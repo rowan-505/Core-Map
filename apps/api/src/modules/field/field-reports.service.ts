@@ -7,6 +7,7 @@ import {
     toReportData,
     type FieldReportRow,
 } from "./field-reports.repo.js";
+import { SurveySessionsError, SurveySessionsService } from "./survey-sessions.service.js";
 
 export class FieldReportsError extends Error {
     constructor(
@@ -30,6 +31,7 @@ export type FieldReportResponse = {
     context: Record<string, unknown>;
     description: string;
     adminAreaId: string | null;
+    surveySessionPublicId: string | null;
     createdAt: string;
     updatedAt: string;
 };
@@ -37,12 +39,33 @@ export type FieldReportResponse = {
 export class FieldReportsService {
     constructor(
         private readonly fieldRepo: FieldReportsRepository,
-        private readonly reportsRepo: ReportsRepository
+        private readonly reportsRepo: ReportsRepository,
+        private readonly surveySessions?: SurveySessionsService
     ) {}
 
     async create(jwtSub: string, body: FieldReportCreateBody): Promise<{ created: boolean; report: FieldReportResponse }> {
         const createdBy = await this.requireUserId(jwtSub);
         await this.assertTargets(body);
+        let surveySessionId: bigint | null = null;
+        if (body.surveySession) {
+            if (!this.surveySessions) {
+                throw new FieldReportsError("Survey sessions are unavailable", 500, "SESSION_UNAVAILABLE");
+            }
+            try {
+                const session = await this.surveySessions.requireOwnedForReport(
+                    createdBy,
+                    body.surveySession,
+                    body.context.variantPublicId,
+                    body.observedAt
+                );
+                surveySessionId = session.session_id;
+            } catch (error) {
+                if (error instanceof SurveySessionsError) {
+                    throw new FieldReportsError(error.message, error.statusCode, error.code);
+                }
+                throw error;
+            }
+        }
         const result = await this.fieldRepo.insertFieldReport({
             clientPublicId: body.clientPublicId,
             createdBy,
@@ -55,8 +78,21 @@ export class FieldReportsService {
             targetEntityType: body.target.entityType,
             targetPublicId: body.target.publicId ?? null,
             reportData: toReportData(body),
+            surveySessionId,
         });
         this.assertOwnedFieldRow(result.row, createdBy);
+        if (
+            (result.row.survey_session_id === null) !== (surveySessionId === null) ||
+            (result.row.survey_session_id !== null &&
+                surveySessionId !== null &&
+                BigInt(result.row.survey_session_id) !== BigInt(surveySessionId))
+        ) {
+            throw new FieldReportsError(
+                "This report id is already associated with another survey session",
+                409,
+                "REPORT_SESSION_CONFLICT"
+            );
+        }
         return { created: result.created, report: toResponse(result.row) };
     }
 
@@ -277,6 +313,7 @@ function toResponse(row: FieldReportRow): FieldReportResponse {
         context,
         description: row.description,
         adminAreaId: row.admin_area_id !== null ? String(row.admin_area_id) : null,
+        surveySessionPublicId: row.survey_session_public_id,
         createdAt: row.created_at.toISOString(),
         updatedAt: row.updated_at.toISOString(),
     };

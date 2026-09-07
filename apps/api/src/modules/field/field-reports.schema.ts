@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { REPORT_TYPE_CODES } from "../reports/reports.schema.js";
+import { fieldReportSurveySessionSchema } from "./survey-sessions.schema.js";
 
 export const FIELD_REPORT_TARGET_TYPES = ["stop", "route", "variant", "path"] as const;
 export const FIELD_VARIANT_CODES = ["D0", "D1"] as const;
@@ -8,6 +9,31 @@ export const FIELD_VARIANT_CODES = ["D0", "D1"] as const;
 /** Fastify abuse limit for POST /field/reports. Not the public 3/5/15 daily caps. */
 export const FIELD_REPORT_CREATE_RATE_LIMIT = {
     max: 60,
+    timeWindow: "1 minute",
+} as const;
+
+export const FIELD_BOOTSTRAP_RATE_LIMIT = {
+    max: 30,
+    timeWindow: "1 minute",
+} as const;
+
+export const FIELD_SESSION_RATE_LIMIT = {
+    max: 30,
+    timeWindow: "1 minute",
+} as const;
+
+export const FIELD_REPORT_READ_RATE_LIMIT = {
+    max: 60,
+    timeWindow: "1 minute",
+} as const;
+
+export const FIELD_REPORT_MUTATE_RATE_LIMIT = {
+    max: 30,
+    timeWindow: "1 minute",
+} as const;
+
+export const FIELD_MEDIA_ATTACH_RATE_LIMIT = {
+    max: 20,
     timeWindow: "1 minute",
 } as const;
 
@@ -73,6 +99,7 @@ export const fieldReportCreateBodySchema = z
         location: fieldReportLocationSchema,
         target: fieldReportTargetSchema,
         context: fieldReportContextSchema,
+        surveySession: fieldReportSurveySessionSchema.optional(),
         description: z.string().trim().max(4000).optional(),
         note: z.string().trim().max(4000).optional(),
     })

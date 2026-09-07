@@ -24,4 +24,5 @@ test("revision fingerprint changes when counts or timestamps change", () => {
     assert.notEqual(snapshotRevisionFromParts({ ...base, routeCount: 141 }), same);
     assert.notEqual(snapshotRevisionFromParts({ ...base, maxUpdatedAtMs: base.maxUpdatedAtMs + 1 }), same);
     assert.notEqual(snapshotRevisionFromParts({ ...base, routeStopSequenceSum: base.routeStopSequenceSum + 1 }), same);
+    assert.notEqual(snapshotRevisionFromParts({ ...base, pathCount: base.pathCount + 1 }), same);
 });

@@ -109,6 +109,59 @@ test("missing or stale revision returns the compact dataset", async () => {
     }
     assert.equal(result.routes[0]?.routeCode, "YBS-13");
     assert.equal(result.variants[0]?.variantCode, "D0");
+    assert.equal(result.variants[0]?.oppositeVariantPublicId, null);
     assert.equal(result.routeStops[0]?.stopSequence, 1);
     assert.equal(result.routePaths[0]?.geometry.type, "LineString");
+});
+
+test("bootstrap variants include the derived opposite public id", async () => {
+    const routeId = "11111111-1111-4111-8111-111111111111";
+    const d0 = "22222222-2222-4222-8222-222222222222";
+    const d1 = "22222222-2222-4222-8222-222222222223";
+    const service = new FieldService(
+        repoStub({
+            async loadSnapshot() {
+                return {
+                    routes: [
+                        {
+                            public_id: routeId,
+                            route_code: "YBS-13",
+                            name_my: null,
+                            name_en: "13",
+                        },
+                    ],
+                    variants: [
+                        {
+                            public_id: d0,
+                            route_public_id: routeId,
+                            route_code: "YBS-13",
+                            direction_id: 0,
+                            origin_name: "A",
+                            destination_name: "B",
+                        },
+                        {
+                            public_id: d1,
+                            route_public_id: routeId,
+                            route_code: "YBS-13",
+                            direction_id: 1,
+                            origin_name: "B",
+                            destination_name: "A",
+                        },
+                    ],
+                    stops: [],
+                    routeStops: [],
+                    routePaths: [],
+                };
+            },
+        })
+    );
+    const result = await service.bootstrap();
+    assert.equal(result.unchanged, false);
+    if (result.unchanged) {
+        return;
+    }
+    assert.equal(result.variants.find((row) => row.publicId === d0)?.oppositeVariantPublicId, d1);
+    assert.equal(result.variants.find((row) => row.publicId === d1)?.oppositeVariantPublicId, d0);
+    assert.equal(result.snapshotRevision, snapshotRevisionFromParts(parts));
+    assert.equal(result.variants.length, 2);
 });

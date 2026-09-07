@@ -58,7 +58,33 @@ export function toFieldVariant(row: FieldVariantRow): FieldVariant | null {
         directionId: identity.directionId,
         originName: row.origin_name,
         destinationName: row.destination_name,
+        oppositeVariantPublicId: null,
     };
+}
+
+/**
+ * Pairs D0/D1 using the same route public id and the opposite direction id.
+ * Does not reverse geometry and does not invent an id by rewriting D0/D1 text.
+ */
+export function withOppositeVariantPublicIds(variants: FieldVariant[]): FieldVariant[] {
+    const byRoute = new Map<string, FieldVariant[]>();
+    for (const variant of variants) {
+        const group = byRoute.get(variant.routePublicId) ?? [];
+        group.push(variant);
+        byRoute.set(variant.routePublicId, group);
+    }
+    return variants.map((variant) => {
+        const group = byRoute.get(variant.routePublicId) ?? [];
+        const sameDirection = group.filter((row) => row.directionId === variant.directionId);
+        const opposites = group.filter(
+            (row) => row.publicId !== variant.publicId && row.directionId === (variant.directionId === 0 ? 1 : 0)
+        );
+        return {
+            ...variant,
+            oppositeVariantPublicId:
+                sameDirection.length === 1 && opposites.length === 1 ? opposites[0].publicId : null,
+        };
+    });
 }
 
 export function toFieldStop(row: FieldStopRow): FieldStop | null {

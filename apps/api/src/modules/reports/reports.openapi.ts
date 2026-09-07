@@ -102,6 +102,29 @@ const statusEventSchema = {
     additionalProperties: false,
 } as const;
 
+const geoPointSchema = {
+    type: "object",
+    nullable: true,
+    required: ["latitude", "longitude"],
+    properties: {
+        latitude: { type: "number" },
+        longitude: { type: "number" },
+    },
+    additionalProperties: false,
+} as const;
+
+const observedLocationSchema = {
+    type: "object",
+    nullable: true,
+    required: ["latitude", "longitude", "accuracy_m"],
+    properties: {
+        latitude: { type: "number" },
+        longitude: { type: "number" },
+        accuracy_m: { type: "number", nullable: true },
+    },
+    additionalProperties: false,
+} as const;
+
 const fieldContextSchema = {
     type: "object",
     nullable: true,
@@ -110,22 +133,38 @@ const fieldContextSchema = {
         "route_public_id",
         "variant_code",
         "variant_public_id",
+        "origin_name",
+        "destination_name",
         "stop_public_id",
         "stop_name",
         "stop_sequence",
         "snapshot_revision",
+        "snapshot_stale",
+        "current_snapshot_revision",
+        "survey_session_public_id",
+        "survey_session_status",
         "canonical_snapshot",
+        "observed_location",
+        "proposed_location",
     ],
     properties: {
         route_code: { type: "string", nullable: true },
         route_public_id: { type: "string", format: "uuid", nullable: true },
         variant_code: { type: "string", nullable: true },
         variant_public_id: { type: "string", format: "uuid", nullable: true },
+        origin_name: { type: "string", nullable: true },
+        destination_name: { type: "string", nullable: true },
         stop_public_id: { type: "string", format: "uuid", nullable: true },
         stop_name: { type: "string", nullable: true },
         stop_sequence: { type: "integer", nullable: true },
         snapshot_revision: { type: "string", nullable: true },
+        snapshot_stale: { type: "boolean" },
+        current_snapshot_revision: { type: "string", nullable: true },
+        survey_session_public_id: { type: "string", format: "uuid", nullable: true },
+        survey_session_status: { type: "string", nullable: true },
         canonical_snapshot: { nullable: true },
+        observed_location: observedLocationSchema,
+        proposed_location: geoPointSchema,
     },
     additionalProperties: false,
 } as const;

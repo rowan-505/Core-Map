@@ -20,6 +20,8 @@ export type FieldReportRow = {
     report_data: unknown;
     created_at: Date;
     updated_at: Date;
+    survey_session_id: bigint | null;
+    survey_session_public_id: string | null;
 };
 
 const fieldReportSelect = Prisma.sql`
@@ -40,7 +42,13 @@ const fieldReportSelect = Prisma.sql`
         r.admin_area_id,
         r.report_data,
         r.created_at,
-        r.updated_at
+        r.updated_at,
+        r.survey_session_id,
+        (
+            SELECT ss.public_id::text
+            FROM feedback.survey_sessions ss
+            WHERE ss.id = r.survey_session_id
+        ) AS survey_session_public_id
     FROM feedback.user_reports r
 `;
 
@@ -183,6 +191,7 @@ export class FieldReportsRepository {
         targetEntityType: string;
         targetPublicId: string | null;
         reportData: Record<string, unknown>;
+        surveySessionId: bigint | null;
     }): Promise<{ created: boolean; row: FieldReportRow }> {
         const reportDataJson = JSON.stringify(input.reportData);
         const pointSql = Prisma.sql`ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326)`;
@@ -192,7 +201,7 @@ export class FieldReportsRepository {
                     public_id, created_by, anonymous_id, is_anonymous, eligible_for_points,
                     report_type_code, status_code, target_entity_type, target_entity_id, target_public_id,
                     title, description, geom, admin_area_id,
-                    source_code, observed_at, location_accuracy_m, report_data
+                    source_code, observed_at, location_accuracy_m, report_data, survey_session_id
                 ) VALUES (
                     ${input.clientPublicId}::uuid,
                     ${input.createdBy},
@@ -211,7 +220,8 @@ export class FieldReportsRepository {
                     'field_survey',
                     ${input.observedAt},
                     ${input.accuracyM},
-                    ${reportDataJson}::jsonb
+                    ${reportDataJson}::jsonb,
+                    ${input.surveySessionId}
                 )
                 ON CONFLICT (public_id) DO NOTHING
                 RETURNING id

@@ -13,6 +13,7 @@ const userId = 42n;
 const otherUser = 7n;
 const assetId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const reportId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const checksumSha256 = "a".repeat(64);
 
 function asset(overrides: Partial<MediaAssetRow> = {}): MediaAssetRow {
     const now = new Date("2026-09-01T00:00:00.000Z");
@@ -24,6 +25,7 @@ function asset(overrides: Partial<MediaAssetRow> = {}): MediaAssetRow {
         object_key: `private/${assetId}.jpg`,
         mime_type: "image/jpeg",
         byte_size: 123n,
+        checksum_sha256: checksumSha256,
         width: null,
         height: null,
         duration_ms: null,
@@ -56,6 +58,8 @@ function report(overrides: Partial<FieldReportRow> = {}): FieldReportRow {
         report_data: {},
         created_at: now,
         updated_at: now,
+        survey_session_id: null,
+        survey_session_public_id: null,
         ...overrides,
     };
 }
@@ -150,7 +154,12 @@ function serviceWith(overrides: {
             })),
         headObject:
             overrides.head ??
-            (async () => ({ exists: true, contentLength: 123, contentType: "image/jpeg" })),
+            (async () => ({
+                exists: true,
+                contentLength: 123,
+                contentType: "image/jpeg",
+                checksumSha256,
+            })),
         getObject:
             overrides.getObject ??
             (async () => {
@@ -181,6 +190,7 @@ test("upload schema accepts JPEG size limits and rejects other types", () => {
         mediaType: "image",
         mimeType: "image/jpeg",
         byteSize: 100,
+        checksumSha256,
     });
     assert.equal(ok.success, true);
 
@@ -188,6 +198,7 @@ test("upload schema accepts JPEG size limits and rejects other types", () => {
         mediaType: "audio",
         mimeType: "audio/mp4",
         byteSize: 100,
+        checksumSha256,
     });
     assert.equal(audio.success, true);
 
@@ -195,6 +206,7 @@ test("upload schema accepts JPEG size limits and rejects other types", () => {
         mediaType: "image",
         mimeType: "image/png",
         byteSize: 100,
+        checksumSha256,
     });
     assert.equal(png.success, false);
 
@@ -202,6 +214,7 @@ test("upload schema accepts JPEG size limits and rejects other types", () => {
         mediaType: "audio",
         mimeType: "audio/mpeg",
         byteSize: 100,
+        checksumSha256,
     });
     assert.equal(mpeg.success, false);
 
@@ -209,8 +222,21 @@ test("upload schema accepts JPEG size limits and rejects other types", () => {
         mediaType: "image",
         mimeType: "image/jpeg",
         byteSize: JPEG_MAX_BYTES + 1,
+        checksumSha256,
     });
     assert.equal(tooBig.success, false);
+
+    assert.equal(mediaUploadBodySchema.safeParse({
+        mediaType: "image",
+        mimeType: "image/jpeg",
+        byteSize: 100,
+    }).success, false);
+    assert.equal(mediaUploadBodySchema.safeParse({
+        mediaType: "image",
+        mimeType: "image/jpeg",
+        byteSize: 100,
+        checksumSha256: "not-a-sha256",
+    }).success, false);
 });
 
 test("createUpload writes pending private JPEG and returns a presigned PUT", async () => {
@@ -227,11 +253,16 @@ test("createUpload writes pending private JPEG and returns a presigned PUT", asy
         mediaType: "image",
         mimeType: "image/jpeg",
         byteSize: 123,
+        checksumSha256,
     });
     assert.equal(result.status, "pending");
     assert.equal(result.upload.method, "PUT");
     assert.equal(insertedKey, `private/${assetId}.jpg`);
     assert.equal(result.upload.headers["Content-Type"], "image/jpeg");
+    assert.deepEqual(result.upload.headers, {
+        "Content-Type": "image/jpeg",
+        "Content-Length": "123",
+    });
 });
 
 test("createUpload writes pending private AAC audio with an m4a key", async () => {
@@ -248,6 +279,7 @@ test("createUpload writes pending private AAC audio with an m4a key", async () =
         mediaType: "audio",
         mimeType: "audio/mp4",
         byteSize: 123,
+        checksumSha256,
     });
     assert.equal(result.mediaType, "audio");
     assert.equal(insertedType, "audio");
@@ -274,6 +306,7 @@ test("complete accepts AAC container aliases from HEAD", async () => {
             exists: true,
             contentLength: 123,
             contentType: "audio/mp4; codecs=mp4a.40.2",
+            checksumSha256,
         }),
     });
     const result = await svc.complete("user-sub", assetId);
@@ -283,7 +316,12 @@ test("complete accepts AAC container aliases from HEAD", async () => {
 test("complete stays pending when the object is missing", async () => {
     let marked = false;
     const svc = serviceWith({
-        head: async () => ({ exists: false, contentLength: null, contentType: null }),
+        head: async () => ({
+            exists: false,
+            contentLength: null,
+            contentType: null,
+            checksumSha256: null,
+        }),
         markReady: async () => {
             marked = true;
             return asset({ status: "ready", ready_at: new Date() });
@@ -299,7 +337,12 @@ test("complete stays pending when the object is missing", async () => {
 test("complete rejects size mismatch without marking ready", async () => {
     let marked = false;
     const svc = serviceWith({
-        head: async () => ({ exists: true, contentLength: 1, contentType: "image/jpeg" }),
+        head: async () => ({
+            exists: true,
+            contentLength: 1,
+            contentType: "image/jpeg",
+            checksumSha256,
+        }),
         markReady: async () => {
             marked = true;
             return asset({ status: "ready", ready_at: new Date() });
@@ -308,6 +351,27 @@ test("complete rejects size mismatch without marking ready", async () => {
     await assert.rejects(
         () => svc.complete("user-sub", assetId),
         (error: unknown) => error instanceof MediaError && error.statusCode === 409
+    );
+    assert.equal(marked, false);
+});
+
+test("complete rejects checksum mismatch without marking ready", async () => {
+    let marked = false;
+    const svc = serviceWith({
+        head: async () => ({
+            exists: true,
+            contentLength: 123,
+            contentType: "image/jpeg",
+            checksumSha256: "b".repeat(64),
+        }),
+        markReady: async () => {
+            marked = true;
+            return asset({ status: "ready", ready_at: new Date() });
+        },
+    });
+    await assert.rejects(
+        () => svc.complete("user-sub", assetId),
+        (error: unknown) => error instanceof MediaError && error.code === "OBJECT_CHECKSUM_MISMATCH"
     );
     assert.equal(marked, false);
 });

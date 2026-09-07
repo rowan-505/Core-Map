@@ -66,6 +66,10 @@ export type ReportRow = {
     report_data: unknown;
     field_route_code: string | null;
     field_stop_name: string | null;
+    field_origin_name: string | null;
+    field_destination_name: string | null;
+    survey_session_public_id: string | null;
+    survey_session_status: string | null;
     media_count: number;
 };
 
@@ -193,6 +197,10 @@ const reportSelect = Prisma.sql`
         r.report_data,
         field_route.route_code AS field_route_code,
         field_stop.field_stop_name,
+        NULLIF(btrim(field_variant.origin_name), '') AS field_origin_name,
+        NULLIF(btrim(field_variant.destination_name), '') AS field_destination_name,
+        field_session.public_id::text AS survey_session_public_id,
+        field_session.status AS survey_session_status,
         (
             SELECT COUNT(*)::int
             FROM feedback.report_media rm
@@ -247,6 +255,17 @@ const reportSelect = Prisma.sql`
           END
         LIMIT 1
     ) field_stop ON true
+    LEFT JOIN feedback.survey_sessions field_session
+      ON r.source_code = 'field_survey'
+     AND field_session.id = r.survey_session_id
+    LEFT JOIN transport.route_variants field_variant
+      ON r.source_code = 'field_survey'
+     AND field_variant.deleted_at IS NULL
+     AND field_variant.public_id = CASE
+            WHEN (r.report_data->>'variantPublicId') ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+            THEN (r.report_data->>'variantPublicId')::uuid
+            ELSE NULL
+        END
 `;
 
 export class ReportsRepository {
@@ -301,6 +320,8 @@ export class ReportsRepository {
             SELECT id
             FROM app_auth.auth_users
             WHERE public_id::text = ${publicId}
+              AND is_active = true
+              AND account_status = 'active'
               AND deleted_at IS NULL
             LIMIT 1
         `);
@@ -315,6 +336,8 @@ export class ReportsRepository {
             SELECT id, email_verified
             FROM app_auth.auth_users
             WHERE public_id::text = ${publicId}
+              AND is_active = true
+              AND account_status = 'active'
               AND deleted_at IS NULL
             LIMIT 1
         `);

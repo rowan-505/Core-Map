@@ -15,16 +15,30 @@ function syntheticSnapshot(): FieldBootstrapResponse {
             nameEn: `Route ${i + 1}`,
         };
     });
-    const variants = routes.flatMap((route) =>
-        ([0, 1] as const).map((directionId) => ({
-            publicId: randomUUID(),
-            routePublicId: route.publicId,
-            variantCode: directionId === 0 ? ("D0" as const) : ("D1" as const),
-            directionId,
-            originName: "Origin",
-            destinationName: "Destination",
-        }))
-    );
+    const variants = routes.flatMap((route) => {
+        const d0 = randomUUID();
+        const d1 = randomUUID();
+        return [
+            {
+                publicId: d0,
+                routePublicId: route.publicId,
+                variantCode: "D0" as const,
+                directionId: 0 as const,
+                originName: "Origin",
+                destinationName: "Destination",
+                oppositeVariantPublicId: d1,
+            },
+            {
+                publicId: d1,
+                routePublicId: route.publicId,
+                variantCode: "D1" as const,
+                directionId: 1 as const,
+                originName: "Destination",
+                destinationName: "Origin",
+                oppositeVariantPublicId: d0,
+            },
+        ];
+    });
     const stops = Array.from({ length: 80 }, (_, i) => ({
         publicId: randomUUID(),
         stopCode: `S${i}`,

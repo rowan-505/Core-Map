@@ -46,7 +46,9 @@ import refRoutes from "./modules/ref/ref.routes.js";
 import addressesRoutes from "./modules/addresses/addresses.routes.js";
 import { IMPORT_REVIEW_ADMIN_TOKEN_HEADER } from "./modules/import-review/import-review-admin.guard.js";
 import { buildApiErrorResponse } from "./lib/api-error-response.js";
+import { apiFastifyOptions, REQUEST_ID_HEADER } from "./lib/http-server.js";
 import { healthGetSchema } from "./lib/openapi/health.openapi.js";
+import { publicErrorCode } from "./lib/public-error-code.js";
 
 const LOCAL_DASHBOARD_ORIGIN = "http://localhost:3000";
 const LOCAL_WEB_ORIGIN = "http://localhost:5173";
@@ -82,9 +84,7 @@ function getCorsOrigins() {
 }
 
 export async function buildApp() {
-    const app = Fastify({
-        logger: true,
-    });
+    const app = Fastify(apiFastifyOptions());
 
     // NOTE: the import-review DB bootstrap (a Supabase round-trip) intentionally does
     // NOT run here. buildApp() must only build/register routes + plugins and return
@@ -110,15 +110,21 @@ export async function buildApp() {
             IMPORT_REVIEW_ADMIN_TOKEN_HEADER,
             // Guests submit reports with a persisted anonymous id via this header.
             "x-anonymous-id",
+            REQUEST_ID_HEADER,
         ],
+        exposedHeaders: [REQUEST_ID_HEADER],
+    });
+
+    app.addHook("onRequest", async (request, reply) => {
+        void reply.header(REQUEST_ID_HEADER, request.id);
     });
 
     // Opt-in only (global: false): routes enable limits via `config.rateLimit`.
     // In-memory store — no Redis. Sensitive auth routes opt in (see auth.routes.ts).
     await app.register(rateLimit, {
         global: false,
-        // The plugin throws this; returning an Error with statusCode lets the global
-        // error handler emit a sanitized 429 (never leaks limits/IPs/retry internals).
+        // The plugin throws this error; the global handler adds a stable client code
+        // while omitting limits, client IPs, and internal retry details.
         errorResponseBuilder: (_request, context) => {
             const error = new Error(
                 "Too many requests. Please slow down and try again shortly."
@@ -269,6 +275,19 @@ function registerPublicErrorHandler(app: FastifyInstance) {
                         fastifyValidation === undefined ? null : { issues: fastifyValidation }
                     )
                 );
+        }
+
+        const code = publicErrorCode({
+            urlPath: url,
+            statusCode,
+            hasValidation: fastifyErr.validation !== undefined,
+        });
+        if (code) {
+            return reply.code(statusCode).send({
+                code,
+                message,
+                ...(fastifyErr.validation === undefined ? {} : { issues: fastifyErr.validation }),
+            });
         }
 
         return reply.code(statusCode).send({ message });

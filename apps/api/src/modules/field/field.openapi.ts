@@ -39,6 +39,7 @@ const fieldVariantSchema = {
         "directionId",
         "originName",
         "destinationName",
+        "oppositeVariantPublicId",
     ],
     properties: {
         publicId: { type: "string", format: "uuid" },
@@ -47,6 +48,7 @@ const fieldVariantSchema = {
         directionId: { type: "integer", enum: [0, 1] },
         originName: { type: "string", nullable: true },
         destinationName: { type: "string", nullable: true },
+        oppositeVariantPublicId: { type: "string", format: "uuid", nullable: true },
     },
     additionalProperties: false,
 } as const;
@@ -126,7 +128,7 @@ export const getFieldBootstrapSchema: FastifySchema = {
     tags: [Tags.Field],
     summary: "Field YBS transport snapshot",
     description:
-        "Authenticated surveyor-only compact YBS bus snapshot. Send `revision` to keep a cached copy when it matches `snapshotRevision`. Public UUIDs only. Gzip is expected at the reverse proxy, not in this API process.",
+        "Authenticated surveyor-only compact YBS bus snapshot. Send `revision` to keep a cached copy when it matches `snapshotRevision`. Public UUIDs only. The process gzips JSON when Accept-Encoding includes gzip. D0 and D1 always come from the same snapshotRevision.",
     security: [...bearerAuth],
     querystring: {
         type: "object",
@@ -161,6 +163,7 @@ const fieldReportResponse = {
         "context",
         "description",
         "adminAreaId",
+        "surveySessionPublicId",
         "createdAt",
         "updatedAt",
     ],
@@ -192,6 +195,7 @@ const fieldReportResponse = {
         context: { type: "object", additionalProperties: true },
         description: { type: "string" },
         adminAreaId: { type: "string", nullable: true },
+        surveySessionPublicId: { type: "string", format: "uuid", nullable: true },
         createdAt: { type: "string", format: "date-time" },
         updatedAt: { type: "string", format: "date-time" },
     },
@@ -238,6 +242,22 @@ const fieldReportCreateBody = {
             },
             additionalProperties: false,
         },
+        surveySession: {
+            oneOf: [
+                {
+                    type: "object",
+                    required: ["publicId"],
+                    properties: { publicId: { type: "string", format: "uuid" } },
+                    additionalProperties: false,
+                },
+                {
+                    type: "object",
+                    required: ["clientSessionId"],
+                    properties: { clientSessionId: { type: "string", format: "uuid" } },
+                    additionalProperties: false,
+                },
+            ],
+        },
         description: { type: "string" },
         note: { type: "string" },
     },
@@ -257,7 +277,7 @@ export const postFieldReportSchema: FastifySchema = {
     tags: [Tags.Field],
     summary: "Submit a field anomaly",
     description:
-        "Surveyor-only. Writes one feedback.user_reports row with source_code=field_survey. clientPublicId is the idempotency key. Distinct UUIDs are distinct anomalies. Does not use public POST /reports duplicate collapse or daily caps. Does not change canonical transport.",
+        "Surveyor-only. Writes one feedback.user_reports row with source_code=field_survey. clientPublicId is the idempotency key. An optional surveySession public or client UUID links an owned, route-compatible session. Distinct UUIDs are distinct anomalies. Does not use public POST /reports duplicate collapse or daily caps. Does not change canonical transport.",
     security: [...bearerAuth],
     body: fieldReportCreateBody,
     response: {
@@ -266,8 +286,9 @@ export const postFieldReportSchema: FastifySchema = {
         400: badRequestSchema,
         401: unauthorizedSchema,
         403: fieldForbiddenSchema,
+        404: fieldConflictSchema,
         409: fieldConflictSchema,
-        429: unauthorizedSchema,
+        429: fieldForbiddenSchema,
     },
 };
 
@@ -352,3 +373,165 @@ export const postFieldReportFollowupSchema: FastifySchema = {
     },
 };
 
+const surveySessionErrorSchema = {
+    type: "object",
+    required: ["code", "message"],
+    properties: {
+        code: { type: "string" },
+        message: { type: "string" },
+        issues: {},
+    },
+    additionalProperties: false,
+} as const;
+
+const surveySessionResponseSchema = {
+    type: "object",
+    required: [
+        "publicId",
+        "clientSessionId",
+        "snapshotRevision",
+        "startedAt",
+        "endedAt",
+        "status",
+        "route",
+        "variant",
+        "reportCount",
+        "createdAt",
+        "updatedAt",
+    ],
+    properties: {
+        publicId: { type: "string", format: "uuid" },
+        clientSessionId: { type: "string", format: "uuid" },
+        snapshotRevision: { type: "string" },
+        startedAt: { type: "string", format: "date-time" },
+        endedAt: { type: "string", format: "date-time", nullable: true },
+        status: { type: "string", enum: ["active", "completed", "abandoned"] },
+        route: {
+            type: "object",
+            required: ["publicId", "code"],
+            properties: {
+                publicId: { type: "string", format: "uuid" },
+                code: { type: "string" },
+            },
+            additionalProperties: false,
+        },
+        variant: {
+            type: "object",
+            required: ["publicId", "code", "origin", "destination"],
+            properties: {
+                publicId: { type: "string", format: "uuid" },
+                code: { type: "string", enum: ["D0", "D1"] },
+                origin: { type: "string", nullable: true },
+                destination: { type: "string", nullable: true },
+            },
+            additionalProperties: false,
+        },
+        reportCount: { type: "integer", minimum: 0 },
+        createdAt: { type: "string", format: "date-time" },
+        updatedAt: { type: "string", format: "date-time" },
+    },
+    additionalProperties: false,
+} as const;
+
+const surveySessionAuthErrors = {
+    400: surveySessionErrorSchema,
+    401: surveySessionErrorSchema,
+    403: fieldForbiddenSchema,
+    404: surveySessionErrorSchema,
+    409: surveySessionErrorSchema,
+} as const;
+
+export const postSurveySessionSchema: FastifySchema = {
+    tags: [Tags.Field],
+    summary: "Start a field survey session",
+    description:
+        "Surveyor-only and idempotent by clientSessionId. The API resolves the public route variant UUID to its private database key.",
+    security: [...bearerAuth],
+    body: {
+        type: "object",
+        required: ["clientSessionId", "routeVariantPublicId", "snapshotRevision", "startedAt"],
+        properties: {
+            clientSessionId: { type: "string", format: "uuid" },
+            routeVariantPublicId: { type: "string", format: "uuid" },
+            snapshotRevision: { type: "string", minLength: 1, maxLength: 80 },
+            startedAt: { type: "string", format: "date-time" },
+        },
+        additionalProperties: false,
+    },
+    response: { 200: surveySessionResponseSchema, 201: surveySessionResponseSchema, ...surveySessionAuthErrors },
+};
+
+export const getSurveySessionsSchema: FastifySchema = {
+    tags: [Tags.Field],
+    summary: "List the surveyor's survey sessions",
+    security: [...bearerAuth],
+    querystring: {
+        type: "object",
+        properties: {
+            cursor: { type: "string", minLength: 1, maxLength: 2000 },
+            limit: { type: "integer", minimum: 1, maximum: 100, default: 20 },
+        },
+        additionalProperties: false,
+    },
+    response: {
+        200: {
+            type: "object",
+            required: ["items", "nextCursor"],
+            properties: {
+                items: { type: "array", items: surveySessionResponseSchema },
+                nextCursor: { type: "string", nullable: true },
+            },
+            additionalProperties: false,
+        },
+        ...surveySessionAuthErrors,
+    },
+};
+
+const surveySessionPublicIdParams = {
+    type: "object",
+    required: ["publicId"],
+    properties: { publicId: { type: "string", format: "uuid" } },
+    additionalProperties: false,
+} as const;
+
+const surveySessionClientIdParams = {
+    type: "object",
+    required: ["clientSessionId"],
+    properties: { clientSessionId: { type: "string", format: "uuid" } },
+    additionalProperties: false,
+} as const;
+
+export const getSurveySessionSchema: FastifySchema = {
+    tags: [Tags.Field],
+    summary: "Get one owned survey session",
+    security: [...bearerAuth],
+    params: surveySessionPublicIdParams,
+    response: { 200: surveySessionResponseSchema, ...surveySessionAuthErrors },
+};
+
+const surveySessionEndBody = {
+    type: "object",
+    required: ["endedAt"],
+    properties: { endedAt: { type: "string", format: "date-time" } },
+    additionalProperties: false,
+} as const;
+
+export const patchSurveySessionCompleteSchema: FastifySchema = {
+    tags: [Tags.Field],
+    summary: "Complete an active survey session",
+    description: "Retry-safe: completing an already-completed session returns its original terminal state.",
+    security: [...bearerAuth],
+    params: surveySessionClientIdParams,
+    body: surveySessionEndBody,
+    response: { 200: surveySessionResponseSchema, ...surveySessionAuthErrors },
+};
+
+export const patchSurveySessionAbandonSchema: FastifySchema = {
+    tags: [Tags.Field],
+    summary: "Abandon an active survey session",
+    description: "Retry-safe: abandoning an already-abandoned session returns its original terminal state.",
+    security: [...bearerAuth],
+    params: surveySessionClientIdParams,
+    body: surveySessionEndBody,
+    response: { 200: surveySessionResponseSchema, ...surveySessionAuthErrors },
+};

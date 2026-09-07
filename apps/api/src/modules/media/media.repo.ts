@@ -8,6 +8,7 @@ export type MediaAssetRow = {
     object_key: string;
     mime_type: string;
     byte_size: bigint;
+    checksum_sha256: string | null;
     width: number | null;
     height: number | null;
     duration_ms: number | null;
@@ -77,6 +78,7 @@ const assetSelect = Prisma.sql`
         a.object_key,
         a.mime_type,
         a.byte_size,
+        a.checksum_sha256,
         a.width,
         a.height,
         a.duration_ms,
@@ -98,11 +100,12 @@ export class MediaRepository {
         objectKey: string;
         mimeType: string;
         byteSize: number;
+        checksumSha256: string;
         createdBy: bigint;
     }): Promise<MediaAssetRow> {
         const rows = await this.prisma.$queryRaw<MediaAssetRow[]>(Prisma.sql`
             INSERT INTO media.assets (
-                public_id, media_type, storage_scope, object_key, mime_type, byte_size,
+                public_id, media_type, storage_scope, object_key, mime_type, byte_size, checksum_sha256,
                 status, created_by
             ) VALUES (
                 ${input.publicId}::uuid,
@@ -111,6 +114,7 @@ export class MediaRepository {
                 ${input.objectKey},
                 ${input.mimeType},
                 ${input.byteSize},
+                ${input.checksumSha256},
                 'pending',
                 ${input.createdBy}
             )
@@ -122,6 +126,7 @@ export class MediaRepository {
                 object_key,
                 mime_type,
                 byte_size,
+                checksum_sha256,
                 width,
                 height,
                 duration_ms,
@@ -158,6 +163,7 @@ export class MediaRepository {
                 object_key,
                 mime_type,
                 byte_size,
+                checksum_sha256,
                 width,
                 height,
                 duration_ms,
@@ -201,6 +207,7 @@ export class MediaRepository {
                 a.public_id::text AS public_id,
                 a.mime_type,
                 a.byte_size,
+                a.checksum_sha256,
                 a.width,
                 a.height,
                 rm.note,
@@ -230,6 +237,7 @@ export class MediaRepository {
                 a.object_key,
                 a.mime_type,
                 a.byte_size,
+                a.checksum_sha256,
                 a.width,
                 a.height,
                 a.duration_ms,
@@ -265,6 +273,7 @@ export class MediaRepository {
                 a.object_key,
                 a.mime_type,
                 a.byte_size,
+                a.checksum_sha256,
                 a.width,
                 a.height,
                 a.duration_ms,
@@ -368,6 +377,7 @@ export class MediaRepository {
                 object_key,
                 mime_type,
                 byte_size,
+                checksum_sha256,
                 width,
                 height,
                 duration_ms,

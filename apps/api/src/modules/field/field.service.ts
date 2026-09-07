@@ -5,6 +5,7 @@ import {
     toFieldRouteStop,
     toFieldStop,
     toFieldVariant,
+    withOppositeVariantPublicIds,
 } from "./field-dto.js";
 import { snapshotRevisionFromParts } from "./field-revision.js";
 import type { FieldRepository } from "./field.repo.js";
@@ -26,9 +27,11 @@ export class FieldService {
             snapshotRevision,
             unchanged: false,
             routes: rows.routes.map(toFieldRoute),
-            variants: rows.variants
-                .map(toFieldVariant)
-                .filter((row): row is NonNullable<typeof row> => row !== null),
+            variants: withOppositeVariantPublicIds(
+                rows.variants
+                    .map(toFieldVariant)
+                    .filter((row): row is NonNullable<typeof row> => row !== null)
+            ),
             stops: rows.stops
                 .map(toFieldStop)
                 .filter((row): row is NonNullable<typeof row> => row !== null),

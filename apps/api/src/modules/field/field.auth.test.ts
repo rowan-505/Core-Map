@@ -80,6 +80,16 @@ async function withAuthApp(
             { preHandler: [app.authenticate, app.requireFieldSurveyor] },
             async () => ({ publicId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", sourceCode: "field_survey" })
         );
+        app.post(
+            "/field/survey-sessions",
+            { preHandler: [app.authenticate, app.requireFieldSurveyor] },
+            async () => ({ publicId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", status: "active" })
+        );
+        app.post(
+            "/media/uploads",
+            { preHandler: [app.authenticate, app.requireFieldSurveyor] },
+            async () => ({ publicId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", status: "pending" })
+        );
         await app.ready();
         await run(app);
     } finally {
@@ -156,5 +166,52 @@ test("POST /field/reports allows surveyor and rejects a regular user", async () 
             payload: {},
         });
         assert.equal(surveyorOk.statusCode, 200);
+    });
+});
+
+test("survey-session endpoints require an authenticated surveyor", async () => {
+    await withAuthApp({}, async (app) => {
+        const missing = await app.inject({ method: "POST", url: "/field/survey-sessions" });
+        assert.equal(missing.statusCode, 401);
+
+        const sign = (roles: string[]) =>
+            app.jwt.sign({ sub: "u1", email: "u1@example.com", roles });
+        const denied = await app.inject({
+            method: "POST",
+            url: "/field/survey-sessions",
+            headers: { authorization: `Bearer ${sign(["user"])}` },
+        });
+        assert.equal(denied.statusCode, 403);
+        assert.equal(denied.json().code, "FORBIDDEN");
+
+        const allowed = await app.inject({
+            method: "POST",
+            url: "/field/survey-sessions",
+            headers: { authorization: `Bearer ${sign(["surveyor"])}` },
+        });
+        assert.equal(allowed.statusCode, 200);
+    });
+});
+
+test("POST /media/uploads requires an authenticated surveyor", async () => {
+    await withAuthApp({}, async (app) => {
+        const missing = await app.inject({ method: "POST", url: "/media/uploads" });
+        assert.equal(missing.statusCode, 401);
+
+        const sign = (roles: string[]) =>
+            app.jwt.sign({ sub: "u1", email: "u1@example.com", roles });
+        const denied = await app.inject({
+            method: "POST",
+            url: "/media/uploads",
+            headers: { authorization: `Bearer ${sign(["admin"])}` },
+        });
+        assert.equal(denied.statusCode, 403);
+
+        const allowed = await app.inject({
+            method: "POST",
+            url: "/media/uploads",
+            headers: { authorization: `Bearer ${sign(["surveyor"])}` },
+        });
+        assert.equal(allowed.statusCode, 200);
     });
 });

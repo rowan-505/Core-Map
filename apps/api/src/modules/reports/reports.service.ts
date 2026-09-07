@@ -1,4 +1,11 @@
 import type { MediaRepository, ReportMediaEvidenceRow } from "../media/media.repo.js";
+import type { FieldRepository } from "../field/field.repo.js";
+import { snapshotRevisionFromParts } from "../field/field-revision.js";
+import {
+    fieldStopPublicIdOf,
+    toFieldContext,
+    type FieldReportAdminContext,
+} from "./field-report-evidence.js";
 import {
     ReportsRepository,
     type AuditContext,
@@ -104,17 +111,7 @@ export type ReportResponse = {
     updated_at: string;
 };
 
-export type FieldReportAdminContext = {
-    route_code: string | null;
-    route_public_id: string | null;
-    variant_code: string | null;
-    variant_public_id: string | null;
-    stop_public_id: string | null;
-    stop_name: string | null;
-    stop_sequence: number | null;
-    snapshot_revision: string | null;
-    canonical_snapshot: unknown | null;
-};
+export type { FieldReportAdminContext } from "./field-report-evidence.js";
 
 export type CanonicalTargetPoint = {
     latitude: number;
@@ -191,7 +188,8 @@ export type CreateReportResult = {
 export class ReportsService {
     constructor(
         private readonly reportsRepo: ReportsRepository,
-        private readonly mediaRepo: MediaRepository
+        private readonly mediaRepo: MediaRepository,
+        private readonly fieldRepo: Pick<FieldRepository, "loadRevisionParts">
     ) {}
 
     async create(
@@ -415,14 +413,15 @@ export class ReportsService {
         }
     > {
         const report = await this.requireReport(publicId);
-        const [events, followups, canonical, media] = await Promise.all([
+        const [events, followups, canonical, media, currentRevision] = await Promise.all([
             this.reportsRepo.listStatusEvents(report.id),
             this.reportsRepo.listFollowups(report.id),
             this.loadCanonicalTarget(report),
             this.mediaRepo.listReadyPrivateForReport(report.id),
+            this.loadCurrentSnapshotRevision(report.source_code),
         ]);
         return {
-            ...toAdminReportResponse(report, canonical),
+            ...toAdminReportResponse(report, canonical, currentRevision),
             status_events: events.map(toStatusEventResponse),
             followups: followups.map(toFollowupResponse),
             media: media.map(toMediaEvidenceResponse),
@@ -564,7 +563,7 @@ export class ReportsService {
     private async loadCanonicalTarget(
         report: ReportRow
     ): Promise<{ canonical_target: CanonicalTargetPoint | null; distance_m: number | null }> {
-        const stopPublicId = fieldStopPublicId(report);
+        const stopPublicId = fieldStopPublicIdOf(report);
         if (!stopPublicId || !isFieldSurveySource(report.source_code)) {
             return { canonical_target: null, distance_m: null };
         }
@@ -582,6 +581,14 @@ export class ReportsService {
             canonical_target: { latitude: point.latitude, longitude: point.longitude },
             distance_m: point.distance_m,
         };
+    }
+
+    private async loadCurrentSnapshotRevision(sourceCode: string | null | undefined): Promise<string | null> {
+        if (!isFieldSurveySource(sourceCode)) {
+            return null;
+        }
+        const parts = await this.fieldRepo.loadRevisionParts();
+        return snapshotRevisionFromParts(parts);
     }
 }
 
@@ -613,7 +620,8 @@ function toReportResponse(row: ReportRow): ReportResponse {
 
 function toAdminReportResponse(
     row: ReportRow,
-    canonical?: { canonical_target: CanonicalTargetPoint | null; distance_m: number | null }
+    canonical?: { canonical_target: CanonicalTargetPoint | null; distance_m: number | null },
+    currentSnapshotRevision: string | null = null
 ): AdminReportResponse {
     return {
         ...toReportResponse(row),
@@ -632,7 +640,7 @@ function toAdminReportResponse(
             row.location_accuracy_m === null || row.location_accuracy_m === undefined
                 ? null
                 : Number(row.location_accuracy_m),
-        field: toFieldContext(row),
+        field: toFieldContext(row, currentSnapshotRevision),
         canonical_target: canonical?.canonical_target ?? null,
         distance_m: canonical?.distance_m ?? null,
         media_count: Number(row.media_count ?? 0),
@@ -649,69 +657,6 @@ function toMediaEvidenceResponse(row: ReportMediaEvidenceRow): ReportMediaEviden
         note: row.note,
         sortOrder: row.sort_order,
         published: row.published === true,
-    };
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-        return value as Record<string, unknown>;
-    }
-    return {};
-}
-
-function optionalString(value: unknown): string | null {
-    return typeof value === "string" && value.trim().length > 0 ? value : null;
-}
-
-function optionalInt(value: unknown): number | null {
-    if (typeof value === "number" && Number.isInteger(value)) {
-        return value;
-    }
-    if (typeof value === "string" && /^-?\d+$/.test(value)) {
-        return Number(value);
-    }
-    return null;
-}
-
-function fieldStopPublicId(row: ReportRow): string | null {
-    const data = asRecord(row.report_data);
-    const fromContext = optionalString(data.stopPublicId);
-    if (fromContext) {
-        return fromContext;
-    }
-    if (row.target_entity_type === "stop") {
-        return row.target_public_id;
-    }
-    return null;
-}
-
-function fieldRoutePublicId(row: ReportRow): string | null {
-    const data = asRecord(row.report_data);
-    const fromContext = optionalString(data.routePublicId);
-    if (fromContext) {
-        return fromContext;
-    }
-    if (row.target_entity_type === "route") {
-        return row.target_public_id;
-    }
-    return null;
-}
-
-function toFieldContext(row: ReportRow): FieldReportAdminContext | null {
-    if (!isFieldSurveySource(row.source_code)) {
-        return null;
-    }
-    const data = asRecord(row.report_data);
-    return {
-        route_code: row.field_route_code ?? null,
-        route_public_id: fieldRoutePublicId(row),
-        variant_code: optionalString(data.variantCode),
-        variant_public_id: optionalString(data.variantPublicId),
-        stop_public_id: fieldStopPublicId(row),
-        stop_name: row.field_stop_name ?? null,
-        stop_sequence: optionalInt(data.stopSequence),
-        snapshot_revision: optionalString(data.snapshotRevision),
-        canonical_snapshot: data.canonicalSnapshot === undefined ? null : data.canonicalSnapshot,
     };
 }
 

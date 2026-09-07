@@ -3,6 +3,7 @@ export type PresignedPutInput = {
     objectKey: string;
     contentType: string;
     contentLength: number;
+    checksumSha256: string;
     expiresInSeconds: number;
 };
 
@@ -16,6 +17,7 @@ export type HeadObjectResult = {
     exists: boolean;
     contentLength: number | null;
     contentType: string | null;
+    checksumSha256: string | null;
 };
 
 export type PutObjectInput = {

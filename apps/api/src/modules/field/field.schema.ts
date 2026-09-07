@@ -25,6 +25,7 @@ export const fieldVariantSchema = z.object({
     directionId: z.union([z.literal(0), z.literal(1)]),
     originName: z.string().nullable(),
     destinationName: z.string().nullable(),
+    oppositeVariantPublicId: z.string().uuid().nullable(),
 });
 
 export const fieldStopSchema = z.object({

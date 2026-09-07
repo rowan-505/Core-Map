@@ -104,6 +104,7 @@ export class MediaService {
             objectKey,
             mimeType: body.mimeType,
             byteSize: body.byteSize,
+            checksumSha256: body.checksumSha256,
             createdBy,
         });
         const expiresInSeconds = this.config.uploadExpiresSeconds ?? MEDIA_UPLOAD_EXPIRES_SECONDS;
@@ -112,6 +113,7 @@ export class MediaService {
             objectKey,
             contentType: body.mimeType,
             contentLength: body.byteSize,
+            checksumSha256: body.checksumSha256,
             expiresInSeconds,
         });
         return {
@@ -148,6 +150,16 @@ export class MediaService {
         }
         if (head.contentType && !mimeCompatible(asset.mime_type, head.contentType)) {
             throw new MediaError("Uploaded object type does not match", 409, "OBJECT_TYPE_MISMATCH");
+        }
+        if (
+            asset.checksum_sha256 &&
+            head.checksumSha256?.toLowerCase() !== asset.checksum_sha256
+        ) {
+            throw new MediaError(
+                "Uploaded object checksum does not match",
+                409,
+                "OBJECT_CHECKSUM_MISMATCH"
+            );
         }
         if (asset.status === "ready") {
             return toCompleteResponse(asset);

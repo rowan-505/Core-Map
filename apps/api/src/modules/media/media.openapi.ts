@@ -33,11 +33,12 @@ export const postMediaUploadSchema: FastifySchema = {
     security: [...bearerAuth],
     body: {
         type: "object",
-        required: ["mediaType", "mimeType", "byteSize"],
+        required: ["mediaType", "mimeType", "byteSize", "checksumSha256"],
         properties: {
             mediaType: { type: "string", enum: ["image", "audio"] },
             mimeType: { type: "string", enum: ["image/jpeg", "audio/mp4", "audio/m4a"] },
             byteSize: { type: "integer", minimum: 1, maximum: 8_388_608 },
+            checksumSha256: { type: "string", pattern: "^[0-9a-f]{64}$" },
         },
         additionalProperties: false,
     },

@@ -1,6 +1,6 @@
 # CoreMap API
 
-> **Generated:** 2026-09-02T18:14:44.221Z (UTC)  
+> **Generated:** 2026-09-04T13:38:46.367Z (UTC)
 > **OpenAPI:** This file is produced from `buildApp().swagger()` in `scripts/generate-api-docs.ts` — the same JSON as `GET /openapi.json` when the server is running.
 
 ## Base URLs
@@ -5690,7 +5690,7 @@ Authenticated surveyor-only compact YBS bus snapshot. Send `revision` to keep a 
 
 **Summary:** Submit a field anomaly
 
-Surveyor-only. Writes one feedback.user_reports row with source_code=field_survey. clientPublicId is the idempotency key. Distinct UUIDs are distinct anomalies. Does not use public POST /reports duplicate collapse or daily caps. Does not change canonical transport.
+Surveyor-only. Writes one feedback.user_reports row with source_code=field_survey. clientPublicId is the idempotency key. An optional surveySession public or client UUID links an owned, route-compatible session. Distinct UUIDs are distinct anomalies. Does not use public POST /reports duplicate collapse or daily caps. Does not change canonical transport.
 
 **Security:** Bearer JWT (`Authorization: Bearer …`)
 
@@ -5718,6 +5718,9 @@ Surveyor-only. Writes one feedback.user_reports row with source_code=field_surve
     "stopPublicId": "00000000-0000-4000-8000-000000000000",
     "stopSequence": 0,
     "canonicalSnapshot": {}
+  },
+  "surveySession": {
+    "publicId": "00000000-0000-4000-8000-000000000000"
   },
   "description": "string",
   "note": "string"
@@ -5747,6 +5750,7 @@ Surveyor-only. Writes one feedback.user_reports row with source_code=field_surve
     "context": {},
     "description": "string",
     "adminAreaId": "string",
+    "surveySessionPublicId": "00000000-0000-4000-8000-000000000000",
     "createdAt": "2026-01-01T00:00:00.000Z",
     "updatedAt": "2026-01-01T00:00:00.000Z"
   }
@@ -5773,6 +5777,7 @@ Surveyor-only. Writes one feedback.user_reports row with source_code=field_surve
     "context": {},
     "description": "string",
     "adminAreaId": "string",
+    "surveySessionPublicId": "00000000-0000-4000-8000-000000000000",
     "createdAt": "2026-01-01T00:00:00.000Z",
     "updatedAt": "2026-01-01T00:00:00.000Z"
   }
@@ -5801,6 +5806,15 @@ Surveyor-only. Writes one feedback.user_reports row with source_code=field_surve
   ```
 
 - **`403`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string"
+  }
+  ```
+
+- **`404`**
 
   ```json
   {
@@ -5860,6 +5874,7 @@ Surveyor-only. Writes one feedback.user_reports row with source_code=field_surve
     "context": {},
     "description": "string",
     "adminAreaId": "string",
+    "surveySessionPublicId": "00000000-0000-4000-8000-000000000000",
     "createdAt": "2026-01-01T00:00:00.000Z",
     "updatedAt": "2026-01-01T00:00:00.000Z"
   }
@@ -5947,6 +5962,7 @@ Creator may edit while status is submitted. in_review, resolved, and rejected ar
     "context": {},
     "description": "string",
     "adminAreaId": "string",
+    "surveySessionPublicId": "00000000-0000-4000-8000-000000000000",
     "createdAt": "2026-01-01T00:00:00.000Z",
     "updatedAt": "2026-01-01T00:00:00.000Z"
   }
@@ -6044,6 +6060,7 @@ Append-only. Closed reports cannot receive follow-ups. Does not change canonical
     "context": {},
     "description": "string",
     "adminAreaId": "string",
+    "surveySessionPublicId": "00000000-0000-4000-8000-000000000000",
     "createdAt": "2026-01-01T00:00:00.000Z",
     "updatedAt": "2026-01-01T00:00:00.000Z"
   }
@@ -6189,6 +6206,506 @@ Surveyor-only. Attaches a ready private asset owned by the caller to an owned fi
   {
     "code": "string",
     "message": "string"
+  }
+  ```
+
+#### `GET` `/field/survey-sessions`
+
+**Summary:** List the surveyor's survey sessions
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| cursor | Query | no | string |
+| limit | Query | no | integer |
+
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "items": [
+      {
+        "publicId": "00000000-0000-4000-8000-000000000000",
+        "clientSessionId": "00000000-0000-4000-8000-000000000000",
+        "snapshotRevision": "string",
+        "startedAt": "2026-01-01T00:00:00.000Z",
+        "endedAt": "2026-01-01T00:00:00.000Z",
+        "status": "active",
+        "route": {
+          "publicId": "00000000-0000-4000-8000-000000000000",
+          "code": "string"
+        },
+        "variant": {
+          "publicId": "00000000-0000-4000-8000-000000000000",
+          "code": "D0",
+          "origin": "string",
+          "destination": "string"
+        },
+        "reportCount": 0,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z"
+      }
+    ],
+    "nextCursor": "string"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`409`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+#### `POST` `/field/survey-sessions`
+
+**Summary:** Start a field survey session
+
+Surveyor-only and idempotent by clientSessionId. The API resolves the public route variant UUID to its private database key.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+**Request body** (`application/json`)
+
+```json
+{
+  "clientSessionId": "00000000-0000-4000-8000-000000000000",
+  "routeVariantPublicId": "00000000-0000-4000-8000-000000000000",
+  "snapshotRevision": "string",
+  "startedAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "publicId": "00000000-0000-4000-8000-000000000000",
+    "clientSessionId": "00000000-0000-4000-8000-000000000000",
+    "snapshotRevision": "string",
+    "startedAt": "2026-01-01T00:00:00.000Z",
+    "endedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active",
+    "route": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "string"
+    },
+    "variant": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "D0",
+      "origin": "string",
+      "destination": "string"
+    },
+    "reportCount": 0,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+  ```
+
+- **`201`**
+
+  ```json
+  {
+    "publicId": "00000000-0000-4000-8000-000000000000",
+    "clientSessionId": "00000000-0000-4000-8000-000000000000",
+    "snapshotRevision": "string",
+    "startedAt": "2026-01-01T00:00:00.000Z",
+    "endedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active",
+    "route": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "string"
+    },
+    "variant": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "D0",
+      "origin": "string",
+      "destination": "string"
+    },
+    "reportCount": 0,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`409`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+#### `PATCH` `/field/survey-sessions/{clientSessionId}/abandon`
+
+**Summary:** Abandon an active survey session
+
+Retry-safe: abandoning an already-abandoned session returns its original terminal state.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| clientSessionId | Path | yes | string, uuid |
+
+
+**Request body** (`application/json`)
+
+```json
+{
+  "endedAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "publicId": "00000000-0000-4000-8000-000000000000",
+    "clientSessionId": "00000000-0000-4000-8000-000000000000",
+    "snapshotRevision": "string",
+    "startedAt": "2026-01-01T00:00:00.000Z",
+    "endedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active",
+    "route": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "string"
+    },
+    "variant": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "D0",
+      "origin": "string",
+      "destination": "string"
+    },
+    "reportCount": 0,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`409`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+#### `PATCH` `/field/survey-sessions/{clientSessionId}/complete`
+
+**Summary:** Complete an active survey session
+
+Retry-safe: completing an already-completed session returns its original terminal state.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| clientSessionId | Path | yes | string, uuid |
+
+
+**Request body** (`application/json`)
+
+```json
+{
+  "endedAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "publicId": "00000000-0000-4000-8000-000000000000",
+    "clientSessionId": "00000000-0000-4000-8000-000000000000",
+    "snapshotRevision": "string",
+    "startedAt": "2026-01-01T00:00:00.000Z",
+    "endedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active",
+    "route": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "string"
+    },
+    "variant": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "D0",
+      "origin": "string",
+      "destination": "string"
+    },
+    "reportCount": 0,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`409`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+#### `GET` `/field/survey-sessions/{publicId}`
+
+**Summary:** Get one owned survey session
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| publicId | Path | yes | string, uuid |
+
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "publicId": "00000000-0000-4000-8000-000000000000",
+    "clientSessionId": "00000000-0000-4000-8000-000000000000",
+    "snapshotRevision": "string",
+    "startedAt": "2026-01-01T00:00:00.000Z",
+    "endedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active",
+    "route": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "string"
+    },
+    "variant": {
+      "publicId": "00000000-0000-4000-8000-000000000000",
+      "code": "D0",
+      "origin": "string",
+      "destination": "string"
+    },
+    "reportCount": 0,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`409`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string",
+    "issues": null
   }
   ```
 
@@ -25714,4 +26231,4 @@ Many routes return JSON error bodies for failed validation, auth, or missing res
 
 ---
 
-*OpenAPI version: 3.0.3 · API version: 0.1.0 · Operations: 298*
+*OpenAPI version: 3.0.3 · API version: 0.1.0 · Operations: 303*

@@ -7,6 +7,7 @@ import { FieldReportsError, FieldReportsService } from "./field-reports.service.
 import type { FieldReportRow } from "./field-reports.repo.js";
 import type { FieldReportsRepository } from "./field-reports.repo.js";
 import type { ReportsRepository } from "../reports/reports.repo.js";
+import type { SurveySessionsService } from "./survey-sessions.service.js";
 
 const stopId = "33333333-3333-4333-8333-333333333333";
 const routeId = "11111111-1111-4111-8111-111111111111";
@@ -53,6 +54,8 @@ function row(overrides: Partial<FieldReportRow> = {}): FieldReportRow {
         report_data: { snapshotRevision: "v1-abc", variantCode: "D0" },
         created_at: now,
         updated_at: now,
+        survey_session_id: null,
+        survey_session_public_id: null,
         ...overrides,
     };
 }
@@ -76,6 +79,7 @@ function serviceWith(overrides: {
     find?: FieldReportsRepository["findByPublicId"];
     update?: FieldReportsRepository["updateFieldReport"];
     followup?: ReportsRepository["insertFollowup"];
+    session?: SurveySessionsService["requireOwnedForReport"];
 }) {
     const fieldRepo = {
         lookupTargets: overrides.lookup ?? (async () => validLookup()),
@@ -90,7 +94,14 @@ function serviceWith(overrides: {
         findByPublicId: async () => ({ id: 9n }),
         insertFollowup: overrides.followup ?? (async () => undefined),
     } as unknown as ReportsRepository;
-    return new FieldReportsService(fieldRepo, reportsRepo);
+    const surveySessions = {
+        requireOwnedForReport:
+            overrides.session ??
+            (async () => {
+                throw new Error("Unexpected survey session lookup");
+            }),
+    } as unknown as SurveySessionsService;
+    return new FieldReportsService(fieldRepo, reportsRepo, surveySessions);
 }
 
 test("schema rejects invalid coordinates and non D0/D1 codes", () => {
@@ -231,4 +242,52 @@ test("field report flow never calls canonical transport writes", async () => {
     const svc = serviceWith({});
     await svc.create("user-sub", validBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"));
     assert.deepEqual(transportMutations, []);
+});
+
+test("links a report to an owned compatible survey session", async () => {
+    let insertedSessionId: bigint | null | undefined;
+    const svc = serviceWith({
+        session: async (_createdBy, identifier, reportVariantPublicId) => {
+            assert.deepEqual(identifier, { clientSessionId: "55555555-5555-4555-8555-555555555555" });
+            assert.equal(reportVariantPublicId, variantId);
+            return { session_id: 77n } as never;
+        },
+        insert: async (input) => {
+            insertedSessionId = input.surveySessionId;
+            return {
+                created: true,
+                row: row({
+                    public_id: input.clientPublicId,
+                    survey_session_id: 77n,
+                    survey_session_public_id: "66666666-6666-4666-8666-666666666666",
+                }),
+            };
+        },
+    });
+    const reportBody = {
+        ...validBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+        surveySession: { clientSessionId: "55555555-5555-4555-8555-555555555555" },
+    };
+    const result = await svc.create("user-sub", reportBody);
+    assert.equal(insertedSessionId, 77n);
+    assert.equal(result.report.surveySessionPublicId, "66666666-6666-4666-8666-666666666666");
+});
+
+test("idempotent report replay cannot switch survey sessions", async () => {
+    const svc = serviceWith({
+        session: async () => ({ session_id: 77n }) as never,
+        insert: async () => ({
+            created: false,
+            row: row({ survey_session_id: 88n }),
+        }),
+    });
+    await assert.rejects(
+        () =>
+            svc.create("user-sub", {
+                ...validBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+                surveySession: { publicId: "66666666-6666-4666-8666-666666666666" },
+            }),
+        (error: unknown) =>
+            error instanceof FieldReportsError && error.code === "REPORT_SESSION_CONFLICT"
+    );
 });

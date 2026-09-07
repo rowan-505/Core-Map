@@ -12,6 +12,8 @@ export const MEDIA_UPLOAD_RATE_LIMIT = {
     timeWindow: "1 minute",
 } as const;
 
+export const MEDIA_COMPLETE_RATE_LIMIT = MEDIA_UPLOAD_RATE_LIMIT;
+
 export const MEDIA_ACCESS_RATE_LIMIT = {
     max: 30,
     timeWindow: "1 minute",
@@ -29,6 +31,8 @@ const normalizedRectSchema = z.object({
     height: z.number().gt(0).max(1),
 });
 
+const checksumSha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
+
 export const publishStopPhotoBodySchema = z.object({
     rotateDegrees: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).default(0),
     crop: normalizedRectSchema.nullable().optional(),
@@ -42,11 +46,13 @@ export const mediaUploadBodySchema = z.discriminatedUnion("mediaType", [
         mediaType: z.literal("image"),
         mimeType: z.literal(JPEG_MIME_TYPE),
         byteSize: z.number().int().positive().max(JPEG_MAX_BYTES),
+        checksumSha256: checksumSha256Schema,
     }),
     z.object({
         mediaType: z.literal("audio"),
         mimeType: z.enum(AUDIO_MIME_TYPES),
         byteSize: z.number().int().positive().max(AUDIO_MAX_BYTES),
+        checksumSha256: checksumSha256Schema,
     }),
 ]);
 

@@ -8,6 +8,7 @@ import {
     toFieldRouteStop,
     toFieldStop,
     toFieldVariant,
+    withOppositeVariantPublicIds,
 } from "./field-dto.js";
 
 test("field variants use D0/D1 labels from canonical YBS identity", () => {
@@ -42,6 +43,85 @@ test("field variants use D0/D1 labels from canonical YBS identity", () => {
             destination_name: null,
         }),
         null
+    );
+});
+
+test("oppositeVariantPublicId is derived from route id and opposite direction id", () => {
+    const routeA = "22222222-2222-4222-8222-222222222222";
+    const routeB = "55555555-5555-4555-8555-555555555555";
+    const d0 = toFieldVariant({
+        public_id: "11111111-1111-4111-8111-111111111111",
+        route_public_id: routeA,
+        route_code: "YBS-13",
+        direction_id: 0,
+        origin_name: "A",
+        destination_name: "B",
+    });
+    const d1 = toFieldVariant({
+        public_id: "33333333-3333-4333-8333-333333333333",
+        route_public_id: routeA,
+        route_code: "YBS-13",
+        direction_id: 1,
+        origin_name: "B",
+        destination_name: "A",
+    });
+    const otherD1 = toFieldVariant({
+        public_id: "66666666-6666-4666-8666-666666666666",
+        route_public_id: routeB,
+        route_code: "YBS-13A",
+        direction_id: 1,
+        origin_name: "C",
+        destination_name: "D",
+    });
+    const paired = withOppositeVariantPublicIds([d0!, d1!, otherD1!]);
+    assert.equal(paired[0]?.oppositeVariantPublicId, d1?.publicId);
+    assert.equal(paired[1]?.oppositeVariantPublicId, d0?.publicId);
+    assert.equal(paired[2]?.oppositeVariantPublicId, null);
+});
+
+test("missing or ambiguous counterparts stay null", () => {
+    const route = "22222222-2222-4222-8222-222222222222";
+    const onlyD0 = withOppositeVariantPublicIds([
+        toFieldVariant({
+            public_id: "11111111-1111-4111-8111-111111111111",
+            route_public_id: route,
+            route_code: "YBS-13",
+            direction_id: 0,
+            origin_name: "A",
+            destination_name: "B",
+        })!,
+    ]);
+    assert.equal(onlyD0[0]?.oppositeVariantPublicId, null);
+
+    const ambiguous = withOppositeVariantPublicIds([
+        toFieldVariant({
+            public_id: "11111111-1111-4111-8111-111111111111",
+            route_public_id: route,
+            route_code: "YBS-13",
+            direction_id: 0,
+            origin_name: "A",
+            destination_name: "B",
+        })!,
+        toFieldVariant({
+            public_id: "77777777-7777-4777-8777-777777777777",
+            route_public_id: route,
+            route_code: "YBS-13",
+            direction_id: 0,
+            origin_name: "A2",
+            destination_name: "B2",
+        })!,
+        toFieldVariant({
+            public_id: "33333333-3333-4333-8333-333333333333",
+            route_public_id: route,
+            route_code: "YBS-13",
+            direction_id: 1,
+            origin_name: "B",
+            destination_name: "A",
+        })!,
+    ]);
+    assert.equal(
+        ambiguous.every((row) => row.oppositeVariantPublicId === null),
+        true
     );
 });
 

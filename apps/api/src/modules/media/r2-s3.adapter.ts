@@ -24,10 +24,21 @@ function isNotFound(error: unknown): boolean {
     return err.name === "NotFound" || err.$metadata?.httpStatusCode === 404;
 }
 
+/** Path-style URLs are required for loopback MinIO. Production R2 stays virtual-hosted. */
+export function shouldForcePathStyle(endpoint: string): boolean {
+    try {
+        const host = new URL(endpoint).hostname;
+        return host === "127.0.0.1" || host === "localhost" || host === "::1";
+    } catch {
+        return false;
+    }
+}
+
 export function createR2S3Client(config: R2MediaEnvConfig): S3Client {
     return new S3Client({
         region: config.region,
         endpoint: config.endpoint,
+        forcePathStyle: shouldForcePathStyle(config.endpoint),
         credentials: {
             accessKeyId: config.accessKeyId,
             secretAccessKey: config.secretAccessKey,
@@ -52,6 +63,7 @@ export class R2ObjectStore implements ObjectStore {
                 Key: input.objectKey,
                 ContentType: input.contentType,
                 ContentLength: input.contentLength,
+                Metadata: { sha256: input.checksumSha256 },
             }),
             { expiresIn: input.expiresInSeconds }
         );
@@ -88,10 +100,11 @@ export class R2ObjectStore implements ObjectStore {
                 exists: true,
                 contentLength: typeof result.ContentLength === "number" ? result.ContentLength : null,
                 contentType: result.ContentType ?? null,
+                checksumSha256: result.Metadata?.sha256?.toLowerCase() ?? null,
             };
         } catch (error) {
             if (isNotFound(error)) {
-                return { exists: false, contentLength: null, contentType: null };
+                return { exists: false, contentLength: null, contentType: null, checksumSha256: null };
             }
             throw error;
         }

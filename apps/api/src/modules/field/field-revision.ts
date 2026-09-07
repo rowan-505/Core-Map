@@ -11,6 +11,11 @@ export type FieldRevisionParts = {
     maxUpdatedAtMs: number;
 };
 
+/**
+ * One fingerprint for the whole snapshot. Route edits, stop merges, and
+ * direction/path changes bump maxUpdatedAtMs or the sequence sum, so clients
+ * reload D0 and D1 together. There is no delta-patch format.
+ */
 export function snapshotRevisionFromParts(parts: FieldRevisionParts): string {
     const canonical = [
         parts.routeCount,
