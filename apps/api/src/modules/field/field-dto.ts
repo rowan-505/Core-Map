@@ -148,6 +148,34 @@ export function asLineString(
     return { type: "LineString", coordinates };
 }
 
+/** About 0.1 m. Enough for field survey; smaller JSON than full-precision OSM vertices. */
+export function roundFieldCoordinate(value: number): number {
+    return Math.round(value * 1e6) / 1e6;
+}
+
+export function roundFieldStopCoordinates<T extends { lat: number; lng: number }>(stop: T): T {
+    return {
+        ...stop,
+        lat: roundFieldCoordinate(stop.lat),
+        lng: roundFieldCoordinate(stop.lng),
+    };
+}
+
+export function roundFieldPathCoordinates(
+    path: FieldRoutePath
+): FieldRoutePath {
+    return {
+        ...path,
+        geometry: {
+            type: "LineString",
+            coordinates: path.geometry.coordinates.map(([lng, lat]) => [
+                roundFieldCoordinate(lng),
+                roundFieldCoordinate(lat),
+            ]),
+        },
+    };
+}
+
 export function sortRouteStops(items: FieldRouteStop[]): FieldRouteStop[] {
     return [...items].sort((a, b) => {
         const variant = a.variantPublicId.localeCompare(b.variantPublicId);

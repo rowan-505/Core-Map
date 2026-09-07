@@ -30,10 +30,9 @@ import {
     fieldReportPublicIdParamSchema,
 } from "./field-reports.schema.js";
 import { FieldReportsError, FieldReportsService } from "./field-reports.service.js";
-import { FieldRepository } from "./field.repo.js";
 import { fieldBootstrapQuerySchema } from "./field.schema.js";
-import { sendMaybeGzipJson } from "./field-gzip.js";
-import { FieldService } from "./field.service.js";
+import { serveFieldBootstrap } from "./field-bootstrap-serve.js";
+import { createFieldBootstrapArtifactStore } from "./field-bootstrap-store-factory.js";
 import { SurveySessionsRepository } from "./survey-sessions.repo.js";
 import {
     surveySessionClientIdParamSchema,
@@ -63,7 +62,7 @@ function invalid(reply: FastifyReply, message: string, issues: unknown): Fastify
 }
 
 const fieldRoutes: FastifyPluginAsync = async (app) => {
-    const service = new FieldService(new FieldRepository(app.prisma));
+    const bootstrapStore = createFieldBootstrapArtifactStore();
     const reportsRepo = new ReportsRepository(app.prisma);
     const surveySessions = new SurveySessionsService(new SurveySessionsRepository(app.prisma));
     const fieldReports = new FieldReportsService(
@@ -86,8 +85,12 @@ const fieldRoutes: FastifyPluginAsync = async (app) => {
             return invalid(reply, "Invalid field bootstrap query", parsed.error.flatten());
         }
 
-        const result = await service.bootstrap(parsed.data.revision);
-        return sendMaybeGzipJson(request, reply, 200, result);
+        return serveFieldBootstrap({
+            request,
+            reply,
+            store: bootstrapStore,
+            revision: parsed.data.revision,
+        });
     });
 
     app.post(

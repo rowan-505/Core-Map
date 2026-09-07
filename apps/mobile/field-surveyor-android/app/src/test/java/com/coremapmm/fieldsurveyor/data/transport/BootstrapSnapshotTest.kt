@@ -82,6 +82,23 @@ class BootstrapSnapshotTest {
     }
 
     @Test
+    fun gzipDatasetBodyDecodesAndValidates() {
+        val json = datasetJson()
+        val compressed = java.io.ByteArrayOutputStream().use { output ->
+            java.util.zip.GZIPOutputStream(output).use { gzip ->
+                gzip.write(json.toByteArray(Charsets.UTF_8))
+            }
+            output.toByteArray()
+        }
+        val payload = BootstrapJson.parseResponse(BootstrapJson.decodeBody(compressed)) as BootstrapPayload.Dataset
+        val snapshot = SnapshotValidator.validate(BootstrapJson.parseDataset(payload.raw))
+        assertEquals(2, snapshot.variants.size)
+        assertEquals("D0", snapshot.variants[0].variantCode)
+        assertEquals("D1", snapshot.variants[1].variantCode)
+        assertTrue(RoutePathGeometry.hasLineString(snapshot.paths.first().geometryJson))
+    }
+
+    @Test
     fun gzipBodyDecodesToJson() {
         val json = """{"snapshotRevision":"v1-test","unchanged":true}"""
         val compressed = java.io.ByteArrayOutputStream().use { output ->

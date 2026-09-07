@@ -128,7 +128,7 @@ export const getFieldBootstrapSchema: FastifySchema = {
     tags: [Tags.Field],
     summary: "Field YBS transport snapshot",
     description:
-        "Authenticated surveyor-only compact YBS bus snapshot. Send `revision` to keep a cached copy when it matches `snapshotRevision`. Public UUIDs only. The process gzips JSON when Accept-Encoding includes gzip. D0 and D1 always come from the same snapshotRevision.",
+        "Authenticated surveyor-only compact YBS bus snapshot served from a prebuilt gzip artifact. Send `revision` to keep a cached copy when it matches `snapshotRevision` (`{ unchanged: true }`, HTTP 200). Send If-None-Match for HTTP 304. The request path never rebuilds the snapshot. Public UUIDs only. D0 and D1 always come from the same snapshotRevision.",
     security: [...bearerAuth],
     querystring: {
         type: "object",
@@ -144,9 +144,11 @@ export const getFieldBootstrapSchema: FastifySchema = {
     },
     response: {
         200: fieldBootstrapResponse,
+        304: { type: "null", description: "ETag matches If-None-Match" },
         400: badRequestSchema,
         401: unauthorizedSchema,
         403: fieldForbiddenSchema,
+        503: fieldForbiddenSchema,
     },
 };
 

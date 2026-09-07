@@ -1,3 +1,5 @@
+import type { Readable } from "node:stream";
+
 export type PresignedPutInput = {
     bucket: string;
     objectKey: string;
@@ -28,11 +30,27 @@ export type PutObjectInput = {
     cacheControl: string;
 };
 
+export type PutObjectStreamInput = {
+    bucket: string;
+    objectKey: string;
+    body: Readable;
+    contentType: string;
+    cacheControl: string;
+    contentLength: number;
+};
+
 /** Small object-store port. R2/S3 is the only production adapter. */
 export type ObjectStore = {
     createPresignedPut(input: PresignedPutInput): Promise<{ url: string; expiresAt: Date }>;
     createPresignedGet(input: PresignedGetInput): Promise<{ url: string; expiresAt: Date }>;
     headObject(input: { bucket: string; objectKey: string }): Promise<HeadObjectResult>;
     getObject(input: { bucket: string; objectKey: string }): Promise<Buffer>;
+    getObjectStream(input: { bucket: string; objectKey: string }): Promise<Readable>;
     putObject(input: PutObjectInput): Promise<void>;
+    putObjectStream(input: PutObjectStreamInput): Promise<void>;
+    copyObject(input: {
+        bucket: string;
+        sourceObjectKey: string;
+        destinationObjectKey: string;
+    }): Promise<void>;
 };

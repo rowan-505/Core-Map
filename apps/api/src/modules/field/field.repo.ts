@@ -142,103 +142,125 @@ export class FieldRepository {
         };
     }
 
-    async loadSnapshot(): Promise<FieldSnapshotRows> {
-        const [routes, variants, stops, routeStops, routePaths] = await Promise.all([
-            this.prisma.$queryRaw<FieldRouteRow[]>`
-                SELECT
-                    r.public_id::text AS public_id,
-                    r.route_code,
-                    rn_my.name AS name_my,
-                    rn_en.name AS name_en
-                FROM transport.routes r
-                LEFT JOIN LATERAL (
-                    SELECT n.name
-                    FROM transport.route_names AS n
-                    WHERE n.route_id = r.id
-                      AND lower(btrim(coalesce(n.language_code, ''))) = 'my'
-                    ORDER BY n.is_primary DESC, n.id ASC
-                    LIMIT 1
-                ) AS rn_my ON true
-                LEFT JOIN LATERAL (
-                    SELECT n.name
-                    FROM transport.route_names AS n
-                    WHERE n.route_id = r.id
-                      AND lower(btrim(coalesce(n.language_code, ''))) = 'en'
-                    ORDER BY n.is_primary DESC, n.id ASC
-                    LIMIT 1
-                ) AS rn_en ON true
-                WHERE ${ybsRouteFilter}
-                ORDER BY r.route_code ASC
-            `,
-            this.prisma.$queryRaw<FieldVariantRow[]>`
-                SELECT
-                    v.public_id::text AS public_id,
-                    r.public_id::text AS route_public_id,
-                    r.route_code,
-                    v.direction_id,
-                    NULLIF(btrim(v.origin_name), '') AS origin_name,
-                    NULLIF(btrim(v.destination_name), '') AS destination_name
-                FROM transport.route_variants v
-                JOIN transport.routes r ON r.id = v.route_id
-                WHERE ${ybsRouteFilter}
-                  AND ${ybsVariantFilter}
-                ORDER BY r.route_code ASC, v.direction_id ASC
-            `,
-            this.prisma.$queryRaw<FieldStopRow[]>`
-                SELECT
-                    s.public_id::text AS public_id,
-                    NULLIF(btrim(s.stop_code), '') AS stop_code,
-                    sn_my.name AS name_my,
-                    sn_en.name AS name_en,
-                    ST_Y(s.geom)::float8 AS lat,
-                    ST_X(s.geom)::float8 AS lng
-                FROM transport.stops s
-                LEFT JOIN LATERAL (
-                    SELECT n.name
-                    FROM transport.stop_names AS n
-                    WHERE n.stop_id = s.id
-                      AND lower(btrim(coalesce(n.language_code, ''))) = 'my'
-                    ORDER BY n.is_primary DESC, n.id ASC
-                    LIMIT 1
-                ) AS sn_my ON true
-                LEFT JOIN LATERAL (
-                    SELECT n.name
-                    FROM transport.stop_names AS n
-                    WHERE n.stop_id = s.id
-                      AND lower(btrim(coalesce(n.language_code, ''))) = 'en'
-                    ORDER BY n.is_primary DESC, n.id ASC
-                    LIMIT 1
-                ) AS sn_en ON true
-                WHERE ${ybsStopFilter}
-                  AND EXISTS (
-                      SELECT 1
-                      FROM transport.route_stops rs
-                      JOIN transport.route_variants v ON v.id = rs.route_variant_id
-                      JOIN transport.routes r ON r.id = v.route_id
-                      WHERE rs.stop_id = s.id
-                        AND ${ybsRouteFilter}
-                        AND ${ybsVariantFilter}
-                  )
-                ORDER BY s.public_id ASC
-            `,
-            this.prisma.$queryRaw<FieldRouteStopRow[]>`
-                SELECT
-                    v.public_id::text AS variant_public_id,
-                    s.public_id::text AS stop_public_id,
-                    rs.stop_sequence
-                FROM transport.route_stops rs
-                JOIN transport.route_variants v ON v.id = rs.route_variant_id
-                JOIN transport.routes r ON r.id = v.route_id
-                JOIN transport.stops s ON s.id = rs.stop_id
-                WHERE ${ybsRouteFilter}
-                  AND ${ybsVariantFilter}
-                  AND ${ybsStopFilter}
-                ORDER BY v.public_id ASC, rs.stop_sequence ASC
-            `,
-            this.prisma.$queryRaw<FieldRoutePathRow[]>`
+    async loadRoutes(): Promise<FieldRouteRow[]> {
+        return this.prisma.$queryRaw<FieldRouteRow[]>`
+            SELECT
+                r.public_id::text AS public_id,
+                r.route_code,
+                rn_my.name AS name_my,
+                rn_en.name AS name_en
+            FROM transport.routes r
+            LEFT JOIN LATERAL (
+                SELECT n.name
+                FROM transport.route_names AS n
+                WHERE n.route_id = r.id
+                  AND lower(btrim(coalesce(n.language_code, ''))) = 'my'
+                ORDER BY n.is_primary DESC, n.id ASC
+                LIMIT 1
+            ) AS rn_my ON true
+            LEFT JOIN LATERAL (
+                SELECT n.name
+                FROM transport.route_names AS n
+                WHERE n.route_id = r.id
+                  AND lower(btrim(coalesce(n.language_code, ''))) = 'en'
+                ORDER BY n.is_primary DESC, n.id ASC
+                LIMIT 1
+            ) AS rn_en ON true
+            WHERE ${ybsRouteFilter}
+            ORDER BY r.route_code ASC
+        `;
+    }
+
+    async loadVariants(): Promise<FieldVariantRow[]> {
+        return this.prisma.$queryRaw<FieldVariantRow[]>`
+            SELECT
+                v.public_id::text AS public_id,
+                r.public_id::text AS route_public_id,
+                r.route_code,
+                v.direction_id,
+                NULLIF(btrim(v.origin_name), '') AS origin_name,
+                NULLIF(btrim(v.destination_name), '') AS destination_name
+            FROM transport.route_variants v
+            JOIN transport.routes r ON r.id = v.route_id
+            WHERE ${ybsRouteFilter}
+              AND ${ybsVariantFilter}
+            ORDER BY r.route_code ASC, v.direction_id ASC
+        `;
+    }
+
+    async loadStops(): Promise<FieldStopRow[]> {
+        return this.prisma.$queryRaw<FieldStopRow[]>`
+            SELECT
+                s.public_id::text AS public_id,
+                NULLIF(btrim(s.stop_code), '') AS stop_code,
+                sn_my.name AS name_my,
+                sn_en.name AS name_en,
+                ST_Y(s.geom)::float8 AS lat,
+                ST_X(s.geom)::float8 AS lng
+            FROM transport.stops s
+            LEFT JOIN LATERAL (
+                SELECT n.name
+                FROM transport.stop_names AS n
+                WHERE n.stop_id = s.id
+                  AND lower(btrim(coalesce(n.language_code, ''))) = 'my'
+                ORDER BY n.is_primary DESC, n.id ASC
+                LIMIT 1
+            ) AS sn_my ON true
+            LEFT JOIN LATERAL (
+                SELECT n.name
+                FROM transport.stop_names AS n
+                WHERE n.stop_id = s.id
+                  AND lower(btrim(coalesce(n.language_code, ''))) = 'en'
+                ORDER BY n.is_primary DESC, n.id ASC
+                LIMIT 1
+            ) AS sn_en ON true
+            WHERE ${ybsStopFilter}
+              AND EXISTS (
+                  SELECT 1
+                  FROM transport.route_stops rs
+                  JOIN transport.route_variants v ON v.id = rs.route_variant_id
+                  JOIN transport.routes r ON r.id = v.route_id
+                  WHERE rs.stop_id = s.id
+                    AND ${ybsRouteFilter}
+                    AND ${ybsVariantFilter}
+              )
+            ORDER BY s.public_id ASC
+        `;
+    }
+
+    async loadRouteStops(): Promise<FieldRouteStopRow[]> {
+        return this.prisma.$queryRaw<FieldRouteStopRow[]>`
+            SELECT
+                v.public_id::text AS variant_public_id,
+                s.public_id::text AS stop_public_id,
+                rs.stop_sequence
+            FROM transport.route_stops rs
+            JOIN transport.route_variants v ON v.id = rs.route_variant_id
+            JOIN transport.routes r ON r.id = v.route_id
+            JOIN transport.stops s ON s.id = rs.stop_id
+            WHERE ${ybsRouteFilter}
+              AND ${ybsVariantFilter}
+              AND ${ybsStopFilter}
+            ORDER BY v.public_id ASC, rs.stop_sequence ASC
+        `;
+    }
+
+    /**
+     * One stored path per variant. Does not reverse D0 to invent D1.
+     * `simplify` only changes serialization precision for field survey, not canonical rows.
+     */
+    async loadRoutePaths(options: { simplify: boolean }): Promise<FieldRoutePathRow[]> {
+        if (options.simplify) {
+            return this.prisma.$queryRaw<FieldRoutePathRow[]>`
                 SELECT DISTINCT ON (p.route_variant_id)
                     v.public_id::text AS variant_public_id,
-                    ST_AsGeoJSON(p.geom)::jsonb AS geometry
+                    CASE
+                        WHEN ST_NPoints(ST_SimplifyPreserveTopology(p.geom, 0.00008)) >= 2
+                        THEN ST_AsGeoJSON(
+                            ST_SnapToGrid(ST_SimplifyPreserveTopology(p.geom, 0.00008), 0.00005)
+                        )::jsonb
+                        ELSE ST_AsGeoJSON(ST_SnapToGrid(p.geom, 0.00005))::jsonb
+                    END AS geometry
                 FROM transport.route_paths p
                 JOIN transport.route_variants v ON v.id = p.route_variant_id
                 JOIN transport.routes r ON r.id = v.route_id
@@ -249,9 +271,31 @@ export class FieldRepository {
                     p.route_variant_id,
                     CASE WHEN p.path_kind = 'primary' THEN 0 ELSE 1 END,
                     p.id ASC
-            `,
-        ]);
+            `;
+        }
+        return this.prisma.$queryRaw<FieldRoutePathRow[]>`
+            SELECT DISTINCT ON (p.route_variant_id)
+                v.public_id::text AS variant_public_id,
+                ST_AsGeoJSON(p.geom)::jsonb AS geometry
+            FROM transport.route_paths p
+            JOIN transport.route_variants v ON v.id = p.route_variant_id
+            JOIN transport.routes r ON r.id = v.route_id
+            WHERE ${ybsRouteFilter}
+              AND ${ybsVariantFilter}
+              AND ${ybsPathFilter}
+            ORDER BY
+                p.route_variant_id,
+                CASE WHEN p.path_kind = 'primary' THEN 0 ELSE 1 END,
+                p.id ASC
+        `;
+    }
 
+    async loadSnapshot(): Promise<FieldSnapshotRows> {
+        const routes = await this.loadRoutes();
+        const variants = await this.loadVariants();
+        const stops = await this.loadStops();
+        const routeStops = await this.loadRouteStops();
+        const routePaths = await this.loadRoutePaths({ simplify: false });
         return { routes, variants, stops, routeStops, routePaths };
     }
 }

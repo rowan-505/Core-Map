@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
     asLineString,
+    roundFieldCoordinate,
     sortRouteStops,
     toFieldRoutePath,
     toFieldRouteStop,
@@ -10,6 +11,10 @@ import {
     toFieldVariant,
     withOppositeVariantPublicIds,
 } from "./field-dto.js";
+
+test("roundFieldCoordinate keeps survey-scale precision", () => {
+    assert.equal(roundFieldCoordinate(96.123456789), 96.123457);
+});
 
 test("field variants use D0/D1 labels from canonical YBS identity", () => {
     const d0 = toFieldVariant({

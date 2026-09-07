@@ -165,11 +165,20 @@ function serviceWith(overrides: {
             (async () => {
                 throw new Error("getObject not stubbed");
             }),
+        getObjectStream: async () => {
+            throw new Error("getObjectStream not stubbed");
+        },
         putObject:
             overrides.putObject ??
             (async () => {
                 throw new Error("putObject not stubbed");
             }),
+        putObjectStream: async () => {
+            throw new Error("putObjectStream not stubbed");
+        },
+        copyObject: async () => {
+            throw new Error("copyObject not stubbed");
+        },
     };
     return new MediaService(
         mediaRepo,

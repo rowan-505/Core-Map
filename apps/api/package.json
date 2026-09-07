@@ -37,6 +37,7 @@
     "test:minimal-address-composer": "node --import tsx --test src/modules/addresses/minimal-address-composer.test.ts",
     "test:share": "node --import tsx --test src/modules/share/share.schema.test.ts src/modules/share/share.service.test.ts",
     "test:field": "node --import tsx --test src/modules/field/*.test.ts src/lib/public-error-code.test.ts",
+    "field:build-bootstrap-snapshot": "tsx src/scripts/build-field-bootstrap-snapshot.ts",
     "test:media": "node --import tsx --test src/modules/media/*.test.ts src/config/env.test.ts",
     "smoke:media-private-upload": "tsx src/scripts/smoke-media-private-upload.ts",
     "test:reports": "node --import tsx --test src/modules/reports/*.test.ts",

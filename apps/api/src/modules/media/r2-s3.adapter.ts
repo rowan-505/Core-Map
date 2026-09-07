@@ -1,4 +1,5 @@
 import {
+    CopyObjectCommand,
     GetObjectCommand,
     HeadObjectCommand,
     PutObjectCommand,
@@ -6,6 +7,7 @@ import {
     type S3ServiceException,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Readable } from "node:stream";
 
 import type { R2MediaEnvConfig } from "../../config/env.js";
 import type {
@@ -14,6 +16,7 @@ import type {
     PresignedGetInput,
     PresignedPutInput,
     PutObjectInput,
+    PutObjectStreamInput,
 } from "./object-store.js";
 
 function isNotFound(error: unknown): boolean {
@@ -124,6 +127,23 @@ export class R2ObjectStore implements ObjectStore {
         return Buffer.from(bytes);
     }
 
+    async getObjectStream(input: { bucket: string; objectKey: string }): Promise<Readable> {
+        const result = await this.client.send(
+            new GetObjectCommand({
+                Bucket: input.bucket,
+                Key: input.objectKey,
+            })
+        );
+        const body = result.Body;
+        if (!body) {
+            throw new Error("Empty object body");
+        }
+        if (body instanceof Readable) {
+            return body;
+        }
+        return Readable.from(body as AsyncIterable<Uint8Array>);
+    }
+
     async putObject(input: PutObjectInput): Promise<void> {
         await this.client.send(
             new PutObjectCommand({
@@ -133,6 +153,33 @@ export class R2ObjectStore implements ObjectStore {
                 ContentType: input.contentType,
                 CacheControl: input.cacheControl,
                 ContentLength: input.body.length,
+            })
+        );
+    }
+
+    async putObjectStream(input: PutObjectStreamInput): Promise<void> {
+        await this.client.send(
+            new PutObjectCommand({
+                Bucket: input.bucket,
+                Key: input.objectKey,
+                Body: input.body,
+                ContentType: input.contentType,
+                CacheControl: input.cacheControl,
+                ContentLength: input.contentLength,
+            })
+        );
+    }
+
+    async copyObject(input: {
+        bucket: string;
+        sourceObjectKey: string;
+        destinationObjectKey: string;
+    }): Promise<void> {
+        await this.client.send(
+            new CopyObjectCommand({
+                Bucket: input.bucket,
+                Key: input.destinationObjectKey,
+                CopySource: `${input.bucket}/${input.sourceObjectKey}`,
             })
         );
     }
