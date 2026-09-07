@@ -8,16 +8,28 @@ import { MAP_PREVIEW_VIEWPORT_FORM } from "@/src/components/map/mapPreviewUi";
 import { PLACE_MAP_DEFAULT_CENTER } from "@/src/components/map/placeMapConfig";
 import { useClientMounted } from "@/src/hooks/useClientMounted";
 
-type Point = { latitude: number; longitude: number };
+import { accuracyCircleCoordinates, type EvidenceMapPoint } from "./fieldEvidenceView";
 
 type ReportLocationCompareMapProps = {
-    observed: Point | null;
-    canonical: Point | null;
+    points: EvidenceMapPoint[];
     distanceM: number | null;
 };
 
-const OBSERVED_COLOR = "#ea580c";
-const CANONICAL_COLOR = "#2563eb";
+const COLORS: Record<EvidenceMapPoint["role"], string> = {
+    canonical: "#2563eb",
+    observed: "#ea580c",
+    proposed: "#16a34a",
+};
+
+const LABELS: Record<EvidenceMapPoint["role"], string> = {
+    canonical: "Current canonical stop",
+    observed: "Observed surveyor location",
+    proposed: "Proposed corrected location",
+};
+
+const ACCURACY_SOURCE = "report-evidence-accuracy";
+const ACCURACY_FILL = "report-evidence-accuracy-fill";
+const ACCURACY_LINE = "report-evidence-accuracy-line";
 
 function formatDistance(distanceM: number | null): string {
     if (distanceM === null || !Number.isFinite(distanceM)) {
@@ -29,19 +41,24 @@ function formatDistance(distanceM: number | null): string {
     return `${Math.round(distanceM)} m apart`;
 }
 
-export default function ReportLocationCompareMap({
-    observed,
-    canonical,
-    distanceM,
-}: ReportLocationCompareMapProps) {
+function makeMarker(color: string, label: string) {
+    const el = document.createElement("div");
+    el.title = label;
+    el.style.width = "16px";
+    el.style.height = "16px";
+    el.style.borderRadius = "9999px";
+    el.style.background = color;
+    el.style.border = "2px solid #fff";
+    el.style.boxShadow = "0 0 0 1px rgb(0 0 0 / 0.25)";
+    return new maplibregl.Marker({ element: el, anchor: "center" });
+}
+
+export default function ReportLocationCompareMap({ points, distanceM }: ReportLocationCompareMapProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const markersRef = useRef<maplibregl.Marker[]>([]);
     const [mapReady, setMapReady] = useState(false);
     const clientMounted = useClientMounted();
-
-    const hasObserved = observed !== null;
-    const hasCanonical = canonical !== null;
 
     useEffect(() => {
         if (!clientMounted || !containerRef.current || mapRef.current) {
@@ -93,19 +110,42 @@ export default function ReportLocationCompareMap({
         }
         markersRef.current = [];
 
-        const points: { lng: number; lat: number; color: string }[] = [];
-        if (canonical) {
-            points.push({ lng: canonical.longitude, lat: canonical.latitude, color: CANONICAL_COLOR });
-        }
-        if (observed) {
-            points.push({ lng: observed.longitude, lat: observed.latitude, color: OBSERVED_COLOR });
-        }
-
         for (const point of points) {
-            const marker = new maplibregl.Marker({ color: point.color, scale: 0.9 })
-                .setLngLat([point.lng, point.lat])
+            const marker = makeMarker(COLORS[point.role], LABELS[point.role])
+                .setLngLat([point.longitude, point.latitude])
                 .addTo(map);
             markersRef.current.push(marker);
+        }
+
+        const observed = points.find((point) => point.role === "observed" && (point.accuracyM ?? 0) > 0);
+        const circle =
+            observed && observed.accuracyM
+                ? accuracyCircleCoordinates(observed.longitude, observed.latitude, observed.accuracyM)
+                : null;
+        const geojson: GeoJSON.Feature<GeoJSON.Polygon> | GeoJSON.FeatureCollection = circle
+            ? {
+                  type: "Feature",
+                  properties: {},
+                  geometry: { type: "Polygon", coordinates: [circle] },
+              }
+            : { type: "FeatureCollection", features: [] };
+
+        if (map.getSource(ACCURACY_SOURCE)) {
+            (map.getSource(ACCURACY_SOURCE) as maplibregl.GeoJSONSource).setData(geojson);
+        } else {
+            map.addSource(ACCURACY_SOURCE, { type: "geojson", data: geojson });
+            map.addLayer({
+                id: ACCURACY_FILL,
+                type: "fill",
+                source: ACCURACY_SOURCE,
+                paint: { "fill-color": COLORS.observed, "fill-opacity": 0.18 },
+            });
+            map.addLayer({
+                id: ACCURACY_LINE,
+                type: "line",
+                source: ACCURACY_SOURCE,
+                paint: { "line-color": COLORS.observed, "line-width": 1.5, "line-opacity": 0.7 },
+            });
         }
 
         if (points.length === 0) {
@@ -114,45 +154,40 @@ export default function ReportLocationCompareMap({
         }
         if (points.length === 1) {
             const only = points[0]!;
-            map.easeTo({ center: [only.lng, only.lat], zoom: 17, duration: 400 });
+            map.easeTo({ center: [only.longitude, only.latitude], zoom: 17, duration: 400 });
             return;
         }
 
         const bounds = new maplibregl.LngLatBounds();
         for (const point of points) {
-            bounds.extend([point.lng, point.lat]);
+            bounds.extend([point.longitude, point.latitude]);
         }
         map.fitBounds(bounds, { padding: 56, maxZoom: 18, duration: 400 });
-    }, [mapReady, observed, canonical]);
+    }, [mapReady, points]);
 
-    if (!hasObserved && !hasCanonical) {
+    if (points.length === 0) {
         return <p className="text-sm text-gray-500">No coordinates to compare.</p>;
     }
+
+    const roles = new Set(points.map((point) => point.role));
 
     return (
         <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
                 <div className="flex flex-wrap gap-3">
-                    {hasCanonical ? (
-                        <span className="inline-flex items-center gap-1.5">
-                            <span
-                                className="inline-block h-2.5 w-2.5 rounded-full"
-                                style={{ backgroundColor: CANONICAL_COLOR }}
-                            />
-                            Current canonical
-                        </span>
-                    ) : null}
-                    {hasObserved ? (
-                        <span className="inline-flex items-center gap-1.5">
-                            <span
-                                className="inline-block h-2.5 w-2.5 rounded-full"
-                                style={{ backgroundColor: OBSERVED_COLOR }}
-                            />
-                            Observed report
-                        </span>
-                    ) : null}
+                    {(["canonical", "observed", "proposed"] as const).map((role) =>
+                        roles.has(role) ? (
+                            <span key={role} className="inline-flex items-center gap-1.5">
+                                <span
+                                    className="inline-block h-2.5 w-2.5 rounded-full"
+                                    style={{ backgroundColor: COLORS[role] }}
+                                />
+                                {LABELS[role]}
+                            </span>
+                        ) : null
+                    )}
                 </div>
-                {hasCanonical && hasObserved ? (
+                {roles.has("canonical") && (roles.has("observed") || roles.has("proposed")) ? (
                     <span className="font-medium text-gray-800">{formatDistance(distanceM)}</span>
                 ) : null}
             </div>

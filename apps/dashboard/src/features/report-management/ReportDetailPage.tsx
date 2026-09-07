@@ -23,6 +23,11 @@ import {
     targetTypeLabel,
 } from "./constants";
 import { fieldRouteEditorHref, fieldStopEditorHref } from "./fieldReportLinks";
+import {
+    evidenceMapPoints,
+    fieldTransportEditorHref,
+    sessionFinalizationLabel,
+} from "./fieldEvidenceView";
 import ReportEvidence from "./ReportEvidence";
 import type { AdminReportDetail, ReportStatusCode, RewardReasonCode } from "./types";
 
@@ -159,14 +164,19 @@ export default function ReportDetailPage({ id }: { id: string }) {
         ? `https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=17/${report.latitude}/${report.longitude}`
         : null;
     const field = report.field;
-    const observedPoint =
-        report.latitude !== null && report.longitude !== null
-            ? { latitude: report.latitude, longitude: report.longitude }
-            : null;
+    const mapPoints = evidenceMapPoints(report);
+    const editorHref = fieldTransportEditorHref(field);
     const snapshotJson =
         field?.canonical_snapshot != null
             ? JSON.stringify(field.canonical_snapshot, null, 2)
             : null;
+
+    function formatPoint(point: { latitude: number; longitude: number } | null | undefined): string {
+        if (!point) {
+            return "—";
+        }
+        return `${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}`;
+    }
 
     return (
         <main className="p-6">
@@ -238,8 +248,18 @@ export default function ReportDetailPage({ id }: { id: string }) {
                         {isField && field ? (
                             <Card title="Field survey">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Field label="Route code" value={field.route_code ?? "—"} />
+                                    <Field
+                                        label="Survey session"
+                                        value={field.survey_session_public_id ?? "—"}
+                                    />
+                                    <Field
+                                        label="Sync / finalization"
+                                        value={sessionFinalizationLabel(field.survey_session_status)}
+                                    />
+                                    <Field label="YBS route" value={field.route_code ?? "—"} />
                                     <Field label="D0 / D1" value={field.variant_code ?? "—"} />
+                                    <Field label="Origin" value={field.origin_name ?? "—"} />
+                                    <Field label="Destination" value={field.destination_name ?? "—"} />
                                     <Field
                                         label="Stop / target"
                                         value={field.stop_name ?? field.stop_public_id ?? "—"}
@@ -253,30 +273,67 @@ export default function ReportDetailPage({ id }: { id: string }) {
                                         value={field.snapshot_revision ?? "—"}
                                     />
                                     <Field
+                                        label="Live snapshot"
+                                        value={
+                                            field.snapshot_stale
+                                                ? `Stale vs ${field.current_snapshot_revision ?? "current"}`
+                                                : field.current_snapshot_revision ?? "Current"
+                                        }
+                                    />
+                                    <Field
                                         label="Observed time"
                                         value={formatDateTime(report.observed_at)}
                                     />
                                     <Field
                                         label="GPS accuracy"
                                         value={
-                                            report.location_accuracy_m != null
-                                                ? `${Math.round(report.location_accuracy_m)} m`
-                                                : "—"
+                                            field.observed_location?.accuracy_m != null
+                                                ? `${Math.round(field.observed_location.accuracy_m)} m`
+                                                : report.location_accuracy_m != null
+                                                  ? `${Math.round(report.location_accuracy_m)} m`
+                                                  : "—"
                                         }
+                                    />
+                                    <Field
+                                        label="Report type"
+                                        value={reportTypeLabel(report.report_type.code)}
                                     />
                                     <Field
                                         label="Target type"
                                         value={targetTypeLabel(report.target_entity_type)}
                                     />
                                 </div>
+                                <div className="mt-4">
+                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                                        Description
+                                    </span>
+                                    <p className="mt-1 whitespace-pre-wrap text-sm text-gray-900">
+                                        {report.description || "—"}
+                                    </p>
+                                </div>
+                                {field.snapshot_stale ? (
+                                    <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+                                        This report used an older field snapshot. Compare the evidence
+                                        before editing canonical data.
+                                    </p>
+                                ) : null}
                                 <div className="mt-4 flex flex-wrap gap-2">
+                                    {editorHref ? (
+                                        <Link
+                                            prefetch={false}
+                                            href={editorHref}
+                                            className={`${PRIMARY_BTN} inline-flex items-center`}
+                                        >
+                                            Open transport editor
+                                        </Link>
+                                    ) : null}
                                     {field.stop_public_id ? (
                                         <Link
                                             prefetch={false}
                                             href={fieldStopEditorHref(field.stop_public_id)}
-                                            className={`${PRIMARY_BTN} inline-flex items-center`}
+                                            className={`${SECONDARY_BTN} inline-flex items-center`}
                                         >
-                                            Open Stop Editor
+                                            Open stop editor
                                         </Link>
                                     ) : null}
                                     {field.route_public_id ? (
@@ -285,14 +342,13 @@ export default function ReportDetailPage({ id }: { id: string }) {
                                             href={fieldRouteEditorHref(field.route_public_id)}
                                             className={`${SECONDARY_BTN} inline-flex items-center`}
                                         >
-                                            Open route
+                                            Open route editor
                                         </Link>
                                     ) : null}
                                 </div>
                                 <p className="mt-3 text-xs text-gray-500">
-                                    Canonical stop edits happen in the existing transport editor, not
-                                    on this page. After Start Review, open the editor, then return
-                                    here to Resolve or Reject.
+                                    Canonical edits happen in the existing transport editor. This page
+                                    does not apply the report to map data.
                                 </p>
                             </Card>
                         ) : null}
@@ -308,30 +364,35 @@ export default function ReportDetailPage({ id }: { id: string }) {
                         ) : null}
 
                         {isField ? (
-                            <Card title="Location comparison">
-                                <div className="mb-3 grid grid-cols-2 gap-4">
-                                    <Field
-                                        label="Observed report point"
-                                        value={
-                                            observedPoint
-                                                ? `${observedPoint.latitude}, ${observedPoint.longitude}`
-                                                : "—"
-                                        }
-                                    />
-                                    <Field
-                                        label="Current canonical geometry"
-                                        value={
-                                            report.canonical_target
-                                                ? `${report.canonical_target.latitude}, ${report.canonical_target.longitude}`
-                                                : "—"
-                                        }
-                                    />
-                                </div>
-                                <ReportLocationCompareMap
-                                    observed={observedPoint}
-                                    canonical={report.canonical_target}
-                                    distanceM={report.distance_m}
-                                />
+                            <Card title="Evidence map">
+                                {report.report_type.code === "wrong_location" ? (
+                                    <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                        <Field
+                                            label="1. Current canonical stop"
+                                            value={formatPoint(report.canonical_target)}
+                                        />
+                                        <Field
+                                            label="2. Observed surveyor location"
+                                            value={formatPoint(field?.observed_location)}
+                                        />
+                                        <Field
+                                            label="3. Proposed corrected location"
+                                            value={formatPoint(field?.proposed_location)}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="mb-3 grid grid-cols-2 gap-4">
+                                        <Field
+                                            label="Observed surveyor location"
+                                            value={formatPoint(field?.observed_location)}
+                                        />
+                                        <Field
+                                            label="Current canonical geometry"
+                                            value={formatPoint(report.canonical_target)}
+                                        />
+                                    </div>
+                                )}
+                                <ReportLocationCompareMap points={mapPoints} distanceM={report.distance_m} />
                             </Card>
                         ) : null}
 

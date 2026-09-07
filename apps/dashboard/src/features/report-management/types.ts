@@ -100,11 +100,19 @@ export type FieldReportContext = {
     route_public_id: string | null;
     variant_code: string | null;
     variant_public_id: string | null;
+    origin_name: string | null;
+    destination_name: string | null;
     stop_public_id: string | null;
     stop_name: string | null;
     stop_sequence: number | null;
     snapshot_revision: string | null;
+    snapshot_stale: boolean;
+    current_snapshot_revision: string | null;
+    survey_session_public_id: string | null;
+    survey_session_status: string | null;
     canonical_snapshot: unknown | null;
+    observed_location: { latitude: number; longitude: number; accuracy_m: number | null } | null;
+    proposed_location: { latitude: number; longitude: number } | null;
 };
 
 export type ReportStatusEvent = {

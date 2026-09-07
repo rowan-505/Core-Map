@@ -1,4 +1,5 @@
 import { apiFetch } from "@/src/lib/api";
+import { privateMediaAccessPath } from "./fieldEvidenceView";
 import type {
     AdminReport,
     AdminReportDetail,
@@ -46,7 +47,7 @@ export function getReport(id: string, init?: Signal) {
 }
 
 export function getPrivateMediaAccess(assetPublicId: string, init?: Signal) {
-    return apiFetch<MediaAccess>(`/admin/media/${encodeURIComponent(assetPublicId)}/access`, {
+    return apiFetch<MediaAccess>(privateMediaAccessPath(assetPublicId), {
         method: "GET",
         ...init,
     });
