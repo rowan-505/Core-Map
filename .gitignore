@@ -232,6 +232,11 @@ infrastructure/database/introspection/**/snapshots/
 # Local field-test captures (screenshots, dumpsys, logs). Do not commit.
 docs/evidence/
 
+# Android signing material (never commit)
+*.jks
+*.keystore
+apps/mobile/field-surveyor-android/keystore.properties
+
 /todo.txt
 /learning.md
 /rclone-test.txt

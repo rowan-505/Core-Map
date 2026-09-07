@@ -54,15 +54,22 @@ Debug allows HTTP cleartext. Release forbids cleartext.
 
 Release minification and resource shrinking are on. Release signing is mandatory: `assembleRelease` and `bundleRelease` fail closed if a complete release keystore configuration is missing. A release build never falls back to the debug key.
 
-Gitignored: `local.properties`, `*.jks`, `*.keystore`.
+Gitignored: `local.properties`, `keystore.properties`, `*.jks`, `*.keystore`.
 
-Example `local.properties` (never commit):
+Copy `keystore.properties.example` to gitignored `keystore.properties` and fill all four keys. Complete `FIELD_RELEASE_STORE_*` environment variables take precedence when all four are set. Incomplete environment variables do not mix with the file. Release never uses the debug key.
+
+Tracked template (`keystore.properties.example`):
 
 ```text
-fieldReleaseStoreFile=/absolute/path/to/field-release.jks
-fieldReleaseStorePassword=…
-fieldReleaseKeyAlias=…
-fieldReleaseKeyPassword=…
+storeFile=/absolute/path/to/coremap-internal-release.jks
+storePassword=REPLACE_LOCALLY
+keyAlias=coremap-release
+keyPassword=REPLACE_LOCALLY
+```
+
+Optional Sentry DSN in gitignored `local.properties`:
+
+```text
 fieldSentryDsn=https://…@….ingest.sentry.io/…
 ```
 

@@ -1,3 +1,4 @@
+import java.io.File
 import java.util.Properties
 
 plugins {
@@ -63,6 +64,78 @@ fun escapeBuildConfig(value: String): String {
     return value.replace("\\", "\\\\").replace("\"", "\\\"")
 }
 
+val releaseSigningRequiredKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+
+fun isUsableReleaseSigningValue(value: String?): Boolean {
+    val trimmed = value?.trim().orEmpty()
+    if (trimmed.isEmpty()) {
+        return false
+    }
+    if (trimmed.equals("REPLACE_LOCALLY", ignoreCase = true)) {
+        return false
+    }
+    if (trimmed.contains("/absolute/path/to/")) {
+        return false
+    }
+    return true
+}
+
+fun envReleaseSigningValues(): Map<String, String> = mapOf(
+    "storeFile" to System.getenv("FIELD_RELEASE_STORE_FILE")?.trim().orEmpty(),
+    "storePassword" to System.getenv("FIELD_RELEASE_STORE_PASSWORD")?.trim().orEmpty(),
+    "keyAlias" to System.getenv("FIELD_RELEASE_KEY_ALIAS")?.trim().orEmpty(),
+    "keyPassword" to System.getenv("FIELD_RELEASE_KEY_PASSWORD")?.trim().orEmpty(),
+)
+
+fun keystorePropertiesValues(): Map<String, String> {
+    val file = rootProject.file("keystore.properties")
+    if (!file.isFile) {
+        return emptyMap()
+    }
+    val props = Properties()
+    file.inputStream().use { props.load(it) }
+    return releaseSigningRequiredKeys.associateWith { key ->
+        props.getProperty(key)?.trim().orEmpty()
+    }
+}
+
+fun selectedReleaseSigningValues(): Pair<Map<String, String>, String> {
+    val fromEnv = envReleaseSigningValues()
+    if (releaseSigningRequiredKeys.all { isUsableReleaseSigningValue(fromEnv[it]) }) {
+        return fromEnv to "environment"
+    }
+    return keystorePropertiesValues() to "keystore.properties"
+}
+
+fun missingReleaseSigningKeys(values: Map<String, String>): List<String> =
+    releaseSigningRequiredKeys.filter { !isUsableReleaseSigningValue(values[it]) }
+
+fun resolveReleaseStoreFile(path: String): File {
+    val asFile = File(path)
+    if (asFile.isAbsolute) {
+        return asFile
+    }
+    return rootProject.file(path)
+}
+
+fun releaseSigningUnavailableMessage(
+    values: Map<String, String>,
+    source: String,
+): String {
+    val missing = missingReleaseSigningKeys(values)
+    if (missing.isNotEmpty()) {
+        return "Release signing credentials are required; debug signing is forbidden for release builds. " +
+            "Missing or unusable: ${missing.joinToString(", ")}. " +
+            "Set complete FIELD_RELEASE_STORE_FILE, FIELD_RELEASE_STORE_PASSWORD, " +
+            "FIELD_RELEASE_KEY_ALIAS, and FIELD_RELEASE_KEY_PASSWORD, " +
+            "or fill keystore.properties."
+    }
+    return "Release signing credentials are required; debug signing is forbidden for release builds. " +
+        "storeFile is not an existing file ($source)."
+}
+
+var releaseSigningFailure: String? = null
+
 fun yangonPmtilesUrl(): String {
     val fromProperty = (project.findProperty("fieldYangonPmtilesUrl") as String?)?.trim().orEmpty()
     if (fromProperty.isNotEmpty()) {
@@ -88,21 +161,20 @@ android {
     }
 
     signingConfigs {
-        val storePath = System.getenv("FIELD_RELEASE_STORE_FILE")?.trim().orEmpty()
-            .ifEmpty { localProperty("fieldReleaseStoreFile").orEmpty() }
-        val storePassword = System.getenv("FIELD_RELEASE_STORE_PASSWORD")
-            ?: localProperty("fieldReleaseStorePassword")
-        val keyAlias = System.getenv("FIELD_RELEASE_KEY_ALIAS")
-            ?: localProperty("fieldReleaseKeyAlias")
-        val keyPassword = System.getenv("FIELD_RELEASE_KEY_PASSWORD")
-            ?: localProperty("fieldReleaseKeyPassword")
-        if (storePath.isNotEmpty() && !storePassword.isNullOrBlank() && !keyAlias.isNullOrBlank() && !keyPassword.isNullOrBlank()) {
+        val (values, source) = selectedReleaseSigningValues()
+        val missing = missingReleaseSigningKeys(values)
+        val store = values["storeFile"]?.trim().orEmpty()
+        val resolvedStore = if (store.isNotEmpty()) resolveReleaseStoreFile(store) else null
+        if (missing.isEmpty() && resolvedStore != null && resolvedStore.isFile) {
             create("release") {
-                storeFile = file(storePath)
-                this.storePassword = storePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
+                storeFile = resolvedStore
+                storePassword = values.getValue("storePassword")
+                keyAlias = values.getValue("keyAlias")
+                keyPassword = values.getValue("keyPassword")
             }
+            releaseSigningFailure = null
+        } else {
+            releaseSigningFailure = releaseSigningUnavailableMessage(values, source)
         }
     }
 
@@ -161,7 +233,8 @@ tasks.register("releaseConfigSmoke") {
         check(!url.contains("invalid.coremap")) { "Release API URL is still a placeholder: $url" }
         check(url.startsWith("https://")) { "Release API URL must be HTTPS: $url" }
         check(android.signingConfigs.findByName("release") != null) {
-            "Release signing credentials are required; debug signing is forbidden for release builds"
+            releaseSigningFailure
+                ?: "Release signing credentials are required; debug signing is forbidden for release builds"
         }
         val override = System.getenv("FIELD_API_BASE_URL")?.trim().orEmpty()
             .ifEmpty { gradle.startParameter.projectProperties["fieldApiBaseUrl"]?.trim().orEmpty() }
