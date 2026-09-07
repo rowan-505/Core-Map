@@ -33,12 +33,18 @@ class FieldMediaApi(
         .callTimeout(180, TimeUnit.SECONDS)
         .build()
 
-    fun createUpload(accessToken: String, mimeType: String, byteSize: Long): MediaApiResult<MediaUploadIntent> {
+    fun createUpload(
+        accessToken: String,
+        mimeType: String,
+        byteSize: Long,
+        checksumSha256: String,
+    ): MediaApiResult<MediaUploadIntent> {
         val mediaType = if (mimeType.startsWith("audio/")) "audio" else "image"
         val body = JSONObject()
             .put("mediaType", mediaType)
             .put("mimeType", mimeType)
             .put("byteSize", byteSize)
+            .put("checksumSha256", checksumSha256)
             .toString()
         val request = jsonPost("/media/uploads", accessToken, body)
         return executeJson(request) { json ->
@@ -109,7 +115,7 @@ class FieldMediaApi(
             }
             if (httpResponse.code == 409 && request.url.encodedPath.contains("/media/")) {
                 val code = runCatching { JSONObject(body).optString("code") }.getOrDefault("")
-                if (code == "OBJECT_SIZE_MISMATCH" || code == "OBJECT_TYPE_MISMATCH") {
+                if (code == "OBJECT_SIZE_MISMATCH" || code == "OBJECT_TYPE_MISMATCH" || code == "OBJECT_CHECKSUM_MISMATCH") {
                     return MediaApiResult.NeedNewUpload(AuthJson.errorMessage(body, code))
                 }
             }

@@ -9,6 +9,7 @@ import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.FillLayer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
@@ -16,6 +17,11 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
+import org.maplibre.geojson.Polygon
+import kotlin.math.asin
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 object SurveyMapOverlays {
     const val MIN_ZOOM = 3.0
@@ -26,6 +32,7 @@ object SurveyMapOverlays {
     const val SRC_SELECTED = "survey-selected-stop-src"
     const val SRC_NEARBY = "survey-nearby-stops-src"
     const val SRC_GPS = "survey-gps-src"
+    const val SRC_GPS_ACCURACY = "survey-gps-accuracy-src"
     const val SRC_PICK = "survey-pick-src"
     const val LAYER_PICK = "survey-pick"
     const val SRC_ANOMALIES = "survey-anomalies-src"
@@ -34,11 +41,18 @@ object SurveyMapOverlays {
     const val LAYER_SELECTED = "survey-selected-stop"
     const val LAYER_NEARBY = "survey-nearby-stops"
     const val LAYER_GPS = "survey-gps"
+    const val LAYER_GPS_ACCURACY = "survey-gps-accuracy"
     const val LAYER_ANOMALIES = "survey-anomalies"
     const val PROP_STOP_ID = "stopPublicId"
 
     fun install(style: Style) {
-        if (style.getSource(SRC_PATH) != null) {
+        if (!styleFullyLoaded(style)) return
+        val existing = try {
+            style.getSource(SRC_PATH)
+        } catch (_: IllegalStateException) {
+            return
+        }
+        if (existing != null) {
             return
         }
         style.addSource(GeoJsonSource(SRC_PATH, emptyCollection()))
@@ -46,6 +60,7 @@ object SurveyMapOverlays {
         style.addSource(GeoJsonSource(SRC_SELECTED, emptyCollection()))
         style.addSource(GeoJsonSource(SRC_NEARBY, emptyCollection()))
         style.addSource(GeoJsonSource(SRC_GPS, emptyCollection()))
+        style.addSource(GeoJsonSource(SRC_GPS_ACCURACY, emptyCollection()))
         style.addSource(GeoJsonSource(SRC_PICK, emptyCollection()))
         style.addSource(GeoJsonSource(SRC_ANOMALIES, emptyCollection()))
         style.addLayer(
@@ -80,11 +95,18 @@ object SurveyMapOverlays {
             ),
         )
         style.addLayer(
-            CircleLayer(LAYER_ANOMALIES, SRC_ANOMALIES).withProperties(
+            CircleLayer(LAYER_ANOMALIES, SRC_ANOMALIES).withProperties( // markers only; no photo thumbnails
                 PropertyFactory.circleColor(Color.parseColor("#FF6D00")),
                 PropertyFactory.circleRadius(4.5f),
                 PropertyFactory.circleStrokeColor(Color.WHITE),
                 PropertyFactory.circleStrokeWidth(1f),
+            ),
+        )
+        style.addLayer(
+            FillLayer(LAYER_GPS_ACCURACY, SRC_GPS_ACCURACY).withProperties(
+                PropertyFactory.fillColor(Color.parseColor("#00B8D4")),
+                PropertyFactory.fillOpacity(0.16f),
+                PropertyFactory.fillOutlineColor(Color.parseColor("#008FA3")),
             ),
         )
         style.addLayer(
@@ -106,7 +128,7 @@ object SurveyMapOverlays {
     }
 
     fun setPath(style: Style, coordinates: List<Pair<Double, Double>>) {
-        val source = style.getSourceAs<GeoJsonSource>(SRC_PATH) ?: return
+        val source = geoJsonSource(style, SRC_PATH) ?: return
         if (coordinates.size < 2) {
             source.setGeoJson(emptyCollection())
             return
@@ -121,9 +143,9 @@ object SurveyMapOverlays {
         selectedStopPublicId: String?,
         nearbyStopPublicIds: Set<String> = emptySet(),
     ) {
-        val stopSource = style.getSourceAs<GeoJsonSource>(SRC_STOPS) ?: return
-        val selectedSource = style.getSourceAs<GeoJsonSource>(SRC_SELECTED) ?: return
-        val nearbySource = style.getSourceAs<GeoJsonSource>(SRC_NEARBY) ?: return
+        val stopSource = geoJsonSource(style, SRC_STOPS) ?: return
+        val selectedSource = geoJsonSource(style, SRC_SELECTED) ?: return
+        val nearbySource = geoJsonSource(style, SRC_NEARBY) ?: return
         val features = stops.map { stop ->
             val feature = Feature.fromGeometry(Point.fromLngLat(stop.lng, stop.lat))
             feature.addStringProperty(PROP_STOP_ID, stop.stopPublicId)
@@ -147,9 +169,11 @@ object SurveyMapOverlays {
     }
 
     fun setGps(style: Style, gps: GpsFix?) {
-        val source = style.getSourceAs<GeoJsonSource>(SRC_GPS) ?: return
+        val source = geoJsonSource(style, SRC_GPS) ?: return
+        val accuracySource = geoJsonSource(style, SRC_GPS_ACCURACY) ?: return
         if (gps == null) {
             source.setGeoJson(emptyCollection())
+            accuracySource.setGeoJson(emptyCollection())
             return
         }
         source.setGeoJson(
@@ -157,10 +181,41 @@ object SurveyMapOverlays {
                 Feature.fromGeometry(Point.fromLngLat(gps.lng, gps.lat)),
             ),
         )
+        val ring = accuracyRing(gps)
+        if (ring.isEmpty()) {
+            accuracySource.setGeoJson(emptyCollection())
+        } else {
+            val polygon = Polygon.fromLngLats(
+                listOf(ring.map { (lng, lat) -> Point.fromLngLat(lng, lat) }),
+            )
+            accuracySource.setGeoJson(FeatureCollection.fromFeature(Feature.fromGeometry(polygon)))
+        }
+    }
+
+    /** Returns a geodesic accuracy ring as (longitude, latitude) pairs. */
+    fun accuracyRing(gps: GpsFix, vertices: Int = 48): List<Pair<Double, Double>> {
+        val radiusM = gps.accuracyM?.toDouble()?.takeIf { it > 0.0 } ?: return emptyList()
+        val count = vertices.coerceAtLeast(8)
+        val angularDistance = radiusM / EARTH_RADIUS_M
+        val lat1 = Math.toRadians(gps.lat)
+        val lng1 = Math.toRadians(gps.lng)
+        val ring = (0 until count).map { index ->
+            val bearing = 2.0 * Math.PI * index / count
+            val lat2 = asin(
+                sin(lat1) * cos(angularDistance) +
+                    cos(lat1) * sin(angularDistance) * cos(bearing),
+            )
+            val lng2 = lng1 + atan2(
+                sin(bearing) * sin(angularDistance) * cos(lat1),
+                cos(angularDistance) - sin(lat1) * sin(lat2),
+            )
+            Math.toDegrees(lng2) to Math.toDegrees(lat2)
+        }
+        return ring + ring.first()
     }
 
     fun setAnomalies(style: Style, points: List<GpsFix>) {
-        val source = style.getSourceAs<GeoJsonSource>(SRC_ANOMALIES) ?: return
+        val source = geoJsonSource(style, SRC_ANOMALIES) ?: return
         val features = points.map {
             Feature.fromGeometry(Point.fromLngLat(it.lng, it.lat))
         }
@@ -168,7 +223,7 @@ object SurveyMapOverlays {
     }
 
     fun setPick(style: Style, point: GpsFix?) {
-        val source = style.getSourceAs<GeoJsonSource>(SRC_PICK) ?: return
+        val source = geoJsonSource(style, SRC_PICK) ?: return
         if (point == null) {
             source.setGeoJson(emptyCollection())
             return
@@ -271,4 +326,23 @@ object SurveyMapOverlays {
     }
 
     private fun emptyCollection(): FeatureCollection = FeatureCollection.fromFeatures(emptyArray())
+
+    private fun styleFullyLoaded(style: Style): Boolean {
+        return try {
+            style.isFullyLoaded
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun geoJsonSource(style: Style, id: String): GeoJsonSource? {
+        if (!styleFullyLoaded(style)) return null
+        return try {
+            style.getSourceAs(id)
+        } catch (_: IllegalStateException) {
+            null
+        }
+    }
+
+    private const val EARTH_RADIUS_M = 6_371_000.0
 }

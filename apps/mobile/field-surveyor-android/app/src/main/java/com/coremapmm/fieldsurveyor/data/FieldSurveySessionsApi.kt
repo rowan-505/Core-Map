@@ -1,0 +1,69 @@
+package com.coremapmm.fieldsurveyor.data
+
+import com.coremapmm.fieldsurveyor.auth.AuthException
+import com.coremapmm.fieldsurveyor.work.OutboxHttpResult
+import com.coremapmm.fieldsurveyor.work.OutboxSyncPolicy
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.IOException
+import java.time.Instant
+
+data class RemoteSurveySession(val publicId: String, val clientSessionId: String, val status: String)
+
+sealed class SurveySessionHttpResult {
+    data class Success(val session: RemoteSurveySession) : SurveySessionHttpResult()
+    data class Failure(val result: OutboxHttpResult) : SurveySessionHttpResult()
+}
+
+class FieldSurveySessionsApi(private val baseUrl: String, private val client: OkHttpClient) {
+    private val json = "application/json; charset=utf-8".toMediaType()
+
+    fun create(token: String, row: LocalSurveySessionEntity): SurveySessionHttpResult = request(
+        token,
+        "/field/survey-sessions",
+        JSONObject()
+            .put("clientSessionId", row.clientSessionId)
+            .put("routeVariantPublicId", row.variantPublicId)
+            .put("snapshotRevision", row.snapshotRevision)
+            .put("startedAt", Instant.ofEpochMilli(row.startedAtEpochMs).toString())
+            .toString(),
+    )
+
+    fun end(token: String, row: LocalSurveySessionEntity): SurveySessionHttpResult {
+        val action = if (row.status == LocalSurveySessionEntity.STATUS_ABANDONED) "abandon" else "complete"
+        return request(
+            token,
+            "/field/survey-sessions/${row.clientSessionId}/$action",
+            JSONObject().put("endedAt", Instant.ofEpochMilli(row.endedAtEpochMs!!).toString()).toString(),
+            patch = true,
+        )
+    }
+
+    private fun request(token: String, path: String, body: String, patch: Boolean = false): SurveySessionHttpResult {
+        val builder = Request.Builder().url(baseUrl.trimEnd('/') + path)
+            .header("Accept", "application/json")
+            .header("Authorization", "Bearer $token")
+        val request = (if (patch) builder.patch(body.toRequestBody(json)) else builder.post(body.toRequestBody(json))).build()
+        val response = try { client.newCall(request).execute() } catch (error: IOException) {
+            return SurveySessionHttpResult.Failure(OutboxSyncPolicy.classifyThrowable(error))
+        }
+        response.use {
+            val raw = it.body?.string().orEmpty()
+            if (it.code == 401) throw AuthException("Session expired", 401)
+            if (it.code !in listOf(200, 201)) {
+                return SurveySessionHttpResult.Failure(OutboxSyncPolicy.classifyHttp(it.code, raw))
+            }
+            return try {
+                val value = JSONObject(raw)
+                SurveySessionHttpResult.Success(
+                    RemoteSurveySession(value.getString("publicId"), value.getString("clientSessionId"), value.getString("status")),
+                )
+            } catch (error: Exception) {
+                SurveySessionHttpResult.Failure(OutboxSyncPolicy.classifyThrowable(error))
+            }
+        }
+    }
+}

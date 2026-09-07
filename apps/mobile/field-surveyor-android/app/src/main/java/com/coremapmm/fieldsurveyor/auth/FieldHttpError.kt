@@ -1,7 +1,7 @@
 package com.coremapmm.fieldsurveyor.auth
 
-import android.util.Log
 import com.coremapmm.fieldsurveyor.BuildConfig
+import com.coremapmm.fieldsurveyor.log.FieldLog
 import java.io.IOException
 
 object FieldHttpError {
@@ -12,9 +12,11 @@ object FieldHttpError {
 
     fun unreachable(error: IOException, baseUrl: String, action: String = "API"): AuthException {
         val message = formatUnreachable(error, baseUrl, action)
-        if (BuildConfig.DEBUG) {
-            Log.w("FieldHttp", message, error)
-        }
+        FieldLog.error(
+            "http_unreachable",
+            mapOf("action" to action),
+            if (BuildConfig.DEBUG) error else null,
+        )
         return AuthException(message)
     }
 }

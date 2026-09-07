@@ -2,6 +2,7 @@ package com.coremapmm.fieldsurveyor
 
 import android.app.Application
 import androidx.work.Configuration
+import com.coremapmm.fieldsurveyor.crash.FieldCrash
 import com.coremapmm.fieldsurveyor.work.FieldWork
 
 class FieldApp : Application(), Configuration.Provider {
@@ -10,6 +11,7 @@ class FieldApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        FieldCrash.install(this)
         graph = AppGraph.create(this)
         FieldWork.enqueue(this)
     }

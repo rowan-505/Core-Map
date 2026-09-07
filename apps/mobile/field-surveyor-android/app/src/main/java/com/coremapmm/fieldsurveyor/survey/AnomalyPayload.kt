@@ -77,7 +77,7 @@ object AnomalyPayload {
     }
 
     /** Body for POST /field/reports. Always uses the Room client UUID. */
-    fun toCreateBody(clientPublicId: String, payloadJson: String): String {
+    fun toCreateBody(clientPublicId: String, payloadJson: String, sessionClientSessionId: String? = null): String {
         val root = JSONObject(payloadJson)
         root.put("clientPublicId", clientPublicId)
         val note = root.optString("note").trim()
@@ -85,6 +85,9 @@ object AnomalyPayload {
             root.put("description", note.take(4000))
         }
         root.remove("anomalyKind")
+        if (!sessionClientSessionId.isNullOrBlank()) {
+            root.put("surveySession", JSONObject().put("clientSessionId", sessionClientSessionId))
+        }
         return root.toString()
     }
 
@@ -106,6 +109,26 @@ object AnomalyPayload {
         return runCatching {
             JSONObject(payloadJson).optJSONObject("context")?.optString("variantPublicId")?.ifBlank { null }
         }.getOrNull()
+    }
+
+    fun reportTypeCode(payloadJson: String): String? {
+        return runCatching {
+            JSONObject(payloadJson).optString("reportTypeCode").ifBlank { null }
+        }.getOrNull()
+    }
+
+    fun targetPublicId(payloadJson: String): String? {
+        return runCatching {
+            val target = JSONObject(payloadJson).optJSONObject("target") ?: return null
+            target.optString("publicId").ifBlank { null }
+        }.getOrNull()
+    }
+
+    fun fingerprint(payloadJson: String, sessionId: String?): ReportFingerprint? {
+        if (sessionId.isNullOrBlank()) return null
+        val type = reportTypeCode(payloadJson) ?: return null
+        val target = targetPublicId(payloadJson) ?: return null
+        return ReportFingerprint(sessionId, type, target)
     }
 
     fun location(payloadJson: String): GpsFix? {

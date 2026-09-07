@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coremapmm.fieldsurveyor.data.transport.BootstrapRefreshResult
 import com.coremapmm.fieldsurveyor.data.transport.BootstrapRepository
+import com.coremapmm.fieldsurveyor.offline.OfflineMapPolicy
 import com.coremapmm.fieldsurveyor.offline.YangonBasemapStore
 import com.coremapmm.fieldsurveyor.ui.components.FieldCard
 import com.coremapmm.fieldsurveyor.ui.components.MetricRow
@@ -47,13 +48,16 @@ fun SetupSyncScreen(
     var busy by remember { mutableStateOf(true) }
     var mapBusy by remember { mutableStateOf(false) }
     var mapStatus by remember { mutableStateOf("") }
+    var mapFailed by remember { mutableStateOf(false) }
     var yangonReady by remember { mutableStateOf(yangon.isReady()) }
     var downloadedBytes by remember { mutableLongStateOf(yangon.sizeBytes()) }
     var totalBytes by remember { mutableLongStateOf(yangon.sizeBytes()) }
+    var expectedBytes by remember { mutableLongStateOf(0L) }
+    var mapVersion by remember { mutableStateOf<String?>(null) }
     var variantCount by remember { mutableIntStateOf(0) }
     var revision by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val locked = busy || mapBusy
+    val continueLocked = busy || mapBusy
     val visibleTitle = title ?: tr("Setup / Sync")
 
     fun applyResult(result: BootstrapRefreshResult) {
@@ -93,25 +97,32 @@ fun SetupSyncScreen(
         }
     }
 
-    suspend fun runYangonDownload() {
+    suspend fun runYangonDownload(allowMetered: Boolean) {
         mapBusy = true
+        mapFailed = false
         mapStatus = "Downloading Yangon streets map…"
         try {
-            yangon.ensure { copied, total ->
+            yangon.ensure(allowMetered = allowMetered) { copied, total ->
                 scope.launch {
                     downloadedBytes = copied
                     totalBytes = total
                 }
             }
             yangonReady = yangon.isReady()
+            mapVersion = yangon.localVersion()
+            downloadedBytes = yangon.sizeBytes()
             mapStatus = if (yangonReady) {
                 "Yangon streets map is on this device."
             } else {
                 "Yangon download finished but the file is incomplete."
             }
+            mapFailed = !yangonReady
         } catch (error: Exception) {
             yangonReady = yangon.isReady()
-            mapStatus = error.message ?: error.toString()
+            val message = error.message ?: error.toString()
+            val cancelled = message == OfflineMapPolicy.CANCELLED_MESSAGE
+            mapFailed = !cancelled
+            mapStatus = message
         } finally {
             mapBusy = false
         }
@@ -121,10 +132,26 @@ fun SetupSyncScreen(
         yangonReady = yangon.isReady()
         downloadedBytes = yangon.sizeBytes()
         totalBytes = yangon.sizeBytes()
-        mapStatus = if (yangonReady) {
-            "Yangon streets map is on this device."
-        } else {
-            "Street zoom needs the Yangon map (~730 MB). Use Wi-Fi."
+        mapVersion = yangon.localVersion()
+        try {
+            val manifest = yangon.probeManifest()
+            expectedBytes = manifest.byteSize
+            mapVersion = yangon.localVersion() ?: manifest.version
+            if (totalBytes <= 0L) {
+                totalBytes = manifest.byteSize
+            }
+            mapStatus = if (yangonReady) {
+                "Yangon streets map is on this device."
+            } else {
+                "Street zoom needs the Yangon map (${formatMb(manifest.byteSize)}, ${manifest.version}). Wi-Fi only unless you override."
+            }
+        } catch (error: Exception) {
+            expectedBytes = 730_000_000L
+            mapStatus = if (yangonReady) {
+                "Yangon streets map is on this device."
+            } else {
+                "Street zoom needs the Yangon map (~730 MB). Use Wi-Fi."
+            }
         }
         runRefresh()
     }
@@ -159,7 +186,7 @@ fun SetupSyncScreen(
             Text(tr(status), style = MaterialTheme.typography.bodyMedium)
             OutlinedButton(
                 onClick = { scope.launch { runRefresh() } },
-                enabled = !locked,
+                enabled = !busy,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(tr(if (busy) "Syncing…" else "Sync routes"))
@@ -167,11 +194,25 @@ fun SetupSyncScreen(
         }
         FieldCard {
             StatusPill(
-                label = tr(if (mapBusy) "Downloading map" else if (yangonReady) "Offline map ready" else "Map needed"),
-                positive = yangonReady && !mapBusy,
-                warning = !yangonReady && !mapBusy,
+                label = tr(
+                    if (mapBusy) "Downloading map"
+                    else if (yangonReady) "Offline map ready"
+                    else if (mapFailed) "Map download failed"
+                    else "Map needed",
+                ),
+                positive = yangonReady && !mapBusy && !mapFailed,
+                warning = (!yangonReady || mapFailed) && !mapBusy,
             )
             Text(tr(mapStatus), style = MaterialTheme.typography.bodyMedium)
+            if (expectedBytes > 0L && !yangonReady) {
+                Text(
+                    tr("File size before download: ${formatMb(expectedBytes)}"),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (mapVersion != null) {
+                Text(tr("Map version: $mapVersion"), style = MaterialTheme.typography.bodySmall)
+            }
             if (mapBusy && totalBytes > 0L) {
                 LinearProgressIndicator(
                     progress = { (downloadedBytes.toFloat() / totalBytes.toFloat()).coerceIn(0f, 1f) },
@@ -182,23 +223,42 @@ fun SetupSyncScreen(
             }
             Text(formatBytes(downloadedBytes, totalBytes), style = MaterialTheme.typography.bodySmall)
             OutlinedButton(
-                onClick = { scope.launch { runYangonDownload() } },
-                enabled = !locked,
+                onClick = { scope.launch { runYangonDownload(allowMetered = false) } },
+                enabled = !mapBusy,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(tr(if (mapBusy) "Downloading map…" else if (yangonReady) "Verify offline map" else "Download Yangon map"))
+                Text(tr(if (mapBusy) "Downloading map…" else if (yangonReady) "Verify offline map" else "Download Yangon map on Wi-Fi"))
+            }
+            OutlinedButton(
+                onClick = { scope.launch { runYangonDownload(allowMetered = true) } },
+                enabled = !mapBusy,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(tr("Download map using mobile data"))
+            }
+            if (mapBusy) {
+                OutlinedButton(
+                    onClick = { yangon.cancelDownload() },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(tr("Cancel download"))
+                }
             }
         }
         if (onContinue != null) {
             Button(
                 onClick = onContinue,
-                enabled = !locked && variantCount > 0 && yangonReady,
+                enabled = !continueLocked && variantCount > 0 && yangonReady,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(tr("Continue to route selection"))
             }
         }
     }
+}
+
+private fun formatMb(bytes: Long): String {
+    return String.format(Locale.US, "%.0f MB", bytes / 1_000_000.0)
 }
 
 private fun formatBytes(copied: Long, total: Long): String {

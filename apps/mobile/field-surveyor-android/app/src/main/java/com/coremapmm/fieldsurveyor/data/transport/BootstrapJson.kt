@@ -1,6 +1,9 @@
 package com.coremapmm.fieldsurveyor.data.transport
 
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayInputStream
+import java.util.zip.GZIPInputStream
 
 class SnapshotParseException(message: String) : Exception(message)
 
@@ -10,6 +13,15 @@ sealed class BootstrapPayload {
 }
 
 object BootstrapJson {
+    fun decodeBody(bytes: ByteArray): String {
+        val raw = if (isGzip(bytes)) {
+            GZIPInputStream(ByteArrayInputStream(bytes)).use { it.readBytes() }
+        } else {
+            bytes
+        }
+        return String(raw, Charsets.UTF_8)
+    }
+
     fun parseResponse(body: String): BootstrapPayload {
         val root = try {
             JSONObject(body)
@@ -48,6 +60,9 @@ object BootstrapJson {
             }
         }
     }
+
+    private fun isGzip(bytes: ByteArray): Boolean =
+        bytes.size >= 2 && bytes[0] == 0x1f.toByte() && bytes[1] == 0x8b.toByte()
 }
 
 data class UnvalidatedSnapshot(
@@ -83,6 +98,7 @@ object SnapshotValidator {
         if (variantIds.size != variants.size) {
             throw SnapshotParseException("duplicate variant publicId")
         }
+        verifyOppositeVariantIds(raw.variants, variants)
         val stops = raw.stops.mapIndexed { index, json -> parseStop(json, index) }
         val stopIds = stops.map { it.publicId }.toHashSet()
         if (stopIds.size != stops.size) {
@@ -140,6 +156,21 @@ object SnapshotValidator {
             originName = json.nullableString("originName"),
             destinationName = json.nullableString("destinationName"),
         )
+    }
+
+    private fun verifyOppositeVariantIds(rawVariants: List<JSONObject>, variants: List<CacheVariantEntity>) {
+        val derived = OppositeVariantLookup.idsByPublicId(variants)
+        rawVariants.forEachIndexed { index, json ->
+            if (!json.has("oppositeVariantPublicId") || json.isNull("oppositeVariantPublicId")) {
+                return@forEachIndexed
+            }
+            val publicId = json.optString("publicId").trim()
+            val claimed = json.optString("oppositeVariantPublicId").trim()
+            val expected = derived[publicId]
+            if (expected == null || claimed != expected) {
+                throw SnapshotParseException("variants[$index].oppositeVariantPublicId does not match route and direction")
+            }
+        }
     }
 
     private fun parseStop(json: JSONObject, index: Int): CacheStopEntity {
@@ -271,5 +302,23 @@ object RoutePathGeometry {
         }
         val coordinates = geometry.optJSONArray("coordinates") ?: return false
         return coordinates.length() >= 2
+    }
+
+    /** GeoJSON order: longitude, latitude. */
+    fun lngLatPoints(geometryJson: String): List<Pair<Double, Double>> {
+        return runCatching {
+            val geometry = JSONObject(geometryJson)
+            val coordinates = geometry.optJSONArray("coordinates") ?: return emptyList()
+            buildList {
+                for (i in 0 until coordinates.length()) {
+                    val pair = coordinates.optJSONArray(i) ?: continue
+                    val lng = pair.optDouble(0, Double.NaN)
+                    val lat = pair.optDouble(1, Double.NaN)
+                    if (lng.isFinite() && lat.isFinite()) {
+                        add(lng to lat)
+                    }
+                }
+            }
+        }.getOrDefault(emptyList())
     }
 }

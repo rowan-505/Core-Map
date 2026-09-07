@@ -19,7 +19,11 @@ class ReportVoiceStore(
     suspend fun list(reportClientPublicId: String): List<LocalReportMediaEntity> =
         dao.listForReport(reportClientPublicId).filter { it.mimeType == LocalReportMediaEntity.MIME_AAC }
 
-    suspend fun addFromRecording(reportClientPublicId: String, source: File): LocalReportMediaEntity {
+    suspend fun addFromRecording(
+        reportClientPublicId: String,
+        source: File,
+        durationMs: Long,
+    ): LocalReportMediaEntity {
         return withContext(Dispatchers.IO) {
             val existing = dao.countForReportMime(reportClientPublicId, LocalReportMediaEntity.MIME_AAC)
             if (existing >= VoiceTarget.MAX_CLIPS_PER_REPORT) {
@@ -30,6 +34,9 @@ class ReportVoiceStore(
             }
             if (source.length() > VoiceTarget.MAX_BYTES) {
                 error("Recording is too large")
+            }
+            if (durationMs > VoiceTarget.MAX_DURATION_MS) {
+                error("Recording is too long")
             }
             val id = newId()
             mediaDir.mkdirs()
@@ -42,6 +49,10 @@ class ReportVoiceStore(
                 localPath = dest.absolutePath,
                 mimeType = LocalReportMediaEntity.MIME_AAC,
                 byteSize = dest.length(),
+                pixelWidth = 0,
+                pixelHeight = 0,
+                checksumSha256 = MediaChecksum.sha256Hex(dest),
+                durationMs = durationMs,
                 syncState = LocalReportMediaEntity.STATE_LOCAL,
                 remoteAssetPublicId = null,
                 createdAtEpochMs = now,

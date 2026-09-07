@@ -1,11 +1,11 @@
 package com.coremapmm.fieldsurveyor.auth
 
+import com.coremapmm.fieldsurveyor.net.FieldHttp
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 /**
  * CoreMap Fastify auth endpoints: POST /auth/login, /auth/refresh, /auth/logout.
@@ -81,12 +81,6 @@ class AuthApi(
     private fun url(path: String): String = baseUrl.trimEnd('/') + path
 
     companion object {
-        fun defaultClient(): OkHttpClient {
-            return OkHttpClient.Builder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .writeTimeout(20, TimeUnit.SECONDS)
-                .build()
-        }
+        fun defaultClient(): OkHttpClient = FieldHttp.client()
     }
 }

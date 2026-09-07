@@ -29,7 +29,7 @@ class FieldBootstrapApi(
             throw FieldHttpError.unreachable(error, baseUrl, "bootstrap")
         }
         response.use { httpResponse ->
-            val body = httpResponse.body?.string().orEmpty()
+            val bytes = httpResponse.body?.bytes() ?: ByteArray(0)
             if (httpResponse.code == 401) {
                 throw AuthException("Session expired", 401)
             }
@@ -39,7 +39,7 @@ class FieldBootstrapApi(
             if (!httpResponse.isSuccessful) {
                 throw SnapshotParseException("Bootstrap failed (${httpResponse.code})")
             }
-            return BootstrapJson.parseResponse(body)
+            return BootstrapJson.parseResponse(BootstrapJson.decodeBody(bytes))
         }
     }
 }

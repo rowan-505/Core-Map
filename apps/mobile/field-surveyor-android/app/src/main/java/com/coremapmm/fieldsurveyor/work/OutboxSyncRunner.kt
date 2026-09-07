@@ -27,7 +27,7 @@ class OutboxSyncRunner(
             return OutboxRunResult.Idle
         }
         val row = reports.claimNext(nowMs()) ?: return OutboxRunResult.Idle
-        val body = AnomalyPayload.toCreateBody(row.clientPublicId, row.payloadJson)
+        val body = AnomalyPayload.toCreateBody(row.clientPublicId, row.payloadJson, row.sessionClientSessionId)
         val result = try {
             post(accessToken(), body)
         } catch (error: AuthException) {

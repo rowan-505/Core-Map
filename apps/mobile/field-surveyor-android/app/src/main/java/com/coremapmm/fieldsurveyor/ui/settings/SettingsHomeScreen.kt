@@ -28,6 +28,7 @@ fun SettingsHomeScreen(
     themeMode: FieldThemeMode,
     onLanguage: (FieldLanguage) -> Unit,
     onThemeMode: (FieldThemeMode) -> Unit,
+    onHistory: () -> Unit,
     onProfile: () -> Unit,
     onOutbox: () -> Unit,
     onInfra: () -> Unit,
@@ -56,6 +57,7 @@ fun SettingsHomeScreen(
                 onThemeMode(FieldThemeMode.DARK)
             }
         }
+        SettingsRow(tr("Survey History"), tr("Offline survey sessions and reports"), onHistory)
         SettingsRow(tr("Profile"), tr("Signed-in surveyor account"), onProfile)
         SettingsRow(tr("Outbox"), tr("Captured, synced, and waiting reports"), onOutbox)
         SettingsRow(tr("Infra"), tr("Yangon PMTiles and YBS snapshot sync"), onInfra)

@@ -22,7 +22,12 @@ fun translateFieldText(text: String, language: FieldLanguage): String {
         text.startsWith("When: ") -> "အချိန် — ${text.removePrefix("When: ")}"
         text.startsWith("Location: ") -> "တည်နေရာ — ${text.removePrefix("Location: ")}"
         text.endsWith(" media file(s)") -> "မီဒီယာဖိုင် ${text.substringBefore(' ')} ခု"
-        text.startsWith("GPS ") -> text
+        text.startsWith("Captured ") -> "ကောက်ယူချိန် ${text.removePrefix("Captured ")}"
+        text.contains(" reports · ") && text.endsWith(" pending") -> {
+            val reports = text.substringBefore(" reports")
+            val pending = text.substringAfter(" · ").substringBefore(" pending")
+            "အစီရင်ခံစာ $reports ခု · စောင့်ဆိုင်း $pending ခု"
+        }
         text.startsWith("#") -> text.replace(" m", " မီတာ")
         text.startsWith("Review recording · ") ->
             "အသံဖိုင် စစ်ဆေးရန် · ${text.removePrefix("Review recording · ").replace("s", " စက္ကန့်")}"
@@ -32,6 +37,11 @@ fun translateFieldText(text: String, language: FieldLanguage): String {
         text.startsWith("Downloaded snapshot ") -> "လမ်းကြောင်းဒေတာ ရယူပြီး — ${text.removePrefix("Downloaded snapshot ")}"
         text.startsWith("Refresh failed") -> "ဒေတာပြန်လည်ရယူမှု မအောင်မြင်ပါ။ ${text.substringAfter('.', "")}"
         text.startsWith("Downloaded snapshot") -> "လမ်းကြောင်းဒေတာ ရယူပြီး"
+        text.startsWith("Street zoom needs the Yangon map") ->
+            "လမ်းအဆင့်ချဲ့ကြည့်ရန် ရန်ကုန်မြေပုံ လိုသည်။ ${text.substringAfter("map ", "")}"
+        text.startsWith("File size before download:") ->
+            "ဒေါင်းလုဒ်မလုပ်မီ ဖိုင်အရွယ်အစား — ${text.removePrefix("File size before download: ")}"
+        text.startsWith("Map version:") -> "မြေပုံဗားရှင်း — ${text.removePrefix("Map version: ")}"
         else -> text
     }
 }
@@ -68,10 +78,24 @@ private val MYANMAR_TEXT = mapOf(
     "Downloading map…" to "မြေပုံ ရယူနေသည်…",
     "Verify offline map" to "အော့ဖ်လိုင်းမြေပုံ စစ်ဆေးမည်",
     "Download Yangon map" to "ရန်ကုန်မြေပုံ ရယူမည်",
+    "Download Yangon map on Wi-Fi" to "Wi-Fi ဖြင့် ရန်ကုန်မြေပုံ ရယူမည်",
+    "Download map using mobile data" to "မိုဘိုင်းဒေတာဖြင့် မြေပုံ ရယူမည်",
+    "Cancel download" to "ဒေါင်းလုဒ် ရပ်မည်",
+    "Map download cancelled. Partial file kept for resume." to "မြေပုံ ရယူမှု ရပ်ထားသည်။ တစ်ဝက်ဖိုင်ကို ဆက်ရယူရန် သိမ်းထားသည်။",
+    "Map download failed" to "မြေပုံ ရယူမှု မအောင်မြင်ပါ",
     "Continue to route selection" to "လမ်းကြောင်းရွေးရန် ဆက်သွားမည်",
     "Choose a route" to "လမ်းကြောင်းရွေးပါ",
     "Search the offline YBS snapshot. No signal is required." to "သိမ်းထားသော YBS ဒေတာတွင် ရှာပါ။ အင်တာနက်မလိုပါ။",
     "Search route code" to "လမ်းကြောင်းနံပါတ် ရှာရန်",
+    "Recommend nearby route" to "အနီးလမ်းကြောင်း အကြံပြုမည်",
+    "Location permission is required to recommend a nearby route." to "အနီးလမ်းကြောင်း အကြံပြုရန် တည်နေရာခွင့်ပြုချက် လိုသည်။",
+    "Finding your location…" to "တည်နေရာ ရှာနေသည်…",
+    "GPS accuracy is too poor to recommend a nearby route." to "GPS တိကျမှု မကောင်းသဖြင့် အနီးလမ်းကြောင်း အကြံပြု၍မရပါ။",
+    "No YBS routes found near your current location." to "ယခုတည်နေရာအနီးတွင် YBS လမ်းကြောင်း မတွေ့ပါ။",
+    "Offline route package is missing or incomplete. Sync routes in Setup." to "အော့ဖ်လိုင်းလမ်းကြောင်းဒေတာ မရှိ သို့မဟုတ် မပြည့်စုံပါ။ Setup တွင် လမ်းကြောင်းများကို ရယူပါ။",
+    "Not surveyed yet" to "စစ်တမ်းမကောက်ရသေးပါ",
+    "Surveyed just now" to "ယခုလေးတင် စစ်တမ်းကောက်ပြီး",
+    "Surveyed earlier" to "အရင်က စစ်တမ်းကောက်ပြီး",
     "No local snapshot yet." to "ဖုန်းထဲတွင် လမ်းကြောင်းဒေတာ မရှိသေးပါ။",
     "Open Setup / Sync" to "စတင်ပြင်ဆင်ခြင်း ဖွင့်မည်",
     "Routes" to "လမ်းကြောင်းများ",
@@ -82,12 +106,30 @@ private val MYANMAR_TEXT = mapOf(
     "Signed-in surveyor account" to "လက်ရှိအသုံးပြုနေသော စစ်တမ်းအကောင့်",
     "Outbox" to "ပို့ရန်စာရင်း",
     "Captured, synced, and waiting reports" to "ကောက်ယူပြီး၊ ပို့ပြီးနှင့် စောင့်ဆိုင်းနေသော အစီရင်ခံစာများ",
+    "Reports upload on any network. Photos and voice wait for Wi-Fi unless you upload now." to "အစီရင်ခံစာကို ကွန်ရက်ရှိလျှင် ပို့သည်။ ဓာတ်ပုံနှင့် အသံသည် Wi-Fi ကို စောင့်သည်။ လိုအင်ရှိလျှင် မိုဘိုင်းဒေတာဖြင့် ယခုပို့နိုင်သည်။",
+    "Upload now using mobile data" to "မိုဘိုင်းဒေတာဖြင့် ယခုပို့မည်",
+    "Show photo preview" to "ဓာတ်ပုံ အကြိုကြည့်မည်",
+    "Hide preview" to "အကြိုကြည့်မှု ပိတ်မည်",
+    "Photo file is missing." to "ဓာတ်ပုံဖိုင် မရှိပါ။",
+    "Optional photo. Full file uploads later." to "ဓာတ်ပုံ မထည့်လည်းရသည်။ ဖိုင်အပြည့်ကို နောက်မှ ပို့မည်။",
     "Infra" to "ဒေတာနှင့် မြေပုံ",
     "Yangon PMTiles and YBS snapshot sync" to "ရန်ကုန်မြေပုံနှင့် YBS ဒေတာရယူခြင်း",
     "Language" to "ဘာသာစကား",
     "Myanmar" to "မြန်မာ",
     "English" to "အင်္ဂလိပ်",
     "Appearance" to "အပြင်အဆင်",
+    "Survey History" to "စစ်တမ်းမှတ်တမ်း",
+    "Offline survey sessions and reports" to "အော့ဖ်လိုင်း စစ်တမ်းနှင့် အစီရင်ခံစာ မှတ်တမ်း",
+    "No survey sessions yet." to "စစ်တမ်းမှတ်တမ်း မရှိသေးပါ။",
+    "Survey session not found." to "စစ်တမ်းမှတ်တမ်းကို မတွေ့ပါ။",
+    "Duration" to "ကြာချိန်",
+    "Reports" to "အစီရင်ခံစာများ",
+    "reports" to "အစီရင်ခံစာ",
+    "No reports in this survey." to "ဤစစ်တမ်းတွင် အစီရင်ခံစာ မရှိပါ။",
+    "View route on map" to "မြေပုံတွင် လမ်းကြောင်းကြည့်မည်",
+    "Finish the active survey before viewing another route." to "အခြားလမ်းကြောင်း မကြည့်မီ လက်ရှိစစ်တမ်းကို ပြီးဆုံးပါ။",
+    "Sync state" to "ပို့မှုအခြေအနေ",
+    "No media" to "မီဒီယာ မရှိပါ",
     "Language and appearance" to "ဘာသာစကားနှင့် အပြင်အဆင်",
     "Light" to "အလင်း",
     "Dark" to "အမှောင်",
@@ -124,6 +166,7 @@ private val MYANMAR_TEXT = mapOf(
     "Active" to "လုပ်နေ",
     "Paused" to "ရပ်ထား",
     "Start" to "စမည်",
+    "Finish" to "ပြီးဆုံးမည်",
     "Stop" to "ရပ်မည်",
     "Report" to "အစီရင်ခံမည်",
     "Current location" to "လက်ရှိတည်နေရာ",
@@ -131,10 +174,25 @@ private val MYANMAR_TEXT = mapOf(
     "Show whole route" to "လမ်းကြောင်းတစ်ခုလုံးကို ပြမည်",
     "Reset north" to "မြောက်ဘက်သို့ ပြန်တည့်မည်",
     "Route stops" to "လမ်းကြောင်းမှတ်တိုင်များ",
+    "Stop is correct" to "မှတ်တိုင် မှန်ကန်သည်",
+    "This is the last stop on this direction." to "ဤဦးတည်ရာတွင် နောက်ဆုံးမှတ်တိုင် ဖြစ်သည်။",
+    "Stop marked correct" to "မှတ်တိုင်ကို မှန်ကန်သည်ဟု မှတ်ပြီးပါပြီ",
+    "This session already has the same report type for this target." to "ဤစစ်တမ်းတွင် ဤပစ်မှတ်အတွက် အမျိုးအစားတူ အစီရင်ခံစာ ရှိပြီးဖြစ်သည်။",
+    "Choose a report action first. Photo, voice and text are optional." to "အစီရင်ခံမည့်အမျိုးအစားကို အရင်ရွေးပါ။ ဓာတ်ပုံ၊ အသံနှင့် စာသားသည် မထည့်လည်းရသည်။",
+    "No GPS fix yet" to "GPS တည်နေရာ မရသေးပါ",
+    "No route" to "လမ်းကြောင်းမရှိပါ",
+    "No snapshot" to "ဒေတာဗားရှင်း မရှိပါ",
     "Previous" to "ယခင်",
     "Current" to "လက်ရှိ",
     "Next" to "နောက်",
     "Nearest stops" to "အနီးဆုံးမှတ်တိုင်များ",
+    "No selected-route stop is close enough. Check GPS or select a stop manually." to "ရွေးထားသော လမ်းကြောင်းမှတ်တိုင်တစ်ခုမျှ အနီးတွင် မရှိပါ။ GPS ကို စစ်ဆေးပါ သို့မဟုတ် မှတ်တိုင်ကို ကိုယ်တိုင်ရွေးပါ။",
+    "GPS accuracy is poor. Move to open sky and wait." to "GPS တိကျမှု မကောင်းပါ။ ကောင်းကင်မြင်ရသောနေရာသို့ ရွှေ့ပြီး စောင့်ပါ။",
+    "GPS fix is stale. Locate again." to "GPS တည်နေရာ ဟောင်းနေပါသည်။ တည်နေရာကို ပြန်ရှာပါ။",
+    "Poor GPS accuracy" to "GPS တိကျမှု မကောင်းပါ",
+    "This location may be more than 50 m off. Submit this location-critical report anyway?" to "ဤတည်နေရာသည် မီတာ ၅၀ ကျော် လွဲနိုင်ပါသည်။ တည်နေရာအရေးကြီးသော ဤအစီရင်ခံစာကို ဆက်ပို့မလား။",
+    "Submit anyway" to "ဆက်ပို့မည်",
+    "Wait for GPS" to "GPS ကို စောင့်မည်",
     "Report issue" to "ပြဿနာ အစီရင်ခံရန်",
     "Report details" to "အစီရင်ခံစာ အသေးစိတ်",
     "Evidence (optional)" to "မီဒီယာ (မထည့်လည်းရသည်)",
@@ -178,6 +236,11 @@ private val MYANMAR_TEXT = mapOf(
     "Microphone permission is needed for voice." to "အသံဖမ်းရန် မိုက်ခရိုဖုန်းခွင့်ပြုချက် လိုသည်။",
     "Hold longer to record." to "အသံဖမ်းရန် အနည်းငယ်ကြာအောင် ဖိထားပါ။",
     "Select a D0/D1 variant first." to "D0/D1 လမ်းကြောင်းခွဲကို အရင်ရွေးပါ။",
+    "Switch direction?" to "ဦးတည်ရာ ပြောင်းမလား။",
+    "Finish current direction and start the opposite direction?" to "ယခုဦးတည်ရာကို ပြီးဆုံးပြီး ဆန့်ကျင်ဘက် ဦးတည်ရာကို စတင်မလား။",
+    "Switch" to "ပြောင်းမည်",
+    "Keep this direction" to "ဤဦးတည်ရာကို ဆက်သုံးမည်",
+    "Opposite direction is not in this snapshot. Refresh routes to switch." to "ဆန့်ကျင်ဘက် ဦးတည်ရာသည် ဤဒေတာထဲတွင် မရှိပါ။ ပြောင်းရန် လမ်းကြောင်းများကို ပြန်ယူပါ။",
     "Turn on GPS to start survey." to "စစ်တမ်းစတင်ရန် GPS ဖွင့်ပါ။",
     "Survey ended. Start again to save reports." to "စစ်တမ်းရပ်ပြီးပါပြီ။ အစီရင်ခံစာသိမ်းရန် ပြန်စတင်ပါ။",
     "Turn on GPS." to "GPS ဖွင့်ပါ။",
@@ -210,4 +273,6 @@ private val MYANMAR_TEXT = mapOf(
     "Preparing local PMTiles…" to "အော့ဖ်လိုင်းမြေပုံ ပြင်ဆင်နေသည်…",
     "Offline Yangon streets · pan/zoom enabled" to "ရန်ကုန်လမ်းမြေပုံ · ရွှေ့/ချဲ့ ကြည့်နိုင်သည်",
     "Offline overview only · download Yangon on Setup for streets" to "အကြမ်းဖျင်းမြေပုံသာရှိသည် · လမ်းများအတွက် ရန်ကုန်မြေပုံ ရယူပါ",
+    "No internet. Survey capture still works. Sync waits until you are online." to "အင်တာနက်မရှိပါ။ ကွင်းဆင်းကောက်ယူမှု ဆက်လုပ်နိုင်သည်။ ဒေတာပို့ခြင်းကို အွန်လိုင်းပြန်ရမှ ဆက်လုပ်မည်။",
+    "Storage is low. Free space before downloading maps or capturing media." to "သိုလှောင်ခန်း နည်းနေသည်။ မြေပုံရယူခြင်း သို့မဟုတ် မီဒီယာမကောက်ယူမီ နေရာလွတ်အရင်ရှင်းပါ။",
 )

@@ -30,22 +30,36 @@ interface LocalReportMediaDao {
         SELECT m.* FROM local_report_media m
         INNER JOIN local_reports r ON r.clientPublicId = m.reportClientPublicId
         WHERE r.status = 'SYNCED'
-          AND m.syncState IN ('LOCAL', 'QUEUED', 'RETRY', 'SYNCING')
+          AND (m.syncState IN ('LOCAL', 'QUEUED', 'RETRY')
+               OR (m.syncState = 'SYNCING' AND m.updatedAtEpochMs <= :staleBeforeEpochMs))
         ORDER BY m.createdAtEpochMs ASC
         LIMIT 1
         """,
     )
-    suspend fun nextEligible(): LocalReportMediaEntity?
+    suspend fun nextEligible(staleBeforeEpochMs: Long): LocalReportMediaEntity?
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM local_report_media
+        WHERE syncState = 'SYNCING' AND updatedAtEpochMs > :staleBeforeEpochMs
+        """,
+    )
+    suspend fun countFreshSyncing(staleBeforeEpochMs: Long): Int
 
     @Query(
         """
         UPDATE local_report_media
         SET syncState = 'SYNCING', updatedAtEpochMs = :updatedAtEpochMs, lastError = NULL
         WHERE mediaPublicId = :mediaPublicId
-          AND syncState IN ('LOCAL', 'QUEUED', 'RETRY', 'SYNCING')
+          AND (syncState IN ('LOCAL', 'QUEUED', 'RETRY')
+               OR (syncState = 'SYNCING' AND updatedAtEpochMs <= :staleBeforeEpochMs))
         """,
     )
-    suspend fun markSyncing(mediaPublicId: String, updatedAtEpochMs: Long): Int
+    suspend fun markSyncing(
+        mediaPublicId: String,
+        updatedAtEpochMs: Long,
+        staleBeforeEpochMs: Long,
+    ): Int
 
     @Query(
         """
@@ -87,6 +101,17 @@ interface LocalReportMediaDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(row: LocalReportMediaEntity)
 
+    @Query(
+        """
+        SELECT * FROM local_report_media
+        WHERE syncState = 'SYNCED' AND updatedAtEpochMs <= :cutoffEpochMs
+        """,
+    )
+    suspend fun listSyncedReadyForCleanup(cutoffEpochMs: Long): List<LocalReportMediaEntity>
+
+    @Query("SELECT localPath FROM local_report_media")
+    suspend fun allLocalPaths(): List<String>
+
     @Query("DELETE FROM local_report_media WHERE reportClientPublicId = :reportClientPublicId")
     suspend fun deleteForReport(reportClientPublicId: String): Int
 
@@ -102,9 +127,10 @@ interface LocalReportMediaDao {
 
     @Transaction
     suspend fun claimNext(nowEpochMs: Long): LocalReportMediaEntity? {
+        val staleBefore = nowEpochMs - SyncClaimPolicy.LEASE_MS
         repeat(8) {
-            val row = nextEligible() ?: return null
-            if (markSyncing(row.mediaPublicId, nowEpochMs) == 1) {
+            val row = nextEligible(staleBefore) ?: return null
+            if (markSyncing(row.mediaPublicId, nowEpochMs, staleBefore) == 1) {
                 return row.copy(syncState = LocalReportMediaEntity.STATE_SYNCING, updatedAtEpochMs = nowEpochMs)
             }
         }

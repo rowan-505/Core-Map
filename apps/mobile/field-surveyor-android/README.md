@@ -1,54 +1,34 @@
 # CoreMap Field (Android)
 
-One Gradle app module (`:app`). Package folders, not extra modules. Do not copy `apps/mobile/android-kotlin`.
+Gradle app module (`:app`). Package folders only. Do not copy `apps/mobile/android-kotlin`.
 
-This is the field-surveyor foundation: CoreMap auth, Keystore token storage, Room, WorkManager, and the offline PMTiles map from the spike.
+This app is a field surveyor client of the CoreMap Fastify API. It does not talk to Postgres, Prisma, or Supabase service-role keys.
 
 ## Screens
 
 Login → Setup/Sync → Routes | Survey | Settings
 
-- **Login** — `POST /auth/login` with email + password. Role must include `surveyor`.
-- **Setup/Sync** — `GET /field/bootstrap` plus a one-time Yangon PMTiles download (~730 MB). Matching `revision` skips the snapshot. Other regions are not downloaded.
-- **Routes** — local Room search by route code. Tap a D0/D1 variant to open Survey.
-- **Survey** — local PMTiles + selected path/stops + live GPS. Check report types, then **Create report**. No media. No API during survey.
-- **Settings** — Profile, Outbox (list, detail, edit/cancel waiting rows), Infra (Yangon PMTiles + YBS snapshot).
+- **Login** — `POST /auth/login`. Role must include `surveyor`.
+- **Setup/Sync** — `GET /field/bootstrap` (gzip when the phone sends `Accept-Encoding: gzip`) plus an optional Yangon PMTiles download (~730 MB, Wi-Fi by default). Matching `revision` skips the snapshot.
+- **Routes** — local Room search. Nearby GPS ranking can suggest a D0/D1 variant.
+- **Survey** — local PMTiles, selected path/stops, live GPS, report types, JPEG + short voice, survey session start/complete/abandon.
+- **Settings** — Profile, Outbox, survey history, Infra (Yangon map + YBS snapshot).
 
-Not in this step: CameraX, audio, R2, public media, routing, POIs, consumer Discover/Saved/Profile, Hilt/Koin.
+Not in this app: public consumer map, dashboard, routing UI, automatic points, live bus GPS.
 
-## Active survey (this step)
+## Offline map
 
-Uses cached bootstrap data and device GPS only. Airplane mode is expected.
+Yangon streets PMTiles stay in `filesDir/basemap/yangon.pmtiles`. Default URL: `https://tiles.coremapmm.com/basemaps/yangon/v1/basemap.pmtiles`. Override with `-PfieldYangonPmtilesUrl=…`.
 
-Map shows only:
+The app checks free space, checksum, and resume. It does not auto-download ~730 MB. Logout does not delete the map file.
 
-- local Yangon PMTiles (`filesDir/basemap/yangon.pmtiles`) after Setup download
-- selected variant path
-- selected variant stops
-- current GPS
-- local anomaly markers for that variant
+## Survey sessions and reports
 
-It does not render all routes, all YBS stops, POIs, online tiles, or media.
+Each started survey writes a local session row and later `POST /field/survey-sessions`. Reports are Room `local_reports` rows, then WorkManager `POST /field/reports`. Photos and voice upload through `/media/uploads` + complete + `POST /field/reports/:id/media`. Ownership is enforced on the API (surveyor + report owner).
 
-Start Survey: keep GPS hot, keep the screen awake, and allow saving reports. End Survey: you can still see the map, but Save report is blocked until Start again. Display `GPS ±Xm`. One round locate icon recenters on you; pinch-zoom and pan stay. Pan does not stop the blue GPS dot. Selecting a stop flies to that stop’s stored coordinates. GPS fixes are not saved to disk.
-
-Stop context is previous / current / next by `stop_sequence`. GPS may suggest a nearby stop; the surveyor must confirm. Correct stop writes nothing.
-
-Report types are outlined pills. A filled background means that type’s form is open. **MOVED** requires a map tap for the real stop location, then **Save report**. **MISSING / DATA / ROUTE / OTHER** open a short form (note or route choices). Each save writes one Room `local_reports` row (`wrong_location`, `missing_item`, `wrong_info`, `transport_issue`, `other_map_issue`) with UUID, GPS, snapshot revision, route/variant, and stop when selected. No media.
-
-There is no survey-session database table. Last variant/stop selection is a small UI pref only.
-
-## Outbox sync
-
-WorkManager unique work `field-outbox-sync` (network required, exponential backoff). One anomaly per `POST /field/reports`. The local `clientPublicId` is reused on every retry. The server treats that UUID as the report public id (`ON CONFLICT DO NOTHING`), so a lost 201 still becomes one dashboard row.
-
-Local states: `LOCAL`, `QUEUED`, `SYNCING`, `SYNCED`, `RETRY`, `PERMANENT_ERROR` (4xx validation — no infinite retry). Waiting rows (not yet synced) can be opened, note-edited, or deleted on the phone. Synced rows are view-only.
-
-Survey capture does not wait for upload. Process restart re-enqueues work. Logout clears auth only.
+Outbox unique work `field-outbox-sync` needs a network. Local states: `LOCAL`, `QUEUED`, `SYNCING`, `SYNCED`, `RETRY`, `PERMANENT_ERROR`. Logout clears Keystore tokens only. Drafts stay.
 
 ## Authentication
-
-Uses the existing Fastify client:
 
 | Method | Path | Body |
 |---|---|---|
@@ -56,122 +36,49 @@ Uses the existing Fastify client:
 | POST | `/auth/refresh` | `{ refreshToken }` |
 | POST | `/auth/logout` | `{ refreshToken }` |
 
-Refresh **rotates** the refresh token. The previous refresh token is invalid after a successful refresh. The next call must send the new token (stored immediately).
+Refresh rotates. Access tokens refresh 30 seconds early. A 401 on field/media routes clears local credentials and returns to Login. Drafts stay.
 
-Access tokens follow API `expiresIn` (currently `15m`). The app refreshes 30 seconds early.
-
-Non-surveyor accounts: login response is not stored; the app calls logout to revoke the just-issued refresh session.
-
-## Secure storage
-
-Access token, refresh token, and user JSON are in `EncryptedSharedPreferences` (`field_auth_prefs`), encrypted with an Android Keystore `MasterKey` (AES256-GCM / AES256-SIV).
-
-Do not store those values in plain SharedPreferences. Do not embed API JWT secrets, R2 keys, or database URLs in the app.
+Tokens live in `EncryptedSharedPreferences`. Do not embed JWT secrets, R2 keys, or database URLs in the APK.
 
 ## API base URL
 
-Non-secret origin only, via `BuildConfig.API_BASE_URL`.
+`BuildConfig.API_BASE_URL` is a public origin only.
 
-- Debug default: `http://10.0.2.2:3001` (emulator → host Fastify). This does **not** work on a physical phone.
-- Real phone (same Wi-Fi as the Mac): add this line to gitignored `local.properties` and rebuild debug:
+- Debug default: `http://10.0.2.2:3001` (emulator). Physical phones need LAN Fastify in gitignored `local.properties`: `fieldApiBaseUrl=http://<MAC_LAN_IP>:3001`
+- Release default: `https://api.coremapmm.com`
+- Override any build: `-PfieldApiBaseUrl=…` or env `FIELD_API_BASE_URL`
+
+Debug allows HTTP cleartext. Release forbids cleartext.
+
+## Release signing (do not commit secrets)
+
+Release minification and resource shrinking are on. Release signing is mandatory: `assembleRelease` and `bundleRelease` fail closed if a complete release keystore configuration is missing. A release build never falls back to the debug key.
+
+Gitignored: `local.properties`, `*.jks`, `*.keystore`.
+
+Example `local.properties` (never commit):
 
 ```text
-fieldApiBaseUrl=http://<MAC_LAN_IP>:3001
+fieldReleaseStoreFile=/absolute/path/to/field-release.jks
+fieldReleaseStorePassword=…
+fieldReleaseKeyAlias=…
+fieldReleaseKeyPassword=…
+fieldSentryDsn=https://…@….ingest.sentry.io/…
 ```
 
-- CLI override (debug or release): `-PfieldApiBaseUrl=https://api.example.com`
-- Release default placeholder: `https://api.invalid.coremap.local` until you pass a real HTTPS origin. `local.properties` is **debug only**.
+Empty `fieldSentryDsn` skips remote crash upload. When configured, Sentry disables default PII, automatic breadcrumbs, screenshots, view hierarchy, and ANR thread dumps; its final event hook removes user/request/breadcrumb payloads and exception messages. Logcat records only the exception type.
 
-Debug builds allow HTTP cleartext (`src/debug`). Release forbids cleartext.
-
-## Room
-
-`FieldDatabase` lives in `noBackupFilesDir/field.db` so Android backup does not copy it.
-
-Table `local_reports` is the outbox. Capture writes `LOCAL`. WorkManager posts to `POST /field/reports` and marks `SYNCED` (or `RETRY` / `PERMANENT_ERROR`).
-
-Transport cache (field-use only, not a Postgres mirror):
-
-- `cache_routes`, `cache_variants`, `cache_stops`, `cache_route_stops`, `cache_route_paths`
-- `cache_metadata.snapshotRevision`
-
-Refresh: if server revision equals local revision, no dataset download. If it differs, download the compact snapshot, validate, replace those tables in one transaction, then store the new revision. Failure keeps the previous good cache and revision.
-
-Local queries: search route code, variants for a route, D0/D1, ordered stops, selected route path, stop coordinates/names.
-
-Route search never calls the network per keystroke.
-
-## WorkManager
-
-`FieldApp` implements `Configuration.Provider` (default WorkManager initializer removed). On start it enqueues unique work `field-foundation` (`KEEP`). Real upload workers come later.
-
-## Logout (safe behavior)
-
-1. `POST /auth/logout` with the current refresh token (idempotent on the server). If the network fails, local logout still continues.
-2. Clear Keystore-backed credentials only.
-3. **Do not** delete Room `local_reports` rows, GPS/evidence files, or the local PMTiles copy.
-
-Unsynced drafts stay on the device so a surveyor can sign in again and sync later. There is no silent wipe.
-
-After a 401 refresh, credentials are cleared the same way. Drafts stay.
-
-## Process restart
-
-Encrypted prefs restore the session. If the access token is still valid, the app opens Routes. If it is expired, the next API call rotates refresh. If refresh is rejected, the user returns to Login; drafts remain.
-
-## Backup exclusions
-
-`data_extraction_rules.xml` and `backup_rules.xml` exclude:
-
-- `field_auth_prefs.xml` (tokens)
-- app databases
-- `files/reports`, `files/evidence`, `files/gps`, `files/basemap`
-
-Room already uses `noBackupFilesDir`.
-
-## Offline PMTiles
-
-Survey zoom is street-level (up to z20). Overview tiles only cover z0–z8, so the app does **not** pack all regional PMTiles. It downloads **Yangon only** into `filesDir/basemap/yangon.pmtiles` (~730 MB). Style URL is `pmtiles://file://…`. Glyphs stay `asset://`. No live tile HTTP after the file is on the device.
-
-Default URL: `https://tiles.coremapmm.com/basemaps/yangon/v1/basemap.pmtiles`. Override with `-PfieldYangonPmtilesUrl=…` (LAN copy of the file). Logout does not delete this file.
-
-Gradle still copies the small overview PMTiles as a fallback asset. Setup requires the Yangon file before Continue.
-
-## Build / test / install
-
-From this directory:
+## Build / test
 
 ```bash
-./gradlew :app:testDebugUnitTest :app:assembleDebug
+./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+# With FIELD_RELEASE_STORE_* set outside the repository:
+./gradlew :app:assembleRelease :app:bundleRelease
 ```
 
-Physical device (Android 12, arm64):
+Physical device:
 
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.coremapmm.fieldsurveyor/.MainActivity
 ```
-
-On a phone, set `fieldApiBaseUrl` in `local.properties` to the Mac LAN Fastify origin (not `10.0.2.2`, not `localhost`).
-
-Mac API (same Wi-Fi):
-
-```bash
-cd apps/api
-# HOST defaults to 0.0.0.0 in server.ts; set it in .env if you previously bound 127.0.0.1
-HOST=0.0.0.0 npm run dev
-```
-
-Mac LAN IP (Wi-Fi, typical):
-
-```bash
-ipconfig getifaddr en0
-```
-
-If that is empty, list other interfaces:
-
-```bash
-ifconfig | awk '/inet / && $2 != "127.0.0.1" { print $2 }'
-```
-
-Phone browser check (replace with your IP): `http://<MAC_LAN_IP>:3001/health` should return JSON `status` ok. Then rebuild the debug APK so login uses that origin.

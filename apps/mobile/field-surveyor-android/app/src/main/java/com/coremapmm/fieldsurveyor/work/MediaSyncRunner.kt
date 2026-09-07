@@ -5,7 +5,10 @@ import com.coremapmm.fieldsurveyor.data.LocalReportMediaDao
 import com.coremapmm.fieldsurveyor.data.LocalReportMediaEntity
 import com.coremapmm.fieldsurveyor.data.MediaApiResult
 import com.coremapmm.fieldsurveyor.data.MediaUploadIntent
+import com.coremapmm.fieldsurveyor.log.FieldLog
+import com.coremapmm.fieldsurveyor.media.MediaChecksum
 import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Syncs one local JPEG or AAC clip: parent report must already be SYNCED.
@@ -15,7 +18,7 @@ class MediaSyncRunner(
     private val hasSession: () -> Boolean,
     private val accessToken: suspend () -> String,
     private val media: LocalReportMediaDao,
-    private val createUpload: (String, String, Long) -> MediaApiResult<MediaUploadIntent>,
+    private val createUpload: (String, String, Long, String) -> MediaApiResult<MediaUploadIntent>,
     private val putObject: (MediaUploadIntent, File) -> OutboxHttpResult,
     private val complete: (String, String) -> MediaApiResult<Unit>,
     private val attach: (String, String, String) -> MediaApiResult<Unit>,
@@ -26,43 +29,81 @@ class MediaSyncRunner(
             return OutboxRunResult.Idle
         }
         val row = media.claimNext(nowMs()) ?: return OutboxRunResult.Idle
-        val file = File(row.localPath)
-        if (!file.isFile || file.length() != row.byteSize) {
-            media.updateState(
-                row.mediaPublicId,
-                LocalReportMediaEntity.STATE_PERMANENT_ERROR,
-                "Local file missing",
-                nowMs(),
-            )
-            return OutboxRunResult.Processed
-        }
-        return try {
+        FieldLog.event(
+            "media_claim",
+            mapOf(
+                "media_id" to row.mediaPublicId,
+                "report_id" to row.reportClientPublicId,
+                "from_state" to row.syncState,
+                "remote_set" to (row.remoteAssetPublicId != null).toString(),
+            ),
+        )
+        try {
+            val file = File(row.localPath)
+            if (!file.isFile || file.length() != row.byteSize) {
+                return finish(row, LocalReportMediaEntity.STATE_PERMANENT_ERROR, "Local file missing", OutboxRunResult.Processed)
+            }
+            if (row.checksumSha256.isNotBlank() && MediaChecksum.sha256Hex(file) != row.checksumSha256) {
+                return finish(row, LocalReportMediaEntity.STATE_PERMANENT_ERROR, "Local file checksum mismatch", OutboxRunResult.Processed)
+            }
             val token = accessToken()
-            when (val step = ensureReadyAsset(token, row, file)) {
-                is AssetStep.Stop -> return step.result
-                is AssetStep.Ready -> {
-                    when (val attached = attach(token, row.reportClientPublicId, step.assetId)) {
-                        is MediaApiResult.Ok -> {
-                            media.updateState(row.mediaPublicId, LocalReportMediaEntity.STATE_SYNCED, null, nowMs())
-                            OutboxRunResult.Processed
-                        }
-                        is MediaApiResult.NeedNewUpload -> failTransient(row, attached.message)
-                        is MediaApiResult.Http -> applyHttp(row, attached.result)
+            return when (val step = ensureReadyAsset(token, row, file)) {
+                is AssetStep.Stop -> step.result
+                is AssetStep.Ready -> when (val attached = attach(token, row.reportClientPublicId, step.assetId)) {
+                    is MediaApiResult.Ok -> finish(row, LocalReportMediaEntity.STATE_SYNCED, null, OutboxRunResult.Processed)
+                    is MediaApiResult.NeedNewUpload -> failTransient(row, attached.message)
+                    is MediaApiResult.Http -> if (alreadyAttached(attached.result)) {
+                        finish(row, LocalReportMediaEntity.STATE_SYNCED, null, OutboxRunResult.Processed)
+                    } else {
+                        applyHttp(row, attached.result)
                     }
                 }
             }
+        } catch (error: CancellationException) {
+            throw error
         } catch (error: AuthException) {
-            media.updateState(
-                row.mediaPublicId,
-                LocalReportMediaEntity.STATE_RETRY,
-                error.message,
-                nowMs(),
-            )
-            if (error.statusCode == 401) OutboxRunResult.Idle else OutboxRunResult.RetryLater
+            return finish(row, LocalReportMediaEntity.STATE_RETRY, error.message, if (error.statusCode == 401) {
+                OutboxRunResult.Idle
+            } else {
+                OutboxRunResult.RetryLater
+            })
         } catch (error: Exception) {
-            applyHttp(row, OutboxSyncPolicy.classifyThrowable(error))
+            return applyHttp(row, OutboxSyncPolicy.classifyThrowable(error))
+        } finally {
+            releaseInterruptedClaim(row)
         }
     }
+
+    private suspend fun releaseInterruptedClaim(row: LocalReportMediaEntity) {
+        val current = media.findById(row.mediaPublicId) ?: return
+        if (current.syncState != LocalReportMediaEntity.STATE_SYNCING) {
+            return
+        }
+        finish(row, LocalReportMediaEntity.STATE_RETRY, "sync interrupted", OutboxRunResult.RetryLater)
+    }
+
+    private suspend fun finish(
+        row: LocalReportMediaEntity,
+        state: String,
+        message: String?,
+        result: OutboxRunResult,
+    ): OutboxRunResult {
+        media.updateState(row.mediaPublicId, state, message, nowMs())
+        FieldLog.event(
+            "media_state",
+            mapOf(
+                "media_id" to row.mediaPublicId,
+                "report_id" to row.reportClientPublicId,
+                "to_state" to state,
+                "result" to result.toString(),
+            ),
+        )
+        return result
+    }
+
+    private fun alreadyAttached(result: OutboxHttpResult): Boolean =
+        result is OutboxHttpResult.Success ||
+            (result is OutboxHttpResult.Permanent && result.httpCode == 409)
 
     private suspend fun ensureReadyAsset(
         token: String,
@@ -77,7 +118,9 @@ class MediaSyncRunner(
                 is MediaApiResult.Http -> return AssetStep.Stop(applyHttp(row, done.result))
             }
         }
-        val intent = when (val created = createUpload(token, row.mimeType, file.length())) {
+        val intent = when (
+            val created = createUpload(token, row.mimeType, file.length(), row.checksumSha256)
+        ) {
             is MediaApiResult.Ok -> created.value
             is MediaApiResult.NeedNewUpload -> return AssetStep.Stop(failTransient(row, created.message))
             is MediaApiResult.Http -> return AssetStep.Stop(applyHttp(row, created.result))
@@ -112,8 +155,7 @@ class MediaSyncRunner(
     }
 
     private suspend fun failTransient(row: LocalReportMediaEntity, message: String): OutboxRunResult {
-        media.updateState(row.mediaPublicId, LocalReportMediaEntity.STATE_RETRY, message, nowMs())
-        return OutboxRunResult.RetryLater
+        return finish(row, LocalReportMediaEntity.STATE_RETRY, message, OutboxRunResult.RetryLater)
     }
 
     private suspend fun applyHttp(row: LocalReportMediaEntity, result: OutboxHttpResult): OutboxRunResult {
@@ -127,12 +169,12 @@ class MediaSyncRunner(
             is OutboxHttpResult.Permanent -> result.message
             is OutboxHttpResult.Transient -> result.message
         }
-        media.updateState(row.mediaPublicId, status, message, nowMs())
-        return when (result) {
+        val run = when (result) {
             is OutboxHttpResult.Success -> OutboxRunResult.Processed
             is OutboxHttpResult.Permanent -> OutboxRunResult.Processed
             is OutboxHttpResult.Transient -> OutboxRunResult.RetryLater
         }
+        return finish(row, status, message, run)
     }
 }
 

@@ -10,7 +10,7 @@ data class SurveySelection(
     val selectedStopPublicId: String?,
 )
 
-/** Last selected variant/stop for the UI. Not a survey-session table. */
+/** Small durable UI/session marker. Survey GPS points are never persisted here. */
 class SurveySelectionStore(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -38,6 +38,21 @@ class SurveySelectionStore(context: Context) {
             .apply()
     }
 
+    fun isSurveyActive(): Boolean = prefs.getBoolean(KEY_SURVEY_ACTIVE, false)
+
+    fun setSurveyActive(active: Boolean) {
+        // A foreground-service/process restart must observe this transition immediately.
+        prefs.edit().putBoolean(KEY_SURVEY_ACTIVE, active).commit()
+    }
+
+    fun activeSessionId(): String? = prefs.getString(KEY_ACTIVE_SESSION_ID, null)
+
+    fun setActiveSessionId(id: String?) {
+        prefs.edit().apply {
+            if (id == null) remove(KEY_ACTIVE_SESSION_ID) else putString(KEY_ACTIVE_SESSION_ID, id)
+        }.commit()
+    }
+
     companion object {
         const val PREFS = "field_survey_ui"
         private const val KEY_ROUTE = "route_public_id"
@@ -45,5 +60,7 @@ class SurveySelectionStore(context: Context) {
         private const val KEY_VARIANT = "variant_public_id"
         private const val KEY_VARIANT_CODE = "variant_code"
         private const val KEY_STOP = "stop_public_id"
+        private const val KEY_ACTIVE_SESSION_ID = "active_session_client_id"
+        private const val KEY_SURVEY_ACTIVE = "survey_active"
     }
 }

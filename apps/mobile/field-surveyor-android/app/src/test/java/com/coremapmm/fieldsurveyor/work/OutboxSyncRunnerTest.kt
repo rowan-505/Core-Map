@@ -137,6 +137,25 @@ class OutboxSyncRunnerTest {
     }
 
     @Test
+    fun linkedReportSendsStableSessionIdentifier() = runBlocking {
+        val reports = MemoryReports()
+        val reportId = "abababab-abab-4bab-8bab-abababababab"
+        val sessionId = "cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd"
+        reports.upsert(row(reportId, LocalReportEntity.STATUS_QUEUED).copy(sessionClientSessionId = sessionId))
+        var postedBody: String? = null
+
+        assertEquals(
+            OutboxRunResult.Processed,
+            runner(reports) { _, body ->
+                postedBody = body
+                OutboxHttpResult.Success(201)
+            }.syncOne(),
+        )
+
+        assertEquals(sessionId, JSONObject(postedBody!!).getJSONObject("surveySession").getString("clientSessionId"))
+    }
+
+    @Test
     fun countsMatchCapturedSyncedWaiting() = runBlocking {
         val reports = MemoryReports()
         reports.upsert(row("a", LocalReportEntity.STATUS_SYNCED, "a"))
@@ -187,7 +206,19 @@ private class MemoryReports : LocalReportDao {
 
     override suspend fun countSynced() = rows.values.count { it.status == LocalReportEntity.STATUS_SYNCED }
 
-    override suspend fun countWaiting() = rows.values.count { it.status != LocalReportEntity.STATUS_SYNCED }
+    override suspend fun countWaiting() =
+        rows.values.count { it.status != LocalReportEntity.STATUS_SYNCED && it.status != LocalReportEntity.STATUS_CANCELLED }
+
+    override suspend fun countForSession(sessionId: String) =
+        rows.values.count { it.sessionClientSessionId == sessionId && it.status != LocalReportEntity.STATUS_CANCELLED }
+
+    override suspend fun countPendingSync() =
+        rows.values.count {
+            it.status == LocalReportEntity.STATUS_LOCAL ||
+                it.status == LocalReportEntity.STATUS_QUEUED ||
+                it.status == LocalReportEntity.STATUS_RETRY ||
+                it.status == LocalReportEntity.STATUS_SYNCING
+        }
 
     override suspend fun listAll() = rows.values.toList()
 
@@ -203,6 +234,9 @@ private class MemoryReports : LocalReportDao {
     }
 
     override suspend fun findById(clientPublicId: String) = rows[clientPublicId]
+
+    override suspend fun listForSession(sessionId: String) =
+        rows.values.filter { it.sessionClientSessionId == sessionId }
 
     override suspend fun markSyncing(clientPublicId: String, updatedAtEpochMs: Long): Int {
         val current = rows[clientPublicId] ?: return 0
@@ -243,7 +277,7 @@ private class MemoryReports : LocalReportDao {
         rows[clientPublicId] = current.copy(payloadJson = payloadJson, updatedAtEpochMs = updatedAtEpochMs)
     }
 
-    override suspend fun deletePending(clientPublicId: String): Int {
+    override suspend fun cancelPending(clientPublicId: String, updatedAtEpochMs: Long): Int {
         val current = rows[clientPublicId] ?: return 0
         val pending = current.status == LocalReportEntity.STATUS_LOCAL ||
             current.status == LocalReportEntity.STATUS_QUEUED ||
@@ -252,7 +286,10 @@ private class MemoryReports : LocalReportDao {
         if (!pending) {
             return 0
         }
-        rows.remove(clientPublicId)
+        rows[clientPublicId] = current.copy(
+            status = LocalReportEntity.STATUS_CANCELLED,
+            updatedAtEpochMs = updatedAtEpochMs,
+        )
         return 1
     }
 

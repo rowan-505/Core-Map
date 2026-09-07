@@ -1,13 +1,24 @@
 package com.coremapmm.fieldsurveyor.data
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
  * Local field anomaly outbox row. Logout must not delete these.
  * clientPublicId is the POST /field/reports idempotency key.
  */
-@Entity(tableName = "local_reports")
+@Entity(
+    tableName = "local_reports",
+    foreignKeys = [ForeignKey(
+        entity = LocalSurveySessionEntity::class,
+        parentColumns = ["clientSessionId"],
+        childColumns = ["sessionClientSessionId"],
+        onDelete = ForeignKey.NO_ACTION,
+    )],
+    indices = [Index(value = ["sessionClientSessionId"])],
+)
 data class LocalReportEntity(
     @PrimaryKey val clientPublicId: String,
     val status: String,
@@ -15,6 +26,7 @@ data class LocalReportEntity(
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
     val lastError: String? = null,
+    val sessionClientSessionId: String? = null,
 ) {
     companion object {
         const val STATUS_LOCAL = "LOCAL"
@@ -23,5 +35,6 @@ data class LocalReportEntity(
         const val STATUS_SYNCED = "SYNCED"
         const val STATUS_RETRY = "RETRY"
         const val STATUS_PERMANENT_ERROR = "PERMANENT_ERROR"
+        const val STATUS_CANCELLED = "CANCELLED"
     }
 }

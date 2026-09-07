@@ -33,19 +33,30 @@ object StopContext {
         )
     }
 
-    fun nearest(stops: List<OrderedStopRow>, lat: Double, lng: Double): OrderedStopRow? {
-        return stops.minByOrNull { haversineMeters(lat, lng, it.lat, it.lng) }
+    fun nearest(
+        stops: List<OrderedStopRow>,
+        lat: Double,
+        lng: Double,
+        variantPublicId: String? = null,
+    ): OrderedStopRow? {
+        return nearby(stops, lat, lng, variantPublicId = variantPublicId, limit = 1)
+            .firstOrNull()?.stop
     }
 
     fun nearby(
         stops: List<OrderedStopRow>,
         lat: Double,
         lng: Double,
+        variantPublicId: String? = null,
+        radiusM: Double = FieldLocationConfig.NEARBY_STOP_RADIUS_M,
         limit: Int = 3,
-    ): List<NearbyStop> = stops
+    ): List<NearbyStop> = stops.asSequence()
+        .filter { variantPublicId == null || it.variantPublicId == variantPublicId }
         .map { stop -> NearbyStop(stop, haversineMeters(lat, lng, stop.lat, stop.lng)) }
+        .filter { it.distanceM <= radiusM.coerceAtLeast(0.0) }
         .sortedBy { it.distanceM }
-        .take(limit.coerceAtLeast(0))
+        .take(limit.coerceIn(0, MAX_NEARBY_STOPS))
+        .toList()
 
     fun haversineMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
         val earth = 6_371_000.0
@@ -55,6 +66,17 @@ object StopContext {
             cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
             sin(dLng / 2) * sin(dLng / 2)
         return 2 * earth * atan2(sqrt(a), sqrt(1 - a))
+    }
+
+    const val MAX_NEARBY_STOPS = 3
+}
+
+object NearbyStopRefreshPolicy {
+    fun shouldRecompute(previous: GpsFix?, next: GpsFix, lastComputedAtMs: Long, nowMs: Long): Boolean {
+        if (previous == null) return true
+        val movedM = StopContext.haversineMeters(previous.lat, previous.lng, next.lat, next.lng)
+        return movedM >= FieldLocationConfig.NEARBY_RECOMPUTE_MOVEMENT_M ||
+            nowMs - lastComputedAtMs >= FieldLocationConfig.NEARBY_RECOMPUTE_INTERVAL_MS
     }
 }
 
@@ -67,7 +89,7 @@ data class GpsFix(
 
 object GpsBuffer {
     const val MAX_FIXES = 30
-    const val BEST_WINDOW_MS = 5_000L
+    const val BEST_WINDOW_MS = FieldLocationConfig.GOOD_FIX_STALE_MS
 
     fun push(buffer: ArrayDeque<GpsFix>, fix: GpsFix): ArrayDeque<GpsFix> {
         buffer.addLast(fix)
@@ -79,7 +101,10 @@ object GpsBuffer {
 
     fun bestRecent(buffer: List<GpsFix>, nowEpochMs: Long): GpsFix? {
         val recent = buffer.filter { nowEpochMs - it.epochMs <= BEST_WINDOW_MS }
-        return recent.minByOrNull { it.accuracyM ?: Float.MAX_VALUE }
+        return recent.minWithOrNull(
+            compareBy<GpsFix> { it.accuracyM ?: Float.MAX_VALUE }
+                .thenByDescending { it.epochMs },
+        )
     }
 }
 

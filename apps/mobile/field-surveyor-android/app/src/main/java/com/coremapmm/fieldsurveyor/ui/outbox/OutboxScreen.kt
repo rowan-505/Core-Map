@@ -37,6 +37,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.coremapmm.fieldsurveyor.data.LocalReportDao
 import com.coremapmm.fieldsurveyor.data.LocalReportEntity
+import com.coremapmm.fieldsurveyor.data.LocalReportMediaEntity
+import com.coremapmm.fieldsurveyor.ui.media.OnDemandJpegPreview
 import com.coremapmm.fieldsurveyor.outbox.OutboxReportSummary
 import com.coremapmm.fieldsurveyor.survey.AnomalyPayload
 import com.coremapmm.fieldsurveyor.work.FieldWork
@@ -58,6 +60,7 @@ fun OutboxScreen(
 ) {
     var rows by remember { mutableStateOf<List<OutboxReportSummary>>(emptyList()) }
     var photoCounts by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var selectedMedia by remember { mutableStateOf<List<com.coremapmm.fieldsurveyor.data.LocalReportMediaEntity>>(emptyList()) }
     var selectedId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -66,6 +69,7 @@ fun OutboxScreen(
         val all = reports.listAll()
         rows = all.map(OutboxReportSummary::from)
         photoCounts = all.associate { it.clientPublicId to reportMedia.countForReport(it.clientPublicId) }
+        selectedId?.let { selectedMedia = reportMedia.listForReport(it) }
     }
 
     val lifecycle = LocalLifecycleOwner.current
@@ -74,6 +78,9 @@ fun OutboxScreen(
             reload()
             FieldWork.enqueue(context)
         }
+    }
+    LaunchedEffect(selectedId) {
+        selectedMedia = selectedId?.let { reportMedia.listForReport(it) } ?: emptyList()
     }
 
     val selected = rows.firstOrNull { it.clientPublicId == selectedId }
@@ -92,11 +99,13 @@ fun OutboxScreen(
                 rows = rows,
                 photoCounts = photoCounts,
                 onOpen = { selectedId = it },
+                onUploadMediaNow = { FieldWork.enqueueMediaOverCellular(context) },
             )
         } else {
             OutboxDetail(
                 summary = selected,
                 photoCount = photoCounts[selected.clientPublicId] ?: 0,
+                media = selectedMedia,
                 onSaved = {
                     scope.launch { reload() }
                 },
@@ -122,7 +131,7 @@ fun OutboxScreen(
                 },
                 cancelPending = { id ->
                     photos.deleteForReport(id)
-                    reports.deletePending(id)
+                    reports.cancelPending(id, System.currentTimeMillis())
                 },
             )
         }
@@ -134,6 +143,7 @@ private fun OutboxList(
     rows: List<OutboxReportSummary>,
     photoCounts: Map<String, Int>,
     onOpen: (String) -> Unit,
+    onUploadMediaNow: () -> Unit,
 ) {
     val captured = rows.size
     val synced = rows.count { it.status == LocalReportEntity.STATUS_SYNCED }
@@ -141,7 +151,7 @@ private fun OutboxList(
     Column(modifier = Modifier.fillMaxSize()) {
         ScreenHeader(
             title = tr("Outbox"),
-            subtitle = tr("Reports upload safely in the background when a network is available."),
+            subtitle = tr("Reports upload on any network. Photos and voice wait for Wi-Fi unless you upload now."),
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
         )
         MetricRow(
@@ -150,6 +160,10 @@ private fun OutboxList(
             waiting.toString() to tr("waiting"),
             modifier = Modifier.padding(horizontal = 20.dp),
         )
+        OutlinedButton(
+            onClick = onUploadMediaNow,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        ) { Text(tr("Upload now using mobile data")) }
         if (rows.isEmpty()) {
             Text(
                 tr("No reports yet."),
@@ -196,6 +210,7 @@ private fun OutboxList(
 private fun OutboxDetail(
     summary: OutboxReportSummary,
     photoCount: Int,
+    media: List<LocalReportMediaEntity>,
     onSaved: () -> Unit,
     onCancelled: () -> Unit,
     saveNote: suspend (String, String) -> Unit,
@@ -225,6 +240,21 @@ private fun OutboxDetail(
         )
         Text(tr("Stop: ${summary.stopLabel}"), style = MaterialTheme.typography.bodyMedium)
         Text(tr("Media: $photoCount"), style = MaterialTheme.typography.bodyMedium)
+        media.forEach { row ->
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    if (row.mimeType == LocalReportMediaEntity.MIME_AAC) {
+                        tr("Voice · ${(row.durationMs ?: 0L) / 1_000}s") + " · ${row.syncState}"
+                    } else {
+                        "${row.pixelWidth}×${row.pixelHeight} · ${row.byteSize} B · ${row.syncState}"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                )
+                if (row.mimeType == LocalReportMediaEntity.MIME_JPEG) {
+                    OnDemandJpegPreview(java.io.File(row.localPath), contentDescription = tr("Attached report photo"))
+                }
+            }
+        }
         Text(tr("When: $whenText"), style = MaterialTheme.typography.bodySmall)
         if (summary.lat != null && summary.lng != null) {
             Text(

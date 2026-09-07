@@ -1,5 +1,9 @@
 package com.coremapmm.fieldsurveyor.ui.routes
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +20,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,24 +29,59 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.coremapmm.fieldsurveyor.data.transport.BootstrapRepository
 import com.coremapmm.fieldsurveyor.data.transport.RouteSelectionFilter
 import com.coremapmm.fieldsurveyor.data.transport.RouteSelectionRow
+import com.coremapmm.fieldsurveyor.survey.NearbyRouteFlow
+import com.coremapmm.fieldsurveyor.survey.NearbyRouteNavigation
+import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecommendation
+import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecommender
+import com.coremapmm.fieldsurveyor.survey.NearbyRouteState
+import com.coremapmm.fieldsurveyor.survey.SurveyController
 import com.coremapmm.fieldsurveyor.ui.components.ScreenHeader
 import com.coremapmm.fieldsurveyor.ui.components.StatusPill
 import com.coremapmm.fieldsurveyor.ui.settings.tr
+import kotlinx.coroutines.launch
 
 @Composable
 fun RoutesScreen(
     bootstrap: BootstrapRepository,
+    survey: SurveyController,
+    nearbyRoutes: NearbyRouteRecommender,
     onNeedSync: () -> Unit,
     onSelectVariant: (RouteSelectionRow) -> Unit,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var allRows by remember { mutableStateOf<List<RouteSelectionRow>>(emptyList()) }
     var query by remember { mutableStateOf("") }
+    var recommendState by remember { mutableStateOf<NearbyRouteState>(NearbyRouteState.Idle) }
+
+    fun hasLocationPermission(): Boolean {
+        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        return fine || coarse
+    }
+
+    val locationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { granted ->
+        val allowed = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            granted[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (allowed) {
+            scope.launch { runRecommend(bootstrap, survey, nearbyRoutes) { recommendState = it } }
+        } else {
+            recommendState = NearbyRouteState.PermissionRequired
+        }
+    }
 
     LaunchedEffect(Unit) {
         allRows = bootstrap.listSelections()
@@ -65,7 +105,30 @@ fun RoutesScreen(
                 leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
             )
+            OutlinedButton(
+                onClick = {
+                    if (!hasLocationPermission()) {
+                        recommendState = NearbyRouteState.PermissionRequired
+                        locationPermission.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            ),
+                        )
+                    } else {
+                        scope.launch { runRecommend(bootstrap, survey, nearbyRoutes) { recommendState = it } }
+                    }
+                },
+                enabled = recommendState !is NearbyRouteState.Locating,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(tr("Recommend nearby route")) }
             StatusPill(tr("${visible.size} variants available"), positive = visible.isNotEmpty())
+            NearbyRecommendPanel(
+                state = recommendState,
+                onSelect = { row ->
+                    NearbyRouteNavigation.select(row) { onSelectVariant(it) }
+                },
+            )
             if (allRows.isEmpty()) {
                 Text(tr("No local snapshot yet."))
                 TextButton(onClick = onNeedSync) { Text(tr("Open Setup / Sync")) }
@@ -80,6 +143,80 @@ fun RoutesScreen(
                 RouteSelectionItem(row, onClick = { onSelectVariant(row) })
             }
         }
+    }
+}
+
+private suspend fun runRecommend(
+    bootstrap: BootstrapRepository,
+    survey: SurveyController,
+    nearbyRoutes: NearbyRouteRecommender,
+    setState: (NearbyRouteState) -> Unit,
+) {
+    setState(NearbyRouteState.Locating)
+    val revision = bootstrap.snapshotRevision()
+    val variants = bootstrap.variantCount()
+    val snapshotOk = !revision.isNullOrBlank() && variants > 0
+    if (!snapshotOk) {
+        setState(NearbyRouteState.StalePackage)
+        return
+    }
+    if (!survey.hasLocationPermission()) {
+        setState(NearbyRouteState.PermissionRequired)
+        return
+    }
+    val now = System.currentTimeMillis()
+    val fix = survey.locationForNearbyRecommend()
+    val rows = if (fix != null) nearbyRoutes.recommend(fix, now) else emptyList()
+    setState(
+        NearbyRouteFlow.afterSnapshotAndFix(
+            hasUsableSnapshot = true,
+            hasPermission = true,
+            fix = fix,
+            nowMs = now,
+            recommendations = rows,
+        ),
+    )
+}
+
+@Composable
+private fun NearbyRecommendPanel(
+    state: NearbyRouteState,
+    onSelect: (RouteSelectionRow) -> Unit,
+) {
+    val message = NearbyRouteFlow.message(state)
+    if (message != null) {
+        Text(tr(message), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    if (state is NearbyRouteState.Recommendations) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            state.rows.forEach { row ->
+                NearbyRecommendRow(row, onClick = { onSelect(row.selection) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun NearbyRecommendRow(row: NearbyRouteRecommendation, onClick: () -> Unit) {
+    val now = remember { System.currentTimeMillis() }
+    Column(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            "${row.selection.routeCode} · ${row.selection.variantCode}",
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Text(
+            "${row.nearestStopName} · ${row.stopDistanceM.toInt()} m",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            tr(com.coremapmm.fieldsurveyor.survey.NearbyRoutePolicy.lastSurveyLabel(row.lastSurveyedAtEpochMs, now)),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

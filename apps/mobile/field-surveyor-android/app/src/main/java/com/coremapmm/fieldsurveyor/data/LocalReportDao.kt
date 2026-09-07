@@ -14,8 +14,24 @@ interface LocalReportDao {
     @Query("SELECT COUNT(*) FROM local_reports WHERE status = 'SYNCED'")
     suspend fun countSynced(): Int
 
-    @Query("SELECT COUNT(*) FROM local_reports WHERE status <> 'SYNCED'")
+    @Query("SELECT COUNT(*) FROM local_reports WHERE status <> 'SYNCED' AND status <> 'CANCELLED'")
     suspend fun countWaiting(): Int
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM local_reports
+        WHERE sessionClientSessionId = :sessionId AND status <> 'CANCELLED'
+        """,
+    )
+    suspend fun countForSession(sessionId: String): Int
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM local_reports
+        WHERE status IN ('LOCAL', 'QUEUED', 'RETRY', 'SYNCING')
+        """,
+    )
+    suspend fun countPendingSync(): Int
 
     @Query("SELECT * FROM local_reports ORDER BY updatedAtEpochMs DESC")
     suspend fun listAll(): List<LocalReportEntity>
@@ -24,6 +40,11 @@ interface LocalReportDao {
         """
         SELECT * FROM local_reports
         WHERE status IN ('LOCAL', 'QUEUED', 'RETRY', 'SYNCING')
+          AND (sessionClientSessionId IS NULL OR EXISTS (
+            SELECT 1 FROM local_survey_sessions s
+            WHERE s.clientSessionId = local_reports.sessionClientSessionId
+              AND s.syncState = 'SYNCED'
+          ))
         ORDER BY createdAtEpochMs ASC
         LIMIT 1
         """,
@@ -32,6 +53,9 @@ interface LocalReportDao {
 
     @Query("SELECT * FROM local_reports WHERE clientPublicId = :clientPublicId LIMIT 1")
     suspend fun findById(clientPublicId: String): LocalReportEntity?
+
+    @Query("SELECT * FROM local_reports WHERE sessionClientSessionId = :sessionId AND status <> 'CANCELLED' ORDER BY createdAtEpochMs ASC")
+    suspend fun listForSession(sessionId: String): List<LocalReportEntity>
 
     @Query(
         """
@@ -72,12 +96,13 @@ interface LocalReportDao {
 
     @Query(
         """
-        DELETE FROM local_reports
+        UPDATE local_reports SET status = 'CANCELLED', lastError = NULL,
+            updatedAtEpochMs = :updatedAtEpochMs
         WHERE clientPublicId = :clientPublicId
           AND status IN ('LOCAL', 'QUEUED', 'RETRY', 'PERMANENT_ERROR')
         """,
     )
-    suspend fun deletePending(clientPublicId: String): Int
+    suspend fun cancelPending(clientPublicId: String, updatedAtEpochMs: Long): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(row: LocalReportEntity)

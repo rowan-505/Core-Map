@@ -7,7 +7,7 @@ object VoiceTarget {
     const val SAMPLE_RATE_HZ = 16_000
     const val BITRATE = 40_000
     const val MIN_DURATION_MS = 800
-    const val MAX_DURATION_MS = 40_000
+    const val MAX_DURATION_MS = 60_000
     const val MAX_BYTES = 1 * 1024 * 1024
     const val MAX_CLIPS_PER_REPORT = 1
 }

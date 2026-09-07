@@ -22,7 +22,7 @@ class ReportPhotoStoreTest {
             dao = dao,
             compress = { source, dest ->
                 dest.writeBytes(source.readBytes())
-                JpegCompressResult(1600, 1200, dest.length(), 1L)
+                JpegCompressResult(1600, 1200, dest.length(), 1L, "image/jpeg", "abc")
             },
             nowMs = { 10L },
             newId = {
@@ -31,6 +31,11 @@ class ReportPhotoStoreTest {
         )
         val source = File.createTempFile("src", ".jpg").apply { writeBytes(ByteArray(32) { 7 }) }
         store.addFromCapture("report-a", source)
+        val first = dao.rows.values.first()
+        assertEquals(1600, first.pixelWidth)
+        assertEquals(1200, first.pixelHeight)
+        assertEquals("image/jpeg", first.mimeType)
+        assertEquals("abc", first.checksumSha256)
         store.addFromCapture("report-a", source)
         store.addFromCapture("report-a", source)
         assertEquals(3, store.count("report-a"))
@@ -57,7 +62,7 @@ class ReportPhotoStoreTest {
             dao = dao,
             compress = { source, dest ->
                 dest.writeBytes(source.readBytes())
-                JpegCompressResult(1600, 1200, dest.length(), 1L)
+                JpegCompressResult(1600, 1200, dest.length(), 1L, "image/jpeg", "abc")
             },
             nowMs = { 10L },
             newId = { "00000000-0000-4000-8000-${dao.rows.size.toString().padStart(12, '0')}" },
@@ -70,7 +75,7 @@ class ReportPhotoStoreTest {
         )
         val jpeg = File.createTempFile("src", ".jpg").apply { writeBytes(ByteArray(32) { 7 }) }
         val clip = File.createTempFile("clip", ".m4a").apply { writeBytes(ByteArray(32) { 2 }) }
-        voice.addFromRecording("report-a", clip)
+        voice.addFromRecording("report-a", clip, 1_500L)
         photos.addFromCapture("report-a", jpeg)
         photos.addFromCapture("report-a", jpeg)
         photos.addFromCapture("report-a", jpeg)
@@ -95,27 +100,35 @@ internal class MemoryMediaDao : LocalReportMediaDao {
 
     override suspend fun findById(mediaPublicId: String) = rows[mediaPublicId]
 
-    override suspend fun nextEligible(): LocalReportMediaEntity? {
+    override suspend fun nextEligible(staleBeforeEpochMs: Long): LocalReportMediaEntity? {
         return rows.values
             .filter {
                 parentSynced(it.reportClientPublicId) &&
-                    it.syncState in setOf(
-                        LocalReportMediaEntity.STATE_LOCAL,
-                        LocalReportMediaEntity.STATE_QUEUED,
-                        LocalReportMediaEntity.STATE_RETRY,
-                        LocalReportMediaEntity.STATE_SYNCING,
+                    com.coremapmm.fieldsurveyor.data.SyncClaimPolicy.eligible(
+                        it.syncState,
+                        it.updatedAtEpochMs,
+                        staleBeforeEpochMs + com.coremapmm.fieldsurveyor.data.SyncClaimPolicy.LEASE_MS,
                     )
             }
             .minByOrNull { it.createdAtEpochMs }
     }
 
-    override suspend fun markSyncing(mediaPublicId: String, updatedAtEpochMs: Long): Int {
+    override suspend fun countFreshSyncing(staleBeforeEpochMs: Long): Int {
+        return rows.values.count {
+            it.syncState == LocalReportMediaEntity.STATE_SYNCING && it.updatedAtEpochMs > staleBeforeEpochMs
+        }
+    }
+
+    override suspend fun markSyncing(
+        mediaPublicId: String,
+        updatedAtEpochMs: Long,
+        staleBeforeEpochMs: Long,
+    ): Int {
         val current = rows[mediaPublicId] ?: return 0
-        val eligible = current.syncState in setOf(
-            LocalReportMediaEntity.STATE_LOCAL,
-            LocalReportMediaEntity.STATE_QUEUED,
-            LocalReportMediaEntity.STATE_RETRY,
-            LocalReportMediaEntity.STATE_SYNCING,
+        val eligible = com.coremapmm.fieldsurveyor.data.SyncClaimPolicy.eligible(
+            current.syncState,
+            current.updatedAtEpochMs,
+            staleBeforeEpochMs + com.coremapmm.fieldsurveyor.data.SyncClaimPolicy.LEASE_MS,
         )
         if (!eligible) return 0
         rows[mediaPublicId] = current.copy(syncState = LocalReportMediaEntity.STATE_SYNCING, updatedAtEpochMs = updatedAtEpochMs, lastError = null)
@@ -163,12 +176,20 @@ internal class MemoryMediaDao : LocalReportMediaDao {
     }
 
     override suspend fun claimNext(nowEpochMs: Long): LocalReportMediaEntity? {
+        val staleBefore = nowEpochMs - com.coremapmm.fieldsurveyor.data.SyncClaimPolicy.LEASE_MS
         repeat(8) {
-            val row = nextEligible() ?: return null
-            if (markSyncing(row.mediaPublicId, nowEpochMs) == 1) {
+            val row = nextEligible(staleBefore) ?: return null
+            if (markSyncing(row.mediaPublicId, nowEpochMs, staleBefore) == 1) {
                 return rows.getValue(row.mediaPublicId)
             }
         }
         return null
     }
+
+    override suspend fun listSyncedReadyForCleanup(cutoffEpochMs: Long) =
+        rows.values.filter {
+            it.syncState == LocalReportMediaEntity.STATE_SYNCED && it.updatedAtEpochMs <= cutoffEpochMs
+        }
+
+    override suspend fun allLocalPaths() = rows.values.map { it.localPath }
 }

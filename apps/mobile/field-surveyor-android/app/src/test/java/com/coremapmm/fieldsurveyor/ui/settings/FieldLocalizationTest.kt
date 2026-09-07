@@ -18,6 +18,42 @@ class FieldLocalizationTest {
             "Select a stop before adding media.",
             translateFieldText("Select a stop before adding media.", FieldLanguage.MYANMAR),
         )
+        assertNotEquals(
+            "No selected-route stop is close enough. Check GPS or select a stop manually.",
+            translateFieldText(
+                "No selected-route stop is close enough. Check GPS or select a stop manually.",
+                FieldLanguage.MYANMAR,
+            ),
+        )
+        assertNotEquals(
+            "Opposite direction is not in this snapshot. Refresh routes to switch.",
+            translateFieldText(
+                "Opposite direction is not in this snapshot. Refresh routes to switch.",
+                FieldLanguage.MYANMAR,
+            ),
+        )
+        assertNotEquals(
+            "This session already has the same report type for this target.",
+            translateFieldText(
+                "This session already has the same report type for this target.",
+                FieldLanguage.MYANMAR,
+            ),
+        )
+        assertNotEquals(
+            "No internet. Survey capture still works. Sync waits until you are online.",
+            translateFieldText(
+                "No internet. Survey capture still works. Sync waits until you are online.",
+                FieldLanguage.MYANMAR,
+            ),
+        )
+        assertNotEquals(
+            "No YBS routes found near your current location.",
+            translateFieldText("No YBS routes found near your current location.", FieldLanguage.MYANMAR),
+        )
+        assertNotEquals(
+            "Recommend nearby route",
+            translateFieldText("Recommend nearby route", FieldLanguage.MYANMAR),
+        )
     }
 
     @Test

@@ -22,15 +22,17 @@ class ReportVoiceStoreTest {
             newId = { "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" },
         )
         val source = File.createTempFile("clip", ".m4a").apply { writeBytes(ByteArray(64) { 3 }) }
-        store.addFromRecording("report-a", source)
+        store.addFromRecording("report-a", source, 2_000L)
         assertEquals(1, store.count("report-a"))
         assertEquals(LocalReportMediaEntity.MIME_AAC, dao.rows.values.single().mimeType)
-        val second = runCatching { store.addFromRecording("report-a", source) }
+        assertEquals(2_000L, dao.rows.values.single().durationMs)
+        assertTrue(dao.rows.values.single().checksumSha256.isNotBlank())
+        val second = runCatching { store.addFromRecording("report-a", source, 2_000L) }
         assertTrue(second.isFailure)
         assertTrue(File(dir, "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.m4a").isFile)
         assertTrue(store.remove(dao.rows.values.single().mediaPublicId))
         assertEquals(0, store.count("report-a"))
-        store.addFromRecording("report-a", source)
+        store.addFromRecording("report-a", source, 2_000L)
         assertEquals(1, store.count("report-a"))
     }
 }

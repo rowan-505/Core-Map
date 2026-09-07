@@ -101,6 +101,41 @@ class CaptureAndPayloadTest {
     @Test
     fun correctStopHasNoAnomalyKindAndWritesNoPayload() {
         assertFalse(AnomalyKind.entries.any { it.name == "CORRECT" })
+        val stops = listOf(
+            OrderedStopRow(1, "a", null, null, null, 16.8, 96.15),
+            OrderedStopRow(2, "b", null, null, null, 16.81, 96.16),
+        )
+        assertEquals("b", CorrectStopAction.nextStopPublicId(stops, "a"))
+        assertNull(CorrectStopAction.nextStopPublicId(stops, "b"))
+    }
+
+    @Test
+    fun routeLevelPayloadTargetsRouteAndKeepsCaptureFieldsOffline() {
+        val json = AnomalyPayload.toJson(
+            AnomalyCaptureInput(
+                kind = AnomalyKind.ROUTE,
+                snapshotRevision = "rev-1",
+                routePublicId = "route-1",
+                routeCode = "YBS-13",
+                variantPublicId = "var-1",
+                variantCode = "D1",
+                selectedStop = null,
+                gps = GpsFix(16.801, 96.151, 8f, 1_700_000_000_000L),
+                note = "path wrong",
+                observedAtIso = "2026-09-02T09:00:00Z",
+                createdAtEpochMs = 1_700_000_000_000L,
+            ),
+        )
+        val root = org.json.JSONObject(json)
+        assertEquals("route", root.getJSONObject("target").getString("entityType"))
+        assertEquals("route-1", root.getJSONObject("target").getString("publicId"))
+        assertEquals("rev-1", root.getJSONObject("context").getString("snapshotRevision"))
+        assertEquals("D1", root.getJSONObject("context").getString("variantCode"))
+        assertEquals(16.801, root.getJSONObject("location").getDouble("lat"), 0.0001)
+        assertEquals(8.0, root.getJSONObject("location").getDouble("accuracyM"), 0.001)
+        assertEquals("2026-09-02T09:00:00Z", root.getString("observedAt"))
+        assertEquals("transport_issue", AnomalyPayload.reportTypeCode(json))
+        assertEquals("route-1", AnomalyPayload.targetPublicId(json))
     }
 
     @Test

@@ -75,6 +75,24 @@ data class RouteSelectionRow(
     val stopCount: Int,
 )
 
+data class NearbyServingRow(
+    val routePublicId: String,
+    val routeCode: String,
+    val variantPublicId: String,
+    val variantCode: String,
+    val directionId: Int,
+    val originName: String?,
+    val destinationName: String?,
+    val stopPublicId: String,
+    val stopCode: String?,
+    val stopNameMy: String?,
+    val stopNameEn: String?,
+    val stopLat: Double,
+    val stopLng: Double,
+    val stopCount: Int,
+    val geometryJson: String?,
+)
+
 data class OrderedStopRow(
     val stopSequence: Int,
     val stopPublicId: String,
@@ -83,4 +101,5 @@ data class OrderedStopRow(
     val nameEn: String?,
     val lat: Double,
     val lng: Double,
+    val variantPublicId: String = "",
 )

@@ -54,6 +54,7 @@ abstract class TransportCacheDao {
     @Query(
         """
         SELECT rs.stopSequence AS stopSequence,
+               rs.variantPublicId AS variantPublicId,
                s.publicId AS stopPublicId,
                s.stopCode AS stopCode,
                s.nameMy AS nameMy,
@@ -73,6 +74,40 @@ abstract class TransportCacheDao {
 
     @Query("SELECT * FROM cache_stops WHERE publicId = :stopPublicId LIMIT 1")
     abstract suspend fun stopById(stopPublicId: String): CacheStopEntity?
+
+    @Query(
+        """
+        SELECT r.publicId AS routePublicId,
+               r.routeCode AS routeCode,
+               v.publicId AS variantPublicId,
+               v.variantCode AS variantCode,
+               v.directionId AS directionId,
+               v.originName AS originName,
+               v.destinationName AS destinationName,
+               s.publicId AS stopPublicId,
+               s.stopCode AS stopCode,
+               s.nameMy AS stopNameMy,
+               s.nameEn AS stopNameEn,
+               s.lat AS stopLat,
+               s.lng AS stopLng,
+               (SELECT COUNT(*) FROM cache_route_stops rs2 WHERE rs2.variantPublicId = v.publicId) AS stopCount,
+               p.geometryJson AS geometryJson
+        FROM cache_route_stops rs
+        INNER JOIN cache_stops s ON s.publicId = rs.stopPublicId
+        INNER JOIN cache_variants v ON v.publicId = rs.variantPublicId
+        INNER JOIN cache_routes r ON r.publicId = v.routePublicId
+        LEFT JOIN cache_route_paths p ON p.variantPublicId = v.publicId
+        WHERE s.lat BETWEEN :minLat AND :maxLat
+          AND s.lng BETWEEN :minLng AND :maxLng
+          AND v.directionId IN (0, 1)
+        """,
+    )
+    abstract suspend fun servingVariantsInBounds(
+        minLat: Double,
+        maxLat: Double,
+        minLng: Double,
+        maxLng: Double,
+    ): List<NearbyServingRow>
 
     @Query("DELETE FROM cache_route_paths")
     abstract suspend fun deletePaths()

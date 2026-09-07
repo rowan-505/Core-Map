@@ -2,12 +2,11 @@ package com.coremapmm.fieldsurveyor.ui.survey
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.media.MediaPlayer
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -25,10 +24,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
@@ -37,11 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow
+import com.coremapmm.fieldsurveyor.data.transport.OppositeVariantLookup
 import com.coremapmm.fieldsurveyor.media.JpegTarget
 import com.coremapmm.fieldsurveyor.media.VoiceRecorder
 import com.coremapmm.fieldsurveyor.media.VoiceTarget
 import com.coremapmm.fieldsurveyor.survey.*
 import com.coremapmm.fieldsurveyor.ui.components.StatusPill
+import com.coremapmm.fieldsurveyor.ui.media.OnDemandJpegPreview
 import com.coremapmm.fieldsurveyor.ui.settings.FieldLanguage
 import com.coremapmm.fieldsurveyor.ui.settings.LocalFieldLanguage
 import com.coremapmm.fieldsurveyor.ui.settings.tr
@@ -71,7 +70,10 @@ fun SurveyScreen(survey: SurveyController) {
     val photoDrafts = remember { mutableStateListOf<File>() }
     var draftStopId by remember { mutableStateOf<String?>(null) }
     var pendingStopId by remember { mutableStateOf<String?>(null) }
+    var confirmPoorGpsReport by remember { mutableStateOf(false) }
+    var confirmDirectionSwitch by remember { mutableStateOf(false) }
     var sheetStage by remember { mutableStateOf(SurveySheetStage.MAP) }
+    var nowEpochMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val recorder = remember { VoiceRecorder(context) }
     val voiceDraftForCleanup by rememberUpdatedState(voiceDraft)
 
@@ -81,7 +83,11 @@ fun SurveyScreen(survey: SurveyController) {
         val allowed = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             granted[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (allowed) {
-            if (permissionAction.value == "survey") survey.startSurvey() else survey.ensureGps()
+            when (permissionAction.value) {
+                "survey" -> survey.startSurvey()
+                "locate" -> survey.locate()
+                else -> survey.startupLocation()
+            }
         }
     }
     val cameraPermission = rememberLauncherForActivityResult(
@@ -99,12 +105,18 @@ fun SurveyScreen(survey: SurveyController) {
     fun withLocationPermission(action: String, block: () -> Unit) {
         val allowed = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) ||
             hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-        if (allowed) block() else {
+        val needsNotifications = action == "survey" &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !hasPermission(Manifest.permission.POST_NOTIFICATIONS)
+        if (allowed && !needsNotifications) block() else {
             permissionAction.value = action
-            locationPermission.launch(arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-            ))
+            locationPermission.launch(
+                buildList {
+                    add(Manifest.permission.ACCESS_FINE_LOCATION)
+                    add(Manifest.permission.ACCESS_COARSE_LOCATION)
+                    if (needsNotifications) add(Manifest.permission.POST_NOTIFICATIONS)
+                }.toTypedArray(),
+            )
         }
     }
 
@@ -123,6 +135,26 @@ fun SurveyScreen(survey: SurveyController) {
         note = ""
         routeIssue = null
         mapPick = null
+    }
+
+    fun submitPendingReport() {
+        val kind = pendingKind ?: return
+        scope.launch {
+            val saved = survey.submitReport(
+                kind = kind,
+                note = note,
+                reportLocation = if (kind == AnomalyKind.MOVED) mapPick else null,
+                routeIssue = if (kind == AnomalyKind.ROUTE) routeIssue else null,
+                photoDrafts = photoDrafts.toList(),
+                voiceDraft = voiceDraft,
+                voiceDurationMs = voiceDraftDuration,
+            )
+            if (saved) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                resetDraft()
+                sheetStage = SurveySheetStage.STOPS
+            }
+        }
     }
 
     fun selectStop(stopId: String) {
@@ -146,13 +178,26 @@ fun SurveyScreen(survey: SurveyController) {
     }
     LaunchedEffect(Unit) {
         survey.loadCachedVariant()
-        withLocationPermission("map") { survey.ensureGps() }
+        withLocationPermission("startup") { survey.startupLocation() }
     }
     LaunchedEffect(state.capturedBanner) {
         if (state.capturedBanner != null) {
             delay(1_400)
             survey.clearBanner()
         }
+    }
+    LaunchedEffect(state.gps?.epochMs) {
+        while (true) {
+            nowEpochMs = System.currentTimeMillis()
+            delay(1_000)
+        }
+    }
+
+    val gpsQuality = GpsQualityPolicy.quality(state.gps, nowEpochMs)
+    val visibleNearbyStops = if (GpsQualityPolicy.canUseForNearby(state.gps, nowEpochMs)) {
+        state.nearbyStops
+    } else {
+        emptyList()
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -161,8 +206,10 @@ fun SurveyScreen(survey: SurveyController) {
             pathCoordinates = state.pathCoordinates,
             stops = state.stops,
             selectedStopPublicId = state.selection?.selectedStopPublicId,
-            nearbyStopPublicIds = state.nearbyStops.map { it.stop.stopPublicId }.toSet(),
+            nearbyStopPublicIds = visibleNearbyStops.map { it.stop.stopPublicId }.toSet(),
             gps = state.gps,
+            cameraFollowEnabled = state.cameraFollowEnabled,
+            centerOncePending = state.centerOncePending,
             anomalies = state.anomalies,
             pickMovedGeom = pendingKind == AnomalyKind.MOVED && mapPick == null,
             pickedPoint = mapPick,
@@ -172,7 +219,9 @@ fun SurveyScreen(survey: SurveyController) {
                 mapPick = GpsFix(lat, lng, null, System.currentTimeMillis())
                 sheetStage = SurveySheetStage.FULL
             },
-            onLocate = { withLocationPermission("map") { survey.ensureGps() } },
+            onManualPan = survey::manualMapPan,
+            onCenterOnceConsumed = survey::cameraCentered,
+            onLocate = { withLocationPermission("locate") { survey.locate() } },
             modifier = Modifier.fillMaxSize(),
         )
         FourStageSurveySheet(
@@ -191,24 +240,92 @@ fun SurveyScreen(survey: SurveyController) {
                     Row(
                         Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         val title = state.selection?.let { "${it.routeCode} · ${it.variantCode}" }
                             ?: tr("Select a D0/D1 variant")
-                        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                        StatusPill(state.gpsLabel, positive = state.gps != null, warning = state.gps == null)
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (state.selection != null) {
+                            OutlinedButton(
+                                onClick = {
+                                    when (survey.requestDirectionSwitch()) {
+                                        DirectionSwitchAction.SWITCH_NOW -> survey.switchToOppositeDirection()
+                                        DirectionSwitchAction.CONFIRM_AND_SWITCH -> confirmDirectionSwitch = true
+                                        DirectionSwitchAction.DISABLED -> Unit
+                                    }
+                                },
+                                enabled = state.directionSwitchEnabled,
+                                modifier = Modifier.heightIn(min = 48.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                            ) {
+                                Text(
+                                    DirectionSwitchPolicy.buttonLabel(state.oppositeVariantCode),
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(7.dp),
+                    ) {
+                        StatusPill(
+                            GpsQualityPolicy.label(state.gps, nowEpochMs),
+                            positive = gpsQuality == GpsQuality.GOOD,
+                            warning = gpsQuality != GpsQuality.GOOD,
+                        )
+                        Spacer(Modifier.weight(1f))
                         Button(
                             onClick = {
                                 if (state.running) survey.endSurvey()
                                 else withLocationPermission("survey") { survey.startSurvey() }
                             },
-                            modifier = Modifier.height(34.dp),
+                                modifier = Modifier.height(34.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (state.running) MaterialTheme.colorScheme.error
                                 else MaterialTheme.colorScheme.primary,
                             ),
-                        ) { Text(tr(if (state.running) "Stop" else "Start"), style = MaterialTheme.typography.labelMedium) }
+                        ) { Text(tr(if (state.running) "Finish" else "Start"), style = MaterialTheme.typography.labelMedium) }
+                    }
+                    if (state.selection != null && !state.directionSwitchEnabled) {
+                        Text(
+                            tr(OppositeVariantLookup.MISSING_COUNTERPART_MESSAGE),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                    when (gpsQuality) {
+                        GpsQuality.POOR, GpsQuality.CONFIRM_REQUIRED -> Text(
+                            tr("GPS accuracy is poor. Move to open sky and wait."),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                        GpsQuality.STALE -> Text(
+                            tr("GPS fix is stale. Locate again."),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                        else -> Unit
+                    }
+                    if (state.running || state.sessionReportCount > 0 || state.pendingSyncCount > 0) {
+                        Text(
+                            tr("${state.sessionReportCount} reports · ${state.pendingSyncCount} pending"),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    state.duplicateWarning?.let {
+                        SurveyNotice(tr(it), warning = true)
+                    }
+                    state.message?.takeIf { it.isNotBlank() }?.let {
+                        SurveyNotice(tr(it), warning = false)
                     }
                 }
             },
@@ -226,8 +343,8 @@ fun SurveyScreen(survey: SurveyController) {
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (visibleStage.ordinal >= SurveySheetStage.STOPS.ordinal) {
-                        SurveySection(tr("Route stops")) {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        SurveySection("${tr("Route stops")} · ${StopProgress.label(state.stops, state.selection?.selectedStopPublicId)}") {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 StopChoiceButton("Previous", window.previous, false, Modifier.weight(1f)) {
                                     window.previous?.let { selectStop(it.stopPublicId) }
                                 }
@@ -238,18 +355,36 @@ fun SurveyScreen(survey: SurveyController) {
                                     window.next?.let { selectStop(it.stopPublicId) }
                                 }
                             }
+                            FilledTonalButton(
+                                onClick = {
+                                    if (survey.markStopCorrect()) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        resetDraft()
+                                    }
+                                },
+                                enabled = state.running && window.current != null,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                            ) { Text(tr("Stop is correct")) }
                         }
                     }
-                    if (visibleStage.ordinal >= SurveySheetStage.NEARBY.ordinal && state.nearbyStops.isNotEmpty()) {
+                    if (visibleStage.ordinal >= SurveySheetStage.NEARBY.ordinal) {
                         SurveySection(tr("Nearest stops")) {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                state.nearbyStops.take(3).forEachIndexed { index, nearby ->
-                                    NearbyStopButton(
-                                        nearby,
-                                        nearby.stop.stopPublicId == state.selection?.selectedStopPublicId,
-                                        index == 0,
-                                        Modifier.weight(1f),
-                                    ) { selectStop(nearby.stop.stopPublicId) }
+                            if (visibleNearbyStops.isEmpty()) {
+                                Text(
+                                    tr("No selected-route stop is close enough. Check GPS or select a stop manually."),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            } else {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    visibleNearbyStops.forEachIndexed { index, nearby ->
+                                        NearbyStopButton(
+                                            nearby,
+                                            nearby.stop.stopPublicId == state.selection?.selectedStopPublicId,
+                                            index == 0,
+                                            Modifier.weight(1f),
+                                        ) { selectStop(nearby.stop.stopPublicId) }
+                                    }
                                 }
                             }
                         }
@@ -268,8 +403,13 @@ fun SurveyScreen(survey: SurveyController) {
                                         onClick = {
                                             when {
                                                 !state.running -> survey.setMessage("Start the survey first.")
-                                                state.selection?.selectedStopPublicId == null -> survey.setMessage("Select a stop first.")
-                                                selected -> resetDraft()
+                                                SurveyReportFlow.requiresStop(kind) &&
+                                                    state.selection?.selectedStopPublicId == null ->
+                                                    survey.setMessage("Select a stop first.")
+                                                selected -> {
+                                                    resetDraft()
+                                                    survey.setMessage("")
+                                                }
                                                 else -> {
                                                     clearMediaDrafts()
                                                     pendingKind = kind
@@ -277,10 +417,15 @@ fun SurveyScreen(survey: SurveyController) {
                                                     routeIssue = null
                                                     mapPick = null
                                                     survey.setMessage("")
+                                                    survey.refreshDuplicateWarning(kind)
                                                     if (kind == AnomalyKind.MOVED) sheetStage = SurveySheetStage.MAP
                                                 }
                                             }
                                         },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        ),
                                         label = { Text(tr(kind.name), style = MaterialTheme.typography.labelSmall) },
                                     )
                                 }
@@ -288,12 +433,21 @@ fun SurveyScreen(survey: SurveyController) {
                         }
                         pendingKind?.let { kind ->
                             SurveySection(tr("Report details")) {
+                                CaptureFacts(
+                                    epochMs = nowEpochMs,
+                                    gps = state.gps,
+                                    routeCode = state.selection?.routeCode,
+                                    variantCode = state.selection?.variantCode,
+                                    snapshotRevision = state.snapshotRevision,
+                                )
                                 ReportKindForm(kind, note, { note = it }, routeIssue, { routeIssue = it }, mapPick)
                             }
                         }
                         SurveySection(tr("Evidence (optional)")) {
                             EvidenceSection(
-                                hasReportContext = state.selection?.selectedStopPublicId != null && pendingKind != null,
+                                hasReportContext = pendingKind != null &&
+                                    (!SurveyReportFlow.requiresStop(pendingKind!!) ||
+                                        state.selection?.selectedStopPublicId != null),
                                 photoDrafts = photoDrafts,
                                 voiceDraft = voiceDraft,
                                 voiceDraftDurationMs = voiceDraftDuration,
@@ -327,7 +481,7 @@ fun SurveyScreen(survey: SurveyController) {
                                                 } else {
                                                     voiceDraft?.delete()
                                                     voiceDraft = file
-                                                    voiceDraftDuration = duration
+                                                    voiceDraftDuration = duration.coerceAtMost(VoiceTarget.MAX_DURATION_MS.toLong())
                                                     draftStopId = state.selection?.selectedStopPublicId
                                                 }
                                             }.onFailure { error -> survey.setMessage(error.message ?: "Could not save voice") }
@@ -342,38 +496,22 @@ fun SurveyScreen(survey: SurveyController) {
                             )
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = ::resetDraft, modifier = Modifier.weight(1f)) {
+                            OutlinedButton(onClick = ::resetDraft, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
                                 Text(tr("Cancel"))
                             }
                             Button(
                                 onClick = {
                                     val kind = pendingKind ?: return@Button
-                                    scope.launch {
-                                        val saved = survey.submitReport(
-                                            kind = kind,
-                                            note = note,
-                                            reportLocation = if (kind == AnomalyKind.MOVED) mapPick else null,
-                                            routeIssue = if (kind == AnomalyKind.ROUTE) routeIssue else null,
-                                            photoDrafts = photoDrafts.toList(),
-                                            voiceDraft = voiceDraft,
-                                            voiceDurationMs = voiceDraftDuration,
-                                        )
-                                        if (saved) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            resetDraft()
-                                            sheetStage = SurveySheetStage.STOPS
-                                        }
-                                    }
+                                    if (ReportLocationPolicy.requiresPoorAccuracyConfirmation(kind, state.gps, nowEpochMs)) {
+                                        confirmPoorGpsReport = true
+                                    } else submitPendingReport()
                                 },
                                 enabled = pendingKind != null,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                             ) { Text(tr("Report")) }
                         }
                         state.capturedBanner?.let {
                             Text(tr(it), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
-                        }
-                        state.message?.takeIf { it.isNotBlank() }?.let {
-                            Text(tr(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                         }
                         Spacer(Modifier.height(16.dp))
                     }
@@ -406,6 +544,38 @@ fun SurveyScreen(survey: SurveyController) {
             dismissButton = { TextButton(onClick = { pendingStopId = null }) { Text(tr("Keep editing")) } },
         )
     }
+    if (confirmPoorGpsReport) {
+        AlertDialog(
+            onDismissRequest = { confirmPoorGpsReport = false },
+            title = { Text(tr("Poor GPS accuracy")) },
+            text = { Text(tr("This location may be more than 50 m off. Submit this location-critical report anyway?")) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmPoorGpsReport = false
+                    submitPendingReport()
+                }) { Text(tr("Submit anyway")) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmPoorGpsReport = false }) { Text(tr("Wait for GPS")) }
+            },
+        )
+    }
+    if (confirmDirectionSwitch) {
+        AlertDialog(
+            onDismissRequest = { confirmDirectionSwitch = false },
+            title = { Text(tr("Switch direction?")) },
+            text = { Text(tr("Finish current direction and start the opposite direction?")) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDirectionSwitch = false
+                    survey.switchToOppositeDirection()
+                }) { Text(tr("Switch")) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDirectionSwitch = false }) { Text(tr("Keep this direction")) }
+            },
+        )
+    }
 }
 
 @Composable
@@ -424,7 +594,10 @@ private fun StopChoiceButton(title: String, stop: OrderedStopRow?, selected: Boo
         colors = if (selected && stop != null) ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ) else ButtonDefaults.outlinedButtonColors(),
+        ) else ButtonDefaults.outlinedButtonColors(
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -493,7 +666,7 @@ private fun EvidenceSection(
     onRemovePhoto: (File) -> Unit,
 ) {
     if (!hasReportContext) {
-        Text(tr("Choose a stop and report action first."), style = MaterialTheme.typography.bodySmall)
+        Text(tr("Choose a report action first. Photo, voice and text are optional."), style = MaterialTheme.typography.bodySmall)
         return
     }
     photoDrafts.forEach { PhotoDraftAttachment(it, onRemovePhoto) }
@@ -515,14 +688,12 @@ private fun EvidenceSection(
 
 @Composable
 private fun PhotoDraftAttachment(file: File, onRemove: (File) -> Unit) {
-    val bitmap = remember(file.absolutePath, file.lastModified()) { BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap() }
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            bitmap?.let {
-                Image(it, tr("Attached report photo"), Modifier.fillMaxWidth().height(120.dp), contentScale = ContentScale.Crop)
-            }
+            Text(tr("Photo ready"))
+            OnDemandJpegPreview(file, contentDescription = tr("Attached report photo"))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(tr("Photo ready"), modifier = Modifier.weight(1f))
+                Text(tr("Optional photo. Full file uploads later."), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = { onRemove(file) }) { Text(tr("Remove")) }
             }
         }
@@ -583,16 +754,17 @@ private fun ReportKindForm(
                 OptionalNote(note, onNote)
             }
             AnomalyKind.MISSING -> OptionalNote(note, onNote)
-            AnomalyKind.DATA -> NoteField(note, onNote, "What is wrong?")
+            AnomalyKind.DATA -> OptionalNote(note, onNote)
             AnomalyKind.ROUTE -> {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     RouteIssueKind.entries.forEach { issue ->
                         val selected = routeIssue == issue
                         OutlinedButton(
-                            onClick = { onRouteIssue(issue) }, modifier = Modifier.weight(1f),
+                            onClick = { onRouteIssue(issue) }, modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                             contentPadding = PaddingValues(4.dp),
                             colors = if (selected) ButtonDefaults.outlinedButtonColors(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                             ) else ButtonDefaults.outlinedButtonColors(),
                         ) {
                             Text(tr(when (issue) {
@@ -605,7 +777,7 @@ private fun ReportKindForm(
                 }
                 OptionalNote(note, onNote)
             }
-            AnomalyKind.OTHER -> NoteField(note, onNote, "Describe the issue")
+            AnomalyKind.OTHER -> OptionalNote(note, onNote)
         }
     }
 }
@@ -634,6 +806,39 @@ internal fun formatDistance(distanceM: Double): String = when {
     distanceM < 1_000 -> "${distanceM.toInt()} m"
     distanceM < 100_000 -> String.format(Locale.US, "%.1f km", distanceM / 1_000)
     else -> "${(distanceM / 1_000).toInt()} km"
+}
+
+@Composable
+private fun SurveyNotice(text: String, warning: Boolean) {
+    val container = if (warning) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer
+    val content = if (warning) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = container,
+    ) {
+        Text(
+            text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = content,
+        )
+    }
+}
+
+@Composable
+private fun CaptureFacts(
+    epochMs: Long,
+    gps: GpsFix?,
+    routeCode: String?,
+    variantCode: String?,
+    snapshotRevision: String?,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        SurveyCaptureFacts.lines(epochMs, gps, routeCode, variantCode, snapshotRevision).forEach { line ->
+            Text(tr(line), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
 }
 
 @Composable

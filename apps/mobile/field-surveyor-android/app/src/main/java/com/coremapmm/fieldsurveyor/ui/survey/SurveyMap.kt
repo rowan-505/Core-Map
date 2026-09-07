@@ -54,12 +54,16 @@ fun SurveyMap(
     selectedStopPublicId: String?,
     nearbyStopPublicIds: Set<String>,
     gps: GpsFix?,
+    cameraFollowEnabled: Boolean,
+    centerOncePending: Boolean,
     anomalies: List<GpsFix>,
     pickMovedGeom: Boolean,
     pickedPoint: GpsFix?,
     sheetVisibleFraction: Float,
     onStopClick: (String) -> Unit,
     onMapPick: (Double, Double) -> Unit,
+    onManualPan: () -> Unit,
+    onCenterOnceConsumed: () -> Unit,
     onLocate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -83,6 +87,15 @@ fun SurveyMap(
         }
     }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+
+    LaunchedEffect(cameraFollowEnabled) {
+        if (cameraFollowEnabled) {
+            followGps.value = true
+            focusOnUser.value = true
+        } else {
+            followGps.value = false
+        }
+    }
 
     LaunchedEffect(mapRef, sheetVisibleFraction) {
         val map = mapRef ?: return@LaunchedEffect
@@ -126,6 +139,8 @@ fun SurveyMap(
                     map.addOnCameraMoveStartedListener { reason ->
                         if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
                             followGps.value = GpsCameraFollow.followingAfterMoveStarted(reason, followGps.value)
+                            focusOnUser.value = false
+                            onManualPan()
                         }
                     }
                     map.addOnMapClickListener { latLng ->
@@ -224,9 +239,10 @@ fun SurveyMap(
         SurveyMapOverlays.setPath(style, pathCoordinates)
         SurveyMapOverlays.setStops(style, stops, selectedStopPublicId, nearbyStopPublicIds)
         val map = mapRef ?: return@LaunchedEffect
-        if (variantPublicId != null && variantPublicId != fittedVariant && pathCoordinates.size >= 2) {
-            SurveyMapOverlays.fitPathOnce(map, pathCoordinates)
-            fittedVariant = variantPublicId
+        if (variantPublicId != null && variantPublicId != fittedVariant) {
+            if (SurveyMapOverlays.fitRoute(map, pathCoordinates, stops)) {
+                fittedVariant = variantPublicId
+            }
         }
     }
 
@@ -252,6 +268,16 @@ fun SurveyMap(
         SurveyMapOverlays.setGps(style, gps)
         SurveyMapOverlays.setAnomalies(style, anomalies)
         SurveyMapOverlays.setPick(style, pickedPoint)
+    }
+
+    LaunchedEffect(styleRef, gps, centerOncePending) {
+        val map = mapRef ?: return@LaunchedEffect
+        val fix = gps ?: return@LaunchedEffect
+        if (!centerOncePending) return@LaunchedEffect
+        SurveyMapOverlays.followGps(map, fix, SurveyMapOverlays.GPS_ZOOM)
+        lastCameraGps = fix
+        focusOnUser.value = false
+        onCenterOnceConsumed()
     }
 
     LaunchedEffect(styleRef, gps, followGps.value, focusOnUser.value) {

@@ -1,12 +1,14 @@
 package com.coremapmm.fieldsurveyor.media
 
-/** Longest-edge target for field JPEG evidence. Does not upscale. */
+/** Longest-edge target for field JPEG evidence. Does not upscale or force orientation. */
 object JpegTarget {
-    const val MIN_LONG_EDGE = 1280
-    const val MAX_LONG_EDGE = 1600
-    const val QUALITY = 78
+    const val MIN_LONG_EDGE = 1600
+    const val MAX_LONG_EDGE = 2048
+    const val QUALITY = 80
     const val MAX_BYTES = 8 * 1024 * 1024
+    const val MIN_FREE_BYTES = 4L * 1024 * 1024
     const val MAX_PHOTOS_PER_REPORT = 3
+    const val MIME_JPEG = "image/jpeg"
 
     fun outputSize(srcWidth: Int, srcHeight: Int): Pair<Int, Int> {
         if (srcWidth <= 0 || srcHeight <= 0) {

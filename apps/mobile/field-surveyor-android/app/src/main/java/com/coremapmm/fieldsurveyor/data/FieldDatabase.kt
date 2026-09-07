@@ -18,6 +18,7 @@ import java.io.File
     entities = [
         LocalReportEntity::class,
         LocalReportMediaEntity::class,
+        LocalSurveySessionEntity::class,
         CacheRouteEntity::class,
         CacheVariantEntity::class,
         CacheStopEntity::class,
@@ -25,22 +26,29 @@ import java.io.File
         CacheRoutePathEntity::class,
         CacheMetadataEntity::class,
     ],
-    version = 4,
+    version = FieldDatabase.VERSION,
     exportSchema = false,
 )
 abstract class FieldDatabase : RoomDatabase() {
     abstract fun localReportDao(): LocalReportDao
     abstract fun localReportMediaDao(): LocalReportMediaDao
+    abstract fun localSurveySessionDao(): LocalSurveySessionDao
     abstract fun transportCacheDao(): TransportCacheDao
 
     companion object {
         const val FILE_NAME = "field.db"
+        const val VERSION = 6
 
         fun create(context: Context): FieldDatabase {
             val app = context.applicationContext
             val file = File(app.noBackupFilesDir, FILE_NAME)
+            return createAt(app, file)
+        }
+
+        fun createAt(context: Context, file: File): FieldDatabase {
+            val app = context.applicationContext
             return Room.databaseBuilder(app, FieldDatabase::class.java, file.absolutePath)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
         }
     }

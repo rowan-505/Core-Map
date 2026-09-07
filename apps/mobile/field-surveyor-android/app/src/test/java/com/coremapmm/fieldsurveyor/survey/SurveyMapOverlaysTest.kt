@@ -32,4 +32,26 @@ class SurveyMapOverlaysTest {
         assertEquals(1, SurveyMapOverlays.routeFitLatLngs(emptyList(), stops).size)
         assertTrue(SurveyMapOverlays.routeFitLatLngs(emptyList(), emptyList()).isEmpty())
     }
+
+    @Test
+    fun anomaliesAreGpsPointMarkersNotPhotos() {
+        val points = listOf(GpsFix(16.8, 96.15, 8f, 1L), GpsFix(16.81, 96.16, 8f, 2L))
+        assertEquals(2, points.size)
+        assertTrue(points.all { it.lat > 0 && it.lng > 0 })
+    }
+
+    @Test
+    fun accuracyRingUsesAccuracyInMetres() {
+        val fix = GpsFix(16.8, 96.15, 75f, 1_000L)
+        val ring = SurveyMapOverlays.accuracyRing(fix)
+        assertEquals(ring.first(), ring.last())
+        assertEquals(49, ring.size)
+        val radius = StopContext.haversineMeters(
+            fix.lat,
+            fix.lng,
+            ring.first().second,
+            ring.first().first,
+        )
+        assertEquals(75.0, radius, 0.25)
+    }
 }

@@ -82,6 +82,23 @@ class BootstrapSnapshotTest {
     }
 
     @Test
+    fun gzipBodyDecodesToJson() {
+        val json = """{"snapshotRevision":"v1-test","unchanged":true}"""
+        val compressed = java.io.ByteArrayOutputStream().use { output ->
+            java.util.zip.GZIPOutputStream(output).use { gzip ->
+                gzip.write(json.toByteArray(Charsets.UTF_8))
+            }
+            output.toByteArray()
+        }
+        assertTrue(compressed[0] == 0x1f.toByte())
+        val decoded = BootstrapJson.decodeBody(compressed)
+        val payload = BootstrapJson.parseResponse(decoded)
+        assertTrue(payload is BootstrapPayload.Unchanged)
+        assertEquals("v1-test", (payload as BootstrapPayload.Unchanged).snapshotRevision)
+        assertEquals(json, BootstrapJson.decodeBody(json.toByteArray(Charsets.UTF_8)))
+    }
+
+    @Test
     fun failedValidateDoesNotProduceRevision() {
         val incomplete = """{"snapshotRevision":"v1-new","unchanged":false,"routes":[]}"""
         val payload = BootstrapJson.parseResponse(incomplete) as BootstrapPayload.Dataset

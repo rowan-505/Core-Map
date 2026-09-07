@@ -1,5 +1,7 @@
 package com.coremapmm.fieldsurveyor.survey
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -8,6 +10,105 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GpsTrackingTest {
+    @Test
+    fun startupPublishesCachedThenFreshLocation() = runBlocking {
+        val cached = GpsFix(16.8000, 96.1500, 18f, 1_000L)
+        val fresh = GpsFix(16.8002, 96.1502, 5f, 2_000L)
+        val emitted = mutableListOf<GpsFix>()
+
+        OneShotLocationPipeline.run(
+            includeCached = true,
+            timeoutMs = 100L,
+            cached = { cached },
+            fresh = { fresh },
+            emit = emitted::add,
+        )
+
+        assertEquals(listOf(cached, fresh), emitted)
+    }
+
+    @Test
+    fun startupWithoutCachePublishesFreshLocationOnly() = runBlocking {
+        val fresh = GpsFix(16.8002, 96.1502, 5f, 2_000L)
+        val emitted = mutableListOf<GpsFix>()
+
+        OneShotLocationPipeline.run(true, 100L, cached = { null }, fresh = { fresh }, emit = emitted::add)
+
+        assertEquals(listOf(fresh), emitted)
+    }
+
+    @Test
+    fun unavailableAndTimedOutStartupFinishWithoutLocation() = runBlocking {
+        val unavailable = mutableListOf<GpsFix>()
+        OneShotLocationPipeline.run(true, 100L, cached = { null }, fresh = { null }, emit = unavailable::add)
+        assertTrue(unavailable.isEmpty())
+
+        val timedOut = mutableListOf<GpsFix>()
+        OneShotLocationPipeline.run(
+            includeCached = false,
+            timeoutMs = 1L,
+            cached = { error("cache must not be requested") },
+            fresh = { delay(100L); GpsFix(1.0, 1.0, 5f, 1L) },
+            emit = timedOut::add,
+        )
+        assertTrue(timedOut.isEmpty())
+    }
+
+    @Test
+    fun startupRequestsOneShotAndOneCenter() {
+        val started = LocationStateModel.startup(LocationState())
+        assertEquals(LocationMode.ONE_SHOT, started.mode)
+        assertFalse(started.cameraFollowEnabled)
+        assertTrue(started.centerOncePending)
+        assertFalse(LocationStateModel.centered(started).centerOncePending)
+    }
+
+    @Test
+    fun oneShotTimeoutReturnsToIdle() {
+        val timedOut = LocationStateModel.oneShotFinished(
+            LocationStateModel.startup(LocationState()),
+        )
+        assertEquals(LocationMode.IDLE, timedOut.mode)
+        assertEquals(9_000L, GpsEngine.ONE_SHOT_TIMEOUT_MS)
+    }
+
+    @Test
+    fun manualPanCancelsFollowButTrackingContinues() {
+        val panned = LocationStateModel.manualPan(LocationStateModel.startSurvey())
+        assertEquals(LocationMode.SURVEY_TRACKING, panned.mode)
+        assertFalse(panned.cameraFollowEnabled)
+        assertFalse(panned.centerOncePending)
+    }
+
+    @Test
+    fun locateDuringSurveyReenablesFollow() {
+        val panned = LocationStateModel.manualPan(LocationStateModel.startSurvey())
+        val located = LocationStateModel.locate(panned)
+        assertEquals(LocationMode.SURVEY_TRACKING, located.mode)
+        assertTrue(located.cameraFollowEnabled)
+    }
+
+    @Test
+    fun finishingSurveyStopsTracking() {
+        val finished = LocationStateModel.finishSurvey()
+        assertEquals(LocationMode.IDLE, finished.mode)
+        assertFalse(finished.cameraFollowEnabled)
+    }
+
+    @Test
+    fun worseFreshFixIsRejectedWhileBetterFixIsValid() {
+        val better = GpsFix(16.80, 96.15, 4f, 10_000L)
+        val worse = GpsFix(16.80001, 96.15001, 24f, 12_000L)
+        assertNull(GpsFixPolicy.publish(better, worse, 12_000L))
+
+        val acceptedAfterHold = GpsFixPolicy.publish(
+            better,
+            worse.copy(epochMs = 21_000L),
+            21_000L,
+        )
+        assertEquals(21_000L, acceptedAfterHold?.epochMs)
+    }
+
     @Test
     fun firstFixIsPublished() {
         val next = GpsFix(16.80, 96.15, 8f, 1_000L)
@@ -48,6 +149,16 @@ class GpsTrackingTest {
     }
 
     @Test
+    fun busSpeedFixesArePublishedAtTrackingCadence() {
+        val start = GpsFix(16.8000, 96.1500, 7f, 1_000L)
+        // About 50 metres in four seconds: 45 km/h, representative urban bus speed.
+        val bus = GpsFix(16.80045, 96.1500, 7f, 5_000L)
+        val accepted = GpsFixPolicy.publish(start, bus, bus.epochMs)
+        assertEquals(bus, accepted)
+        assertTrue(StopContext.haversineMeters(start.lat, start.lng, bus.lat, bus.lng) > 45.0)
+    }
+
+    @Test
     fun everyMeaningfulMovementRefreshesTheMapFix() {
         var displayed = GpsFix(16.800000, 96.150000, 7f, 1_000L)
         repeat(6) { step ->
@@ -74,9 +185,30 @@ class GpsTrackingTest {
     }
 
     @Test
-    fun cachedLastKnownOlderThanThirtySecondsIsDropped() {
+    fun cachedLastKnownOlderThanGoodFixThresholdIsDropped() {
         val cached = GpsFix(16.80, 96.15, 8f, 1_000L)
         assertNull(GpsFixPolicy.publish(null, cached, 1_000L + GpsFixPolicy.MAX_FIX_AGE_MS + 1L))
+    }
+
+    @Test
+    fun poorGpsQualityWarnsAndCriticalReportRequiresConfirmation() {
+        val poor = GpsFix(16.80, 96.15, 40f, 10_000L)
+        val critical = poor.copy(accuracyM = 75f)
+        assertEquals(GpsQuality.POOR, GpsQualityPolicy.quality(poor, 10_000L))
+        assertEquals(GpsQuality.CONFIRM_REQUIRED, GpsQualityPolicy.quality(critical, 10_000L))
+        assertTrue(GpsQualityPolicy.canUseForNearby(poor, 10_000L))
+        assertFalse(GpsQualityPolicy.canUseForNearby(critical, 10_000L))
+        assertTrue(ReportLocationPolicy.requiresPoorAccuracyConfirmation(AnomalyKind.MOVED, critical, 10_000L))
+        assertFalse(ReportLocationPolicy.requiresPoorAccuracyConfirmation(AnomalyKind.DATA, critical, 10_000L))
+    }
+
+    @Test
+    fun staleFixIsExplicitAndCannotDriveNearbyResults() {
+        val fix = GpsFix(16.80, 96.15, 5f, 1_000L)
+        val now = 1_000L + FieldLocationConfig.GOOD_FIX_STALE_MS + 1L
+        assertEquals(GpsQuality.STALE, GpsQualityPolicy.quality(fix, now))
+        assertEquals("GPS stale · ±5 m", GpsQualityPolicy.label(fix, now))
+        assertFalse(GpsQualityPolicy.canUseForNearby(fix, now))
     }
 
     @Test
@@ -99,6 +231,19 @@ class GpsTrackingTest {
     fun panGestureTurnsFollowOff() {
         assertFalse(GpsCameraFollow.followingAfterMoveStarted(GpsCameraFollow.REASON_GESTURE, true))
         assertTrue(GpsCameraFollow.followingAfterMoveStarted(2, true))
+    }
+
+    @Test
+    fun idleAndLocateNeverEnterContinuousTracking() {
+        val startup = LocationStateModel.startup(LocationState())
+        val startupDone = LocationStateModel.oneShotFinished(startup)
+        val locate = LocationStateModel.locate(startupDone)
+        val locateDone = LocationStateModel.oneShotFinished(locate)
+
+        assertEquals(LocationMode.ONE_SHOT, startup.mode)
+        assertEquals(LocationMode.IDLE, startupDone.mode)
+        assertEquals(LocationMode.ONE_SHOT, locate.mode)
+        assertEquals(LocationMode.IDLE, locateDone.mode)
     }
 
     @Test

@@ -10,20 +10,21 @@ class JpegTargetTest {
     }
 
     @Test
-    fun downscalesLongestEdgeTo1600() {
-        assertEquals(1600 to 1200, JpegTarget.outputSize(3200, 2400))
-        assertEquals(900 to 1600, JpegTarget.outputSize(1800, 3200))
+    fun downscalesLongestEdgeTo2048() {
+        assertEquals(2048 to 1536, JpegTarget.outputSize(3200, 2400))
+        assertEquals(1152 to 2048, JpegTarget.outputSize(1800, 3200))
     }
 
     @Test
-    fun keepsAlreadyInRange() {
-        assertEquals(1280 to 960, JpegTarget.outputSize(1280, 960))
+    fun keepsAlreadyInRangeIncluding1600To2048() {
         assertEquals(1600 to 900, JpegTarget.outputSize(1600, 900))
+        assertEquals(1800 to 1200, JpegTarget.outputSize(1800, 1200))
+        assertEquals(2048 to 1152, JpegTarget.outputSize(2048, 1152))
     }
 
     @Test
     fun sampleSizeJumpsByPowersOfTwo() {
-        assertEquals(1, JpegTarget.inSampleSize(1600, 1200))
-        assertEquals(2, JpegTarget.inSampleSize(4000, 3000))
+        assertEquals(1, JpegTarget.inSampleSize(2048, 1536))
+        assertEquals(2, JpegTarget.inSampleSize(5000, 3000))
     }
 }

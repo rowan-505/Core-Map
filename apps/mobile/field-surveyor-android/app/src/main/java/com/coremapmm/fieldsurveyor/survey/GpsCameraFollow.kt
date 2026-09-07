@@ -5,10 +5,12 @@ object GpsFixPolicy {
     const val MIN_MOVE_METERS = 1.0
     const val HEARTBEAT_MS = 2_000L
     /** Drop lastKnown / cached provider samples that are too old for field capture. */
-    const val MAX_FIX_AGE_MS = 30_000L
+    const val MAX_FIX_AGE_MS = FieldLocationConfig.GOOD_FIX_STALE_MS
+    const val BETTER_FIX_HOLD_MS = 10_000L
 
     /**
-     * GPS and network can both fire. Drop stale or duplicate jitter.
+     * Fused callbacks can still include stale or duplicate jitter. Filter those
+     * while retaining a short-lived, materially better fix for report evidence.
      * Keep a heartbeat so the blue dot and accuracy label stay fresh.
      */
     fun publish(previous: GpsFix?, next: GpsFix, nowEpochMs: Long): GpsFix? {
@@ -21,17 +23,99 @@ object GpsFixPolicy {
         if (next.epochMs + STALE_BEHIND_MS < previous.epochMs) {
             return null
         }
-        val moved = StopContext.haversineMeters(
-            previous.lat,
-            previous.lng,
-            next.lat,
-            next.lng,
-        ) >= MIN_MOVE_METERS
+        val previousAccuracy = previous.accuracyM
+        val nextAccuracy = next.accuracyM
+        val distance = StopContext.haversineMeters(previous.lat, previous.lng, next.lat, next.lng)
+        val previousStillPreferred = nowEpochMs - previous.epochMs <= BETTER_FIX_HOLD_MS &&
+            previousAccuracy != null &&
+            nextAccuracy != null &&
+            nextAccuracy > previousAccuracy + 3f &&
+            distance <= maxOf(previousAccuracy.toDouble(), nextAccuracy.toDouble())
+        if (previousStillPreferred) {
+            return null
+        }
+        val moved = distance >= MIN_MOVE_METERS
         val betterAccuracy = (next.accuracyM ?: Float.MAX_VALUE) + 3f <
             (previous.accuracyM ?: Float.MAX_VALUE)
         val heartbeat = next.epochMs - previous.epochMs >= HEARTBEAT_MS
         return if (moved || betterAccuracy || heartbeat) next else null
     }
+}
+
+enum class GpsQuality {
+    MISSING,
+    GOOD,
+    POOR,
+    CONFIRM_REQUIRED,
+    STALE,
+}
+
+object GpsQualityPolicy {
+    fun quality(fix: GpsFix?, nowMs: Long): GpsQuality = when {
+        fix == null -> GpsQuality.MISSING
+        nowMs - fix.epochMs > FieldLocationConfig.GOOD_FIX_STALE_MS -> GpsQuality.STALE
+        fix.accuracyM == null || fix.accuracyM > FieldLocationConfig.REPORT_CONFIRM_ACCURACY_M ->
+            GpsQuality.CONFIRM_REQUIRED
+        fix.accuracyM > FieldLocationConfig.POOR_ACCURACY_WARNING_M -> GpsQuality.POOR
+        else -> GpsQuality.GOOD
+    }
+
+    fun label(fix: GpsFix?, nowMs: Long): String = when (quality(fix, nowMs)) {
+        GpsQuality.MISSING -> "GPS —"
+        GpsQuality.STALE -> fix?.accuracyM?.let { "GPS stale · ±${it.toInt()} m" } ?: "GPS stale"
+        else -> fix?.accuracyM?.let { "GPS ±${it.toInt()} m" } ?: "GPS ±? m"
+    }
+
+    fun canUseForNearby(fix: GpsFix?, nowMs: Long): Boolean = when (quality(fix, nowMs)) {
+        GpsQuality.GOOD, GpsQuality.POOR -> true
+        GpsQuality.MISSING, GpsQuality.CONFIRM_REQUIRED, GpsQuality.STALE -> false
+    }
+}
+
+object ReportLocationPolicy {
+    fun isLocationCritical(kind: AnomalyKind): Boolean =
+        kind == AnomalyKind.MOVED || kind == AnomalyKind.MISSING
+
+    fun requiresPoorAccuracyConfirmation(kind: AnomalyKind, fix: GpsFix?, nowMs: Long): Boolean =
+        isLocationCritical(kind) && GpsQualityPolicy.quality(fix, nowMs) == GpsQuality.CONFIRM_REQUIRED
+}
+
+data class LocationState(
+    val mode: LocationMode = LocationMode.IDLE,
+    val cameraFollowEnabled: Boolean = false,
+    val centerOncePending: Boolean = false,
+)
+
+object LocationStateModel {
+    fun startup(state: LocationState): LocationState = when (state.mode) {
+        LocationMode.IDLE -> LocationState(LocationMode.ONE_SHOT, centerOncePending = true)
+        else -> state
+    }
+
+    fun locate(state: LocationState): LocationState = when (state.mode) {
+        LocationMode.SURVEY_TRACKING -> state.copy(cameraFollowEnabled = true, centerOncePending = false)
+        else -> LocationState(LocationMode.ONE_SHOT, centerOncePending = true)
+    }
+
+    fun startSurvey(): LocationState = LocationState(
+        mode = LocationMode.SURVEY_TRACKING,
+        cameraFollowEnabled = true,
+    )
+
+    fun manualPan(state: LocationState): LocationState = state.copy(
+        cameraFollowEnabled = false,
+        centerOncePending = false,
+    )
+
+    fun centered(state: LocationState): LocationState = state.copy(centerOncePending = false)
+
+    fun oneShotFinished(state: LocationState): LocationState = if (state.mode == LocationMode.ONE_SHOT) {
+        state.copy(mode = LocationMode.IDLE)
+    } else {
+        state
+    }
+
+    fun finishSurvey(): LocationState = LocationState(LocationMode.IDLE, cameraFollowEnabled = false)
 }
 
 object GpsCameraFollow {

@@ -1,6 +1,5 @@
 package com.coremapmm.fieldsurveyor.ui.survey
 
-import android.graphics.BitmapFactory
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.ViewGroup
@@ -48,6 +47,7 @@ import java.io.File
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
+import com.coremapmm.fieldsurveyor.media.JpegCompressor
 import com.coremapmm.fieldsurveyor.ui.settings.tr
 
 @Composable
@@ -59,6 +59,7 @@ fun CameraCaptureOverlay(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val imageCapture = remember {
+        // Do not setTargetRotation: keep device EXIF; JpegCompressor corrects pixels before upload.
         ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .setJpegQuality(95)
@@ -146,7 +147,7 @@ fun CameraCaptureOverlay(
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
         reviewFile?.let { file ->
-            val bitmap = remember(file.absolutePath) { loadPreviewBitmap(file) }
+            val bitmap = remember(file.absolutePath) { JpegCompressor.loadPreview(file, 1600) }
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
@@ -233,11 +234,3 @@ fun CameraCaptureOverlay(
         }
     }
 }
-
-private fun loadPreviewBitmap(file: File) = runCatching {
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    BitmapFactory.decodeFile(file.absolutePath, bounds)
-    var sample = 1
-    while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 1600) sample *= 2
-    BitmapFactory.decodeFile(file.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
-}.getOrNull()
