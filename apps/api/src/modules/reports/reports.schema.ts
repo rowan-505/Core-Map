@@ -10,6 +10,7 @@ export const REPORT_TYPE_CODES = [
     "transport_issue",
     "community_info",
     "other_map_issue",
+    "new_stop",
 ] as const;
 
 /** Lifecycle status codes — must match the seeded ref.ref_report_statuses rows. */

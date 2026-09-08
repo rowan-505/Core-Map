@@ -173,15 +173,27 @@ export class ObjectStoreFieldBootstrapStore implements FieldBootstrapArtifactSto
         const gzipKey = this.key(gzipName);
         const manifestKey = this.key(manifestName);
         const head = await this.objectStore.headObject({ bucket: this.bucket, objectKey: gzipKey });
-        if (!head.exists || !head.contentLength) {
+        if (!head.exists) {
             return null;
         }
-        const manifestBytes = await this.objectStore.getObject({
-            bucket: this.bucket,
-            objectKey: manifestKey,
-        });
+        let manifestBytes: Buffer;
+        try {
+            manifestBytes = await this.objectStore.getObject({
+                bucket: this.bucket,
+                objectKey: manifestKey,
+            });
+        } catch {
+            return null;
+        }
         const manifest = parseFieldBootstrapManifest(JSON.parse(manifestBytes.toString("utf8")));
-        if (!manifest || head.contentLength !== manifest.compressedBytes) {
+        if (!manifest) {
+            return null;
+        }
+        if (
+            head.contentLength != null &&
+            head.contentLength > 0 &&
+            head.contentLength !== manifest.compressedBytes
+        ) {
             return null;
         }
         return {

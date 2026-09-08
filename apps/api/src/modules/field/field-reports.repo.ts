@@ -61,6 +61,9 @@ export type FieldTargetLookup = {
     variantDirectionId: number | null;
     variantRoutePublicId: string | null;
     stopOnVariant: boolean | null;
+    stopBelongsToVariant: boolean | null;
+    liveStopSequence: number | null;
+    nextStopBelongsToVariant: boolean | null;
 };
 
 export class FieldReportsRepository {
@@ -71,6 +74,7 @@ export class FieldReportsRepository {
         routePublicId?: string;
         variantPublicId?: string;
         stopSequence?: number;
+        nextStopPublicId?: string;
     }): Promise<FieldTargetLookup> {
         const rows = await this.prisma.$queryRaw<
             {
@@ -82,6 +86,9 @@ export class FieldReportsRepository {
                 variant_direction_id: number | null;
                 variant_route_public_id: string | null;
                 stop_on_variant: boolean | null;
+                stop_belongs_to_variant: boolean | null;
+                live_stop_sequence: number | null;
+                next_stop_belongs_to_variant: boolean | null;
             }[]
         >`
             SELECT
@@ -155,7 +162,51 @@ export class FieldReportsRepository {
                           AND v.deleted_at IS NULL
                           AND s.deleted_at IS NULL
                     )
-                END AS stop_on_variant
+                END AS stop_on_variant,
+                CASE
+                    WHEN ${input.variantPublicId ?? null}::uuid IS NULL
+                      OR ${input.stopPublicId ?? null}::uuid IS NULL
+                    THEN NULL
+                    ELSE EXISTS (
+                        SELECT 1
+                        FROM transport.route_stops rs
+                        JOIN transport.route_variants v ON v.id = rs.route_variant_id
+                        JOIN transport.stops s ON s.id = rs.stop_id
+                        WHERE v.public_id = ${input.variantPublicId ?? null}::uuid
+                          AND s.public_id = ${input.stopPublicId ?? null}::uuid
+                          AND v.deleted_at IS NULL
+                          AND s.deleted_at IS NULL
+                    )
+                END AS stop_belongs_to_variant,
+                (
+                    SELECT rs.stop_sequence
+                    FROM transport.route_stops rs
+                    JOIN transport.route_variants v ON v.id = rs.route_variant_id
+                    JOIN transport.stops s ON s.id = rs.stop_id
+                    WHERE ${input.variantPublicId ?? null}::uuid IS NOT NULL
+                      AND ${input.stopPublicId ?? null}::uuid IS NOT NULL
+                      AND v.public_id = ${input.variantPublicId ?? null}::uuid
+                      AND s.public_id = ${input.stopPublicId ?? null}::uuid
+                      AND v.deleted_at IS NULL
+                      AND s.deleted_at IS NULL
+                    ORDER BY rs.stop_sequence
+                    LIMIT 1
+                ) AS live_stop_sequence,
+                CASE
+                    WHEN ${input.variantPublicId ?? null}::uuid IS NULL
+                      OR ${input.nextStopPublicId ?? null}::uuid IS NULL
+                    THEN NULL
+                    ELSE EXISTS (
+                        SELECT 1
+                        FROM transport.route_stops rs
+                        JOIN transport.route_variants v ON v.id = rs.route_variant_id
+                        JOIN transport.stops s ON s.id = rs.stop_id
+                        WHERE v.public_id = ${input.variantPublicId ?? null}::uuid
+                          AND s.public_id = ${input.nextStopPublicId ?? null}::uuid
+                          AND v.deleted_at IS NULL
+                          AND s.deleted_at IS NULL
+                    )
+                END AS next_stop_belongs_to_variant
         `;
         const row = rows[0];
         return {
@@ -167,6 +218,9 @@ export class FieldReportsRepository {
             variantDirectionId: row?.variant_direction_id ?? null,
             variantRoutePublicId: row?.variant_route_public_id ?? null,
             stopOnVariant: row?.stop_on_variant ?? null,
+            stopBelongsToVariant: row?.stop_belongs_to_variant ?? null,
+            liveStopSequence: row?.live_stop_sequence ?? null,
+            nextStopBelongsToVariant: row?.next_stop_belongs_to_variant ?? null,
         };
     }
 
@@ -311,6 +365,13 @@ export function toReportData(body: FieldReportCreateBody): Record<string, unknow
     if (body.context.variantPublicId) data.variantPublicId = body.context.variantPublicId;
     if (body.context.stopPublicId) data.stopPublicId = body.context.stopPublicId;
     if (body.context.stopSequence !== undefined) data.stopSequence = body.context.stopSequence;
+    if (body.context.previousStopPublicId) data.previousStopPublicId = body.context.previousStopPublicId;
+    if (body.context.previousStopSequence !== undefined) {
+        data.previousStopSequence = body.context.previousStopSequence;
+    }
+    if (body.context.nextStopPublicId) data.nextStopPublicId = body.context.nextStopPublicId;
+    if (body.context.proposedStopName) data.proposedStopName = body.context.proposedStopName;
+    if (body.context.locationSource) data.locationSource = body.context.locationSource;
     if (body.context.canonicalSnapshot !== undefined) {
         data.canonicalSnapshot = body.context.canonicalSnapshot;
     }

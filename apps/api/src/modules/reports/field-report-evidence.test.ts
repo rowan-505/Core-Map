@@ -152,3 +152,121 @@ test("old snapshot is stale when the live field revision differs", () => {
     assert.equal(field?.snapshot_stale, true);
     assert.equal(field?.snapshot_revision, "v1-capture");
 });
+
+test("new_stop evidence keeps previous stop, proposed name, and location source", () => {
+    const field = toFieldContext(
+        row({
+            report_type_code: "new_stop",
+            target_entity_type: "variant",
+            target_public_id: variantId,
+            latitude: 16.781,
+            longitude: 96.151,
+            report_data: {
+                snapshotRevision: "v1-old",
+                routePublicId: routeId,
+                variantPublicId: variantId,
+                variantCode: "D0",
+                previousStopPublicId: stopId,
+                previousStopSequence: 4,
+                nextStopPublicId: "44444444-4444-4444-8444-444444444444",
+                proposedStopName: "Corner stall",
+                locationSource: "GPS",
+                stopPublicId: stopId,
+                stopSequence: 4,
+            },
+        }),
+        "v1-old"
+    );
+    assert.equal(field?.previous_stop_public_id, stopId);
+    assert.equal(field?.previous_stop_sequence, 4);
+    assert.equal(field?.next_stop_public_id, "44444444-4444-4444-8444-444444444444");
+    assert.equal(field?.proposed_stop_name, "Corner stall");
+    assert.equal(field?.location_source, "GPS");
+    assert.equal(field?.stop_public_id, stopId);
+    assert.equal(field?.proposed_location?.latitude, 16.781);
+    assert.equal(field?.observed_location?.latitude, 16.781);
+});
+
+test("new_stop GPS-only has proposed geometry even without a corrected snapshot point", () => {
+    const field = toFieldContext(
+        row({
+            report_type_code: "new_stop",
+            target_entity_type: "variant",
+            target_public_id: variantId,
+            latitude: 16.801,
+            longitude: 96.151,
+            location_accuracy_m: 7,
+            report_data: {
+                snapshotRevision: "v1-old",
+                variantCode: "D0",
+                previousStopPublicId: stopId,
+                previousStopSequence: 4,
+                proposedStopName: "Corner stall",
+                locationSource: "GPS",
+                stopPublicId: stopId,
+                stopSequence: 4,
+            },
+        }),
+        "v1-old"
+    );
+    assert.equal(field?.next_stop_public_id, null);
+    assert.equal(field?.location_source, "GPS");
+    assert.equal(field?.proposed_location?.latitude, 16.801);
+    assert.equal(field?.observed_location?.latitude, 16.801);
+    assert.equal(field?.observed_location?.accuracy_m, 7);
+});
+
+test("new_stop map pick keeps observer GPS separate from the proposed point", () => {
+    const field = toFieldContext(
+        row({
+            report_type_code: "new_stop",
+            target_entity_type: "variant",
+            target_public_id: variantId,
+            latitude: 16.91,
+            longitude: 96.21,
+            location_accuracy_m: null,
+            report_data: {
+                snapshotRevision: "v1-old",
+                variantCode: "D1",
+                previousStopPublicId: stopId,
+                previousStopSequence: 4,
+                proposedStopName: "Corner stall",
+                locationSource: "MAP_PICK",
+                stopPublicId: stopId,
+                stopSequence: 4,
+                canonicalSnapshot: {
+                    observerLat: 16.801,
+                    observerLng: 96.151,
+                    observerAccuracyM: 40,
+                    observerEpochMs: 1_700_000_000_000,
+                    correctedLat: 16.91,
+                    correctedLng: 96.21,
+                    lat: 16.8,
+                    lng: 96.15,
+                },
+            },
+        }),
+        "v1-old"
+    );
+    assert.equal(field?.location_source, "MAP_PICK");
+    assert.equal(field?.proposed_location?.latitude, 16.91);
+    assert.equal(field?.observed_location?.latitude, 16.801);
+    assert.equal(field?.observed_location?.accuracy_m, 40);
+});
+
+test("wrong_info field reports still omit a proposed point", () => {
+    const field = toFieldContext(
+        row({
+            report_type_code: "wrong_info",
+            report_data: {
+                snapshotRevision: "v1-old",
+                variantCode: "D0",
+                stopPublicId: stopId,
+                stopSequence: 4,
+            },
+        }),
+        "v1-old"
+    );
+    assert.equal(field?.proposed_location, null);
+    assert.equal(field?.observed_location?.latitude, 16.81);
+});

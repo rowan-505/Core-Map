@@ -93,6 +93,9 @@ export class FieldReportsService {
                 "REPORT_SESSION_CONFLICT"
             );
         }
+        if (!result.created) {
+            this.assertIdempotentReplay(result.row, body);
+        }
         return { created: result.created, report: toResponse(result.row) };
     }
 
@@ -199,6 +202,7 @@ export class FieldReportsService {
     }
 
     private async assertTargets(body: {
+        reportTypeCode: FieldReportCreateBody["reportTypeCode"];
         target: FieldReportCreateBody["target"];
         context: FieldReportCreateBody["context"];
     }): Promise<void> {
@@ -207,8 +211,15 @@ export class FieldReportsService {
             throw new FieldReportsError("variantCode must be D0 or D1", 400, "INVALID_VARIANT");
         }
 
-        const stopPublicId =
-            body.target.entityType === "stop" ? body.target.publicId : body.context.stopPublicId;
+        const isNewStop = body.reportTypeCode === "new_stop";
+        const stopPublicId = isNewStop
+            ? body.context.previousStopPublicId
+            : body.target.entityType === "stop"
+              ? body.target.publicId
+              : body.context.stopPublicId;
+        const stopSequence = isNewStop
+            ? body.context.previousStopSequence
+            : body.context.stopSequence;
         const routePublicId =
             body.target.entityType === "route" ? body.target.publicId : body.context.routePublicId;
         const variantPublicId =
@@ -220,7 +231,8 @@ export class FieldReportsService {
             stopPublicId,
             routePublicId,
             variantPublicId,
-            stopSequence: body.context.stopSequence,
+            stopSequence,
+            nextStopPublicId: isNewStop ? body.context.nextStopPublicId : undefined,
         });
 
         if (stopPublicId && !lookup.stopExists) {
@@ -250,8 +262,58 @@ export class FieldReportsService {
                 throw new FieldReportsError("Variant does not belong to the given route", 400, "INVALID_VARIANT");
             }
         }
+        if (isNewStop) {
+            if (!lookup.stopBelongsToVariant) {
+                throw new FieldReportsError(
+                    "Previous stop does not belong to this variant",
+                    400,
+                    "INVALID_STOP"
+                );
+            }
+            if (body.context.nextStopPublicId && lookup.nextStopBelongsToVariant === false) {
+                throw new FieldReportsError(
+                    "Next stop does not belong to this variant",
+                    400,
+                    "INVALID_STOP"
+                );
+            }
+            return;
+        }
         if (lookup.stopOnVariant === false) {
             throw new FieldReportsError("Stop sequence does not match this variant", 400, "INVALID_STOP");
+        }
+    }
+
+    private assertIdempotentReplay(row: FieldReportRow, body: FieldReportCreateBody): void {
+        const stored = asContext(row.report_data);
+        const sameType = row.report_type_code === body.reportTypeCode;
+        const sameTarget =
+            row.target_entity_type === body.target.entityType &&
+            (row.target_public_id ?? null) === (body.target.publicId ?? null);
+        const sameRoute = (stored.routePublicId ?? null) === (body.context.routePublicId ?? null);
+        const sameVariant =
+            (stored.variantPublicId ?? null) === (body.context.variantPublicId ?? null) &&
+            stored.variantCode === body.context.variantCode;
+        const sameSnapshot = stored.snapshotRevision === body.context.snapshotRevision;
+        const samePrevious =
+            (stored.previousStopPublicId ?? stored.stopPublicId ?? null) ===
+                (body.context.previousStopPublicId ?? body.context.stopPublicId ?? null) &&
+            (stored.previousStopSequence ?? stored.stopSequence ?? null) ===
+                (body.context.previousStopSequence ?? body.context.stopSequence ?? null);
+        const sameNext = (stored.nextStopPublicId ?? null) === (body.context.nextStopPublicId ?? null);
+        const sameName = (stored.proposedStopName ?? null) === (body.context.proposedStopName ?? null);
+        const sameSource = (stored.locationSource ?? null) === (body.context.locationSource ?? null);
+        const samePoint =
+            Math.abs(row.latitude - body.location.lat) < 1e-7 &&
+            Math.abs(row.longitude - body.location.lng) < 1e-7;
+        const newStopOk =
+            body.reportTypeCode !== "new_stop" || (sameNext && sameName && sameSource && samePoint);
+        if (!sameType || !sameTarget || !sameRoute || !sameVariant || !sameSnapshot || !samePrevious || !newStopOk) {
+            throw new FieldReportsError(
+                "This report id was already used with different evidence",
+                409,
+                "IDEMPOTENCY_CONFLICT"
+            );
         }
     }
 }
@@ -266,6 +328,14 @@ function asContext(reportData: unknown): FieldReportCreateBody["context"] {
         variantCode,
         stopPublicId: typeof data.stopPublicId === "string" ? data.stopPublicId : undefined,
         stopSequence: typeof data.stopSequence === "number" ? data.stopSequence : undefined,
+        previousStopPublicId: typeof data.previousStopPublicId === "string" ? data.previousStopPublicId : undefined,
+        previousStopSequence: typeof data.previousStopSequence === "number" ? data.previousStopSequence : undefined,
+        nextStopPublicId: typeof data.nextStopPublicId === "string" ? data.nextStopPublicId : undefined,
+        proposedStopName: typeof data.proposedStopName === "string" ? data.proposedStopName : undefined,
+        locationSource:
+            data.locationSource === "MAP_PICK" || data.locationSource === "GPS"
+                ? data.locationSource
+                : undefined,
         canonicalSnapshot: data.canonicalSnapshot,
     };
 }

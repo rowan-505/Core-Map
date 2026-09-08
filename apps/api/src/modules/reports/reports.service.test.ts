@@ -160,6 +160,61 @@ test("adminGet missing media stays an empty list", async () => {
     assert.equal(detail.media_count, 0);
 });
 
+test("adminGet new_stop returns evidence and does not invent a canonical write", async () => {
+    let canonicalLookups = 0;
+    const reports = {
+        findByPublicId: async () =>
+            reportRow({
+                report_type_code: "new_stop",
+                report_type_name: "New stop",
+                target_entity_type: "variant",
+                target_public_id: "22222222-2222-4222-8222-222222222222",
+                latitude: 16.91,
+                longitude: 96.21,
+                report_data: {
+                    snapshotRevision: "v1-capture",
+                    routePublicId: routeId,
+                    variantCode: "D0",
+                    previousStopPublicId: stopId,
+                    previousStopSequence: 4,
+                    proposedStopName: "Corner stall",
+                    locationSource: "MAP_PICK",
+                    stopPublicId: stopId,
+                    stopSequence: 4,
+                    canonicalSnapshot: {
+                        observerLat: 16.801,
+                        observerLng: 96.151,
+                        observerAccuracyM: 40,
+                        correctedLat: 16.91,
+                        correctedLng: 96.21,
+                    },
+                },
+            }),
+        listStatusEvents: async () => [],
+        listFollowups: async () => [],
+        findCanonicalStopPoint: async () => {
+            canonicalLookups += 1;
+            return { latitude: 16.8, longitude: 96.15, distance_m: 80 };
+        },
+        insertStop: async () => {
+            throw new Error("canonical write");
+        },
+    };
+    const detail = await new ReportsService(
+        reports as never,
+        { listReadyPrivateForReport: async () => [] } as never,
+        { loadRevisionParts: async () => liveParts }
+    ).adminGet(reportId);
+    assert.equal(detail.report_type.code, "new_stop");
+    assert.equal(detail.field?.proposed_stop_name, "Corner stall");
+    assert.equal(detail.field?.location_source, "MAP_PICK");
+    assert.equal(detail.field?.proposed_location?.latitude, 16.91);
+    assert.equal(detail.field?.observed_location?.latitude, 16.801);
+    assert.equal(detail.canonical_target?.latitude, 16.8);
+    assert.equal(canonicalLookups, 1);
+    assert.equal(detail.media.length, 0);
+});
+
 test("adminGet marks an old snapshot stale against the live revision", async () => {
     const detail = await service({ report: reportRow() }).adminGet(reportId);
     assert.equal(detail.field?.snapshot_revision, "v1-capture");

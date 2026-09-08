@@ -20,6 +20,11 @@ export type FieldReportAdminContext = {
     stop_public_id: string | null;
     stop_name: string | null;
     stop_sequence: number | null;
+    previous_stop_public_id: string | null;
+    previous_stop_sequence: number | null;
+    next_stop_public_id: string | null;
+    proposed_stop_name: string | null;
+    location_source: string | null;
     snapshot_revision: string | null;
     snapshot_stale: boolean;
     current_snapshot_revision: string | null;
@@ -59,7 +64,6 @@ export function toFieldContext(
                     accuracy_m: optionalFinite(row.location_accuracy_m),
                 }
               : null;
-    const proposed = corrected ?? (observer != null ? reportPoint : null);
 
     return {
         route_code: row.field_route_code ?? optionalString(data.routeCode),
@@ -70,7 +74,12 @@ export function toFieldContext(
         destination_name: row.field_destination_name ?? null,
         stop_public_id: fieldStopPublicId(row, data),
         stop_name: row.field_stop_name ?? null,
-        stop_sequence: optionalInt(data.stopSequence) ?? optionalInt(snapshot.stopSequence),
+        stop_sequence: optionalInt(data.stopSequence) ?? optionalInt(data.previousStopSequence) ?? optionalInt(snapshot.stopSequence),
+        previous_stop_public_id: optionalString(data.previousStopPublicId),
+        previous_stop_sequence: optionalInt(data.previousStopSequence),
+        next_stop_public_id: optionalString(data.nextStopPublicId),
+        proposed_stop_name: optionalString(data.proposedStopName),
+        location_source: optionalString(data.locationSource),
         snapshot_revision: snapshotRevision,
         snapshot_stale: Boolean(
             snapshotRevision && currentSnapshotRevision && snapshotRevision !== currentSnapshotRevision
@@ -80,8 +89,23 @@ export function toFieldContext(
         survey_session_status: row.survey_session_status ?? null,
         canonical_snapshot: data.canonicalSnapshot === undefined ? null : data.canonicalSnapshot,
         observed_location: observed,
-        proposed_location: proposed,
+        proposed_location: proposedLocation(row.report_type_code, corrected, observer, reportPoint),
     };
+}
+
+function proposedLocation(
+    reportTypeCode: string,
+    corrected: GeoPoint | null,
+    observer: GeoPoint | null,
+    reportPoint: GeoPoint | null
+): GeoPoint | null {
+    if (corrected) {
+        return corrected;
+    }
+    if (reportTypeCode === "new_stop") {
+        return reportPoint;
+    }
+    return observer != null ? reportPoint : null;
 }
 
 function fieldStopPublicId(row: ReportRow, data: Record<string, unknown>): string | null {

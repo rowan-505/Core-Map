@@ -51,7 +51,14 @@ function row(overrides: Partial<FieldReportRow> = {}): FieldReportRow {
         location_accuracy_m: 8,
         observed_at: now,
         admin_area_id: 1n,
-        report_data: { snapshotRevision: "v1-abc", variantCode: "D0" },
+        report_data: {
+            snapshotRevision: "v1-abc",
+            variantCode: "D0",
+            routePublicId: routeId,
+            variantPublicId: variantId,
+            stopPublicId: stopId,
+            stopSequence: 4,
+        },
         created_at: now,
         updated_at: now,
         survey_session_id: null,
@@ -70,6 +77,9 @@ function validLookup() {
         variantDirectionId: 0,
         variantRoutePublicId: routeId,
         stopOnVariant: true,
+        stopBelongsToVariant: true,
+        liveStopSequence: 4,
+        nextStopBelongsToVariant: true,
     };
 }
 
@@ -290,4 +300,193 @@ test("idempotent report replay cannot switch survey sessions", async () => {
         (error: unknown) =>
             error instanceof FieldReportsError && error.code === "REPORT_SESSION_CONFLICT"
     );
+});
+
+const nextStopId = "44444444-4444-4444-8444-444444444444";
+const sessionId = "55555555-5555-4555-8555-555555555555";
+
+function newStopBody(clientPublicId: string) {
+    return {
+        clientPublicId,
+        reportTypeCode: "new_stop" as const,
+        observedAt: new Date(),
+        location: { lat: 16.781, lng: 96.151, accuracyM: 6 },
+        target: { entityType: "variant" as const, publicId: variantId },
+        context: {
+            snapshotRevision: "v1-abc",
+            routePublicId: routeId,
+            variantPublicId: variantId,
+            variantCode: "D0" as const,
+            previousStopPublicId: stopId,
+            previousStopSequence: 4,
+            nextStopPublicId: nextStopId,
+            proposedStopName: "Corner stall",
+            locationSource: "GPS" as const,
+            stopPublicId: stopId,
+            stopSequence: 4,
+            canonicalSnapshot: { previousStopName: "Sule" },
+        },
+        surveySession: { clientSessionId: sessionId },
+        description: "Physical stop not on this variant",
+    };
+}
+
+test("schema accepts new_stop evidence and keeps missing_item distinct", () => {
+    const parsed = fieldReportCreateBodySchema.safeParse(
+        newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+    );
+    assert.equal(parsed.success, true);
+    const missing = fieldReportCreateBodySchema.safeParse(
+        validBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+    );
+    assert.equal(missing.success, true);
+    assert.equal(missing.success ? missing.data.reportTypeCode : null, "wrong_location");
+});
+
+test("new_stop schema rejects a blank name and missing previous stop", () => {
+    const blankName = fieldReportCreateBodySchema.safeParse({
+        ...newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+        context: {
+            ...newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").context,
+            proposedStopName: "  ",
+        },
+    });
+    assert.equal(blankName.success, false);
+
+    const noPrevious = fieldReportCreateBodySchema.safeParse({
+        ...newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+        context: {
+            ...newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").context,
+            previousStopPublicId: undefined,
+        },
+    });
+    assert.equal(noPrevious.success, false);
+});
+
+test("creates a new_stop evidence row without treating it as missing_item", async () => {
+    const created = row({
+        public_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        report_type_code: "new_stop",
+        target_entity_type: "variant",
+        target_public_id: variantId,
+        survey_session_id: 77n,
+        survey_session_public_id: "66666666-6666-4666-8666-666666666666",
+        report_data: newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").context,
+    });
+    const svc = serviceWith({
+        session: async () => ({ session_id: 77n }) as never,
+        insert: async (input) => {
+            assert.equal(input.reportTypeCode, "new_stop");
+            assert.equal(input.targetEntityType, "variant");
+            return { created: true, row: created };
+        },
+    });
+    const result = await svc.create("user-sub", newStopBody(created.public_id));
+    assert.equal(result.created, true);
+    assert.equal(result.report.reportTypeCode, "new_stop");
+});
+
+test("new_stop replay of the same UUID does not create another report", async () => {
+    const existing = row({
+        report_type_code: "new_stop",
+        target_entity_type: "variant",
+        target_public_id: variantId,
+        latitude: 16.781,
+        longitude: 96.151,
+        survey_session_id: 77n,
+        report_data: newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").context,
+    });
+    let inserts = 0;
+    const svc = serviceWith({
+        session: async () => ({ session_id: 77n }) as never,
+        insert: async () => {
+            inserts += 1;
+            return { created: inserts === 1, row: existing };
+        },
+    });
+    const body = newStopBody(existing.public_id);
+    const first = await svc.create("user-sub", body);
+    const second = await svc.create("user-sub", body);
+    assert.equal(first.created, true);
+    assert.equal(second.created, false);
+    assert.equal(inserts, 2);
+});
+
+test("new_stop replay with different previous stop is a safe conflict", async () => {
+    const existing = row({
+        report_type_code: "new_stop",
+        target_entity_type: "variant",
+        target_public_id: variantId,
+        latitude: 16.781,
+        longitude: 96.151,
+        survey_session_id: 77n,
+        report_data: newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").context,
+    });
+    const svc = serviceWith({
+        session: async () => ({ session_id: 77n }) as never,
+        insert: async () => ({ created: false, row: existing }),
+    });
+    const body = newStopBody(existing.public_id);
+    await assert.rejects(
+        () =>
+            svc.create("user-sub", {
+                ...body,
+                context: {
+                    ...body.context,
+                    previousStopPublicId: "99999999-9999-4999-8999-999999999999",
+                    stopPublicId: "99999999-9999-4999-8999-999999999999",
+                },
+            }),
+        (error: unknown) =>
+            error instanceof FieldReportsError && error.code === "IDEMPOTENCY_CONFLICT"
+    );
+});
+
+test("new_stop rejects a previous stop that is not on the selected variant", async () => {
+    const svc = serviceWith({
+        session: async () => ({ session_id: 77n }) as never,
+        lookup: async () => ({
+            ...validLookup(),
+            stopBelongsToVariant: false,
+            stopOnVariant: false,
+            liveStopSequence: null,
+        }),
+    });
+    await assert.rejects(
+        () => svc.create("user-sub", newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")),
+        (error: unknown) => error instanceof FieldReportsError && error.statusCode === 400
+    );
+});
+
+test("new_stop keeps a mismatched snapshot sequence as historical evidence", async () => {
+    const created = row({
+        report_type_code: "new_stop",
+        target_entity_type: "variant",
+        target_public_id: variantId,
+        survey_session_id: 77n,
+        report_data: newStopBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").context,
+    });
+    const svc = serviceWith({
+        session: async () => ({ session_id: 77n }) as never,
+        lookup: async () => ({
+            ...validLookup(),
+            stopOnVariant: false,
+            stopBelongsToVariant: true,
+            liveStopSequence: 9,
+        }),
+        insert: async (input) => {
+            assert.equal((input.reportData as { previousStopSequence?: number }).previousStopSequence, 4);
+            return { created: true, row: created };
+        },
+    });
+    const result = await svc.create("user-sub", newStopBody(created.public_id));
+    assert.equal(result.created, true);
+});
+
+test("old missing_item payloads still parse", () => {
+    const parsed = fieldReportCreateBodySchema.safeParse({
+        ...validBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+        reportTypeCode: "missing_item",
+    });
+    assert.equal(parsed.success, true);
 });

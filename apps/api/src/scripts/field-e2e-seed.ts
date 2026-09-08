@@ -28,7 +28,8 @@ async function main() {
               ('transport_issue', 'Transport issue'),
               ('wrong_location', 'Wrong location'),
               ('missing_item', 'Missing item'),
-              ('wrong_info', 'Wrong information')
+              ('wrong_info', 'Wrong information'),
+              ('new_stop', 'New stop')
             ON CONFLICT (code) DO NOTHING
         `);
         await tx.$executeRawUnsafe(`

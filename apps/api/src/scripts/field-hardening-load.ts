@@ -78,7 +78,10 @@ async function main(): Promise<void> {
     `);
     await prisma.$executeRawUnsafe(`
         INSERT INTO ref.ref_report_types (code, name)
-        VALUES ('other_map_issue', 'Other map issue') ON CONFLICT (code) DO NOTHING
+        VALUES
+            ('other_map_issue', 'Other map issue'),
+            ('new_stop', 'New stop')
+        ON CONFLICT (code) DO NOTHING
     `);
     await prisma.$executeRawUnsafe(`
         INSERT INTO ref.ref_report_statuses (code, name)

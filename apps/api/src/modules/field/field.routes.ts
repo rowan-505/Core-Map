@@ -62,7 +62,7 @@ function invalid(reply: FastifyReply, message: string, issues: unknown): Fastify
 }
 
 const fieldRoutes: FastifyPluginAsync = async (app) => {
-    const bootstrapStore = createFieldBootstrapArtifactStore();
+    const bootstrapStore = await createFieldBootstrapArtifactStore();
     const reportsRepo = new ReportsRepository(app.prisma);
     const surveySessions = new SurveySessionsService(new SurveySessionsRepository(app.prisma));
     const fieldReports = new FieldReportsService(

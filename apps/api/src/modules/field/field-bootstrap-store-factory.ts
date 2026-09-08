@@ -7,24 +7,56 @@ import {
     type FieldBootstrapArtifactStore,
 } from "./field-bootstrap-store.js";
 
+export type FieldBootstrapStoreKind = "dir" | "r2" | "empty";
+
+function logStore(kind: FieldBootstrapStoreKind, extra?: string): void {
+    const suffix = extra ? ` ${extra}` : "";
+    // eslint-disable-next-line no-console -- startup diagnostic; never logs credentials or bodies
+    console.log(`[api] field bootstrap store=${kind}${suffix}`);
+}
+
+function optionalR2() {
+    try {
+        return getOptionalR2MediaEnv();
+    } catch {
+        return null;
+    }
+}
+
+function r2Store() {
+    const r2 = optionalR2();
+    if (!r2) {
+        return null;
+    }
+    return new ObjectStoreFieldBootstrapStore(
+        new R2ObjectStore(createR2S3Client(r2)),
+        r2.privateBucket
+    );
+}
+
 /**
- * Request path never builds a snapshot. Local dir wins for tests; else private R2.
+ * Request path never builds a snapshot.
+ * A local dir is used only when it already has a valid artifact (tests).
+ * Otherwise private R2. An empty FIELD_BOOTSTRAP_SNAPSHOT_DIR must not hide R2.
  */
-export function createFieldBootstrapArtifactStore(): FieldBootstrapArtifactStore {
+export async function createFieldBootstrapArtifactStore(): Promise<FieldBootstrapArtifactStore> {
     const directory = process.env.FIELD_BOOTSTRAP_SNAPSHOT_DIR?.trim();
     if (directory) {
-        return new FilesystemFieldBootstrapStore(directory);
-    }
-    try {
-        const r2 = getOptionalR2MediaEnv();
-        if (r2) {
-            return new ObjectStoreFieldBootstrapStore(
-                new R2ObjectStore(createR2S3Client(r2)),
-                r2.privateBucket
-            );
+        const fsStore = new FilesystemFieldBootstrapStore(directory);
+        const hasArtifact = Boolean((await fsStore.readCurrent()) ?? (await fsStore.readPrevious()));
+        if (hasArtifact) {
+            logStore("dir");
+            return fsStore;
         }
-    } catch {
-        return new EmptyFieldBootstrapStore();
+        logStore("dir", "empty_fallback_r2");
     }
+
+    const fromR2 = r2Store();
+    if (fromR2) {
+        logStore("r2");
+        return fromR2;
+    }
+
+    logStore("empty");
     return new EmptyFieldBootstrapStore();
 }
