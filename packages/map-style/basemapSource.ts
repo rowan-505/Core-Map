@@ -55,6 +55,7 @@ export function createBasemapVectorSource(pmtilesHttpUrl: string): {
     type: 'vector',
     url: toPmtilesSchemeUrl(pmtilesHttpUrl),
     minzoom: 0,
+    // Native archive ceiling (z16). Camera may go to z20 via MapLibre overzoom.
     maxzoom: REGIONAL_VECTOR_SOURCE_OVERZOOM_MAX_ZOOM,
   };
 }

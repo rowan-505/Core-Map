@@ -52,7 +52,7 @@ fun yangonPmtilesUrl(): String {
     if (fromProperty.isNotEmpty()) {
         return fromProperty
     }
-    return "https://tiles.coremapmm.com/basemaps/yangon/v1/basemap.pmtiles"
+    return "https://tiles.coremapmm.com/basemaps/yangon/v2/basemap.pmtiles"
 }
 
 android {

@@ -131,9 +131,9 @@ Room already uses `noBackupFilesDir`.
 
 ## Offline PMTiles
 
-Survey zoom is street-level (up to z20). Overview tiles only cover z0–z8, so the app does **not** pack all regional PMTiles. It downloads **Yangon only** into `filesDir/basemap/yangon.pmtiles` (~730 MB). Style URL is `pmtiles://file://…`. Glyphs stay `asset://`. No live tile HTTP after the file is on the device.
+Survey zoom is street-level (up to z20). Overview tiles only cover z0–z8, so the app does **not** pack all regional PMTiles. It downloads **Yangon only** into `filesDir/basemap/yangon.pmtiles` (~114 MB for v2). Style URL is `pmtiles://file://…`. Glyphs stay `asset://`. No live tile HTTP after the file is on the device.
 
-Default URL: `https://tiles.coremapmm.com/basemaps/yangon/v1/basemap.pmtiles`. Override with `-PfieldYangonPmtilesUrl=…` (LAN copy of the file). Logout does not delete this file.
+Default URL: `https://tiles.coremapmm.com/basemaps/yangon/v2/basemap.pmtiles`. Override with `-PfieldYangonPmtilesUrl=…` (LAN copy of the file). Logout does not delete this file.
 
 Gradle still copies the small overview PMTiles as a fallback asset. Setup requires the Yangon file before Continue.
 

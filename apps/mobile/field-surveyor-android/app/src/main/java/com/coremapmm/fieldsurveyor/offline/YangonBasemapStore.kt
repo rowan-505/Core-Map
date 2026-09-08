@@ -80,7 +80,12 @@ class YangonBasemapStore(
 
     companion object {
         const val FILE_NAME = "yangon.pmtiles"
-        private const val MIN_READY_BYTES = 400_000_000L
+        /**
+         * Sanity floor only — not the expected archive size.
+         * Yangon v1 was ~730MB (native detail through high zoom). Corrected v2 is ~114MB
+         * (native z8–z16). Keep this well below the smallest acceptable production package.
+         */
+        private const val MIN_READY_BYTES = 50_000_000L
 
         fun isComplete(file: File): Boolean {
             if (!file.isFile || file.length() < MIN_READY_BYTES) {
