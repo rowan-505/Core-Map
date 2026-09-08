@@ -11,7 +11,8 @@ data class YangonMapManifest(
 )
 
 object YangonMapManifestParser {
-    const val FALLBACK_BYTES = 730_000_000L
+    /** Used when manifest.json is missing and HEAD has no Content-Length (Yangon v2 ≈ 119 MB). */
+    const val FALLBACK_BYTES = 120_000_000L
 
     fun manifestUrl(downloadUrl: String): String {
         val slash = downloadUrl.lastIndexOf('/')

@@ -43,8 +43,8 @@ class NearbyRouteRankerTest {
         val recs = NearbyRouteRanker.rank(fix.lat, fix.lng, listOf(serving("v-near", 16.8005, 96.1505)), radius)
         val state = NearbyRouteFlow.afterSnapshotAndFix(true, true, location, recs)
         assertTrue(state is NearbyRouteState.Recommendations)
-        assertEquals(NearbyRoutePolicy.QUALIFIER_DEGRADED, NearbyRouteFlow.message(state))
-        assertFalse(NearbyRouteFlow.message(state)!!.contains("accuracy required", ignoreCase = true))
+        assertEquals(null, NearbyRouteFlow.message(state))
+        assertEquals(NearbyRoutePolicy.QUALIFIER_DEGRADED, (state as NearbyRouteState.Recommendations).qualifier)
     }
 
     @Test
@@ -65,7 +65,7 @@ class NearbyRouteRankerTest {
         assertNull(NearbyRouteLocationPolicy.select(idle, clock = clock))
         val state = NearbyRouteFlow.afterSnapshotAndFix(true, true, null, emptyList())
         assertEquals(NearbyRouteState.NoLocation, state)
-        assertEquals(NearbyRoutePolicy.EMPTY_NO_LOCATION, NearbyRouteFlow.message(state))
+        assertEquals("No location yet", NearbyRouteFlow.message(state))
         assertFalse(NearbyRouteFlow.message(state)!!.contains("GPS accuracy required", ignoreCase = true))
     }
 
@@ -148,7 +148,7 @@ class NearbyRouteRankerTest {
             emptyList(),
         )
         assertEquals(NearbyRouteState.NoNearby, state)
-        assertEquals(NearbyRoutePolicy.EMPTY_NO_NEARBY, NearbyRouteFlow.message(state))
+        assertEquals("No nearby routes", NearbyRouteFlow.message(state))
     }
 
     @Test

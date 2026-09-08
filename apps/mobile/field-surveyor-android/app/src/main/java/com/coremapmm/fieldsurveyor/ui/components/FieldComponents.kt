@@ -38,44 +38,51 @@ fun FieldCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) { content() }
     }
 }
 
+/**
+ * Status chip tones. Red ([blockingError]) is only for hard blocking failures.
+ */
 @Composable
 fun StatusPill(
     label: String,
     positive: Boolean = false,
     warning: Boolean = false,
+    blockingError: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val container = when {
+        blockingError -> MaterialTheme.colorScheme.errorContainer
         positive -> MaterialTheme.colorScheme.primaryContainer
-        warning -> MaterialTheme.colorScheme.errorContainer
-        else -> MaterialTheme.colorScheme.secondaryContainer
+        warning -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
     }
     val content = when {
+        blockingError -> MaterialTheme.colorScheme.onErrorContainer
         positive -> MaterialTheme.colorScheme.onPrimaryContainer
-        warning -> MaterialTheme.colorScheme.onErrorContainer
-        else -> MaterialTheme.colorScheme.onSecondaryContainer
+        warning -> MaterialTheme.colorScheme.onSecondaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     Surface(
         modifier = modifier,
         color = container,
         contentColor = content,
-        shape = RoundedCornerShape(100.dp),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            maxLines = 2,
         )
     }
 }
@@ -93,10 +100,10 @@ fun MetricRow(
         metrics.forEach { (value, label) ->
             Surface(
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                     Text(value, style = MaterialTheme.typography.titleMedium)
                     Text(
                         label,

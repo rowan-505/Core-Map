@@ -154,10 +154,10 @@ class StopContextTest {
         val sequences = listOf(1, 2, 3)
         assertEquals("Previous, empty", com.coremapmm.fieldsurveyor.ui.survey.StopWindowDisplay.accessibilityLabel("Previous", null, sequences, null))
         assertEquals(
-            "Selected, #2, Sule",
-            com.coremapmm.fieldsurveyor.ui.survey.StopWindowDisplay.accessibilityLabel("Selected", b, sequences, "Sule"),
+            "Current, #2, Sule",
+            com.coremapmm.fieldsurveyor.ui.survey.StopWindowDisplay.accessibilityLabel("Current", b, sequences, "Sule"),
         )
-        assertFalse(com.coremapmm.fieldsurveyor.ui.survey.StopWindowDisplay.accessibilityLabel("Selected", b, sequences, "Sule").contains("#0"))
+        assertFalse(com.coremapmm.fieldsurveyor.ui.survey.StopWindowDisplay.accessibilityLabel("Current", b, sequences, "Sule").contains("#0"))
     }
 
     @Test

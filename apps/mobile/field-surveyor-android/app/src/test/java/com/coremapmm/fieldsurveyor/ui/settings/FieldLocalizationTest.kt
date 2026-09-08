@@ -64,21 +64,28 @@ class FieldLocalizationTest {
             "နောက်ဆုံးသိထားသော တည်နေရာကို သုံးထားသည်။",
             translateFieldText("Using last known location.", FieldLanguage.MYANMAR),
         )
-        assertEquals("GPS ရှာနေသည်…", translateFieldText("Finding GPS…", FieldLanguage.MYANMAR))
-        assertEquals("GPS ပိတ်ထားသည်", translateFieldText("GPS off", FieldLanguage.MYANMAR))
-        assertEquals("GPS ခွင့်ပြုချက် လိုသည်", translateFieldText("GPS permission needed", FieldLanguage.MYANMAR))
+        assertEquals("တည်နေရာ ရှာနေသည်…", translateFieldText("Finding location…", FieldLanguage.MYANMAR))
+        assertEquals("တည်နေရာဖွင့်ပါ", translateFieldText("Turn on location", FieldLanguage.MYANMAR))
+        assertEquals("တည်နေရာခွင့်ပြုချက် လိုသည်", translateFieldText("Location permission required", FieldLanguage.MYANMAR))
+        assertEquals("တည်နေရာ မရနိုင်ပါ", translateFieldText("Location unavailable", FieldLanguage.MYANMAR))
+        assertEquals("နောက်ဆုံးတည်နေရာ သုံးနေသည်", translateFieldText("Using last location", FieldLanguage.MYANMAR))
         assertEquals(
-            "GPS ဟောင်း · ±5 m",
-            translateFieldText("GPS stale · ±5 m", FieldLanguage.MYANMAR),
+            "GPS အားနည်း · ±40m",
+            translateFieldText("Weak GPS · ±40m", FieldLanguage.MYANMAR),
         )
-        assertEquals(
-            "GPS အားနည်း · ±40 m",
-            translateFieldText("GPS weak · ±40 m", FieldLanguage.MYANMAR),
-        )
+        assertEquals("GPS ±8m", translateFieldText("GPS ±8m", FieldLanguage.MYANMAR))
+        assertEquals("စစ်တမ်း ပြီးဆုံးမည်", translateFieldText("End survey", FieldLanguage.MYANMAR))
         assertEquals("မှတ်တိုင်အသစ် တင်မည်", translateFieldText("Report new stop", FieldLanguage.MYANMAR))
         assertEquals("အစီရင်ခံစာ သိမ်းပြီး", translateFieldText("Report saved", FieldLanguage.MYANMAR))
         assertEquals("အော့ဖ်လိုင်းတွင် သိမ်းပြီး", translateFieldText("Saved offline", FieldLanguage.MYANMAR))
         assertEquals("အစီရင်ခံစာ သိမ်း၍မရပါ", translateFieldText("Could not save report", FieldLanguage.MYANMAR))
+        assertEquals("သိမ်းမည်", translateFieldText("Save", FieldLanguage.MYANMAR))
+        assertEquals("အထောက်အထား · မထည့်လည်းရသည်", translateFieldText("Evidence · Optional", FieldLanguage.MYANMAR))
+        assertEquals("ဖိထားပြီး အသံဖမ်းပါ", translateFieldText("Hold to record", FieldLanguage.MYANMAR))
+        assertEquals("မြေပုံကို တစ်ချက်နှိပ်ပါ။", translateFieldText("Tap the map once.", FieldLanguage.MYANMAR))
+        assertEquals("အော့ဖ်လိုင်း · ကောက်ယူမှု ဆက်လုပ်နိုင်သည်", translateFieldText("Offline · Capture still works", FieldLanguage.MYANMAR))
+        assertEquals("ဓာတ်ပုံ ၁ ပုံ · အသံ 12 စက္ကန့်", translateFieldText("1 photo · 12-sec voice", FieldLanguage.MYANMAR))
+        assertEquals("နည်းပညာ အသေးစိတ်", translateFieldText("Technical details", FieldLanguage.MYANMAR))
     }
 
     @Test

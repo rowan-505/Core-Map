@@ -30,9 +30,9 @@ data class NewStopAfterSave(
 
 object NewStopReportFlow {
     const val NAME_MAX = 120
-    const val REPORT_SAVED = "Report saved"
-    const val SAVED_OFFLINE = "Saved offline"
-    const val END_OF_ROUTE = "Last stop on this direction."
+    const val REPORT_SAVED = ReportSaveReset.REPORT_SAVED
+    const val SAVED_OFFLINE = ReportSaveReset.SAVED_OFFLINE
+    const val END_OF_ROUTE = ReportSaveReset.END_OF_ROUTE
 
     fun newDraft(clientPublicId: String = UUID.randomUUID().toString()): NewStopDraft {
         return NewStopDraft(clientPublicId = clientPublicId)
@@ -62,7 +62,11 @@ object NewStopReportFlow {
     }
 
     fun chooseAgain(draft: NewStopDraft): NewStopDraft {
-        return draft.copy(pickMode = NewStopPickMode.PICKING)
+        return draft.copy(
+            pickMode = NewStopPickMode.PICKING,
+            proposed = null,
+            locationSource = null,
+        )
     }
 
     fun removeGeometry(draft: NewStopDraft): NewStopDraft {
@@ -125,16 +129,24 @@ object NewStopReportFlow {
         return validationError(running, previousStop, draft) == null
     }
 
-    fun successBanner(online: Boolean): String = if (online) REPORT_SAVED else SAVED_OFFLINE
+    fun successBanner(online: Boolean): String = ReportSaveReset.successBanner(online)
 
     fun afterSave(stops: List<OrderedStopRow>, selectedStopPublicId: String?): NewStopAfterSave {
-        val next = CorrectStopAction.nextStopPublicId(stops, selectedStopPublicId)
-        return NewStopAfterSave(nextStopPublicId = next, endOfRoute = next == null)
+        val after = ReportSaveReset.afterLocalSave(stops, selectedStopPublicId)
+        return NewStopAfterSave(
+            nextStopPublicId = after.nextStopPublicId,
+            endOfRoute = after.endOfRoute,
+        )
     }
 
     fun locationSourceCode(source: NewStopLocationSource?): String? = when (source) {
         NewStopLocationSource.GPS -> "GPS"
         NewStopLocationSource.MAP_PICK -> "MAP_PICK"
         null -> null
+    }
+
+    fun locationSelectedLabel(fix: GpsFix): String {
+        val meters = fix.accuracyM?.toInt()
+        return if (meters != null) "Location selected · ±${meters}m" else "Location selected"
     }
 }

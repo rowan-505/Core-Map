@@ -25,6 +25,10 @@ class FieldPreferences(context: Context) {
     )
         private set
 
+    /** Debug-only Fastify origin override. Empty means auto (USB tunnel or emulator). */
+    fun debugApiBaseUrl(): String? =
+        preferences.getString(KEY_DEBUG_API_BASE_URL, null)?.trim()?.takeIf { it.isNotEmpty() }
+
     fun updateLanguage(value: FieldLanguage) {
         language = value
         preferences.edit().putString(KEY_LANGUAGE, value.name).apply()
@@ -35,11 +39,23 @@ class FieldPreferences(context: Context) {
         preferences.edit().putString(KEY_THEME, value.name).apply()
     }
 
+    fun updateDebugApiBaseUrl(value: String?) {
+        val normalized = value?.trim().orEmpty()
+        preferences.edit().apply {
+            if (normalized.isEmpty()) {
+                remove(KEY_DEBUG_API_BASE_URL)
+            } else {
+                putString(KEY_DEBUG_API_BASE_URL, normalized)
+            }
+        }.apply()
+    }
+
     companion object {
         const val FILE_NAME = "field_display_preferences"
         val DEFAULT_LANGUAGE = FieldLanguage.MYANMAR
         val DEFAULT_THEME = FieldThemeMode.LIGHT
         private const val KEY_LANGUAGE = "language"
         private const val KEY_THEME = "theme"
+        private const val KEY_DEBUG_API_BASE_URL = "debug_api_base_url"
     }
 }

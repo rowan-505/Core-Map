@@ -57,19 +57,28 @@ class SurveyMapOverlaysTest {
     }
 
     @Test
-    fun headingChevronPointsNorthAndCloses() {
-        val fix = GpsFix(16.8, 96.15, 8f, 1_000L)
-        val chevron = SurveyMapOverlays.headingChevron(fix, 0.0)
-        assertEquals(chevron.first(), chevron.last())
-        assertEquals(4, chevron.size)
-        assertTrue(chevron[0].second > fix.lat)
+    fun locationPuckArrowIsScreenSpaceNotGeographicMetres() {
+        assertFalse(LocationPuck.usesGeographicArrowMeters())
+        val feature = SurveyMapOverlays.headingArrowFeature(
+            GpsFix(16.8, 96.15, 8f, 1_000L),
+            90.0,
+        )
+        assertEquals(90.0, feature.getNumberProperty(LocationPuck.PROP_BEARING).toDouble(), 0.001)
+        assertFalse(LocationPuck.showArrow(null))
+        assertTrue(LocationPuck.showArrow(90.0))
     }
 
     @Test
-    fun headingChevronIsHiddenWhenHeadingMissing() {
-        val fix = GpsFix(16.8, 96.15, 8f, 1_000L)
-        assertTrue(SurveyMapOverlays.headingChevron(fix, 90.0).isNotEmpty())
-        assertEquals(0.0, SurveyHeading.select(null, null, null, null, false).degrees, 0.0)
-        assertFalse(SurveyHeading.select(null, null, null, null, false).visible)
+    fun locationPuckLayerIdsMatchRequiredOrder() {
+        assertEquals(SurveyMapOverlays.LAYER_GPS_GLOW, "survey-gps-glow")
+        assertEquals(
+            listOf(
+                "survey-gps-accuracy",
+                "survey-gps-glow",
+                "survey-gps",
+                "survey-gps-heading",
+            ),
+            LocationPuck.layerOrderAboveAccuracy(),
+        )
     }
 }

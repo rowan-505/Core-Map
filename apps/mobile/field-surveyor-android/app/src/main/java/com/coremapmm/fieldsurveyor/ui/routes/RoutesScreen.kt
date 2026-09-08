@@ -31,15 +31,22 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.coremapmm.fieldsurveyor.data.transport.BootstrapRefreshPhase
 import com.coremapmm.fieldsurveyor.data.transport.BootstrapRepository
 import com.coremapmm.fieldsurveyor.data.transport.RouteSelectionFilter
 import com.coremapmm.fieldsurveyor.data.transport.RouteSelectionRow
+import com.coremapmm.fieldsurveyor.data.transport.RouteSyncUi
+import com.coremapmm.fieldsurveyor.data.transport.RouteSyncUiState
+import com.coremapmm.fieldsurveyor.device.DeviceStatus
 import com.coremapmm.fieldsurveyor.survey.GpsFix
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteFlow
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteLocationPolicy
@@ -50,8 +57,6 @@ import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecommender
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecompute
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteState
 import com.coremapmm.fieldsurveyor.survey.SurveyController
-import com.coremapmm.fieldsurveyor.ui.components.ScreenHeader
-import com.coremapmm.fieldsurveyor.ui.components.StatusPill
 import com.coremapmm.fieldsurveyor.ui.settings.tr
 import kotlinx.coroutines.launch
 
@@ -71,6 +76,17 @@ fun RoutesScreen(
     var recommendState by remember { mutableStateOf<NearbyRouteState>(NearbyRouteState.Idle) }
     var lastRecommendFix by remember { mutableStateOf<GpsFix?>(null) }
     var lastRecommendAtMs by remember { mutableLongStateOf(0L) }
+    var routeSync by remember { mutableStateOf<RouteSyncUiState>(RouteSyncUiState.NotDownloaded) }
+    var syncName by rememberSaveable { mutableStateOf("NotDownloaded") }
+    var syncCount by rememberSaveable { mutableStateOf(0) }
+    var syncRevision by rememberSaveable { mutableStateOf<String?>(null) }
+
+    fun persistSync(state: RouteSyncUiState) {
+        routeSync = state
+        syncName = RouteSyncUi.persistenceName(state)
+        syncCount = state.variantCount
+        syncRevision = state.revision
+    }
 
     fun hasLocationPermission(): Boolean {
         val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -99,6 +115,30 @@ fun RoutesScreen(
         recommendState = NearbyRouteFlow.retainDuringRefresh(recommendState, next)
     }
 
+    suspend fun runRouteRefresh() {
+        val online = DeviceStatus.isOnline(context)
+        persistSync(RouteSyncUi.downloading(routeSync))
+        val result = bootstrap.refresh { phase ->
+            if (phase == BootstrapRefreshPhase.IMPORTING) {
+                persistSync(RouteSyncUi.importing(routeSync))
+            }
+        }
+        val count = bootstrap.variantCount()
+        val revision = bootstrap.snapshotRevision()
+        persistSync(
+            RouteSyncUi.fromRefreshResult(
+                result = result,
+                online = online,
+                fallbackCount = count,
+                fallbackRevision = revision,
+            ),
+        )
+        allRows = bootstrap.listSelections()
+        if (hasLocationPermission()) {
+            refreshRecommendations(force = true)
+        }
+    }
+
     val locationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { granted ->
@@ -112,7 +152,18 @@ fun RoutesScreen(
     }
 
     LaunchedEffect(Unit) {
+        val online = DeviceStatus.isOnline(context)
+        val count = bootstrap.variantCount()
+        val revision = bootstrap.snapshotRevision()
         allRows = bootstrap.listSelections()
+        val restored = RouteSyncUi.restore(syncName, syncCount.takeIf { it > 0 } ?: count, syncRevision ?: revision, online)
+        persistSync(
+            if (restored is RouteSyncUiState.Downloading || restored is RouteSyncUiState.Importing) {
+                RouteSyncUi.initial(count, revision, online)
+            } else {
+                restored
+            },
+        )
         if (hasLocationPermission()) {
             refreshRecommendations(force = true)
         }
@@ -143,17 +194,27 @@ fun RoutesScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            ScreenHeader(tr("Choose a route"), tr("Search the offline YBS snapshot. No signal is required."))
+            Text(tr("Routes"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("routes_title"))
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
                 label = { Text(tr("Search route code")) },
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("routes_search"),
+            )
+            RouteSyncStatusRow(
+                state = routeSync,
+                onTryAgain = {
+                    if (!RouteSyncUi.hasUsableCache(routeSync) && allRows.isEmpty()) {
+                        onNeedSync()
+                    } else {
+                        scope.launch { runRouteRefresh() }
+                    }
+                },
             )
             OutlinedButton(
                 onClick = {
@@ -171,23 +232,21 @@ fun RoutesScreen(
                 },
                 enabled = recommendState !is NearbyRouteState.Locating,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text(tr("Recommend nearby route")) }
-            StatusPill(tr("${visible.size} variants available"), positive = visible.isNotEmpty())
+            ) { Text(tr("Nearby routes")) }
             NearbyRecommendPanel(
                 state = recommendState,
                 onSelect = { row ->
                     NearbyRouteNavigation.select(row) { onSelectVariant(it) }
                 },
             )
-            if (allRows.isEmpty()) {
-                Text(tr("No local snapshot yet."))
+            if (allRows.isEmpty() && !RouteSyncUi.isBusy(routeSync)) {
                 TextButton(onClick = onNeedSync) { Text(tr("Open Setup / Sync")) }
             }
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items(visible, key = { it.variantPublicId }) { row ->
                 RouteSelectionItem(row, onClick = { onSelectVariant(row) })
@@ -229,11 +288,15 @@ internal fun NearbyRecommendPanel(
 ) {
     val message = NearbyRouteFlow.message(state)
     if (message != null) {
-        Text(tr(message), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            tr(message),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
     if (state is NearbyRouteState.Recommendations) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            state.rows.forEach { row ->
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            state.rows.take(NearbyRoutePolicy.MAX_RESULTS).forEach { row ->
                 NearbyRecommendRow(row, onClick = { onSelect(row.selection) })
             }
         }
@@ -243,8 +306,11 @@ internal fun NearbyRecommendPanel(
 @Composable
 private fun NearbyRecommendRow(row: NearbyRouteRecommendation, onClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         Text(
             "${row.selection.routeCode} · ${row.selection.variantCode}",
@@ -254,6 +320,8 @@ private fun NearbyRecommendRow(row: NearbyRouteRecommendation, onClick: () -> Un
             "${row.nearestStopName} · ${NearbyRoutePolicy.formatDistance(row.stopDistanceM)}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -264,18 +332,26 @@ private fun RouteSelectionItem(row: RouteSelectionRow, onClick: () -> Unit) {
     val destination = row.destinationName ?: "—"
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text("${row.routeCode}  ·  ${row.variantCode}", style = MaterialTheme.typography.titleMedium)
-            Text("$origin → $destination", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "${row.routeCode} · ${row.variantCode}",
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(
+                "$origin → $destination",
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text(
                 "${row.stopCount} ${tr("stops")}",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

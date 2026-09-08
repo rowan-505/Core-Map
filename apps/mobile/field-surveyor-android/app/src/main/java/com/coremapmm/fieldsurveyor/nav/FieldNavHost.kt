@@ -117,10 +117,16 @@ fun FieldNavHost(graph: AppGraph, display: FieldPreferences) {
                 .fillMaxSize(),
         ) {
             if (!online) {
-                StatusBanner(tr("No internet. Survey capture still works. Sync waits until you are online."))
+                StatusBanner(
+                    text = tr("Offline · Capture still works"),
+                    blocking = false,
+                )
             }
             if (lowStorage) {
-                StatusBanner(tr("Storage is low. Free space before downloading maps or capturing media."))
+                StatusBanner(
+                    text = tr("Storage is low"),
+                    blocking = true,
+                )
             }
             NavHost(
                 navController = navController,
@@ -236,16 +242,24 @@ fun FieldNavHost(graph: AppGraph, display: FieldPreferences) {
 }
 
 @Composable
-private fun StatusBanner(text: String) {
+private fun StatusBanner(text: String, blocking: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.errorContainer,
+        color = if (blocking) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.secondaryContainer
+        },
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onErrorContainer,
+            color = if (blocking) {
+                MaterialTheme.colorScheme.onErrorContainer
+            } else {
+                MaterialTheme.colorScheme.onSecondaryContainer
+            },
         )
     }
 }

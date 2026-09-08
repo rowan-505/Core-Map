@@ -221,13 +221,14 @@ class YangonBasemapStore(
 
     companion object {
         const val FILE_NAME = "yangon.pmtiles"
-        const val MIN_READY_BYTES = 400_000_000L
+        /** Floor so tiny/corrupt files never count as ready. Yangon v2 is ~119 MB. */
+        const val MIN_READY_BYTES = 80_000_000L
 
         fun isComplete(file: File, minReadyBytes: Long = MIN_READY_BYTES): Boolean {
             return OfflineMapPolicy.isComplete(file, File(file.path + ".ok"), minReadyBytes)
         }
 
-        fun writeCompleteMarker(file: File, version: String = "v1", sha256: String? = null) {
+        fun writeCompleteMarker(file: File, version: String = "v2", sha256: String? = null) {
             File(file.path + ".ok").writeText(OfflineMapPolicy.markerText(file.length(), version, sha256))
         }
     }

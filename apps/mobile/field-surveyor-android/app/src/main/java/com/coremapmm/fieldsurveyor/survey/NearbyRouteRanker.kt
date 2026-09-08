@@ -212,12 +212,13 @@ object NearbyRouteFlow {
 
     fun message(state: NearbyRouteState): String? = when (state) {
         NearbyRouteState.Idle -> null
-        NearbyRouteState.PermissionRequired -> "Location permission is required to recommend a nearby route."
-        NearbyRouteState.Locating -> "Finding your location…"
-        NearbyRouteState.NoLocation -> NearbyRoutePolicy.EMPTY_NO_LOCATION
-        NearbyRouteState.NoNearby -> NearbyRoutePolicy.EMPTY_NO_NEARBY
-        NearbyRouteState.StalePackage -> "Offline route package is missing or incomplete. Sync routes in Setup."
-        is NearbyRouteState.Recommendations -> state.qualifier
+        NearbyRouteState.PermissionRequired -> "Location permission needed"
+        NearbyRouteState.Locating -> "Finding nearby…"
+        NearbyRouteState.NoLocation -> "No location yet"
+        NearbyRouteState.NoNearby -> "No nearby routes"
+        NearbyRouteState.StalePackage -> "Sync routes to use nearby"
+        // Do not surface GPS accuracy qualifiers on the route list.
+        is NearbyRouteState.Recommendations -> null
     }
 }
 

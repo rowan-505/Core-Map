@@ -27,11 +27,12 @@ class SurveyReportFlowTest {
     }
 
     @Test
-    fun missingAndDataRequireStopAndAllowEmptyText() {
+    fun missingAllowsEmptyTextWhileDataRequiresExplanation() {
         assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.MISSING, false, null, "", null))
         assertNull(SurveyReportFlow.saveError(true, AnomalyKind.MISSING, true, null, "", null))
         assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.DATA, false, null, "note", null))
-        assertNull(SurveyReportFlow.saveError(true, AnomalyKind.DATA, true, null, "", null))
+        assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.DATA, true, null, "", null))
+        assertNull(SurveyReportFlow.saveError(true, AnomalyKind.DATA, true, null, "wrong name", null))
     }
 
     @Test
@@ -50,19 +51,13 @@ class SurveyReportFlowTest {
     }
 
     @Test
-    fun routeWorksWithoutStop() {
+    fun routeAndOtherRequireExplanation() {
         assertTrue(!SurveyReportFlow.requiresStop(AnomalyKind.ROUTE))
         assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.ROUTE, false, null, "", null))
-        assertNull(
-            SurveyReportFlow.saveError(true, AnomalyKind.ROUTE, false, null, "", RouteIssueKind.PATH_WRONG),
-        )
-    }
-
-    @Test
-    fun otherMayBeStopOrRouteLevelWithoutText() {
+        assertNull(SurveyReportFlow.saveError(true, AnomalyKind.ROUTE, false, null, "path broken", null))
         assertTrue(!SurveyReportFlow.requiresStop(AnomalyKind.OTHER))
-        assertNull(SurveyReportFlow.saveError(true, AnomalyKind.OTHER, false, null, "", null))
-        assertNull(SurveyReportFlow.saveError(true, AnomalyKind.OTHER, true, null, "", null))
+        assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.OTHER, false, null, "", null))
+        assertNull(SurveyReportFlow.saveError(true, AnomalyKind.OTHER, false, null, "misc", null))
         assertEquals("variant", AnomalyMapping.targetEntityType(AnomalyKind.OTHER, false))
         assertEquals("stop", AnomalyMapping.targetEntityType(AnomalyKind.OTHER, true))
         assertEquals("route", AnomalyMapping.targetEntityType(AnomalyKind.ROUTE, false))
@@ -122,10 +117,10 @@ class SurveyReportFlowTest {
             variantCode = "D0",
             snapshotRevision = "v1-abc",
         )
+        assertEquals(1, lines.size)
         assertTrue(lines[0].startsWith("Captured "))
-        assertTrue(lines[1].contains("16.80012"))
-        assertTrue(lines[1].contains("±5 m"))
-        assertTrue(lines[2].contains("YBS-13 · D0"))
-        assertTrue(lines[2].contains("v1-abc"))
+        assertFalse(lines.any { it.contains("16.80012") })
+        assertFalse(lines.any { it.contains("v1-abc") })
+        assertFalse(lines.any { it.contains("YBS-13") })
     }
 }

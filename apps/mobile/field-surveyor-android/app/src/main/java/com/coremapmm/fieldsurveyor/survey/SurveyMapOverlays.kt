@@ -1,6 +1,10 @@
 package com.coremapmm.fieldsurveyor.survey
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.camera.CameraPosition
@@ -8,10 +12,13 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillLayer
 import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
@@ -20,6 +27,7 @@ import org.maplibre.geojson.Point
 import org.maplibre.geojson.Polygon
 import kotlin.math.asin
 import kotlin.math.atan2
+import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -41,13 +49,14 @@ object SurveyMapOverlays {
     const val LAYER_STOPS = "survey-stops"
     const val LAYER_SELECTED = "survey-selected-stop"
     const val LAYER_NEARBY = "survey-nearby-stops"
+    const val LAYER_GPS_GLOW = "survey-gps-glow"
     const val LAYER_GPS = "survey-gps"
     const val LAYER_GPS_ACCURACY = "survey-gps-accuracy"
     const val LAYER_GPS_HEADING = "survey-gps-heading"
     const val LAYER_ANOMALIES = "survey-anomalies"
     const val PROP_STOP_ID = "stopPublicId"
 
-    fun install(style: Style) {
+    fun install(style: Style, density: Float = 1f) {
         if (!styleFullyLoaded(style)) return
         val existing = try {
             style.getSource(SRC_PATH)
@@ -55,6 +64,7 @@ object SurveyMapOverlays {
             return
         }
         if (existing != null) {
+            ensureLocationPuck(style, density)
             return
         }
         style.addSource(GeoJsonSource(SRC_PATH, emptyCollection()))
@@ -105,28 +115,15 @@ object SurveyMapOverlays {
                 PropertyFactory.circleStrokeWidth(1f),
             ),
         )
+        // Location puck: accuracy (geo) → glow → circle → arrow (all screen-space except accuracy).
         style.addLayer(
             FillLayer(LAYER_GPS_ACCURACY, SRC_GPS_ACCURACY).withProperties(
-                PropertyFactory.fillColor(Color.parseColor("#00B8D4")),
+                PropertyFactory.fillColor(Color.parseColor("#64B5F6")),
                 PropertyFactory.fillOpacity(0.16f),
-                PropertyFactory.fillOutlineColor(Color.parseColor("#008FA3")),
+                PropertyFactory.fillOutlineColor(Color.parseColor(LocationPuck.COREMAP_BLUE)),
             ),
         )
-        style.addLayer(
-            FillLayer(LAYER_GPS_HEADING, SRC_GPS_HEADING).withProperties(
-                PropertyFactory.fillColor(Color.parseColor("#00838F")),
-                PropertyFactory.fillOpacity(0.92f),
-                PropertyFactory.fillOutlineColor(Color.WHITE),
-            ),
-        )
-        style.addLayer(
-            CircleLayer(LAYER_GPS, SRC_GPS).withProperties(
-                PropertyFactory.circleColor(Color.parseColor("#00B8D4")),
-                PropertyFactory.circleRadius(7f),
-                PropertyFactory.circleStrokeColor(Color.WHITE),
-                PropertyFactory.circleStrokeWidth(2f),
-            ),
-        )
+        addLocationPuckLayers(style, density)
         style.addLayer(
             CircleLayer(LAYER_PICK, SRC_PICK).withProperties(
                 PropertyFactory.circleColor(Color.parseColor("#C2185B")),
@@ -135,6 +132,113 @@ object SurveyMapOverlays {
                 PropertyFactory.circleStrokeWidth(2f),
             ),
         )
+    }
+
+    private fun addLocationPuckLayers(style: Style, density: Float) {
+        val metrics = LocationPuck.screenMetrics()
+        ensureArrowImage(style, density)
+        if (style.getLayer(LAYER_GPS_GLOW) == null) {
+            style.addLayer(
+                CircleLayer(LAYER_GPS_GLOW, SRC_GPS).withProperties(
+                    PropertyFactory.circleColor(Color.parseColor(LocationPuck.GLOW_BLUE)),
+                    PropertyFactory.circleRadius(metrics.glowRadiusDp),
+                    PropertyFactory.circleOpacity(LocationPuck.GLOW_OPACITY),
+                    PropertyFactory.circlePitchAlignment(Property.CIRCLE_PITCH_ALIGNMENT_VIEWPORT),
+                ),
+            )
+        }
+        if (style.getLayer(LAYER_GPS) == null) {
+            style.addLayer(
+                CircleLayer(LAYER_GPS, SRC_GPS).withProperties(
+                    PropertyFactory.circleColor(Color.parseColor(LocationPuck.CENTRE_WHITE)),
+                    PropertyFactory.circleRadius(metrics.circleRadiusDp),
+                    PropertyFactory.circleStrokeColor(Color.parseColor(LocationPuck.COREMAP_BLUE)),
+                    PropertyFactory.circleStrokeWidth(metrics.circleBorderDp),
+                    PropertyFactory.circlePitchAlignment(Property.CIRCLE_PITCH_ALIGNMENT_VIEWPORT),
+                ),
+            )
+        }
+        if (style.getLayer(LAYER_GPS_HEADING) == null) {
+            style.addLayer(
+                SymbolLayer(LAYER_GPS_HEADING, SRC_GPS_HEADING).withProperties(
+                    PropertyFactory.iconImage(LocationPuck.IMAGE_ARROW),
+                    PropertyFactory.iconSize(1f),
+                    PropertyFactory.iconAllowOverlap(true),
+                    PropertyFactory.iconIgnorePlacement(true),
+                    PropertyFactory.iconOptional(false),
+                    // Map-aligned rotate: camera bearing is applied by the renderer.
+                    PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
+                    PropertyFactory.iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_VIEWPORT),
+                    PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
+                    PropertyFactory.iconOffset(LocationPuck.arrowIconOffsetDp().toTypedArray()),
+                    PropertyFactory.iconRotate(Expression.get(LocationPuck.PROP_BEARING)),
+                ),
+            )
+        }
+    }
+
+    fun ensureLocationPuck(style: Style, density: Float = 1f) {
+        if (!styleFullyLoaded(style)) return
+        try {
+            if (geoJsonSource(style, SRC_GPS) == null) {
+                style.addSource(GeoJsonSource(SRC_GPS, emptyCollection()))
+            }
+            if (geoJsonSource(style, SRC_GPS_HEADING) == null) {
+                style.addSource(GeoJsonSource(SRC_GPS_HEADING, emptyCollection()))
+            }
+            // Drop legacy geographic heading fill if an older install left it behind.
+            style.getLayer(LAYER_GPS_HEADING)?.let { layer ->
+                if (layer !is SymbolLayer) {
+                    style.removeLayer(LAYER_GPS_HEADING)
+                }
+            }
+            addLocationPuckLayers(style, density)
+        } catch (_: Exception) {
+        }
+    }
+
+    fun ensureArrowImage(style: Style, density: Float) {
+        if (!styleFullyLoaded(style)) return
+        try {
+            if (style.getImage(LocationPuck.IMAGE_ARROW) != null) return
+            style.addImage(LocationPuck.IMAGE_ARROW, createArrowBitmap(density), false)
+        } catch (_: Exception) {
+        }
+    }
+
+    /** Blue triangle with thin white outline; tip points up (map-north before rotate). */
+    fun createArrowBitmap(density: Float): Bitmap {
+        val d = density.coerceAtLeast(0.5f)
+        val metrics = LocationPuck.screenMetrics()
+        val outline = LocationPuck.ARROW_OUTLINE_DP * d
+        val widthPx = ceil((metrics.arrowWidthDp + LocationPuck.ARROW_OUTLINE_DP * 2f) * d).toInt().coerceAtLeast(8)
+        val heightPx = ceil((metrics.arrowHeightDp + LocationPuck.ARROW_OUTLINE_DP * 2f) * d).toInt().coerceAtLeast(8)
+        val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val cx = widthPx / 2f
+        val tipY = outline
+        val baseY = heightPx - outline
+        val halfBase = metrics.arrowWidthDp * d / 2f
+        val path = Path().apply {
+            moveTo(cx, tipY)
+            lineTo(cx + halfBase, baseY)
+            lineTo(cx - halfBase, baseY)
+            close()
+        }
+        val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = Color.parseColor(LocationPuck.ARROW_OUTLINE_WHITE)
+            strokeWidth = outline.coerceAtLeast(1f)
+            strokeJoin = Paint.Join.ROUND
+            strokeCap = Paint.Cap.ROUND
+        }
+        val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = Color.parseColor(LocationPuck.COREMAP_BLUE)
+        }
+        canvas.drawPath(path, stroke)
+        canvas.drawPath(path, fill)
+        return bitmap
     }
 
     fun setPath(style: Style, coordinates: List<Pair<Double, Double>>) {
@@ -178,8 +282,12 @@ object SurveyMapOverlays {
         }
     }
 
+    /**
+     * Updates the location puck. Circle + glow stay when [headingDeg] is null;
+     * only the screen-space arrow SymbolLayer is cleared.
+     */
     fun setGps(style: Style, gps: GpsFix?, headingDeg: Double? = null) {
-        ensureGpsHeading(style)
+        ensureLocationPuck(style)
         val source = geoJsonSource(style, SRC_GPS) ?: return
         val accuracySource = geoJsonSource(style, SRC_GPS_ACCURACY) ?: return
         val headingSource = geoJsonSource(style, SRC_GPS_HEADING)
@@ -203,51 +311,29 @@ object SurveyMapOverlays {
             )
             accuracySource.setGeoJson(FeatureCollection.fromFeature(Feature.fromGeometry(polygon)))
         }
-        val chevron = if (headingDeg == null) emptyList() else headingChevron(gps, headingDeg)
         if (headingSource == null) {
             return
         }
-        if (chevron.isEmpty()) {
+        if (!LocationPuck.showArrow(headingDeg)) {
             headingSource.setGeoJson(emptyCollection())
         } else {
-            val polygon = Polygon.fromLngLats(
-                listOf(chevron.map { (lng, lat) -> Point.fromLngLat(lng, lat) }),
+            val feature = Feature.fromGeometry(Point.fromLngLat(gps.lng, gps.lat))
+            feature.addNumberProperty(
+                LocationPuck.PROP_BEARING,
+                LocationPuck.mapAlignedIconRotateDeg(headingDeg!!),
             )
-            headingSource.setGeoJson(FeatureCollection.fromFeature(Feature.fromGeometry(polygon)))
+            headingSource.setGeoJson(FeatureCollection.fromFeature(feature))
         }
     }
 
-    fun ensureGpsHeading(style: Style) {
-        if (!styleFullyLoaded(style)) return
-        if (geoJsonSource(style, SRC_GPS_HEADING) != null) return
-        try {
-            style.addSource(GeoJsonSource(SRC_GPS_HEADING, emptyCollection()))
-            val layer = FillLayer(LAYER_GPS_HEADING, SRC_GPS_HEADING).withProperties(
-                PropertyFactory.fillColor(Color.parseColor("#00838F")),
-                PropertyFactory.fillOpacity(0.92f),
-                PropertyFactory.fillOutlineColor(Color.WHITE),
-            )
-            if (style.getLayer(LAYER_GPS) != null) {
-                style.addLayerBelow(layer, LAYER_GPS)
-            } else {
-                style.addLayer(layer)
-            }
-        } catch (_: Exception) {
-        }
-    }
-
-    /** Closed triangle pointing along [headingDeg], as (longitude, latitude) pairs. */
-    fun headingChevron(
-        gps: GpsFix,
-        headingDeg: Double,
-        tipMeters: Double = 16.0,
-        halfWidthMeters: Double = 7.5,
-    ): List<Pair<Double, Double>> {
-        val heading = SurveyHeading.normalize(headingDeg)
-        val tip = destination(gps.lat, gps.lng, heading, tipMeters)
-        val left = destination(gps.lat, gps.lng, heading + 150.0, halfWidthMeters)
-        val right = destination(gps.lat, gps.lng, heading - 150.0, halfWidthMeters)
-        return listOf(tip, left, right, tip)
+    /** GeoJSON point + bearing for the arrow SymbolLayer (tests / callers). */
+    fun headingArrowFeature(gps: GpsFix, headingDeg: Double): Feature {
+        val feature = Feature.fromGeometry(Point.fromLngLat(gps.lng, gps.lat))
+        feature.addNumberProperty(
+            LocationPuck.PROP_BEARING,
+            LocationPuck.mapAlignedIconRotateDeg(headingDeg),
+        )
+        return feature
     }
 
     /** Returns a geodesic accuracy ring as (longitude, latitude) pairs. */

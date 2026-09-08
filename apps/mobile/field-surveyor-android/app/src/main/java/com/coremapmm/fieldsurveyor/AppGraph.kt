@@ -15,6 +15,7 @@ import com.coremapmm.fieldsurveyor.data.transport.FieldBootstrapApi
 import com.coremapmm.fieldsurveyor.media.ReportPhotoStore
 import com.coremapmm.fieldsurveyor.media.ReportVoiceStore
 import com.coremapmm.fieldsurveyor.net.FieldHttp
+import com.coremapmm.fieldsurveyor.net.ApiBaseUrl
 import com.coremapmm.fieldsurveyor.offline.YangonBasemapStore
 import com.coremapmm.fieldsurveyor.survey.GpsEngine
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecommender
@@ -48,8 +49,9 @@ class AppGraph(
             val onUnauthorized = AtomicReference<() -> Unit> {}
             val http = FieldHttp.client { onUnauthorized.get().invoke() }
             val database = FieldDatabase.create(app)
+            val apiBaseUrl = ApiBaseUrl.resolve(app)
             val auth = AuthRepository(
-                api = AuthApi(BuildConfig.API_BASE_URL, http),
+                api = AuthApi(apiBaseUrl, http),
                 tokenStore = SecureTokenStore(app),
             )
             onUnauthorized.set { auth.clearCredentialsOnly() }
@@ -67,12 +69,12 @@ class AppGraph(
             )
             val bootstrap = BootstrapRepository(
                 auth = auth,
-                api = FieldBootstrapApi(BuildConfig.API_BASE_URL, http),
+                api = FieldBootstrapApi(apiBaseUrl, http),
                 cache = database.transportCacheDao(),
             )
-            val fieldReportsApi = FieldReportsApi(BuildConfig.API_BASE_URL, http)
-            val fieldMediaApi = FieldMediaApi(BuildConfig.API_BASE_URL, http)
-            val fieldSurveySessionsApi = FieldSurveySessionsApi(BuildConfig.API_BASE_URL, http)
+            val fieldReportsApi = FieldReportsApi(apiBaseUrl, http)
+            val fieldMediaApi = FieldMediaApi(apiBaseUrl, http)
+            val fieldSurveySessionsApi = FieldSurveySessionsApi(apiBaseUrl, http)
             val yangon = YangonBasemapStore(
                 context = app,
                 downloadUrl = BuildConfig.YANGON_PMTILES_URL,
@@ -105,7 +107,7 @@ class AppGraph(
                 fieldSurveySessionsApi = fieldSurveySessionsApi,
                 yangon = yangon,
                 nearbyRoutes = NearbyRouteRecommender(database.transportCacheDao()),
-                apiBaseUrl = BuildConfig.API_BASE_URL,
+                apiBaseUrl = apiBaseUrl,
             )
         }
     }

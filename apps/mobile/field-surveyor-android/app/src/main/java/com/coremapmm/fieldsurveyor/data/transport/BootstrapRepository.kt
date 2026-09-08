@@ -39,16 +39,21 @@ class BootstrapRepository(
     /**
      * Full-snapshot refresh only. Matching revision skips download. A failed
      * download or validate leaves the previous cache and revision untouched.
+     * [onPhase] is UI-only progress; it does not change the HTTP contract.
      */
-    suspend fun refresh(): BootstrapRefreshResult {
+    suspend fun refresh(
+        onPhase: ((BootstrapRefreshPhase) -> Unit)? = null,
+    ): BootstrapRefreshResult {
         val keptRevision = cache.snapshotRevision()
         val keptVariants = cache.variantCount()
         return try {
             val token = auth.validAccessToken()
+            onPhase?.invoke(BootstrapRefreshPhase.FETCHING)
             val payload = withContext(Dispatchers.IO) { api.fetch(token, keptRevision) }
             when (payload) {
                 is BootstrapPayload.Unchanged -> BootstrapRefreshResult.Unchanged(payload.snapshotRevision)
                 is BootstrapPayload.Dataset -> {
+                    onPhase?.invoke(BootstrapRefreshPhase.IMPORTING)
                     val validated = SnapshotValidator.validate(BootstrapJson.parseDataset(payload.raw))
                     cache.replaceSnapshot(validated)
                     BootstrapRefreshResult.Updated(validated.snapshotRevision, validated.variants.size)

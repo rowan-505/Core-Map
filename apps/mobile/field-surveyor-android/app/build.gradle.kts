@@ -141,7 +141,7 @@ fun yangonPmtilesUrl(): String {
     if (fromProperty.isNotEmpty()) {
         return fromProperty
     }
-    return "https://tiles.coremapmm.com/basemaps/yangon/v1/basemap.pmtiles"
+    return "https://tiles.coremapmm.com/basemaps/yangon/v2/basemap.pmtiles"
 }
 
 android {
@@ -152,8 +152,8 @@ android {
         applicationId = "com.coremapmm.fieldsurveyor"
         minSdk = 31
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.8.0-pilot"
+        versionCode = 9
+        versionName = "0.8.1-pilot"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += "arm64-v8a"

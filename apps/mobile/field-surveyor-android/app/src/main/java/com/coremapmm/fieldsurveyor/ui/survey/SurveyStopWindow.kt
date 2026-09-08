@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +28,9 @@ import com.coremapmm.fieldsurveyor.ui.settings.FieldLanguage
 import com.coremapmm.fieldsurveyor.ui.settings.LocalFieldLanguage
 import com.coremapmm.fieldsurveyor.ui.settings.tr
 
+private val CurrentStopGreen = Color(0xFF1B7F3A)
+private val CurrentStopGreenContainer = Color(0xFFE3F5E9)
+
 internal object StopWindowDisplay {
     fun sequenceLabel(stop: OrderedStopRow?, sequences: List<Int>): String {
         if (stop == null) return "—"
@@ -35,7 +39,7 @@ internal object StopWindowDisplay {
 
     fun accessibilityLabel(title: String, stop: OrderedStopRow?, sequences: List<Int>, name: String?): String {
         if (stop == null) return "$title, empty"
-        return "$title, ${sequenceLabel(stop, sequences)}, ${name ?: stop.stopPublicId}"
+        return "$title, ${sequenceLabel(stop, sequences)}, ${name ?: "—"}"
     }
 }
 
@@ -45,7 +49,7 @@ internal fun StopWindowRow(
     sequences: List<Int>,
     onSelect: (String) -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         StopChoiceButton(
             title = "Previous",
             stop = window.previous,
@@ -55,7 +59,7 @@ internal fun StopWindowRow(
             onClick = { window.previous?.let { onSelect(it.stopPublicId) } },
         )
         StopChoiceButton(
-            title = "Selected",
+            title = "Current",
             stop = window.current,
             selected = true,
             sequences = sequences,
@@ -87,15 +91,15 @@ private fun StopChoiceButton(
     val description = StopWindowDisplay.accessibilityLabel(tr(title), stop, sequences, name)
     val colors = when {
         selected && stop != null -> ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            containerColor = CurrentStopGreenContainer,
+            contentColor = CurrentStopGreen,
         )
         stop != null -> ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         else -> ButtonDefaults.outlinedButtonColors(
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -103,21 +107,29 @@ private fun StopChoiceButton(
         onClick = onClick,
         enabled = stop != null,
         modifier = modifier
-            .heightIn(min = 72.dp)
+            .heightIn(min = 64.dp)
             .semantics { contentDescription = description },
-        shape = RoundedCornerShape(14.dp),
-        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
         colors = colors,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
-            modifier = Modifier.padding(vertical = 2.dp),
+            modifier = Modifier.padding(vertical = 1.dp),
         ) {
-            if (stop == null) {
-                Text("—", style = MaterialTheme.typography.labelMedium)
-            } else {
-                Text(sequenceText, style = MaterialTheme.typography.labelMedium)
+            Text(
+                tr(title),
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                if (stop == null) "—" else sequenceText,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+            )
+            if (stop != null) {
                 Text(
                     name ?: "—",
                     style = MaterialTheme.typography.labelSmall,
@@ -137,5 +149,5 @@ internal fun stopDisplayName(stop: OrderedStopRow): String {
     } else {
         stop.nameEn ?: stop.nameMy
     }
-    return name ?: stop.stopCode ?: stop.stopPublicId.take(8)
+    return name ?: stop.stopCode ?: "—"
 }

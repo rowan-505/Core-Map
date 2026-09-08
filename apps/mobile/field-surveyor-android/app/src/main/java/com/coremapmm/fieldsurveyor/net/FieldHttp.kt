@@ -29,7 +29,7 @@ object FieldHttp {
             .build()
     }
 
-    /** Large Yangon PMTiles (~730 MB), bounded while allowing slow field networks. */
+    /** Yangon PMTiles download (~120 MB for v2), bounded while allowing slow field networks. */
     fun downloadClient(): OkHttpClient {
         return OkHttpClient.Builder()
             .connectTimeout(DOWNLOAD_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)

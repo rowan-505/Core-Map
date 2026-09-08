@@ -30,5 +30,22 @@ object AnomalyMapping {
         }
     }
 
-    fun reportIssueKinds(): List<AnomalyKind> = AnomalyKind.entries.filter { it != AnomalyKind.NEW_STOP }
+    /** Selector order: Moved, Missing, Wrong data, Route, New stop, Other. */
+    fun reportIssueKinds(): List<AnomalyKind> = listOf(
+        AnomalyKind.MOVED,
+        AnomalyKind.MISSING,
+        AnomalyKind.DATA,
+        AnomalyKind.ROUTE,
+        AnomalyKind.NEW_STOP,
+        AnomalyKind.OTHER,
+    )
+
+    fun displayLabel(kind: AnomalyKind): String = when (kind) {
+        AnomalyKind.MOVED -> "Moved"
+        AnomalyKind.MISSING -> "Missing"
+        AnomalyKind.DATA -> "Wrong data"
+        AnomalyKind.ROUTE -> "Route"
+        AnomalyKind.NEW_STOP -> "New stop"
+        AnomalyKind.OTHER -> "Other"
+    }
 }

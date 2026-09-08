@@ -9,7 +9,6 @@ class SurveyMapControlLayoutTest {
     fun controlsRemainAvailableForEveryMapVisibleStage() {
         assertTrue(SurveyMapControlLayout.visible(SurveySheetStage.MAP.visibleFraction))
         assertTrue(SurveyMapControlLayout.visible(SurveySheetStage.STOPS.visibleFraction))
-        assertTrue(SurveyMapControlLayout.visible(SurveySheetStage.NEARBY.visibleFraction))
     }
 
     @Test

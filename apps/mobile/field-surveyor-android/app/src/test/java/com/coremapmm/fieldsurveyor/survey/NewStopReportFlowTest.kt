@@ -64,10 +64,35 @@ class NewStopReportFlowTest {
         )
         val picking = NewStopReportFlow.chooseAgain(first)
         assertEquals(NewStopPickMode.PICKING, picking.pickMode)
-        assertEquals(16.9, picking.proposed!!.lat, 0.0001)
+        assertNull(picking.proposed)
         val replaced = NewStopReportFlow.onMapTap(picking, 16.91, 96.21, 3_000L)
         assertEquals(16.91, replaced.proposed!!.lat, 0.0001)
         assertEquals(NewStopPickMode.SELECTED, replaced.pickMode)
+    }
+
+    @Test
+    fun ordinaryTapsDoNotReplaceSelectedMarker() {
+        val selected = NewStopReportFlow.onMapTap(
+            NewStopReportFlow.beginMapPick(NewStopReportFlow.newDraft("id-1")),
+            16.9,
+            96.2,
+            2_000L,
+        )
+        val ignored = NewStopReportFlow.onMapTap(selected, 16.95, 96.25, 3_000L)
+        assertEquals(16.9, ignored.proposed!!.lat, 0.0001)
+        assertEquals(NewStopPickMode.SELECTED, ignored.pickMode)
+    }
+
+    @Test
+    fun locationSelectedLabelIncludesAccuracyWhenPresent() {
+        assertEquals(
+            "Location selected · ±40m",
+            NewStopReportFlow.locationSelectedLabel(GpsFix(16.8, 96.1, 40f, 1L)),
+        )
+        assertEquals(
+            "Location selected",
+            NewStopReportFlow.locationSelectedLabel(GpsFix(16.8, 96.1, null, 1L)),
+        )
     }
 
     @Test
@@ -101,6 +126,30 @@ class NewStopReportFlowTest {
         val restored = NewStopReportFlow.newDraft(NewStopReportFlow.reuseDraftUuid(first.clientPublicId))
         assertEquals(first.clientPublicId, restored.clientPublicId)
         assertNotEquals(first.clientPublicId, NewStopReportFlow.reuseDraftUuid(null))
+    }
+
+    @Test
+    fun processRecreationRestoresSelectedGeometryAndPickMode() {
+        val selected = NewStopReportFlow.useMyLocation(
+            NewStopReportFlow.withName(NewStopReportFlow.newDraft("id-restore"), "Corner"),
+            GpsFix(16.801, 96.151, 12f, 1_000L),
+        )
+        val restored = NewStopDraft(
+            clientPublicId = NewStopReportFlow.reuseDraftUuid(selected.clientPublicId),
+            name = selected.name,
+            note = selected.note,
+            pickMode = NewStopPickMode.valueOf(selected.pickMode.name),
+            proposed = selected.proposed?.let {
+                GpsFix(it.lat, it.lng, it.accuracyM, it.epochMs)
+            },
+            locationSource = selected.locationSource,
+        )
+        assertEquals(selected.clientPublicId, restored.clientPublicId)
+        assertEquals("Corner", restored.name)
+        assertEquals(NewStopPickMode.SELECTED, restored.pickMode)
+        assertEquals(16.801, restored.proposed!!.lat, 0.0001)
+        assertEquals(NewStopLocationSource.GPS, restored.locationSource)
+        assertTrue(NewStopReportFlow.canSave(true, previous, restored))
     }
 
     @Test

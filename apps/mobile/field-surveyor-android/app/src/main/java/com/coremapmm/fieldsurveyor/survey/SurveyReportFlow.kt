@@ -30,7 +30,7 @@ object SurveyReportFlow {
         return when (kind) {
             AnomalyKind.MOVED -> when {
                 !hasStop -> "Select the stop that moved."
-                mapPick == null -> "Tap the map where the stop really is."
+                mapPick == null -> "Choose a new location for the stop."
                 else -> null
             }
             AnomalyKind.MISSING -> if (hasStop) null else "Select the missing stop."
@@ -42,9 +42,19 @@ object SurveyReportFlow {
                     "Choose a valid map location."
                 else -> null
             }
-            AnomalyKind.DATA -> if (hasStop) null else "Select the stop with wrong data."
-            AnomalyKind.ROUTE -> if (routeIssue == null) "Choose a route issue." else null
-            AnomalyKind.OTHER -> null
+            AnomalyKind.DATA -> when {
+                !hasStop -> "Select the stop with wrong data."
+                note.trim().isEmpty() -> "Enter a short explanation."
+                else -> null
+            }
+            AnomalyKind.ROUTE -> when {
+                note.trim().isEmpty() -> "Enter a route explanation."
+                else -> null
+            }
+            AnomalyKind.OTHER -> when {
+                note.trim().isEmpty() -> "Enter an explanation."
+                else -> null
+            }
         }
     }
 
@@ -129,6 +139,10 @@ object CorrectStopAction {
 }
 
 object SurveyCaptureFacts {
+    /**
+     * UI-only capture summary. Never includes raw coordinates, technical IDs,
+     * or snapshot hashes — those stay in report payloads only.
+     */
     fun lines(
         epochMs: Long,
         gps: GpsFix?,
@@ -138,13 +152,7 @@ object SurveyCaptureFacts {
     ): List<String> {
         val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US)
             .format(java.util.Date(epochMs))
-        val coords = gps?.let {
-            val acc = it.accuracyM?.let { meters -> " · ±${meters.toInt()} m" } ?: " · ±? m"
-            String.format(java.util.Locale.US, "%.5f, %.5f%s", it.lat, it.lng, acc)
-        } ?: "No GPS fix yet"
-        val route = listOfNotNull(routeCode, variantCode).joinToString(" · ").ifBlank { "No route" }
-        val revision = snapshotRevision?.takeIf { it.isNotBlank() } ?: "No snapshot"
-        return listOf("Captured $time", coords, "$route · $revision")
+        return listOf("Captured $time")
     }
 }
 

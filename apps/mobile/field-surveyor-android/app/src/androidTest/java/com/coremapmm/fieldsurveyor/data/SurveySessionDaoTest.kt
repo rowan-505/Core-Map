@@ -174,6 +174,19 @@ class SurveySessionDaoTest {
         assertEquals(1, db.localReportDao().countForSession("session-1"))
         assertEquals("new_stop", org.json.JSONObject(stored.payloadJson).getString("reportTypeCode"))
         assertEquals("variant", org.json.JSONObject(stored.payloadJson).getJSONObject("target").getString("entityType"))
+        assertEquals(4, org.json.JSONObject(stored.payloadJson).getJSONObject("context").getInt("previousStopSequence"))
+        assertEquals("stop-1", org.json.JSONObject(stored.payloadJson).getJSONObject("context").getString("previousStopPublicId"))
+    }
+
+    @Test fun newStopPayloadRoundTripKeepsNextStopAndDoesNotCreateCanonicalStop() = runBlocking {
+        db.localSurveySessionDao().insert(session())
+        val payload = """{"clientPublicId":"new-stop-2","reportTypeCode":"new_stop","anomalyKind":"NEW_STOP","observedAt":"2026-09-08T00:00:00Z","location":{"lat":16.91,"lng":96.21},"target":{"entityType":"variant","publicId":"variant"},"context":{"snapshotRevision":"rev","previousStopPublicId":"stop-1","previousStopSequence":4,"nextStopPublicId":"stop-2","proposedStopName":"Corner stall","locationSource":"MAP_PICK"}}"""
+        db.localReportDao().upsert(report("new-stop-2", "session-1").copy(payloadJson = payload))
+        val stored = org.json.JSONObject(db.localReportDao().findById("new-stop-2")!!.payloadJson)
+        assertEquals("stop-2", stored.getJSONObject("context").getString("nextStopPublicId"))
+        assertEquals("MAP_PICK", stored.getJSONObject("context").getString("locationSource"))
+        assertEquals("new_stop", stored.getString("reportTypeCode"))
+        assertEquals(LocalReportEntity.STATUS_LOCAL, db.localReportDao().findById("new-stop-2")!!.status)
     }
 
     @Test fun historyPageIsBoundedAndNewestFirst() = runBlocking {

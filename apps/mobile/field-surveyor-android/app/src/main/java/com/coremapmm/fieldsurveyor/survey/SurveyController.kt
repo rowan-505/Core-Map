@@ -433,7 +433,6 @@ class SurveyController(
             stateFlow.value = snapshot.copy(message = flowError)
             return false
         }
-        val duplicate = duplicateWarningFor(kind, selectedStop?.stopPublicId, selection)
         ReportBundlePolicy.error(photoDrafts, voiceDraft, voiceDurationMs)?.let { error ->
             stateFlow.value = snapshot.copy(message = error)
             return false
@@ -483,8 +482,9 @@ class SurveyController(
         try {
             mutex.withLock {
                 withContext(Dispatchers.IO) {
-                    // Media is written first. The sync DAO cannot claim it until the
-                    // matching report exists and has synced successfully.
+                    // Media rows are written before the report row. Sync cannot claim
+                    // media until the matching report exists and has synced.
+                    // Draft UI files are deleted only after this Room write succeeds.
                     photoDrafts.forEach { photos.addFromCapture(input.clientPublicId, it) }
                     voiceDraft?.let { voice.addFromRecording(input.clientPublicId, it, voiceDurationMs) }
                     reports.upsert(row)
@@ -493,7 +493,8 @@ class SurveyController(
         } catch (error: Exception) {
             withContext(Dispatchers.IO) { photos.deleteForReport(input.clientPublicId) }
             stateFlow.value = stateFlow.value.copy(
-                message = error.message ?: "Could not save report",
+                message = ReportSaveReset.roomFailureMessage(error),
+                capturedBanner = null,
             )
             return false
         }
@@ -502,23 +503,16 @@ class SurveyController(
         lastCaptureUptime = uptimeMs()
         refreshAnomalies()
         refreshCounts()
-        val after = if (kind == AnomalyKind.NEW_STOP) {
-            NewStopReportFlow.afterSave(snapshot.stops, selectedStop?.stopPublicId)
-        } else {
-            null
-        }
-        if (after?.nextStopPublicId != null) {
+        val selectedId = selectedStop?.stopPublicId
+        val after = ReportSaveReset.afterLocalSave(snapshot.stops, selectedId)
+        if (after.nextStopPublicId != null) {
             selectStop(after.nextStopPublicId)
         }
         stateFlow.value = stateFlow.value.copy(
-            capturedBanner = if (kind == AnomalyKind.NEW_STOP) {
-                NewStopReportFlow.successBanner(online)
-            } else {
-                "✓ Captured"
-            },
+            capturedBanner = ReportSaveReset.successBanner(online),
             message = null,
-            duplicateWarning = duplicate,
-            endOfRouteNotice = if (after?.endOfRoute == true) NewStopReportFlow.END_OF_ROUTE else null,
+            duplicateWarning = null,
+            endOfRouteNotice = if (after.endOfRoute) ReportSaveReset.END_OF_ROUTE else null,
         )
         return true
     }

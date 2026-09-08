@@ -221,7 +221,10 @@ fun SurveyMap(
                         val styleJson = OfflineBasemap.loadRewrittenStyle(context)
                         map.setStyle(Style.Builder().fromJson(styleJson)) { style ->
                             SurveyMapOverlays.applyCameraLimits(map)
-                            SurveyMapOverlays.install(style)
+                            SurveyMapOverlays.install(
+                                style,
+                                context.resources.displayMetrics.density,
+                            )
                             styleRef = style
                         }
                     } catch (_: Exception) {

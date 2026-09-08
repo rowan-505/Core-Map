@@ -10,6 +10,38 @@ import org.junit.Test
 
 class SurveyLocationStateTest {
     @Test
+    fun everyGpsStateHasExactChipCopy() {
+        assertEquals(
+            SurveyLocationLabels.CHIP_ACQUIRING,
+            SurveyLocationLabels.chip(SurveyLocationStatus.Acquiring, null),
+        )
+        assertEquals(
+            "GPS ±8m",
+            SurveyLocationLabels.chip(SurveyLocationStatus.Live, GpsFix(16.8, 96.1, 8f, 1L)),
+        )
+        assertEquals(
+            "Weak GPS · ±40m",
+            SurveyLocationLabels.chip(SurveyLocationStatus.Degraded, GpsFix(16.8, 96.1, 40f, 1L)),
+        )
+        assertEquals(
+            SurveyLocationLabels.CHIP_STALE,
+            SurveyLocationLabels.chip(SurveyLocationStatus.Stale, GpsFix(16.8, 96.1, 5f, 1L)),
+        )
+        assertEquals(
+            SurveyLocationLabels.CHIP_OFF,
+            SurveyLocationLabels.chip(SurveyLocationStatus.Disabled, null),
+        )
+        assertEquals(
+            SurveyLocationLabels.CHIP_PERMISSION,
+            SurveyLocationLabels.chip(SurveyLocationStatus.PermissionDenied, null),
+        )
+        assertEquals(
+            SurveyLocationLabels.CHIP_NONE,
+            SurveyLocationLabels.chip(SurveyLocationStatus.Unavailable, null),
+        )
+    }
+
+    @Test
     fun noFixIsAcquiringWhileTracking() {
         val clock = FakeLocationClock(epochMs = 10_000L, elapsedRealtimeNanos = 10_000_000_000L)
         val started = SurveyLocationReducer.reduce(
@@ -29,7 +61,7 @@ class SurveyLocationStateTest {
         val live = reduceFix(clock, clock.fix(16.80, 96.15, 8f))
         assertEquals(SurveyLocationStatus.Live, live.status)
         assertEquals(clock.fix(16.80, 96.15, 8f), live.displayFix)
-        assertEquals("GPS ±8 m", live.chipLabel)
+        assertEquals("GPS ±8m", live.chipLabel)
         assertNull(live.banner)
     }
 
@@ -39,7 +71,8 @@ class SurveyLocationStateTest {
         val degraded = reduceFix(clock, clock.fix(16.80, 96.15, 40f))
         assertEquals(SurveyLocationStatus.Degraded, degraded.status)
         assertNotNull(degraded.displayFix)
-        assertEquals(SurveyLocationLabels.BANNER_DEGRADED, degraded.banner)
+        assertEquals("Weak GPS · ±40m", degraded.chipLabel)
+        assertNull(degraded.banner)
         assertFalse(degraded.status == SurveyLocationStatus.Unavailable)
         assertTrue(SurveyLocationContradiction.isImpossible(degraded))
     }
@@ -52,10 +85,12 @@ class SurveyLocationStateTest {
         val stale = SurveyLocationReducer.reduce(withFix, SurveyLocationEvent.Tick, clock)
         assertEquals(SurveyLocationStatus.Stale, stale.status)
         assertEquals(withFix.displayFix, stale.displayFix)
-        assertEquals(SurveyLocationLabels.BANNER_STALE, stale.banner)
+        assertEquals(SurveyLocationLabels.CHIP_STALE, stale.chipLabel)
+        assertNull(stale.banner)
         assertEquals(stale.displayFix, SurveyLocationConsumers.mapFix(stale))
         assertEquals(stale.displayFix, SurveyLocationConsumers.formFix(stale))
         assertTrue(stale.displayFix != null)
+        assertNotEquals(SurveyLocationLabels.CHIP_NONE, stale.chipLabel)
     }
 
     @Test
@@ -68,7 +103,7 @@ class SurveyLocationStateTest {
         )
         assertEquals(SurveyLocationStatus.Disabled, disabled.status)
         assertEquals(SurveyLocationLabels.CHIP_OFF, disabled.chipLabel)
-        assertEquals(SurveyLocationLabels.BANNER_DISABLED, disabled.banner)
+        assertNull(disabled.banner)
         assertNull(disabled.displayFix)
     }
 
@@ -82,6 +117,7 @@ class SurveyLocationStateTest {
         )
         assertEquals(SurveyLocationStatus.PermissionDenied, denied.status)
         assertEquals(SurveyLocationLabels.CHIP_PERMISSION, denied.chipLabel)
+        assertNull(denied.banner)
     }
 
     @Test
@@ -91,6 +127,40 @@ class SurveyLocationStateTest {
         assertEquals(SurveyLocationLabels.CHIP_NONE, idle.chipLabel)
         assertNull(idle.displayFix)
         assertNull(idle.banner)
+    }
+
+    @Test
+    fun neverShowsStaleAndUnavailableTogetherWhenCoordinateExists() {
+        val clock = FakeLocationClock(epochMs = 1_000L, elapsedRealtimeNanos = 1_000_000_000L)
+        val live = reduceFix(clock, clock.fix(16.80, 96.15, 7f))
+        clock.advanceMs(SurveyLocationPolicy.STALE_AGE_MS + 50L)
+        val stale = SurveyLocationReducer.reduce(live, SurveyLocationEvent.Tick, clock)
+        assertEquals(SurveyLocationStatus.Stale, stale.status)
+        assertNotNull(stale.displayFix)
+        assertEquals(SurveyLocationLabels.CHIP_STALE, stale.chipLabel)
+        assertNotEquals(SurveyLocationStatus.Unavailable, stale.status)
+        assertNotEquals(SurveyLocationLabels.CHIP_NONE, stale.chipLabel)
+        assertTrue(SurveyLocationContradiction.isImpossible(stale))
+        assertNull(SurveyLocationLabels.banner(stale.status, stale.displayFix))
+    }
+
+    @Test
+    fun singleGpsPresentationNeverDuplicatesBanner() {
+        SurveyLocationStatus.entries.forEach { status ->
+            val fix = if (
+                status == SurveyLocationStatus.Live ||
+                status == SurveyLocationStatus.Degraded ||
+                status == SurveyLocationStatus.Stale
+            ) {
+                GpsFix(16.8, 96.1, 10f, 1L)
+            } else {
+                null
+            }
+            assertNull(SurveyLocationLabels.banner(status, fix))
+            val snap = SurveyLocationLabels.snapshot(status, fix, fix)
+            assertNull(snap.banner)
+            assertTrue(SurveyLocationContradiction.isImpossible(snap))
+        }
     }
 
     @Test
@@ -152,7 +222,7 @@ class SurveyLocationStateTest {
         )
         assertEquals(SurveyLocationStatus.Stale, stale.status)
         assertNotNull(stale.displayFix)
-        assertNotEquals(SurveyLocationLabels.TEMPORARILY_UNAVAILABLE, stale.banner)
+        assertNotEquals(SurveyLocationLabels.CHIP_NONE, stale.chipLabel)
         assertTrue(SurveyLocationContradiction.isImpossible(stale))
     }
 
@@ -177,6 +247,7 @@ class SurveyLocationStateTest {
         val silenced = SurveyLocationReducer.reduce(live, SurveyLocationEvent.WatchdogSilence, clock)
         assertEquals(SurveyLocationStatus.Stale, silenced.status)
         assertEquals(live.displayFix, silenced.displayFix)
+        assertEquals(SurveyLocationLabels.CHIP_STALE, silenced.chipLabel)
         assertTrue(SurveyLocationContradiction.isImpossible(silenced))
     }
 

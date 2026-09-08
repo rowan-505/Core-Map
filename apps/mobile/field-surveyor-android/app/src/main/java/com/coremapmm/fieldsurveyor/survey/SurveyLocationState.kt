@@ -133,46 +133,31 @@ object SurveyLocationPolicy {
 }
 
 object SurveyLocationLabels {
-    const val CHIP_NONE = "GPS —"
-    const val CHIP_ACQUIRING = "Finding GPS…"
-    const val CHIP_OFF = "GPS off"
-    const val CHIP_PERMISSION = "GPS permission needed"
-    const val CHIP_WEAK_PREFIX = "GPS weak"
-    const val CHIP_STALE_PREFIX = "GPS stale"
-    const val BANNER_DEGRADED = "GPS accuracy is poor. Move to open sky and wait."
-    const val BANNER_STALE = "GPS fix is stale. Locate again."
-    const val BANNER_DISABLED = "Location services are disabled."
-    const val BANNER_PERMISSION = "Location permission is required to start survey."
+    const val CHIP_NONE = "Location unavailable"
+    const val CHIP_ACQUIRING = "Finding location…"
+    const val CHIP_LIVE_PREFIX = "GPS ±"
+    const val CHIP_WEAK_PREFIX = "Weak GPS · ±"
+    const val CHIP_STALE = "Using last location"
+    const val CHIP_OFF = "Turn on location"
+    const val CHIP_PERMISSION = "Location permission required"
+    /** Kept for message filtering only; UI uses a single chip, never a second GPS banner. */
     const val TEMPORARILY_UNAVAILABLE = "Location is temporarily unavailable."
 
     fun chip(status: SurveyLocationStatus, fix: GpsFix?): String {
-        val acc = fix?.accuracyM?.let { " · ±${it.toInt()} m" }
+        val meters = fix?.accuracyM?.toInt()
         return when (status) {
             SurveyLocationStatus.Acquiring -> CHIP_ACQUIRING
-            SurveyLocationStatus.Live -> fix?.accuracyM?.let { "GPS ±${it.toInt()} m" } ?: "GPS ±? m"
-            SurveyLocationStatus.Degraded -> "$CHIP_WEAK_PREFIX${acc ?: " · ±? m"}"
-            SurveyLocationStatus.Stale -> "$CHIP_STALE_PREFIX${acc ?: ""}".trim()
+            SurveyLocationStatus.Live -> "$CHIP_LIVE_PREFIX${meters ?: "?"}m"
+            SurveyLocationStatus.Degraded -> "$CHIP_WEAK_PREFIX${meters ?: "?"}m"
+            SurveyLocationStatus.Stale -> CHIP_STALE
             SurveyLocationStatus.Disabled -> CHIP_OFF
             SurveyLocationStatus.PermissionDenied -> CHIP_PERMISSION
             SurveyLocationStatus.Unavailable -> CHIP_NONE
         }
     }
 
-    fun banner(status: SurveyLocationStatus, displayFix: GpsFix?): String? {
-        if (displayFix != null && status == SurveyLocationStatus.Unavailable) {
-            return null
-        }
-        return when (status) {
-            SurveyLocationStatus.Degraded -> BANNER_DEGRADED
-            SurveyLocationStatus.Stale -> BANNER_STALE
-            SurveyLocationStatus.Disabled -> BANNER_DISABLED
-            SurveyLocationStatus.PermissionDenied -> BANNER_PERMISSION
-            SurveyLocationStatus.Acquiring,
-            SurveyLocationStatus.Live,
-            SurveyLocationStatus.Unavailable,
-            -> null
-        }
-    }
+    /** Second GPS banner is retired; one chip is the only presentation. */
+    fun banner(status: SurveyLocationStatus, displayFix: GpsFix?): String? = null
 
     fun snapshot(
         status: SurveyLocationStatus,
@@ -195,7 +180,7 @@ object SurveyLocationLabels {
             displayFix = shown,
             evidenceFix = evidenceFix ?: shown,
             chipLabel = chip(safeStatus, shown),
-            banner = banner(safeStatus, shown),
+            banner = null,
             permissionGranted = permissionGranted,
             locationEnabled = locationEnabled,
             tracking = tracking,
@@ -213,14 +198,22 @@ object SurveyLocationConsumers {
 
 object SurveyLocationContradiction {
     fun isImpossible(snapshot: SurveyLocationSnapshot): Boolean {
-        val unavailableBanner = snapshot.banner == SurveyLocationLabels.TEMPORARILY_UNAVAILABLE
         val unavailableWithPoint =
             snapshot.displayFix != null && snapshot.status == SurveyLocationStatus.Unavailable
-        val bannerVsMap = snapshot.displayFix != null && unavailableBanner
+        val staleAndUnavailableChip =
+            snapshot.displayFix != null &&
+                snapshot.status == SurveyLocationStatus.Stale &&
+                (
+                    snapshot.chipLabel == SurveyLocationLabels.CHIP_NONE ||
+                        snapshot.chipLabel == SurveyLocationLabels.TEMPORARILY_UNAVAILABLE
+                    )
+        val bannerVsMap = snapshot.banner != null &&
+            snapshot.displayFix != null &&
+            snapshot.banner == SurveyLocationLabels.TEMPORARILY_UNAVAILABLE
         val mapFormSplit = SurveyLocationConsumers.mapFix(snapshot) !=
             SurveyLocationConsumers.formFix(snapshot)
-        return !unavailableWithPoint && !bannerVsMap && !mapFormSplit &&
-            (snapshot.displayFix == null || snapshot.status != SurveyLocationStatus.Unavailable)
+        val hasContradiction = unavailableWithPoint || staleAndUnavailableChip || bannerVsMap || mapFormSplit
+        return !hasContradiction
     }
 }
 

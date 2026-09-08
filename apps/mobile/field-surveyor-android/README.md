@@ -9,7 +9,7 @@ This app is a field surveyor client of the CoreMap Fastify API. It does not talk
 Login → Setup/Sync → Routes | Survey | Settings
 
 - **Login** — `POST /auth/login`. Role must include `surveyor`.
-- **Setup/Sync** — `GET /field/bootstrap` (gzip when the phone sends `Accept-Encoding: gzip`) plus an optional Yangon PMTiles download (~730 MB, Wi-Fi by default). Matching `revision` skips the snapshot.
+- **Setup/Sync** — `GET /field/bootstrap` (gzip when the phone sends `Accept-Encoding: gzip`) plus an optional Yangon PMTiles download (~120 MB for v2, Wi-Fi by default). Matching `revision` skips the snapshot.
 - **Routes** — local Room search. Nearby GPS ranking can suggest a D0/D1 variant.
 - **Survey** — local PMTiles, selected path/stops, live GPS, report types, JPEG + short voice, survey session start/complete/abandon.
 - **Settings** — Profile, Outbox, survey history, Infra (Yangon map + YBS snapshot).
@@ -18,9 +18,9 @@ Not in this app: public consumer map, dashboard, routing UI, automatic points, l
 
 ## Offline map
 
-Yangon streets PMTiles stay in `filesDir/basemap/yangon.pmtiles`. Default URL: `https://tiles.coremapmm.com/basemaps/yangon/v1/basemap.pmtiles`. Override with `-PfieldYangonPmtilesUrl=…`.
+Yangon streets PMTiles stay in `filesDir/basemap/yangon.pmtiles`. Default URL: `https://tiles.coremapmm.com/basemaps/yangon/v2/basemap.pmtiles`. Override with `-PfieldYangonPmtilesUrl=…`.
 
-The app checks free space, checksum, and resume. It does not auto-download ~730 MB. Logout does not delete the map file.
+The app checks free space, checksum, and resume. It does not auto-download ~120 MB. Logout does not delete the map file. A local v1 file is replaced when Setup downloads v2.
 
 ## Survey sessions and reports
 
@@ -42,11 +42,23 @@ Tokens live in `EncryptedSharedPreferences`. Do not embed JWT secrets, R2 keys, 
 
 ## API base URL
 
-`BuildConfig.API_BASE_URL` is a public origin only.
+`BuildConfig.API_BASE_URL` is a public origin only. **Release** always uses `https://api.coremapmm.com`.
 
-- Debug default: `http://10.0.2.2:3001` (emulator). Physical phones need LAN Fastify in gitignored `local.properties`: `fieldApiBaseUrl=http://<MAC_LAN_IP>:3001`
-- Release default: `https://api.coremapmm.com`
-- Override any build: `-PfieldApiBaseUrl=…` or env `FIELD_API_BASE_URL`
+**Debug (physical phone, recommended):** USB tunnel so Wi-Fi changes do not break login.
+
+```bash
+# terminal 1 — API reachable on the Mac
+cd apps/api && HOST=0.0.0.0 PORT=3001 npm run dev
+
+# terminal 2 — phone localhost → Mac :3001
+./apps/mobile/field-surveyor-android/scripts/adb-reverse-api.sh
+```
+
+The debug app auto-picks `http://127.0.0.1:3001` on real phones and `http://10.0.2.2:3001` on emulators. On the login screen you can also set a temporary Debug API URL (saved on device) without editing `local.properties`.
+
+Do **not** bake a Mac LAN IP into `local.properties` for daily use — that IP changes when Wi-Fi changes.
+
+Optional build-time override still works: `-PfieldApiBaseUrl=…` or `FIELD_API_BASE_URL`.
 
 Debug allows HTTP cleartext. Release forbids cleartext.
 
@@ -76,6 +88,10 @@ fieldSentryDsn=https://…@….ingest.sentry.io/…
 Empty `fieldSentryDsn` skips remote crash upload. When configured, Sentry disables default PII, automatic breadcrumbs, screenshots, view hierarchy, and ANR thread dumps; its final event hook removes user/request/breadcrumb payloads and exception messages. Logcat records only the exception type.
 
 ## Build / test
+
+Gradle needs a **full JDK 21** with `jlink` (Homebrew OpenJDK or Android Studio JBR). Do not use Cursor’s Red Hat Java extension JRE — it is missing `jlink` and fails `:app:compileDebugJavaWithJavac`.
+
+`gradle.properties` already sets `org.gradle.java.home` to Homebrew OpenJDK 21 and `android.disableJdkImageTransform=true`. Cursor/VS Code users also get `.vscode/settings.json` for the same path.
 
 ```bash
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
