@@ -109,7 +109,8 @@ function proposedLocation(
 }
 
 function fieldStopPublicId(row: ReportRow, data: Record<string, unknown>): string | null {
-    const fromContext = optionalString(data.stopPublicId);
+    const fromContext =
+        optionalString(data.stopPublicId) ?? optionalString(data.previousStopPublicId);
     if (fromContext) {
         return fromContext;
     }

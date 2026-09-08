@@ -187,6 +187,32 @@ test("new_stop evidence keeps previous stop, proposed name, and location source"
     assert.equal(field?.observed_location?.latitude, 16.781);
 });
 
+test("new_stop evidence falls back to previousStopPublicId when stopPublicId is omitted", () => {
+    const field = toFieldContext(
+        row({
+            report_type_code: "new_stop",
+            target_entity_type: "variant",
+            target_public_id: variantId,
+            latitude: 16.91,
+            longitude: 96.21,
+            report_data: {
+                snapshotRevision: "v1-old",
+                routePublicId: routeId,
+                variantPublicId: variantId,
+                variantCode: "D0",
+                previousStopPublicId: stopId,
+                previousStopSequence: 4,
+                proposedStopName: "Corner stall",
+                locationSource: "MAP_PICK",
+            },
+        }),
+        "v1-old"
+    );
+    assert.equal(field?.stop_public_id, stopId);
+    assert.equal(field?.previous_stop_public_id, stopId);
+    assert.equal(field?.proposed_location?.latitude, 16.91);
+});
+
 test("new_stop GPS-only has proposed geometry even without a corrected snapshot point", () => {
     const field = toFieldContext(
         row({

@@ -250,6 +250,8 @@ const reportSelect = Prisma.sql`
           AND s.public_id = CASE
             WHEN (r.report_data->>'stopPublicId') ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
               THEN (r.report_data->>'stopPublicId')::uuid
+            WHEN (r.report_data->>'previousStopPublicId') ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+              THEN (r.report_data->>'previousStopPublicId')::uuid
             WHEN r.target_entity_type = 'stop' THEN r.target_public_id
             ELSE NULL
           END
