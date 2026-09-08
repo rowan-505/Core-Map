@@ -32,7 +32,9 @@ build
 # OS / Editor
 # ========================
 .vscode/*
+**/.vscode/*
 !.vscode/extensions.json
+!**/.vscode/extensions.json
 .idea
 .DS_Store
 *.suo
