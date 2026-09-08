@@ -54,7 +54,6 @@ export default function ReportEvidence({
 
     useEffect(() => {
         if (items.length === 0) {
-            setPreviews({});
             return;
         }
         const controller = new AbortController();
@@ -77,6 +76,9 @@ export default function ReportEvidence({
                 }
             })
         ).then((rows) => {
+            if (controller.signal.aborted) {
+                return;
+            }
             const next: Record<string, PreviewState> = {};
             for (const row of rows) {
                 if (row) {
@@ -87,6 +89,8 @@ export default function ReportEvidence({
         });
         return () => controller.abort();
     }, [items]);
+
+    const displayPreviews = items.length === 0 ? {} : previews;
 
     useEffect(() => {
         if (!openId) {
@@ -102,7 +106,7 @@ export default function ReportEvidence({
     }, [openId]);
 
     const openItem = items.find((item) => item.publicId === openId) ?? null;
-    const openPreview = openId ? previews[openId] : undefined;
+    const openPreview = openId ? displayPreviews[openId] : undefined;
 
     return (
         <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -112,7 +116,7 @@ export default function ReportEvidence({
             ) : (
                 <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {items.map((item) => {
-                        const preview = previews[item.publicId];
+                        const preview = displayPreviews[item.publicId];
                         const audio = isAudio(item.mimeType);
                         const canPublish = Boolean(stopPublicId) && !audio && !item.published;
                         return (

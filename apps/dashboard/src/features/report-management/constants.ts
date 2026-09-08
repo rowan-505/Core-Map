@@ -24,6 +24,7 @@ export const REPORT_TYPE_OPTIONS: { value: ReportTypeCode; label: string }[] = [
     { value: "transport_issue", label: "Transport issue" },
     { value: "community_info", label: "Community info" },
     { value: "other_map_issue", label: "Others" },
+    { value: "new_stop", label: "New stop" },
 ];
 
 export const TARGET_ENTITY_TYPE_OPTIONS: { value: ReportTargetEntityType; label: string }[] = [
@@ -76,6 +77,13 @@ export function statusBadgeClass(code: string): string {
 
 export function reportTypeLabel(code: string): string {
     return REPORT_TYPE_OPTIONS.find((o) => o.value === code)?.label ?? code;
+}
+
+export function reportTypeBadgeClass(code: string): string {
+    if (code === "new_stop") {
+        return "bg-teal-50 text-teal-800 ring-teal-100";
+    }
+    return "bg-gray-50 text-gray-700 ring-gray-200";
 }
 
 export function statusLabel(code: string): string {

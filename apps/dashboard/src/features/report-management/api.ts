@@ -1,5 +1,6 @@
 import { apiFetch } from "@/src/lib/api";
 import { privateMediaAccessPath } from "./fieldEvidenceView";
+import { getReportPath, listReportsPath, reportStatusChangeRequest } from "./reportAdminQueries";
 import type {
     AdminReport,
     AdminReportDetail,
@@ -18,29 +19,14 @@ import type {
 type Signal = Pick<RequestInit, "signal">;
 
 export function listReports(filters: ReportsListFilters = {}, init?: Signal) {
-    const sp = new URLSearchParams();
-    if (filters.status) sp.set("status", filters.status);
-    if (filters.type) sp.set("type", filters.type);
-    if (filters.adminAreaId !== undefined) sp.set("adminAreaId", String(filters.adminAreaId));
-    if (filters.targetEntityType) sp.set("targetEntityType", filters.targetEntityType);
-    if (filters.source) sp.set("source", filters.source);
-    if (filters.routeCode) sp.set("routeCode", filters.routeCode);
-    if (filters.variantCode) sp.set("variantCode", filters.variantCode);
-    if (filters.anonymous !== undefined) sp.set("anonymous", String(filters.anonymous));
-    if (filters.createdFrom) sp.set("createdFrom", filters.createdFrom);
-    if (filters.createdTo) sp.set("createdTo", filters.createdTo);
-    if (filters.page !== undefined) sp.set("page", String(filters.page));
-    if (filters.pageSize !== undefined) sp.set("pageSize", String(filters.pageSize));
-
-    const qs = sp.toString();
-    return apiFetch<AdminReportList>(`/admin/reports${qs ? `?${qs}` : ""}`, {
+    return apiFetch<AdminReportList>(listReportsPath(filters), {
         method: "GET",
         ...init,
     });
 }
 
 export function getReport(id: string, init?: Signal) {
-    return apiFetch<AdminReportDetail>(`/admin/reports/${encodeURIComponent(id)}`, {
+    return apiFetch<AdminReportDetail>(getReportPath(id), {
         method: "GET",
         ...init,
     });
@@ -70,10 +56,11 @@ export function publishStopPhoto(assetPublicId: string, body: PublishStopPhotoBo
 }
 
 export function changeReportStatus(id: string, statusCode: ReportStatusCode, note?: string) {
-    return apiFetch<AdminReport>(`/admin/reports/${encodeURIComponent(id)}/status`, {
-        method: "PATCH",
+    const request = reportStatusChangeRequest(id, statusCode, note);
+    return apiFetch<AdminReport>(request.path, {
+        method: request.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ statusCode, ...(note ? { note } : {}) }),
+        body: JSON.stringify(request.body),
     });
 }
 

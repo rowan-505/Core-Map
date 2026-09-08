@@ -5,6 +5,7 @@ import { canDashboardWrite, hasDashboardAccess, isViewer } from "./jwtRoles.js";
 
 test("dashboard UX capabilities mirror API role policy", () => {
     assert.equal(hasDashboardAccess(["user"]), false);
+    assert.equal(hasDashboardAccess(["surveyor"]), false);
     assert.equal(hasDashboardAccess(["viewer"]), true);
     assert.equal(canDashboardWrite(["viewer"]), false);
     assert.equal(canDashboardWrite(["admin"]), true);

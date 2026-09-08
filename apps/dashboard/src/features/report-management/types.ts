@@ -17,7 +17,8 @@ export type ReportTypeCode =
     | "duplicate_item"
     | "transport_issue"
     | "community_info"
-    | "other_map_issue";
+    | "other_map_issue"
+    | "new_stop";
 
 export type ReportTargetEntityType =
     | "place"
@@ -105,6 +106,11 @@ export type FieldReportContext = {
     stop_public_id: string | null;
     stop_name: string | null;
     stop_sequence: number | null;
+    previous_stop_public_id: string | null;
+    previous_stop_sequence: number | null;
+    next_stop_public_id: string | null;
+    proposed_stop_name: string | null;
+    location_source: string | null;
     snapshot_revision: string | null;
     snapshot_stale: boolean;
     current_snapshot_revision: string | null;

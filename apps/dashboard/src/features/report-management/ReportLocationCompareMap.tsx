@@ -13,6 +13,8 @@ import { accuracyCircleCoordinates, type EvidenceMapPoint } from "./fieldEvidenc
 type ReportLocationCompareMapProps = {
     points: EvidenceMapPoint[];
     distanceM: number | null;
+    labels?: Partial<Record<EvidenceMapPoint["role"], string>>;
+    showDistanceWhen?: "canonical" | "gps-to-proposed";
 };
 
 const COLORS: Record<EvidenceMapPoint["role"], string> = {
@@ -21,7 +23,7 @@ const COLORS: Record<EvidenceMapPoint["role"], string> = {
     proposed: "#16a34a",
 };
 
-const LABELS: Record<EvidenceMapPoint["role"], string> = {
+const DEFAULT_LABELS: Record<EvidenceMapPoint["role"], string> = {
     canonical: "Current canonical stop",
     observed: "Observed surveyor location",
     proposed: "Proposed corrected location",
@@ -53,7 +55,12 @@ function makeMarker(color: string, label: string) {
     return new maplibregl.Marker({ element: el, anchor: "center" });
 }
 
-export default function ReportLocationCompareMap({ points, distanceM }: ReportLocationCompareMapProps) {
+export default function ReportLocationCompareMap({
+    points,
+    distanceM,
+    labels,
+    showDistanceWhen = "canonical",
+}: ReportLocationCompareMapProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const markersRef = useRef<maplibregl.Marker[]>([]);
@@ -111,7 +118,7 @@ export default function ReportLocationCompareMap({ points, distanceM }: ReportLo
         markersRef.current = [];
 
         for (const point of points) {
-            const marker = makeMarker(COLORS[point.role], LABELS[point.role])
+            const marker = makeMarker(COLORS[point.role], labels?.[point.role] ?? DEFAULT_LABELS[point.role])
                 .setLngLat([point.longitude, point.latitude])
                 .addTo(map);
             markersRef.current.push(marker);
@@ -163,13 +170,17 @@ export default function ReportLocationCompareMap({ points, distanceM }: ReportLo
             bounds.extend([point.longitude, point.latitude]);
         }
         map.fitBounds(bounds, { padding: 56, maxZoom: 18, duration: 400 });
-    }, [mapReady, points]);
+    }, [mapReady, points, labels]);
 
     if (points.length === 0) {
         return <p className="text-sm text-gray-500">No coordinates to compare.</p>;
     }
 
     const roles = new Set(points.map((point) => point.role));
+    const showDistance =
+        showDistanceWhen === "gps-to-proposed"
+            ? roles.has("observed") && roles.has("proposed")
+            : roles.has("canonical") && (roles.has("observed") || roles.has("proposed"));
 
     return (
         <div className="space-y-2">
@@ -182,12 +193,12 @@ export default function ReportLocationCompareMap({ points, distanceM }: ReportLo
                                     className="inline-block h-2.5 w-2.5 rounded-full"
                                     style={{ backgroundColor: COLORS[role] }}
                                 />
-                                {LABELS[role]}
+                                {labels?.[role] ?? DEFAULT_LABELS[role]}
                             </span>
                         ) : null
                     )}
                 </div>
-                {roles.has("canonical") && (roles.has("observed") || roles.has("proposed")) ? (
+                {showDistance ? (
                     <span className="font-medium text-gray-800">{formatDistance(distanceM)}</span>
                 ) : null}
             </div>

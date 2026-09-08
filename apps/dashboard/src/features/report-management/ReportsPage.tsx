@@ -14,6 +14,7 @@ import {
     REPORT_TYPE_OPTIONS,
     TARGET_ENTITY_TYPE_OPTIONS,
     formatDateTime,
+    reportTypeBadgeClass,
     reportTypeLabel,
     statusBadgeClass,
     statusLabel,
@@ -426,7 +427,13 @@ export default function ReportsPage() {
                                         </td>
                                         <td className="px-3 py-2 text-gray-700">{fieldStopLabel(row)}</td>
                                         <td className="px-3 py-2 text-gray-700">
-                                            {reportTypeLabel(row.report_type.code)}
+                                            <span
+                                                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${reportTypeBadgeClass(
+                                                    row.report_type.code
+                                                )}`}
+                                            >
+                                                {reportTypeLabel(row.report_type.code)}
+                                            </span>
                                         </td>
                                         <td className="px-3 py-2 text-gray-700">
                                             {formatAccuracy(row.location_accuracy_m)}
@@ -474,7 +481,13 @@ export default function ReportsPage() {
                                             </span>
                                         </td>
                                         <td className="px-3 py-2 text-gray-700">
-                                            {reportTypeLabel(row.report_type.code)}
+                                            <span
+                                                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${reportTypeBadgeClass(
+                                                    row.report_type.code
+                                                )}`}
+                                            >
+                                                {reportTypeLabel(row.report_type.code)}
+                                            </span>
                                         </td>
                                         <td className="px-3 py-2 text-gray-700">{targetLabel(row)}</td>
                                         <td className="px-3 py-2 text-gray-700">

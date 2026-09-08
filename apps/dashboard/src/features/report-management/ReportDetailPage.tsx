@@ -17,6 +17,7 @@ import {
 import {
     REWARD_REASON_OPTIONS,
     formatDateTime,
+    reportTypeBadgeClass,
     reportTypeLabel,
     statusBadgeClass,
     statusLabel,
@@ -28,6 +29,18 @@ import {
     fieldTransportEditorHref,
     sessionFinalizationLabel,
 } from "./fieldEvidenceView";
+import {
+    evidenceMapLabels,
+    gpsToProposedDistanceM,
+    isNewStopReport,
+    locationSourceLabel,
+    nextStopLabel,
+    newStopCanonicalPublishEnabled,
+    newStopReviewMapPoints,
+    previousStopLabel,
+    proposedGeometryLabel,
+    sameGeoPoint,
+} from "./newStopReview";
 import ReportEvidence from "./ReportEvidence";
 import type { AdminReportDetail, ReportStatusCode, RewardReasonCode } from "./types";
 
@@ -164,7 +177,11 @@ export default function ReportDetailPage({ id }: { id: string }) {
         ? `https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=17/${report.latitude}/${report.longitude}`
         : null;
     const field = report.field;
-    const mapPoints = evidenceMapPoints(report);
+    const isNewStop = isNewStopReport(report.report_type.code);
+    const mapPoints = isNewStop ? newStopReviewMapPoints(report) : evidenceMapPoints(report);
+    const mapLabels = evidenceMapLabels(report);
+    const gpsProposedDistanceM = isNewStop ? gpsToProposedDistanceM(field) : null;
+    const mapDistanceM = isNewStop ? gpsProposedDistanceM : report.distance_m;
     const editorHref = fieldTransportEditorHref(field);
     const snapshotJson =
         field?.canonical_snapshot != null
@@ -192,6 +209,13 @@ export default function ReportDetailPage({ id }: { id: string }) {
                         <h1 className="text-2xl font-bold text-gray-900">
                             {reportTypeLabel(report.report_type.code)}
                         </h1>
+                        <span
+                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${reportTypeBadgeClass(
+                                report.report_type.code
+                            )}`}
+                        >
+                            {reportTypeLabel(report.report_type.code)}
+                        </span>
                         <span
                             className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${statusBadgeClass(
                                 status
@@ -262,11 +286,41 @@ export default function ReportDetailPage({ id }: { id: string }) {
                                     <Field label="Destination" value={field.destination_name ?? "—"} />
                                     <Field
                                         label="Stop / target"
-                                        value={field.stop_name ?? field.stop_public_id ?? "—"}
+                                        value={
+                                            isNewStop
+                                                ? previousStopLabel(field)
+                                                : field.stop_name ?? field.stop_public_id ?? "—"
+                                        }
                                     />
                                     <Field
                                         label="Stop sequence"
-                                        value={field.stop_sequence != null ? String(field.stop_sequence) : "—"}
+                                        value={
+                                            isNewStop
+                                                ? field.previous_stop_sequence != null
+                                                    ? String(field.previous_stop_sequence)
+                                                    : field.stop_sequence != null
+                                                      ? String(field.stop_sequence)
+                                                      : "—"
+                                                : field.stop_sequence != null
+                                                  ? String(field.stop_sequence)
+                                                  : "—"
+                                        }
+                                    />
+                                    <Field
+                                        label="Previous canonical stop"
+                                        value={isNewStop ? previousStopLabel(field) : field.previous_stop_public_id ?? "—"}
+                                    />
+                                    <Field
+                                        label="Next canonical stop"
+                                        value={isNewStop ? nextStopLabel(field) : field.next_stop_public_id ?? "—"}
+                                    />
+                                    <Field
+                                        label="Proposed stop name"
+                                        value={field.proposed_stop_name ?? "—"}
+                                    />
+                                    <Field
+                                        label="Location source"
+                                        value={locationSourceLabel(field.location_source)}
                                     />
                                     <Field
                                         label="Snapshot revision"
@@ -349,6 +403,9 @@ export default function ReportDetailPage({ id }: { id: string }) {
                                 <p className="mt-3 text-xs text-gray-500">
                                     Canonical edits happen in the existing transport editor. This page
                                     does not apply the report to map data.
+                                    {isNewStop && !newStopCanonicalPublishEnabled()
+                                        ? " New stop reports are evidence only in this phase."
+                                        : ""}
                                 </p>
                             </Card>
                         ) : null}
@@ -380,6 +437,36 @@ export default function ReportDetailPage({ id }: { id: string }) {
                                             value={formatPoint(field?.proposed_location)}
                                         />
                                     </div>
+                                ) : isNewStop ? (
+                                    <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                        <Field
+                                            label={proposedGeometryLabel(field?.location_source)}
+                                            value={formatPoint(field?.proposed_location)}
+                                        />
+                                        <Field
+                                            label="Captured GPS"
+                                            value={
+                                                field?.observed_location &&
+                                                !sameGeoPoint(field.observed_location, field.proposed_location)
+                                                    ? formatPoint(field.observed_location)
+                                                    : field?.location_source === "GPS"
+                                                      ? "Same as proposed GPS point"
+                                                      : "—"
+                                            }
+                                        />
+                                        <Field
+                                            label="Previous canonical stop"
+                                            value={formatPoint(report.canonical_target)}
+                                        />
+                                        <Field
+                                            label="GPS to proposed"
+                                            value={
+                                                gpsProposedDistanceM != null
+                                                    ? `${Math.round(gpsProposedDistanceM)} m`
+                                                    : "—"
+                                            }
+                                        />
+                                    </div>
                                 ) : (
                                     <div className="mb-3 grid grid-cols-2 gap-4">
                                         <Field
@@ -392,7 +479,12 @@ export default function ReportDetailPage({ id }: { id: string }) {
                                         />
                                     </div>
                                 )}
-                                <ReportLocationCompareMap points={mapPoints} distanceM={report.distance_m} />
+                                <ReportLocationCompareMap
+                                    points={mapPoints}
+                                    distanceM={mapDistanceM}
+                                    labels={mapLabels}
+                                    showDistanceWhen={isNewStop ? "gps-to-proposed" : "canonical"}
+                                />
                             </Card>
                         ) : null}
 
