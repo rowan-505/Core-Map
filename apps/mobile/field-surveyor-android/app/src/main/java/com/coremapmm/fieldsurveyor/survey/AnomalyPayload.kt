@@ -12,12 +12,15 @@ data class AnomalyCaptureInput(
     val variantPublicId: String,
     val variantCode: String,
     val selectedStop: OrderedStopRow?,
-    val gps: GpsFix,
+    val gps: GpsFix?,
     val note: String = "",
     val reportLocation: GpsFix? = null,
     val observedAtIso: String,
     val clientPublicId: String = UUID.randomUUID().toString(),
     val createdAtEpochMs: Long,
+    val proposedStopName: String = "",
+    val nextStopPublicId: String? = null,
+    val locationSource: String? = null,
 )
 
 object AnomalyPayload {
@@ -40,6 +43,14 @@ object AnomalyPayload {
             .put("variantCode", input.variantCode)
         val stop = input.selectedStop
         val reportFix = input.reportLocation ?: input.gps
+        val locationSource = input.locationSource
+            ?: if (input.kind == AnomalyKind.MOVED && input.reportLocation != null) {
+                "MAP_PICK"
+            } else if (input.kind == AnomalyKind.MOVED) {
+                "GPS"
+            } else {
+                null
+            }
         if (stop != null) {
             val snapshot = JSONObject()
                 .put("stopPublicId", stop.stopPublicId)
@@ -49,21 +60,46 @@ object AnomalyPayload {
                 .put("nameMy", stop.nameMy)
                 .put("lat", stop.lat)
                 .put("lng", stop.lng)
+            val observer = input.gps
+            if (observer != null) {
+                snapshot.put("observerLat", observer.lat)
+                snapshot.put("observerLng", observer.lng)
+                snapshot.put("observerAccuracyM", observer.accuracyM?.toDouble() ?: JSONObject.NULL)
+                snapshot.put("observerEpochMs", observer.epochMs)
+            }
             if (input.reportLocation != null) {
-                snapshot.put("correctedLat", reportFix.lat)
+                snapshot.put("correctedLat", reportFix!!.lat)
                 snapshot.put("correctedLng", reportFix.lng)
-                snapshot.put("observerLat", input.gps.lat)
-                snapshot.put("observerLng", input.gps.lng)
-                snapshot.put("observerAccuracyM", input.gps.accuracyM?.toDouble() ?: JSONObject.NULL)
+            }
+            if (input.kind == AnomalyKind.NEW_STOP) {
+                context.put("previousStopPublicId", stop.stopPublicId)
+                context.put("previousStopSequence", stop.stopSequence)
+                if (!input.nextStopPublicId.isNullOrBlank()) {
+                    context.put("nextStopPublicId", input.nextStopPublicId)
+                    snapshot.put("nextStopPublicId", input.nextStopPublicId)
+                }
+                context.put("proposedStopName", input.proposedStopName.trim())
+                context.put("locationSource", locationSource)
+                snapshot.put("proposedStopName", input.proposedStopName.trim())
+                snapshot.put("locationSource", locationSource)
             }
             context.put("stopPublicId", stop.stopPublicId)
             context.put("stopSequence", stop.stopSequence)
             context.put("canonicalSnapshot", snapshot)
         }
         val location = JSONObject()
-            .put("lat", reportFix.lat)
-            .put("lng", reportFix.lng)
-            .put("accuracyM", reportFix.accuracyM?.toDouble() ?: JSONObject.NULL)
+        if (reportFix != null) {
+            location.put("lat", reportFix.lat)
+                .put("lng", reportFix.lng)
+                .put(
+                    "accuracyM",
+                    if (locationSource == "MAP_PICK") {
+                        JSONObject.NULL
+                    } else {
+                        reportFix.accuracyM?.toDouble() ?: JSONObject.NULL
+                    },
+                )
+        }
         return JSONObject()
             .put("clientPublicId", input.clientPublicId)
             .put("reportTypeCode", AnomalyMapping.reportTypeCode(input.kind))

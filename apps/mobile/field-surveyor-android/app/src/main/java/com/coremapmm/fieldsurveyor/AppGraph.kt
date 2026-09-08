@@ -104,7 +104,7 @@ class AppGraph(
                 fieldMediaApi = fieldMediaApi,
                 fieldSurveySessionsApi = fieldSurveySessionsApi,
                 yangon = yangon,
-                nearbyRoutes = NearbyRouteRecommender(database.transportCacheDao(), sessionDao),
+                nearbyRoutes = NearbyRouteRecommender(database.transportCacheDao()),
                 apiBaseUrl = BuildConfig.API_BASE_URL,
             )
         }

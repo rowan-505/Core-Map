@@ -33,6 +33,7 @@ object SurveyMapOverlays {
     const val SRC_NEARBY = "survey-nearby-stops-src"
     const val SRC_GPS = "survey-gps-src"
     const val SRC_GPS_ACCURACY = "survey-gps-accuracy-src"
+    const val SRC_GPS_HEADING = "survey-gps-heading-src"
     const val SRC_PICK = "survey-pick-src"
     const val LAYER_PICK = "survey-pick"
     const val SRC_ANOMALIES = "survey-anomalies-src"
@@ -42,6 +43,7 @@ object SurveyMapOverlays {
     const val LAYER_NEARBY = "survey-nearby-stops"
     const val LAYER_GPS = "survey-gps"
     const val LAYER_GPS_ACCURACY = "survey-gps-accuracy"
+    const val LAYER_GPS_HEADING = "survey-gps-heading"
     const val LAYER_ANOMALIES = "survey-anomalies"
     const val PROP_STOP_ID = "stopPublicId"
 
@@ -61,6 +63,7 @@ object SurveyMapOverlays {
         style.addSource(GeoJsonSource(SRC_NEARBY, emptyCollection()))
         style.addSource(GeoJsonSource(SRC_GPS, emptyCollection()))
         style.addSource(GeoJsonSource(SRC_GPS_ACCURACY, emptyCollection()))
+        style.addSource(GeoJsonSource(SRC_GPS_HEADING, emptyCollection()))
         style.addSource(GeoJsonSource(SRC_PICK, emptyCollection()))
         style.addSource(GeoJsonSource(SRC_ANOMALIES, emptyCollection()))
         style.addLayer(
@@ -107,6 +110,13 @@ object SurveyMapOverlays {
                 PropertyFactory.fillColor(Color.parseColor("#00B8D4")),
                 PropertyFactory.fillOpacity(0.16f),
                 PropertyFactory.fillOutlineColor(Color.parseColor("#008FA3")),
+            ),
+        )
+        style.addLayer(
+            FillLayer(LAYER_GPS_HEADING, SRC_GPS_HEADING).withProperties(
+                PropertyFactory.fillColor(Color.parseColor("#00838F")),
+                PropertyFactory.fillOpacity(0.92f),
+                PropertyFactory.fillOutlineColor(Color.WHITE),
             ),
         )
         style.addLayer(
@@ -168,12 +178,15 @@ object SurveyMapOverlays {
         }
     }
 
-    fun setGps(style: Style, gps: GpsFix?) {
+    fun setGps(style: Style, gps: GpsFix?, headingDeg: Double? = null) {
+        ensureGpsHeading(style)
         val source = geoJsonSource(style, SRC_GPS) ?: return
         val accuracySource = geoJsonSource(style, SRC_GPS_ACCURACY) ?: return
+        val headingSource = geoJsonSource(style, SRC_GPS_HEADING)
         if (gps == null) {
             source.setGeoJson(emptyCollection())
             accuracySource.setGeoJson(emptyCollection())
+            headingSource?.setGeoJson(emptyCollection())
             return
         }
         source.setGeoJson(
@@ -190,28 +203,78 @@ object SurveyMapOverlays {
             )
             accuracySource.setGeoJson(FeatureCollection.fromFeature(Feature.fromGeometry(polygon)))
         }
+        val chevron = if (headingDeg == null) emptyList() else headingChevron(gps, headingDeg)
+        if (headingSource == null) {
+            return
+        }
+        if (chevron.isEmpty()) {
+            headingSource.setGeoJson(emptyCollection())
+        } else {
+            val polygon = Polygon.fromLngLats(
+                listOf(chevron.map { (lng, lat) -> Point.fromLngLat(lng, lat) }),
+            )
+            headingSource.setGeoJson(FeatureCollection.fromFeature(Feature.fromGeometry(polygon)))
+        }
+    }
+
+    fun ensureGpsHeading(style: Style) {
+        if (!styleFullyLoaded(style)) return
+        if (geoJsonSource(style, SRC_GPS_HEADING) != null) return
+        try {
+            style.addSource(GeoJsonSource(SRC_GPS_HEADING, emptyCollection()))
+            val layer = FillLayer(LAYER_GPS_HEADING, SRC_GPS_HEADING).withProperties(
+                PropertyFactory.fillColor(Color.parseColor("#00838F")),
+                PropertyFactory.fillOpacity(0.92f),
+                PropertyFactory.fillOutlineColor(Color.WHITE),
+            )
+            if (style.getLayer(LAYER_GPS) != null) {
+                style.addLayerBelow(layer, LAYER_GPS)
+            } else {
+                style.addLayer(layer)
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    /** Closed triangle pointing along [headingDeg], as (longitude, latitude) pairs. */
+    fun headingChevron(
+        gps: GpsFix,
+        headingDeg: Double,
+        tipMeters: Double = 16.0,
+        halfWidthMeters: Double = 7.5,
+    ): List<Pair<Double, Double>> {
+        val heading = SurveyHeading.normalize(headingDeg)
+        val tip = destination(gps.lat, gps.lng, heading, tipMeters)
+        val left = destination(gps.lat, gps.lng, heading + 150.0, halfWidthMeters)
+        val right = destination(gps.lat, gps.lng, heading - 150.0, halfWidthMeters)
+        return listOf(tip, left, right, tip)
     }
 
     /** Returns a geodesic accuracy ring as (longitude, latitude) pairs. */
     fun accuracyRing(gps: GpsFix, vertices: Int = 48): List<Pair<Double, Double>> {
         val radiusM = gps.accuracyM?.toDouble()?.takeIf { it > 0.0 } ?: return emptyList()
         val count = vertices.coerceAtLeast(8)
-        val angularDistance = radiusM / EARTH_RADIUS_M
-        val lat1 = Math.toRadians(gps.lat)
-        val lng1 = Math.toRadians(gps.lng)
         val ring = (0 until count).map { index ->
-            val bearing = 2.0 * Math.PI * index / count
-            val lat2 = asin(
-                sin(lat1) * cos(angularDistance) +
-                    cos(lat1) * sin(angularDistance) * cos(bearing),
-            )
-            val lng2 = lng1 + atan2(
-                sin(bearing) * sin(angularDistance) * cos(lat1),
-                cos(angularDistance) - sin(lat1) * sin(lat2),
-            )
-            Math.toDegrees(lng2) to Math.toDegrees(lat2)
+            val bearingDeg = 360.0 * index / count
+            destination(gps.lat, gps.lng, bearingDeg, radiusM)
         }
         return ring + ring.first()
+    }
+
+    fun destination(lat: Double, lng: Double, bearingDeg: Double, meters: Double): Pair<Double, Double> {
+        val angularDistance = meters / EARTH_RADIUS_M
+        val bearing = Math.toRadians(SurveyHeading.normalize(bearingDeg))
+        val lat1 = Math.toRadians(lat)
+        val lng1 = Math.toRadians(lng)
+        val lat2 = asin(
+            sin(lat1) * cos(angularDistance) +
+                cos(lat1) * sin(angularDistance) * cos(bearing),
+        )
+        val lng2 = lng1 + atan2(
+            sin(bearing) * sin(angularDistance) * cos(lat1),
+            cos(angularDistance) - sin(lat1) * sin(lat2),
+        )
+        return Math.toDegrees(lng2) to Math.toDegrees(lat2)
     }
 
     fun setAnomalies(style: Style, points: List<GpsFix>) {
@@ -285,11 +348,20 @@ object SurveyMapOverlays {
         return true
     }
 
-    fun followGps(map: MapLibreMap, gps: GpsFix, zoom: Double, durationMs: Int = 280) {
-        map.easeCamera(
-            CameraUpdateFactory.newLatLngZoom(LatLng(gps.lat, gps.lng), zoom),
-            durationMs,
-        )
+    fun followGps(
+        map: MapLibreMap,
+        gps: GpsFix,
+        zoom: Double,
+        durationMs: Int = 450,
+        mapBearingDeg: Double? = null,
+    ) {
+        val builder = CameraPosition.Builder(map.cameraPosition)
+            .target(LatLng(gps.lat, gps.lng))
+            .zoom(zoom)
+        if (mapBearingDeg != null) {
+            builder.bearing(mapBearingDeg)
+        }
+        map.easeCamera(CameraUpdateFactory.newCameraPosition(builder.build()), durationMs)
     }
 
     fun flyToGpsOnce(map: MapLibreMap, gps: GpsFix) {

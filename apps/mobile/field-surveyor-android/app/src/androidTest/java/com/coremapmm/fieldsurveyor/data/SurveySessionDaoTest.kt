@@ -163,6 +163,19 @@ class SurveySessionDaoTest {
         assertEquals(1, db.localSurveySessionDao().observeHistory().first().single().reportCount)
     }
 
+    @Test fun newStopOutboxUpsertIsIdempotentAndDoesNotTouchCanonicalData() = runBlocking {
+        db.localSurveySessionDao().insert(session())
+        val payload = """{"clientPublicId":"new-stop-1","reportTypeCode":"new_stop","anomalyKind":"NEW_STOP","observedAt":"2026-09-08T00:00:00Z","location":{"lat":16.91,"lng":96.21},"target":{"entityType":"variant","publicId":"variant"},"context":{"snapshotRevision":"rev","previousStopPublicId":"stop-1","previousStopSequence":4,"proposedStopName":"Corner stall","locationSource":"GPS"}}"""
+        val first = report("new-stop-1", "session-1").copy(payloadJson = payload)
+        db.localReportDao().upsert(first)
+        db.localReportDao().upsert(first.copy(updatedAtEpochMs = 2_000L, payloadJson = payload))
+        val stored = db.localReportDao().findById("new-stop-1")!!
+        assertEquals(payload, stored.payloadJson)
+        assertEquals(1, db.localReportDao().countForSession("session-1"))
+        assertEquals("new_stop", org.json.JSONObject(stored.payloadJson).getString("reportTypeCode"))
+        assertEquals("variant", org.json.JSONObject(stored.payloadJson).getJSONObject("target").getString("entityType"))
+    }
+
     @Test fun historyPageIsBoundedAndNewestFirst() = runBlocking {
         val sessions = db.localSurveySessionDao()
         repeat(75) { index ->

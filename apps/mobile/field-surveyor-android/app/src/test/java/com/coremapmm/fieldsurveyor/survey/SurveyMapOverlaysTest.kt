@@ -2,6 +2,7 @@ package com.coremapmm.fieldsurveyor.survey
 
 import com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -53,5 +54,22 @@ class SurveyMapOverlaysTest {
             ring.first().first,
         )
         assertEquals(75.0, radius, 0.25)
+    }
+
+    @Test
+    fun headingChevronPointsNorthAndCloses() {
+        val fix = GpsFix(16.8, 96.15, 8f, 1_000L)
+        val chevron = SurveyMapOverlays.headingChevron(fix, 0.0)
+        assertEquals(chevron.first(), chevron.last())
+        assertEquals(4, chevron.size)
+        assertTrue(chevron[0].second > fix.lat)
+    }
+
+    @Test
+    fun headingChevronIsHiddenWhenHeadingMissing() {
+        val fix = GpsFix(16.8, 96.15, 8f, 1_000L)
+        assertTrue(SurveyMapOverlays.headingChevron(fix, 90.0).isNotEmpty())
+        assertEquals(0.0, SurveyHeading.select(null, null, null, null, false).degrees, 0.0)
+        assertFalse(SurveyHeading.select(null, null, null, null, false).visible)
     }
 }

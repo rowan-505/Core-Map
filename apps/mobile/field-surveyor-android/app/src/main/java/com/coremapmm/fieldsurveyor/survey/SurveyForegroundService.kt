@@ -13,6 +13,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.coremapmm.fieldsurveyor.FieldApp
 import com.coremapmm.fieldsurveyor.MainActivity
+import com.coremapmm.fieldsurveyor.R
 
 /** Keeps the existing fused survey pipeline eligible while the app is backgrounded. */
 class SurveyForegroundService : Service() {
@@ -54,7 +55,6 @@ class SurveyForegroundService : Service() {
     }
 
     override fun onDestroy() {
-        if (survey.state.value.running) survey.stopFromNotification()
         super.onDestroy()
     }
 
@@ -62,14 +62,14 @@ class SurveyForegroundService : Service() {
 
     private fun notification() = NotificationCompat.Builder(this, CHANNEL_ID)
         .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-        .setContentTitle("Survey in progress")
-        .setContentText("Location tracking is active")
+        .setContentTitle(getString(R.string.survey_notification_title))
+        .setContentText(getString(R.string.survey_notification_text))
         .setCategory(NotificationCompat.CATEGORY_SERVICE)
         .setOngoing(true)
         .setOnlyAlertOnce(true)
         .setContentIntent(returnToSurveyIntent())
-        .addAction(0, "Return to survey", returnToSurveyIntent())
-        .addAction(0, "Stop Survey", stopSurveyIntent())
+        .addAction(0, getString(R.string.survey_notification_return), returnToSurveyIntent())
+        .addAction(0, getString(R.string.survey_notification_stop), stopSurveyIntent())
         .build()
 
     private fun returnToSurveyIntent(): PendingIntent = PendingIntent.getActivity(
@@ -94,10 +94,10 @@ class SurveyForegroundService : Service() {
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                "Active surveys",
+                getString(R.string.survey_notification_channel),
                 NotificationManager.IMPORTANCE_LOW,
             ).apply {
-                description = "Location tracking while a field survey is active"
+                description = getString(R.string.survey_notification_channel_desc)
                 setShowBadge(false)
             },
         )

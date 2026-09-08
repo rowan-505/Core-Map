@@ -6,6 +6,7 @@ enum class AnomalyKind {
     DATA,
     ROUTE,
     OTHER,
+    NEW_STOP,
 }
 
 object AnomalyMapping {
@@ -16,6 +17,7 @@ object AnomalyMapping {
             AnomalyKind.DATA -> "wrong_info"
             AnomalyKind.ROUTE -> "transport_issue"
             AnomalyKind.OTHER -> "other_map_issue"
+            AnomalyKind.NEW_STOP -> "new_stop"
         }
     }
 
@@ -23,7 +25,10 @@ object AnomalyMapping {
         return when (kind) {
             AnomalyKind.ROUTE -> "route"
             AnomalyKind.MOVED, AnomalyKind.MISSING, AnomalyKind.DATA -> "stop"
+            AnomalyKind.NEW_STOP -> "variant"
             AnomalyKind.OTHER -> if (hasSelectedStop) "stop" else "variant"
         }
     }
+
+    fun reportIssueKinds(): List<AnomalyKind> = AnomalyKind.entries.filter { it != AnomalyKind.NEW_STOP }
 }

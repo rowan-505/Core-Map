@@ -9,6 +9,8 @@ class FieldLocalizationTest {
     fun myanmarModeTranslatesNavigationAndDynamicCounts() {
         assertEquals("ဆက်တင်များ", translateFieldText("Settings", FieldLanguage.MYANMAR))
         assertEquals("လမ်းကြောင်းတစ်ခုလုံးကို ပြမည်", translateFieldText("Show whole route", FieldLanguage.MYANMAR))
+        assertEquals("ဦးတည်ရာအတိုင်း လိုက်မည်", translateFieldText("Follow heading", FieldLanguage.MYANMAR))
+        assertEquals("ရွေးထားသော", translateFieldText("Selected", FieldLanguage.MYANMAR))
         assertEquals("မှတ်တိုင်", translateFieldText("stops", FieldLanguage.MYANMAR))
         assertEquals(
             "အသုံးပြုနိုင်သော လမ်းကြောင်းခွဲ 19 ခု",
@@ -54,6 +56,29 @@ class FieldLocalizationTest {
             "Recommend nearby route",
             translateFieldText("Recommend nearby route", FieldLanguage.MYANMAR),
         )
+        assertEquals(
+            "အားနည်းသော GPS တည်နေရာကို သုံးထားသည်။",
+            translateFieldText("Using a weaker GPS fix.", FieldLanguage.MYANMAR),
+        )
+        assertEquals(
+            "နောက်ဆုံးသိထားသော တည်နေရာကို သုံးထားသည်။",
+            translateFieldText("Using last known location.", FieldLanguage.MYANMAR),
+        )
+        assertEquals("GPS ရှာနေသည်…", translateFieldText("Finding GPS…", FieldLanguage.MYANMAR))
+        assertEquals("GPS ပိတ်ထားသည်", translateFieldText("GPS off", FieldLanguage.MYANMAR))
+        assertEquals("GPS ခွင့်ပြုချက် လိုသည်", translateFieldText("GPS permission needed", FieldLanguage.MYANMAR))
+        assertEquals(
+            "GPS ဟောင်း · ±5 m",
+            translateFieldText("GPS stale · ±5 m", FieldLanguage.MYANMAR),
+        )
+        assertEquals(
+            "GPS အားနည်း · ±40 m",
+            translateFieldText("GPS weak · ±40 m", FieldLanguage.MYANMAR),
+        )
+        assertEquals("မှတ်တိုင်အသစ် တင်မည်", translateFieldText("Report new stop", FieldLanguage.MYANMAR))
+        assertEquals("အစီရင်ခံစာ သိမ်းပြီး", translateFieldText("Report saved", FieldLanguage.MYANMAR))
+        assertEquals("အော့ဖ်လိုင်းတွင် သိမ်းပြီး", translateFieldText("Saved offline", FieldLanguage.MYANMAR))
+        assertEquals("အစီရင်ခံစာ သိမ်း၍မရပါ", translateFieldText("Could not save report", FieldLanguage.MYANMAR))
     }
 
     @Test

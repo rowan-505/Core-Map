@@ -98,15 +98,15 @@ class GpsTrackingTest {
     @Test
     fun worseFreshFixIsRejectedWhileBetterFixIsValid() {
         val better = GpsFix(16.80, 96.15, 4f, 10_000L)
-        val worse = GpsFix(16.80001, 96.15001, 24f, 12_000L)
+        val worse = GpsFix(16.800001, 96.150001, 24f, 12_000L)
         assertNull(GpsFixPolicy.publish(better, worse, 12_000L))
 
-        val acceptedAfterHold = GpsFixPolicy.publish(
+        val stillHeld = GpsFixPolicy.publish(
             better,
             worse.copy(epochMs = 21_000L),
             21_000L,
         )
-        assertEquals(21_000L, acceptedAfterHold?.epochMs)
+        assertNull(stillHeld)
     }
 
     @Test
@@ -185,9 +185,9 @@ class GpsTrackingTest {
     }
 
     @Test
-    fun cachedLastKnownOlderThanGoodFixThresholdIsDropped() {
+    fun cachedLastKnownIsKeptAsLastKnownEvenWhenOld() {
         val cached = GpsFix(16.80, 96.15, 8f, 1_000L)
-        assertNull(GpsFixPolicy.publish(null, cached, 1_000L + GpsFixPolicy.MAX_FIX_AGE_MS + 1L))
+        assertEquals(cached, GpsFixPolicy.publish(null, cached, 1_000L + GpsFixPolicy.MAX_FIX_AGE_MS + 1L))
     }
 
     @Test
@@ -200,6 +200,7 @@ class GpsTrackingTest {
         assertFalse(GpsQualityPolicy.canUseForNearby(critical, 10_000L))
         assertTrue(ReportLocationPolicy.requiresPoorAccuracyConfirmation(AnomalyKind.MOVED, critical, 10_000L))
         assertFalse(ReportLocationPolicy.requiresPoorAccuracyConfirmation(AnomalyKind.DATA, critical, 10_000L))
+        assertFalse(ReportLocationPolicy.requiresPoorAccuracyConfirmation(AnomalyKind.NEW_STOP, critical, 10_000L))
     }
 
     @Test

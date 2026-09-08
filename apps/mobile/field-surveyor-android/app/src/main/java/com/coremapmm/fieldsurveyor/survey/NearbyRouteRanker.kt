@@ -1,7 +1,6 @@
 package com.coremapmm.fieldsurveyor.survey
 
 import com.coremapmm.fieldsurveyor.data.transport.NearbyServingRow
-import com.coremapmm.fieldsurveyor.data.transport.RoutePathGeometry
 import com.coremapmm.fieldsurveyor.data.transport.RouteSelectionRow
 import kotlin.math.cos
 
@@ -9,73 +8,79 @@ data class NearbyRouteRecommendation(
     val selection: RouteSelectionRow,
     val nearestStopName: String,
     val stopDistanceM: Double,
-    val pathDistanceM: Double,
-    val lastSurveyedAtEpochMs: Long?,
-    val score: Double,
+)
+
+data class NearbyRouteLocation(
+    val fix: GpsFix,
+    val status: SurveyLocationStatus,
+    val qualifier: String?,
 )
 
 sealed class NearbyRouteState {
     data object Idle : NearbyRouteState()
     data object PermissionRequired : NearbyRouteState()
     data object Locating : NearbyRouteState()
-    data object PoorAccuracy : NearbyRouteState()
+    data object NoLocation : NearbyRouteState()
     data object NoNearby : NearbyRouteState()
     data object StalePackage : NearbyRouteState()
-    data class Recommendations(val rows: List<NearbyRouteRecommendation>) : NearbyRouteState()
+    data class Recommendations(
+        val rows: List<NearbyRouteRecommendation>,
+        val qualifier: String? = null,
+    ) : NearbyRouteState()
 }
 
 object NearbyRoutePolicy {
-    const val RADIUS_M = 500.0
-    const val PATH_WEIGHT = 0.35
-    const val RECENT_DAY_MS = 24L * 60 * 60 * 1000
-    const val RECENT_WEEK_MS = 7L * 24 * 60 * 60 * 1000
-    const val PENALTY_WITHIN_DAY_M = 400.0
-    const val PENALTY_WITHIN_WEEK_M = 150.0
+    const val MIN_RADIUS_M = 120.0
+    const val MAX_RADIUS_M = 500.0
     const val MAX_RESULTS = 3
     const val MIN_STOPS = 2
+    const val RECOMPUTE_MOVE_M = 10.0
+    const val RECOMPUTE_INTERVAL_MS = 10_000L
 
-    fun boundingBox(lat: Double, lng: Double, radiusM: Double = RADIUS_M): NearbyBounds {
+    const val QUALIFIER_DEGRADED = "Using a weaker GPS fix."
+    const val QUALIFIER_STALE = "Using last known location."
+    const val EMPTY_NO_LOCATION = "No location yet. Nearby routes will appear when a coordinate is available."
+    const val EMPTY_NO_NEARBY = "No YBS routes found near your current location."
+
+    fun candidateRadiusM(accuracyM: Float?): Double {
+        val fromAccuracy = (accuracyM?.toDouble() ?: 0.0) * 2.0
+        return maxOf(MIN_RADIUS_M, fromAccuracy).coerceAtMost(MAX_RADIUS_M)
+    }
+
+    fun boundingBox(lat: Double, lng: Double, radiusM: Double = MAX_RADIUS_M): NearbyBounds {
         val padded = radiusM * 1.15
         val dLat = padded / 111_320.0
         val dLng = padded / (111_320.0 * cos(Math.toRadians(lat)).coerceAtLeast(0.2))
         return NearbyBounds(lat - dLat, lat + dLat, lng - dLng, lng + dLng)
     }
 
-    fun isCompleteD0D1(row: NearbyServingRow): Boolean {
+    fun hasValidStopGeometry(lat: Double, lng: Double): Boolean {
+        if (!lat.isFinite() || !lng.isFinite()) return false
+        if (lat == 0.0 && lng == 0.0) return false
+        return lat in -90.0..90.0 && lng in -180.0..180.0
+    }
+
+    fun isUsableVariant(row: NearbyServingRow): Boolean {
         if (row.directionId !in 0..1) return false
+        if (row.variantCode != "D0" && row.variantCode != "D1") return false
         if (row.stopCount < MIN_STOPS) return false
-        val path = row.geometryJson ?: return false
-        return RoutePathGeometry.hasLineString(path)
+        return hasValidStopGeometry(row.stopLat, row.stopLng)
     }
 
-    fun withinRadius(userLat: Double, userLng: Double, stopLat: Double, stopLng: Double): Boolean =
-        StopContext.haversineMeters(userLat, userLng, stopLat, stopLng) <= RADIUS_M
+    fun withinRadius(
+        userLat: Double,
+        userLng: Double,
+        stopLat: Double,
+        stopLng: Double,
+        radiusM: Double,
+    ): Boolean = StopContext.haversineMeters(userLat, userLng, stopLat, stopLng) <= radiusM
 
-    fun surveyPenaltyM(lastSurveyedAtEpochMs: Long?, nowMs: Long): Double {
-        if (lastSurveyedAtEpochMs == null) return 0.0
-        val age = nowMs - lastSurveyedAtEpochMs
-        return when {
-            age < 0L -> PENALTY_WITHIN_DAY_M
-            age <= RECENT_DAY_MS -> PENALTY_WITHIN_DAY_M
-            age <= RECENT_WEEK_MS -> PENALTY_WITHIN_WEEK_M
-            else -> 0.0
-        }
-    }
+    fun formatDistance(meters: Double): String = "~${meters.toInt()} m"
 
-    fun score(stopDistanceM: Double, pathDistanceM: Double, lastSurveyedAtEpochMs: Long?, nowMs: Long): Double =
-        stopDistanceM + PATH_WEIGHT * pathDistanceM + surveyPenaltyM(lastSurveyedAtEpochMs, nowMs)
-
-    fun lastSurveyLabel(lastSurveyedAtEpochMs: Long?, nowMs: Long): String {
-        if (lastSurveyedAtEpochMs == null) return "Not surveyed yet"
-        val age = (nowMs - lastSurveyedAtEpochMs).coerceAtLeast(0L)
-        val hours = age / 3_600_000L
-        val days = age / RECENT_DAY_MS
-        return when {
-            hours < 1L -> "Surveyed just now"
-            hours < 24L -> "Surveyed ${hours}h ago"
-            days < 7L -> "Surveyed ${days}d ago"
-            else -> "Surveyed earlier"
-        }
+    fun qualifier(status: SurveyLocationStatus): String? = when (status) {
+        SurveyLocationStatus.Degraded -> QUALIFIER_DEGRADED
+        SurveyLocationStatus.Stale -> QUALIFIER_STALE
+        else -> null
     }
 }
 
@@ -86,22 +91,68 @@ data class NearbyBounds(
     val maxLng: Double,
 )
 
+object NearbyRouteLocationPolicy {
+    fun select(
+        snapshot: SurveyLocationSnapshot,
+        fallbackFix: GpsFix? = null,
+        clock: LocationClock = SystemLocationClock,
+    ): NearbyRouteLocation? {
+        val fromSnapshot = snapshot.displayFix
+        if (fromSnapshot != null) {
+            val status = when (snapshot.status) {
+                SurveyLocationStatus.Live -> SurveyLocationStatus.Live
+                SurveyLocationStatus.Degraded -> SurveyLocationStatus.Degraded
+                else -> SurveyLocationStatus.Stale
+            }
+            return NearbyRouteLocation(fromSnapshot, status, NearbyRoutePolicy.qualifier(status))
+        }
+        val fallback = fallbackFix ?: return null
+        val classified = SurveyLocationPolicy.classify(
+            displayFix = fallback,
+            permissionGranted = true,
+            locationEnabled = true,
+            tracking = false,
+            oneShot = false,
+            clock = clock,
+        )
+        val status = when (classified) {
+            SurveyLocationStatus.Live -> SurveyLocationStatus.Live
+            SurveyLocationStatus.Degraded -> SurveyLocationStatus.Degraded
+            else -> SurveyLocationStatus.Stale
+        }
+        return NearbyRouteLocation(fallback, status, NearbyRoutePolicy.qualifier(status))
+    }
+}
+
+object NearbyRouteRecompute {
+    fun shouldRecompute(
+        previous: GpsFix?,
+        next: GpsFix?,
+        lastComputedAtMs: Long,
+        nowMs: Long,
+    ): Boolean {
+        if (next == null) return previous != null
+        if (previous == null) return true
+        val moved = StopContext.haversineMeters(previous.lat, previous.lng, next.lat, next.lng)
+        return moved >= NearbyRoutePolicy.RECOMPUTE_MOVE_M ||
+            nowMs - lastComputedAtMs >= NearbyRoutePolicy.RECOMPUTE_INTERVAL_MS
+    }
+}
+
 object NearbyRouteRanker {
     fun rank(
         userLat: Double,
         userLng: Double,
         rows: List<NearbyServingRow>,
-        lastSurveyByVariant: Map<String, Long>,
-        nowMs: Long,
+        radiusM: Double = NearbyRoutePolicy.MAX_RADIUS_M,
     ): List<NearbyRouteRecommendation> {
         val bestByVariant = linkedMapOf<String, NearbyRouteRecommendation>()
         rows.forEach { row ->
-            if (!NearbyRoutePolicy.isCompleteD0D1(row)) return@forEach
-            if (!NearbyRoutePolicy.withinRadius(userLat, userLng, row.stopLat, row.stopLng)) return@forEach
-            val path = row.geometryJson ?: return@forEach
-            val pathDistance = minPathDistanceM(userLat, userLng, path) ?: return@forEach
+            if (!NearbyRoutePolicy.isUsableVariant(row)) return@forEach
+            if (!NearbyRoutePolicy.withinRadius(userLat, userLng, row.stopLat, row.stopLng, radiusM)) {
+                return@forEach
+            }
             val stopDistance = StopContext.haversineMeters(userLat, userLng, row.stopLat, row.stopLng)
-            val lastSurvey = lastSurveyByVariant[row.variantPublicId]
             val scored = NearbyRouteRecommendation(
                 selection = RouteSelectionRow(
                     routePublicId = row.routePublicId,
@@ -117,29 +168,17 @@ object NearbyRouteRanker {
                     ?: row.stopCode
                     ?: "Stop",
                 stopDistanceM = stopDistance,
-                pathDistanceM = pathDistance,
-                lastSurveyedAtEpochMs = lastSurvey,
-                score = NearbyRoutePolicy.score(stopDistance, pathDistance, lastSurvey, nowMs),
             )
             val current = bestByVariant[row.variantPublicId]
-            if (current == null || scored.stopDistanceM < current.stopDistanceM - 0.01 ||
-                (kotlin.math.abs(scored.stopDistanceM - current.stopDistanceM) <= 0.01 && scored.score < current.score)
-            ) {
+            if (current == null || scored.stopDistanceM < current.stopDistanceM) {
                 bestByVariant[row.variantPublicId] = scored
             }
         }
         return bestByVariant.values.sortedWith(
-            compareBy<NearbyRouteRecommendation> { it.score }
-                .thenBy { it.stopDistanceM }
+            compareBy<NearbyRouteRecommendation> { it.stopDistanceM }
                 .thenBy { it.selection.routeCode }
                 .thenBy { it.selection.variantCode },
         ).take(NearbyRoutePolicy.MAX_RESULTS)
-    }
-
-    private fun minPathDistanceM(lat: Double, lng: Double, geometryJson: String): Double? {
-        val points = RoutePathGeometry.lngLatPoints(geometryJson)
-        if (points.size < 2) return null
-        return points.minOf { point -> StopContext.haversineMeters(lat, lng, point.second, point.first) }
     }
 }
 
@@ -147,25 +186,38 @@ object NearbyRouteFlow {
     fun afterSnapshotAndFix(
         hasUsableSnapshot: Boolean,
         hasPermission: Boolean,
-        fix: GpsFix?,
-        nowMs: Long,
+        location: NearbyRouteLocation?,
         recommendations: List<NearbyRouteRecommendation>,
     ): NearbyRouteState = when {
-        !hasPermission -> NearbyRouteState.PermissionRequired
+        !hasPermission && location == null -> NearbyRouteState.PermissionRequired
         !hasUsableSnapshot -> NearbyRouteState.StalePackage
-        !GpsQualityPolicy.canUseForNearby(fix, nowMs) -> NearbyRouteState.PoorAccuracy
+        location == null -> NearbyRouteState.NoLocation
         recommendations.isEmpty() -> NearbyRouteState.NoNearby
-        else -> NearbyRouteState.Recommendations(recommendations.take(NearbyRoutePolicy.MAX_RESULTS))
+        else -> NearbyRouteState.Recommendations(
+            rows = recommendations.take(NearbyRoutePolicy.MAX_RESULTS),
+            qualifier = location.qualifier,
+        )
+    }
+
+    fun retainDuringRefresh(previous: NearbyRouteState, incoming: NearbyRouteState): NearbyRouteState {
+        val keep = previous as? NearbyRouteState.Recommendations ?: return incoming
+        return when (incoming) {
+            NearbyRouteState.Locating,
+            NearbyRouteState.Idle,
+            NearbyRouteState.StalePackage,
+            -> keep
+            else -> incoming
+        }
     }
 
     fun message(state: NearbyRouteState): String? = when (state) {
         NearbyRouteState.Idle -> null
         NearbyRouteState.PermissionRequired -> "Location permission is required to recommend a nearby route."
         NearbyRouteState.Locating -> "Finding your location…"
-        NearbyRouteState.PoorAccuracy -> "GPS accuracy is too poor to recommend a nearby route."
-        NearbyRouteState.NoNearby -> "No YBS routes found near your current location."
+        NearbyRouteState.NoLocation -> NearbyRoutePolicy.EMPTY_NO_LOCATION
+        NearbyRouteState.NoNearby -> NearbyRoutePolicy.EMPTY_NO_NEARBY
         NearbyRouteState.StalePackage -> "Offline route package is missing or incomplete. Sync routes in Setup."
-        is NearbyRouteState.Recommendations -> null
+        is NearbyRouteState.Recommendations -> state.qualifier
     }
 }
 

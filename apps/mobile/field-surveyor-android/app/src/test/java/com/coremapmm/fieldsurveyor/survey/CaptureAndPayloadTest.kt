@@ -213,4 +213,107 @@ class CaptureAndPayloadTest {
         assertEquals(16.805, snap.getDouble("correctedLat"), 0.0001)
         assertEquals(16.801, snap.getDouble("observerLat"), 0.0001)
     }
+
+    @Test
+    fun newStopPayloadTargetsVariantAndKeepsPreviousStopEvidence() {
+        val json = AnomalyPayload.toJson(
+            AnomalyCaptureInput(
+                kind = AnomalyKind.NEW_STOP,
+                snapshotRevision = "rev-1",
+                routePublicId = "11111111-1111-4111-8111-111111111111",
+                routeCode = "YBS-13",
+                variantPublicId = "22222222-2222-4222-8222-222222222222",
+                variantCode = "D0",
+                selectedStop = OrderedStopRow(4, "33333333-3333-4333-8333-333333333333", "S4", null, "Corner", 16.8, 96.15),
+                gps = GpsFix(16.801, 96.151, 4.2f, 1_700_000_000_000L),
+                note = "after this pole",
+                observedAtIso = "2026-09-02T09:00:00Z",
+                clientPublicId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                createdAtEpochMs = 1L,
+                proposedStopName = "Corner stall",
+                nextStopPublicId = "44444444-4444-4444-8444-444444444444",
+                locationSource = "GPS",
+            ),
+        )
+        val root = JSONObject(json)
+        assertEquals("new_stop", root.getString("reportTypeCode"))
+        assertEquals("variant", root.getJSONObject("target").getString("entityType"))
+        assertEquals("22222222-2222-4222-8222-222222222222", root.getJSONObject("target").getString("publicId"))
+        val context = root.getJSONObject("context")
+        assertEquals("33333333-3333-4333-8333-333333333333", context.getString("previousStopPublicId"))
+        assertEquals(4, context.getInt("previousStopSequence"))
+        assertEquals("44444444-4444-4444-8444-444444444444", context.getString("nextStopPublicId"))
+        assertEquals("Corner stall", context.getString("proposedStopName"))
+        assertEquals("GPS", context.getString("locationSource"))
+        assertEquals(16.801, root.getJSONObject("location").getDouble("lat"), 0.0001)
+        assertEquals(4.2, root.getJSONObject("location").getDouble("accuracyM"), 0.01)
+        val snap = context.getJSONObject("canonicalSnapshot")
+        assertEquals(16.801, snap.getDouble("observerLat"), 0.0001)
+        assertEquals(1_700_000_000_000L, snap.getLong("observerEpochMs"))
+    }
+
+    @Test
+    fun newStopGpsProposedStaysSeparateFromLaterObserverFix() {
+        val json = AnomalyPayload.toJson(
+            AnomalyCaptureInput(
+                kind = AnomalyKind.NEW_STOP,
+                snapshotRevision = "rev-1",
+                routePublicId = "11111111-1111-4111-8111-111111111111",
+                routeCode = "YBS-13",
+                variantPublicId = "22222222-2222-4222-8222-222222222222",
+                variantCode = "D0",
+                selectedStop = OrderedStopRow(4, "33333333-3333-4333-8333-333333333333", "S4", null, "Corner", 16.8, 96.15),
+                gps = GpsFix(16.88, 96.18, 12f, 9_000L),
+                reportLocation = GpsFix(16.801, 96.151, 4.2f, 1_000L),
+                observedAtIso = "2026-09-02T09:00:00Z",
+                clientPublicId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                createdAtEpochMs = 1L,
+                proposedStopName = "Corner stall",
+                locationSource = "GPS",
+            ),
+        )
+        val root = JSONObject(json)
+        assertEquals(16.801, root.getJSONObject("location").getDouble("lat"), 0.0001)
+        assertEquals(4.2, root.getJSONObject("location").getDouble("accuracyM"), 0.01)
+        val snap = root.getJSONObject("context").getJSONObject("canonicalSnapshot")
+        assertEquals(16.88, snap.getDouble("observerLat"), 0.0001)
+        assertEquals(12.0, snap.getDouble("observerAccuracyM"), 0.01)
+        assertEquals(16.801, snap.getDouble("correctedLat"), 0.0001)
+    }
+
+    @Test
+    fun newStopMapPickKeepsObserverGpsSeparateFromProposedPoint() {
+        val json = AnomalyPayload.toJson(
+            AnomalyCaptureInput(
+                kind = AnomalyKind.NEW_STOP,
+                snapshotRevision = "rev-1",
+                routePublicId = "11111111-1111-4111-8111-111111111111",
+                routeCode = "YBS-13",
+                variantPublicId = "22222222-2222-4222-8222-222222222222",
+                variantCode = "D0",
+                selectedStop = OrderedStopRow(4, "33333333-3333-4333-8333-333333333333", "S4", null, "Corner", 16.8, 96.15),
+                gps = GpsFix(16.801, 96.151, 40f, 1_700_000_000_000L),
+                reportLocation = GpsFix(16.91, 96.21, null, 2L),
+                observedAtIso = "2026-09-02T09:00:00Z",
+                clientPublicId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                createdAtEpochMs = 1L,
+                proposedStopName = "Corner stall",
+                locationSource = "MAP_PICK",
+            ),
+        )
+        val root = JSONObject(json)
+        val loc = root.getJSONObject("location")
+        assertEquals(16.91, loc.getDouble("lat"), 0.0001)
+        assertTrue(loc.isNull("accuracyM"))
+        val snap = root.getJSONObject("context").getJSONObject("canonicalSnapshot")
+        assertEquals("MAP_PICK", root.getJSONObject("context").getString("locationSource"))
+        assertEquals(16.801, snap.getDouble("observerLat"), 0.0001)
+        assertEquals(16.91, snap.getDouble("correctedLat"), 0.0001)
+        assertEquals(40.0, snap.getDouble("observerAccuracyM"), 0.01)
+        val body = JSONObject(
+            AnomalyPayload.toCreateBody("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", json, "55555555-5555-4555-8555-555555555555"),
+        )
+        assertEquals("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", body.getString("clientPublicId"))
+        assertEquals("55555555-5555-4555-8555-555555555555", body.getJSONObject("surveySession").getString("clientSessionId"))
+    }
 }

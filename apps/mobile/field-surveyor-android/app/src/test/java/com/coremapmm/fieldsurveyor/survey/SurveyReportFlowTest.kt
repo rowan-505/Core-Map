@@ -3,6 +3,7 @@ package com.coremapmm.fieldsurveyor.survey
 import com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -31,6 +32,21 @@ class SurveyReportFlowTest {
         assertNull(SurveyReportFlow.saveError(true, AnomalyKind.MISSING, true, null, "", null))
         assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.DATA, false, null, "note", null))
         assertNull(SurveyReportFlow.saveError(true, AnomalyKind.DATA, true, null, "", null))
+    }
+
+    @Test
+    fun newStopNeedsPreviousStopAndNameAndDoesNotReuseMissing() {
+        assertEquals("new_stop", AnomalyMapping.reportTypeCode(AnomalyKind.NEW_STOP))
+        assertNotEquals("missing_item", AnomalyMapping.reportTypeCode(AnomalyKind.NEW_STOP))
+        assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.NEW_STOP, false, null, "", null, "Corner"))
+        assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.NEW_STOP, true, pick, "", null, "  "))
+        assertNotNull(SurveyReportFlow.saveError(true, AnomalyKind.NEW_STOP, true, null, "", null, "Corner stall"))
+        assertNull(SurveyReportFlow.saveError(true, AnomalyKind.NEW_STOP, true, pick, "", null, "Corner stall"))
+        assertEquals("variant", AnomalyMapping.targetEntityType(AnomalyKind.NEW_STOP, true))
+        assertEquals(
+            "stop-1",
+            SurveyReportFlow.targetPublicId(AnomalyKind.NEW_STOP, "stop-1", "route", "var"),
+        )
     }
 
     @Test
@@ -74,6 +90,9 @@ class SurveyReportFlowTest {
         assertNull(
             SurveyReportFlow.duplicateWarning(existing, "session-1", AnomalyKind.MOVED, "stop-2", "route", "var"),
         )
+        assertNull(
+            SurveyReportFlow.duplicateWarning(existing, "session-1", AnomalyKind.NEW_STOP, "stop-1", "route", "var"),
+        )
     }
 
     @Test
@@ -93,6 +112,9 @@ class SurveyReportFlowTest {
             OrderedStopRow(i + 1, "s$i", null, null, null, 16.8, 96.15)
         }
         assertEquals("#2 of 66", StopProgress.label(stops, "s1"))
+        assertEquals("#1 of 66", StopProgress.label(stops, "s0"))
+        assertEquals("— of 66", StopProgress.label(stops, null))
+        assertFalse(StopProgress.label(stops, null).startsWith("#0"))
         val lines = SurveyCaptureFacts.lines(
             epochMs = 1_725_451_800_000L,
             gps = GpsFix(16.80012, 96.15034, 5.4f, 1L),

@@ -66,6 +66,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        (application as FieldApp).graph.survey.onHostResumed()
+    }
+
     companion object {
         const val ACTION_OPEN_SURVEY = "com.coremapmm.fieldsurveyor.action.OPEN_SURVEY"
     }

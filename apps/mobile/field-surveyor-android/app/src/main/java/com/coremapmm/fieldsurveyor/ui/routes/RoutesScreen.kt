@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -35,13 +36,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coremapmm.fieldsurveyor.data.transport.BootstrapRepository
 import com.coremapmm.fieldsurveyor.data.transport.RouteSelectionFilter
 import com.coremapmm.fieldsurveyor.data.transport.RouteSelectionRow
+import com.coremapmm.fieldsurveyor.survey.GpsFix
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteFlow
+import com.coremapmm.fieldsurveyor.survey.NearbyRouteLocationPolicy
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteNavigation
+import com.coremapmm.fieldsurveyor.survey.NearbyRoutePolicy
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecommendation
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecommender
+import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecompute
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteState
 import com.coremapmm.fieldsurveyor.survey.SurveyController
 import com.coremapmm.fieldsurveyor.ui.components.ScreenHeader
@@ -59,9 +65,12 @@ fun RoutesScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val surveyState by survey.state.collectAsStateWithLifecycle()
     var allRows by remember { mutableStateOf<List<RouteSelectionRow>>(emptyList()) }
     var query by remember { mutableStateOf("") }
     var recommendState by remember { mutableStateOf<NearbyRouteState>(NearbyRouteState.Idle) }
+    var lastRecommendFix by remember { mutableStateOf<GpsFix?>(null) }
+    var lastRecommendAtMs by remember { mutableLongStateOf(0L) }
 
     fun hasLocationPermission(): Boolean {
         val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -71,13 +80,32 @@ fun RoutesScreen(
         return fine || coarse
     }
 
+    suspend fun refreshRecommendations(force: Boolean) {
+        val now = System.currentTimeMillis()
+        val snapshot = survey.state.value.location
+        val pendingFix = NearbyRouteLocationPolicy.select(snapshot, survey.state.value.gps)?.fix
+        if (!force && !NearbyRouteRecompute.shouldRecompute(lastRecommendFix, pendingFix, lastRecommendAtMs, now)) {
+            return
+        }
+        if (force || recommendState !is NearbyRouteState.Recommendations) {
+            recommendState = NearbyRouteFlow.retainDuringRefresh(recommendState, NearbyRouteState.Locating)
+        }
+        val next = runRecommend(bootstrap, survey, nearbyRoutes)
+        lastRecommendFix = NearbyRouteLocationPolicy.select(
+            survey.state.value.location,
+            survey.state.value.gps,
+        )?.fix
+        lastRecommendAtMs = now
+        recommendState = NearbyRouteFlow.retainDuringRefresh(recommendState, next)
+    }
+
     val locationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { granted ->
         val allowed = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             granted[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (allowed) {
-            scope.launch { runRecommend(bootstrap, survey, nearbyRoutes) { recommendState = it } }
+            scope.launch { refreshRecommendations(force = true) }
         } else {
             recommendState = NearbyRouteState.PermissionRequired
         }
@@ -85,6 +113,28 @@ fun RoutesScreen(
 
     LaunchedEffect(Unit) {
         allRows = bootstrap.listSelections()
+        if (hasLocationPermission()) {
+            refreshRecommendations(force = true)
+        }
+    }
+
+    LaunchedEffect(surveyState.snapshotRevision) {
+        val rows = bootstrap.listSelections()
+        allRows = rows
+        if (hasLocationPermission()) {
+            refreshRecommendations(force = false)
+        }
+    }
+
+    LaunchedEffect(
+        surveyState.location.status,
+        surveyState.location.displayFix?.lat,
+        surveyState.location.displayFix?.lng,
+        surveyState.location.displayFix?.epochMs,
+    ) {
+        if (hasLocationPermission()) {
+            refreshRecommendations(force = false)
+        }
     }
 
     val visible = remember(allRows, query) {
@@ -116,7 +166,7 @@ fun RoutesScreen(
                             ),
                         )
                     } else {
-                        scope.launch { runRecommend(bootstrap, survey, nearbyRoutes) { recommendState = it } }
+                        scope.launch { refreshRecommendations(force = true) }
                     }
                 },
                 enabled = recommendState !is NearbyRouteState.Locating,
@@ -146,40 +196,34 @@ fun RoutesScreen(
     }
 }
 
-private suspend fun runRecommend(
+internal suspend fun runRecommend(
     bootstrap: BootstrapRepository,
     survey: SurveyController,
     nearbyRoutes: NearbyRouteRecommender,
-    setState: (NearbyRouteState) -> Unit,
-) {
-    setState(NearbyRouteState.Locating)
+): NearbyRouteState {
     val revision = bootstrap.snapshotRevision()
     val variants = bootstrap.variantCount()
     val snapshotOk = !revision.isNullOrBlank() && variants > 0
     if (!snapshotOk) {
-        setState(NearbyRouteState.StalePackage)
-        return
+        return NearbyRouteState.StalePackage
     }
     if (!survey.hasLocationPermission()) {
-        setState(NearbyRouteState.PermissionRequired)
-        return
+        val existing = NearbyRouteLocationPolicy.select(survey.state.value.location, survey.state.value.gps)
+        if (existing == null) return NearbyRouteState.PermissionRequired
     }
-    val now = System.currentTimeMillis()
     val fix = survey.locationForNearbyRecommend()
-    val rows = if (fix != null) nearbyRoutes.recommend(fix, now) else emptyList()
-    setState(
-        NearbyRouteFlow.afterSnapshotAndFix(
-            hasUsableSnapshot = true,
-            hasPermission = true,
-            fix = fix,
-            nowMs = now,
-            recommendations = rows,
-        ),
+    val location = NearbyRouteLocationPolicy.select(survey.state.value.location, fix)
+    val rows = if (location != null) nearbyRoutes.recommend(location.fix) else emptyList()
+    return NearbyRouteFlow.afterSnapshotAndFix(
+        hasUsableSnapshot = true,
+        hasPermission = survey.hasLocationPermission() || location != null,
+        location = location,
+        recommendations = rows,
     )
 }
 
 @Composable
-private fun NearbyRecommendPanel(
+internal fun NearbyRecommendPanel(
     state: NearbyRouteState,
     onSelect: (RouteSelectionRow) -> Unit,
 ) {
@@ -198,7 +242,6 @@ private fun NearbyRecommendPanel(
 
 @Composable
 private fun NearbyRecommendRow(row: NearbyRouteRecommendation, onClick: () -> Unit) {
-    val now = remember { System.currentTimeMillis() }
     Column(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -208,13 +251,8 @@ private fun NearbyRecommendRow(row: NearbyRouteRecommendation, onClick: () -> Un
             style = MaterialTheme.typography.titleSmall,
         )
         Text(
-            "${row.nearestStopName} · ${row.stopDistanceM.toInt()} m",
+            "${row.nearestStopName} · ${NearbyRoutePolicy.formatDistance(row.stopDistanceM)}",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            tr(com.coremapmm.fieldsurveyor.survey.NearbyRoutePolicy.lastSurveyLabel(row.lastSurveyedAtEpochMs, now)),
-            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

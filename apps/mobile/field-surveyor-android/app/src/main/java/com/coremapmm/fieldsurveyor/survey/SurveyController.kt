@@ -28,7 +28,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.time.Instant
-import java.util.UUID
 
 data class SurveyUiState(
     val running: Boolean = false,
@@ -39,7 +38,8 @@ data class SurveyUiState(
     val stops: List<OrderedStopRow> = emptyList(),
     val pathCoordinates: List<Pair<Double, Double>> = emptyList(),
     val gps: GpsFix? = null,
-    val gpsLabel: String = "GPS —",
+    val location: SurveyLocationSnapshot = SurveyLocationSnapshot.idle(),
+    val gpsLabel: String = SurveyLocationLabels.CHIP_NONE,
     val nearbyStops: List<NearbyStop> = emptyList(),
     val capturedBanner: String? = null,
     val message: String? = null,
@@ -51,6 +51,7 @@ data class SurveyUiState(
     val sessionReportCount: Int = 0,
     val pendingSyncCount: Int = 0,
     val duplicateWarning: String? = null,
+    val endOfRouteNotice: String? = null,
 )
 
 class SurveyController(
@@ -66,6 +67,7 @@ class SurveyController(
     private val onForegroundStop: () -> Unit = {},
     private val nowMs: () -> Long = { System.currentTimeMillis() },
     private val uptimeMs: () -> Long = { android.os.SystemClock.uptimeMillis() },
+    private val locationClock: LocationClock = SystemLocationClock,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val mutex = Mutex()
@@ -77,6 +79,7 @@ class SurveyController(
     private var lastNearbyFix: GpsFix? = null
     private var lastNearbyComputedAtMs = 0L
     private var activeSessionId: String? = selectionStore.activeSessionId()
+    private var watchdog = TrackingWatchdog.stopped()
 
     private val restoredSelection = selectionStore.load()
     private val restoredActive = selectionStore.isSurveyActive() && restoredSelection != null
@@ -138,17 +141,17 @@ class SurveyController(
     fun hasLocationPermission(): Boolean = gpsEngine.hasLocationPermission()
 
     /**
-     * Uses a fresh in-memory fix when possible. Otherwise one GPS one-shot.
+     * Uses the centralized location snapshot when a coordinate exists.
+     * Live, degraded, and last-known/stale coordinates are all eligible.
      * Does not start survey tracking.
      */
     suspend fun locationForNearbyRecommend(): GpsFix? {
-        val current = stateFlow.value.gps
-        val now = nowMs()
-        if (GpsQualityPolicy.canUseForNearby(current, now)) {
-            return current
+        NearbyRouteLocationPolicy.select(stateFlow.value.location, stateFlow.value.gps)?.let {
+            return it.fix
         }
+        if (!hasLocationPermission()) return null
         if (stateFlow.value.locationMode == LocationMode.SURVEY_TRACKING || gpsEngine.isTracking()) {
-            return current
+            return stateFlow.value.gps
         }
         return suspendCancellableCoroutine { continuation ->
             var latest: GpsFix? = null
@@ -204,6 +207,7 @@ class SurveyController(
         stateFlow.value = stateFlow.value.copy(
             selection = next,
             duplicateWarning = null,
+            endOfRouteNotice = null,
         )
     }
 
@@ -300,7 +304,7 @@ class SurveyController(
             locationEnabled = gpsEngine.locationEnabled(),
         )
         if (decision == SurveyStartDecision.NOT_ACTIVE) return false
-        if (trackingStarted) return true
+        if (trackingStarted && gpsEngine.isTracking()) return true
         if (decision == SurveyStartDecision.NO_PERMISSION || decision == SurveyStartDecision.NO_SELECTION) {
             val message = when (decision) {
                 SurveyStartDecision.NO_PERMISSION -> "Location permission was removed; survey stopped."
@@ -361,6 +365,8 @@ class SurveyController(
         )
         if (location.mode == LocationMode.ONE_SHOT) {
             requestOneShot(location, includeCached = false, deferCenterUntilFix = true)
+        } else if (stateFlow.value.running) {
+            gpsEngine.requestFreshWhileTracking(::acceptFix)
         }
         return null
     }
@@ -396,9 +402,13 @@ class SurveyController(
         note: String = "",
         reportLocation: GpsFix? = null,
         routeIssue: RouteIssueKind? = null,
+        proposedStopName: String = "",
         photoDrafts: List<File> = emptyList(),
         voiceDraft: File? = null,
         voiceDurationMs: Long = 0L,
+        clientPublicId: String? = null,
+        locationSource: String? = null,
+        online: Boolean = true,
     ): Boolean {
         if (!CaptureDebounce.shouldAccept(lastKind, lastCaptureUptime, kind, uptimeMs())) {
             return false
@@ -408,13 +418,16 @@ class SurveyController(
         val selectedStop = snapshot.stops.firstOrNull {
             it.stopPublicId == selection.selectedStopPublicId
         }
+        val proposedForValidation =
+            if (kind == AnomalyKind.NEW_STOP) (reportLocation ?: evidenceGps(snapshot)) else reportLocation
         val flowError = SurveyReportFlow.saveError(
             running = snapshot.running,
             kind = kind,
             hasStop = selectedStop != null,
-            mapPick = reportLocation,
+            mapPick = proposedForValidation,
             note = note,
             routeIssue = routeIssue,
+            proposedStopName = proposedStopName,
         )
         if (flowError != null) {
             stateFlow.value = snapshot.copy(message = flowError)
@@ -430,11 +443,13 @@ class SurveyController(
             stateFlow.value = snapshot.copy(message = "No local snapshot. Sync first.")
             return false
         }
-        val gps = GpsBuffer.bestRecent(gpsBuffer.toList() + listOfNotNull(snapshot.gps), nowMs())
-        if (gps == null) {
+        val gps = evidenceGps(stateFlow.value)
+        val newStopHasProposed = kind == AnomalyKind.NEW_STOP && reportLocation != null
+        if (gps == null && !newStopHasProposed) {
             stateFlow.value = snapshot.copy(message = "Need a GPS fix")
             return false
         }
+        val observedAtMs = gps?.epochMs ?: nowMs()
         val input = AnomalyCaptureInput(
             kind = kind,
             snapshotRevision = revision,
@@ -446,9 +461,16 @@ class SurveyController(
             gps = gps,
             note = SurveyReportFlow.composedNote(note, routeIssue),
             reportLocation = reportLocation,
-            observedAtIso = Instant.ofEpochMilli(nowMs()).toString(),
-            clientPublicId = UUID.randomUUID().toString(),
+            observedAtIso = Instant.ofEpochMilli(observedAtMs).toString(),
+            clientPublicId = NewStopReportFlow.reuseDraftUuid(clientPublicId),
             createdAtEpochMs = nowMs(),
+            proposedStopName = proposedStopName,
+            nextStopPublicId = if (kind == AnomalyKind.NEW_STOP) {
+                CorrectStopAction.nextStopPublicId(snapshot.stops, selectedStop?.stopPublicId)
+            } else {
+                null
+            },
+            locationSource = locationSource,
         )
         val row = LocalReportEntity(
             clientPublicId = input.clientPublicId,
@@ -480,12 +502,30 @@ class SurveyController(
         lastCaptureUptime = uptimeMs()
         refreshAnomalies()
         refreshCounts()
+        val after = if (kind == AnomalyKind.NEW_STOP) {
+            NewStopReportFlow.afterSave(snapshot.stops, selectedStop?.stopPublicId)
+        } else {
+            null
+        }
+        if (after?.nextStopPublicId != null) {
+            selectStop(after.nextStopPublicId)
+        }
         stateFlow.value = stateFlow.value.copy(
-            capturedBanner = "✓ Captured",
+            capturedBanner = if (kind == AnomalyKind.NEW_STOP) {
+                NewStopReportFlow.successBanner(online)
+            } else {
+                "✓ Captured"
+            },
             message = null,
             duplicateWarning = duplicate,
+            endOfRouteNotice = if (after?.endOfRoute == true) NewStopReportFlow.END_OF_ROUTE else null,
         )
         return true
+    }
+
+    private fun evidenceGps(snapshot: SurveyUiState): GpsFix? {
+        return snapshot.location.evidenceFix
+            ?: GpsBuffer.bestRecent(gpsBuffer.toList() + listOfNotNull(snapshot.gps), locationClock, snapshot.gps)
     }
 
     fun setMessage(message: String) {
@@ -520,6 +560,7 @@ class SurveyController(
             centerOncePending = location.centerOncePending && !deferCenterUntilFix,
             message = null,
         )
+        applyLocationEvent(SurveyLocationEvent.OneShotStarted)
         gpsEngine.requestOneShot(
             includeCached = includeCached,
             onFix = { fix ->
@@ -529,6 +570,7 @@ class SurveyController(
                 }
             },
             onFinished = {
+                applyLocationEvent(SurveyLocationEvent.OneShotFinished)
                 val finished = LocationStateModel.oneShotFinished(locationState())
                 stateFlow.value = stateFlow.value.copy(
                     locationMode = finished.mode,
@@ -539,9 +581,83 @@ class SurveyController(
         )
     }
 
+    fun onLocationTick() {
+        applyLocationEvent(SurveyLocationEvent.Tick)
+        if (!stateFlow.value.running) {
+            return
+        }
+        val (next, action) = TrackingWatchdog.onTick(watchdog, elapsedMs())
+        watchdog = next
+        when (action) {
+            TrackingWatchdogAction.REQUEST_FRESH -> {
+                applyLocationEvent(SurveyLocationEvent.WatchdogSilence)
+                gpsEngine.requestFreshWhileTracking(::acceptFix)
+            }
+            TrackingWatchdogAction.RESTART_ONCE -> {
+                gpsEngine.restartTracking()
+            }
+            TrackingWatchdogAction.NONE -> Unit
+        }
+    }
+
+    fun onHostResumed() {
+        if (!stateFlow.value.running) {
+            return
+        }
+        if (!gpsEngine.hasLocationPermission()) {
+            onTrackingFailure(TrackingFailure.PERMISSION_REVOKED)
+            return
+        }
+        applyLocationEvent(SurveyLocationEvent.PermissionGranted)
+        if (gpsEngine.locationEnabled()) {
+            applyLocationEvent(SurveyLocationEvent.LocationEnabled)
+        } else {
+            applyLocationEvent(SurveyLocationEvent.LocationDisabled)
+        }
+        when (
+            SurveyTrackingResumePolicy.resumeAfterSettingsOrPermission(
+                surveyRunning = true,
+                hasPermission = true,
+                alreadyTracking = gpsEngine.isTracking(),
+            )
+        ) {
+            SurveyStartDecision.START -> {
+                trackingStarted = false
+                startTracking()
+                foreground.start()
+            }
+            SurveyStartDecision.ALREADY_ACTIVE -> foreground.start()
+            else -> Unit
+        }
+    }
+
+    private fun elapsedMs(): Long = locationClock.elapsedRealtimeNanos() / 1_000_000L
+
+    private fun applyLocationEvent(event: SurveyLocationEvent) {
+        val next = SurveyLocationReducer.reduce(
+            previous = stateFlow.value.location,
+            event = event,
+            clock = locationClock,
+            evidenceBuffer = gpsBuffer.toList(),
+        )
+        val gpsMessage = stateFlow.value.message
+            ?.takeIf { it != SurveyLocationLabels.TEMPORARILY_UNAVAILABLE }
+        stateFlow.value = stateFlow.value.copy(
+            gps = next.displayFix,
+            location = next,
+            gpsLabel = next.chipLabel,
+            message = gpsMessage,
+        )
+    }
+
     private fun acceptFix(fix: GpsFix) {
-        val published = GpsFixPolicy.publish(stateFlow.value.gps, fix, nowMs()) ?: return
-        GpsBuffer.push(gpsBuffer, published)
+        watchdog = TrackingWatchdog.onCallback(watchdog, elapsedMs())
+        val previous = stateFlow.value.location.displayFix
+        applyLocationEvent(SurveyLocationEvent.FixReceived(fix))
+        val published = stateFlow.value.location.displayFix ?: return
+        if (published != previous) {
+            GpsBuffer.push(gpsBuffer, published)
+        }
         val now = nowMs()
         val recomputeNearby = NearbyStopRefreshPolicy.shouldRecompute(
             previous = lastNearbyFix,
@@ -552,26 +668,41 @@ class SurveyController(
         val nearby = if (recomputeNearby) {
             lastNearbyFix = published
             lastNearbyComputedAtMs = now
-            nearbyFrom(published, now)
+            nearbyFrom(published)
         } else {
             stateFlow.value.nearbyStops
         }
-        stateFlow.value = stateFlow.value.copy(
-            gps = published,
-            gpsLabel = formatGps(published),
-            nearbyStops = nearby,
-        )
+        stateFlow.value = stateFlow.value.copy(nearbyStops = nearby)
     }
 
     private fun startTracking(): Boolean {
-        if (trackingStarted) return true
-        val started = gpsEngine.startTracking(::acceptFix, ::onTrackingFailure)
+        if (gpsEngine.isTracking()) {
+            trackingStarted = true
+            if (!watchdog.tracking) {
+                watchdog = TrackingWatchdog.started(elapsedMs())
+            }
+            applyLocationEvent(SurveyLocationEvent.TrackingStarted)
+            return true
+        }
+        applyLocationEvent(SurveyLocationEvent.TrackingStarted)
+        val started = gpsEngine.startTracking(
+            onFix = ::acceptFix,
+            onUnavailable = ::onTrackingFailure,
+            onAvailable = { applyLocationEvent(SurveyLocationEvent.ProviderAvailable(true)) },
+        )
         trackingStarted = started
+        if (started) {
+            watchdog = TrackingWatchdog.started(elapsedMs())
+        } else {
+            applyLocationEvent(SurveyLocationEvent.TrackingStopped)
+            watchdog = TrackingWatchdog.stopped()
+        }
         return started
     }
 
     private fun onTrackingFailure(failure: TrackingFailure) {
         if (SurveyRuntimePolicy.failureStopsSurvey(failure)) {
+            applyLocationEvent(SurveyLocationEvent.PermissionDenied)
             scope.launch {
                 finishSurveyPersisted(
                     LocalSurveySessionEntity.STATUS_ABANDONED,
@@ -582,9 +713,9 @@ class SurveyController(
         }
         when (failure) {
             TrackingFailure.LOCATION_DISABLED ->
-                stateFlow.value = stateFlow.value.copy(message = "Location services are disabled.")
+                applyLocationEvent(SurveyLocationEvent.LocationDisabled)
             TrackingFailure.PROVIDER_ERROR ->
-                stateFlow.value = stateFlow.value.copy(message = "Location is temporarily unavailable.")
+                applyLocationEvent(SurveyLocationEvent.ProviderAvailable(false))
             TrackingFailure.PERMISSION_REVOKED -> Unit
         }
     }
@@ -700,6 +831,8 @@ class SurveyController(
     private fun finishSurvey(message: String, notifyService: Boolean = true) {
         gpsEngine.stop()
         trackingStarted = false
+        watchdog = TrackingWatchdog.stopped()
+        applyLocationEvent(SurveyLocationEvent.TrackingStopped)
         selectionStore.setSurveyActive(false)
         selectionStore.setActiveSessionId(null)
         activeSessionId = null
@@ -736,10 +869,10 @@ class SurveyController(
             },
         )
         selectionStore.save(selected)
-        val gps = stateFlow.value.gps
+        val gps = stateFlow.value.location.displayFix ?: stateFlow.value.gps
         lastNearbyFix = gps
         lastNearbyComputedAtMs = nowMs()
-        val nearby = if (gps == null || !GpsQualityPolicy.canUseForNearby(gps, nowMs())) {
+        val nearby = if (gps == null) {
             emptyList()
         } else StopContext.nearby(
             stops = stops,
@@ -820,13 +953,14 @@ class SurveyController(
         )
     }
 
-    private fun nearbyFrom(gps: GpsFix, now: Long): List<NearbyStop> {
-        if (!GpsQualityPolicy.canUseForNearby(gps, now)) return emptyList()
+    private fun nearbyFrom(gps: GpsFix): List<NearbyStop> {
+        val variantPublicId = stateFlow.value.selection?.variantPublicId ?: return emptyList()
         return StopContext.nearby(
             stops = stateFlow.value.stops,
             lat = gps.lat,
             lng = gps.lng,
-            variantPublicId = stateFlow.value.selection?.variantPublicId,
+            variantPublicId = variantPublicId,
+            previous = stateFlow.value.nearbyStops,
         )
     }
 
@@ -836,10 +970,10 @@ class SurveyController(
     }
 
     companion object {
-        fun formatGps(fix: GpsFix): String {
-            val acc = fix.accuracyM?.let { "±${it.toInt()}m" } ?: "±?m"
-            return "GPS $acc"
-        }
+        fun formatGps(fix: GpsFix): String = SurveyLocationLabels.chip(
+            SurveyLocationStatus.Live,
+            fix,
+        )
 
         fun parseLine(geometryJson: String?): List<Pair<Double, Double>> {
             if (geometryJson.isNullOrBlank()) {

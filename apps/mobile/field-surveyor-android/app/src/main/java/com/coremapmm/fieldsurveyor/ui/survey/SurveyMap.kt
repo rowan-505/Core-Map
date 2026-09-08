@@ -1,5 +1,6 @@
 package com.coremapmm.fieldsurveyor.ui.survey
 
+import android.os.SystemClock
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,15 +12,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material.icons.outlined.Navigation
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.ZoomOutMap
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,6 +40,12 @@ import com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow
 import com.coremapmm.fieldsurveyor.offline.OfflineBasemap
 import com.coremapmm.fieldsurveyor.survey.GpsCameraFollow
 import com.coremapmm.fieldsurveyor.survey.GpsFix
+import com.coremapmm.fieldsurveyor.survey.HeadingListenerLifecycle
+import com.coremapmm.fieldsurveyor.survey.MapCameraThrottle
+import com.coremapmm.fieldsurveyor.survey.MapFollowMode
+import com.coremapmm.fieldsurveyor.survey.MapFollowPolicy
+import com.coremapmm.fieldsurveyor.survey.RotationVectorHeadingSource
+import com.coremapmm.fieldsurveyor.survey.SurveyHeading
 import com.coremapmm.fieldsurveyor.survey.SurveyMapOverlays
 import com.coremapmm.fieldsurveyor.ui.settings.tr
 import org.maplibre.android.maps.MapLibreMap
@@ -75,8 +86,15 @@ fun SurveyMap(
     // Follow the first live fix automatically; a deliberate map pan turns follow off.
     val followGps = remember { mutableStateOf(true) }
     val focusOnUser = remember { mutableStateOf(true) }
+    val followMode = remember { mutableStateOf(MapFollowMode.LOCATE) }
     val picking = remember { mutableStateOf(false) }
     var lastCameraGps by remember { mutableStateOf<GpsFix?>(null) }
+    var lastCameraHeading by remember { mutableStateOf<Double?>(null) }
+    var lastCameraAtMs by remember { mutableLongStateOf(0L) }
+    var previousGps by remember { mutableStateOf<GpsFix?>(null) }
+    var compassHeading by remember { mutableStateOf<Float?>(null) }
+    var compassUsable by remember { mutableStateOf(false) }
+    var displayHeading by remember { mutableStateOf<Double?>(null) }
     val mapView = remember {
         MapView(context).apply {
             layoutParams = FrameLayout.LayoutParams(
@@ -88,12 +106,45 @@ fun SurveyMap(
     }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
+    DisposableEffect(HeadingListenerLifecycle.STABLE_KEY) {
+        val source = RotationVectorHeadingSource(context) { headingDeg, usable ->
+            compassHeading = headingDeg
+            compassUsable = usable
+        }
+        source.start()
+        onDispose { source.stop() }
+    }
+
     LaunchedEffect(cameraFollowEnabled) {
         if (cameraFollowEnabled) {
             followGps.value = true
-            focusOnUser.value = true
+            if (MapFollowPolicy.cameraNorthUp(followMode.value)) {
+                focusOnUser.value = true
+            }
         } else {
             followGps.value = false
+        }
+    }
+
+    LaunchedEffect(gps, compassHeading, compassUsable) {
+        val last = previousGps
+        previousGps = gps
+        val fix = gps
+        if (fix == null) {
+            displayHeading = null
+            return@LaunchedEffect
+        }
+        val sample = SurveyHeading.select(
+            speedMps = SurveyHeading.speedMps(fix, last),
+            locationBearingDeg = fix.bearingDeg,
+            locationBearingAccuracyDeg = fix.bearingAccuracyDeg,
+            compassHeadingDeg = compassHeading,
+            compassUsable = compassUsable,
+        )
+        displayHeading = if (sample.visible) {
+            SurveyHeading.smooth(displayHeading, sample.degrees)
+        } else {
+            null
         }
     }
 
@@ -196,7 +247,21 @@ fun SurveyMap(
                     icon = Icons.Outlined.MyLocation,
                     description = tr("Current location"),
                     enabled = true,
+                    selected = followGps.value && followMode.value == MapFollowMode.LOCATE,
                     onClick = {
+                        followMode.value = MapFollowPolicy.restore(MapFollowMode.LOCATE)
+                        followGps.value = true
+                        focusOnUser.value = true
+                        onLocate()
+                    },
+                )
+                MapControlButton(
+                    icon = Icons.Outlined.Navigation,
+                    description = tr("Follow heading"),
+                    enabled = true,
+                    selected = followGps.value && followMode.value == MapFollowMode.DIRECTION,
+                    onClick = {
+                        followMode.value = MapFollowPolicy.restore(MapFollowMode.DIRECTION)
                         followGps.value = true
                         focusOnUser.value = true
                         onLocate()
@@ -263,9 +328,9 @@ fun SurveyMap(
         SurveyMapOverlays.focusStop(map, stop.lat, stop.lng, zoom)
     }
 
-    LaunchedEffect(styleRef, gps, anomalies, pickedPoint) {
+    LaunchedEffect(styleRef, gps, anomalies, pickedPoint, displayHeading) {
         val style = styleRef ?: return@LaunchedEffect
-        SurveyMapOverlays.setGps(style, gps)
+        SurveyMapOverlays.setGps(style, gps, displayHeading)
         SurveyMapOverlays.setAnomalies(style, anomalies)
         SurveyMapOverlays.setPick(style, pickedPoint)
     }
@@ -276,25 +341,38 @@ fun SurveyMap(
         if (!centerOncePending) return@LaunchedEffect
         SurveyMapOverlays.followGps(map, fix, SurveyMapOverlays.GPS_ZOOM)
         lastCameraGps = fix
+        lastCameraAtMs = SystemClock.elapsedRealtime()
         focusOnUser.value = false
         onCenterOnceConsumed()
     }
 
-    LaunchedEffect(styleRef, gps, followGps.value, focusOnUser.value) {
+    LaunchedEffect(styleRef, gps, followGps.value, focusOnUser.value, followMode.value, displayHeading) {
         val map = mapRef ?: return@LaunchedEffect
-        val move = GpsCameraFollow.shouldMoveCamera(
-            followGps.value,
-            focusOnUser.value,
-            lastCameraGps,
-            gps,
+        val headingUp = MapFollowPolicy.cameraHeadingUp(followMode.value, displayHeading != null)
+        val nowMs = SystemClock.elapsedRealtime()
+        val move = MapCameraThrottle.shouldApply(
+            following = followGps.value,
+            focusOnUser = focusOnUser.value,
+            previous = lastCameraGps,
+            next = gps,
+            previousHeadingDeg = lastCameraHeading,
+            nextHeadingDeg = displayHeading,
+            lastAppliedAtMs = lastCameraAtMs,
+            nowMs = nowMs,
+            headingUp = headingUp,
         )
         if (move && gps != null) {
             val zoom = GpsCameraFollow.cameraZoom(focusOnUser.value, map.cameraPosition.zoom)
-            SurveyMapOverlays.followGps(map, gps, zoom)
+            val mapBearing = when {
+                MapFollowPolicy.cameraNorthUp(followMode.value) -> 0.0
+                headingUp -> displayHeading
+                else -> null
+            }
+            SurveyMapOverlays.followGps(map, gps, zoom, mapBearingDeg = mapBearing)
             lastCameraGps = gps
+            lastCameraHeading = displayHeading
+            lastCameraAtMs = nowMs
             focusOnUser.value = false
-        } else if (gps != null) {
-            lastCameraGps = gps
         }
     }
 }
@@ -305,6 +383,7 @@ private fun MapControlButton(
     description: String,
     enabled: Boolean,
     onClick: () -> Unit,
+    selected: Boolean = false,
 ) {
     FilledTonalButton(
         onClick = onClick,
@@ -312,6 +391,13 @@ private fun MapControlButton(
         modifier = Modifier.size(42.dp),
         shape = CircleShape,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.secondaryContainer
+            },
+        ),
     ) {
         Icon(imageVector = icon, contentDescription = description, modifier = Modifier.size(20.dp))
     }

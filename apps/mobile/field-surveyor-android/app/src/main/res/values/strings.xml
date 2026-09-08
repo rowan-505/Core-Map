@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">CoreMap Field</string>
+    <string name="survey_notification_title">Survey in progress</string>
+    <string name="survey_notification_text">Location tracking is active</string>
+    <string name="survey_notification_return">Return to survey</string>
+    <string name="survey_notification_stop">Stop survey</string>
+    <string name="survey_notification_channel">Active surveys</string>
+    <string name="survey_notification_channel_desc">Location tracking while a field survey is active</string>
 </resources>

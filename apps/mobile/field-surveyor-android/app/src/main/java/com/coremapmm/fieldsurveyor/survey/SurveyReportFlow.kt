@@ -11,7 +11,7 @@ object SurveyReportFlow {
         "This session already has the same report type for this target."
 
     fun requiresStop(kind: AnomalyKind): Boolean = when (kind) {
-        AnomalyKind.MOVED, AnomalyKind.MISSING, AnomalyKind.DATA -> true
+        AnomalyKind.MOVED, AnomalyKind.MISSING, AnomalyKind.DATA, AnomalyKind.NEW_STOP -> true
         AnomalyKind.ROUTE, AnomalyKind.OTHER -> false
     }
 
@@ -22,6 +22,7 @@ object SurveyReportFlow {
         mapPick: GpsFix?,
         note: String,
         routeIssue: RouteIssueKind?,
+        proposedStopName: String = "",
     ): String? {
         if (!running) {
             return "Start Survey first. That keeps GPS on and the screen awake."
@@ -33,6 +34,14 @@ object SurveyReportFlow {
                 else -> null
             }
             AnomalyKind.MISSING -> if (hasStop) null else "Select the missing stop."
+            AnomalyKind.NEW_STOP -> when {
+                !hasStop -> "Select the previous stop on this variant."
+                proposedStopName.trim().isEmpty() -> "Enter the proposed stop name."
+                mapPick == null -> "Choose a location for the new stop."
+                !NewStopReportFlow.validCoordinates(mapPick.lat, mapPick.lng) ->
+                    "Choose a valid map location."
+                else -> null
+            }
             AnomalyKind.DATA -> if (hasStop) null else "Select the stop with wrong data."
             AnomalyKind.ROUTE -> if (routeIssue == null) "Choose a route issue." else null
             AnomalyKind.OTHER -> null
@@ -60,10 +69,13 @@ object SurveyReportFlow {
         routePublicId: String,
         variantPublicId: String,
     ): String? {
-        return when (AnomalyMapping.targetEntityType(kind, stopPublicId != null)) {
-            "stop" -> stopPublicId
-            "route" -> routePublicId
-            else -> variantPublicId
+        return when {
+            kind == AnomalyKind.NEW_STOP -> stopPublicId
+            else -> when (AnomalyMapping.targetEntityType(kind, stopPublicId != null)) {
+                "stop" -> stopPublicId
+                "route" -> routePublicId
+                else -> variantPublicId
+            }
         }
     }
 
@@ -109,9 +121,10 @@ data class ReportFingerprint(
 object CorrectStopAction {
     fun nextStopPublicId(stops: List<com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow>, selectedStopPublicId: String?): String? {
         if (selectedStopPublicId.isNullOrBlank()) return null
-        val index = stops.indexOfFirst { it.stopPublicId == selectedStopPublicId }
+        val ordered = StopContext.ordered(stops)
+        val index = ordered.indexOfFirst { it.stopPublicId == selectedStopPublicId }
         if (index < 0) return null
-        return stops.getOrNull(index + 1)?.stopPublicId
+        return ordered.getOrNull(index + 1)?.stopPublicId
     }
 }
 
@@ -135,11 +148,26 @@ object SurveyCaptureFacts {
     }
 }
 
+object StopSequenceDisplay {
+    fun isZeroBased(sequences: Iterable<Int>): Boolean {
+        val values = sequences.filter { it >= 0 }
+        return values.isNotEmpty() && values.minOrNull() == 0
+    }
+
+    fun uiNumber(sequence: Int, sequences: Iterable<Int>): Int {
+        val shifted = if (isZeroBased(sequences)) sequence + 1 else sequence
+        return shifted.coerceAtLeast(1)
+    }
+
+    fun uiLabel(sequence: Int, sequences: Iterable<Int>): String = "#${uiNumber(sequence, sequences)}"
+}
+
 object StopProgress {
     fun label(stops: List<com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow>, selectedStopPublicId: String?): String {
-        if (stops.isEmpty()) return "#0 of 0"
-        val index = stops.indexOfFirst { it.stopPublicId == selectedStopPublicId }
-        val current = if (index < 0) 0 else index + 1
-        return "#$current of ${stops.size}"
+        val ordered = StopContext.ordered(stops)
+        if (ordered.isEmpty()) return "— of 0"
+        val index = ordered.indexOfFirst { it.stopPublicId == selectedStopPublicId }
+        if (index < 0) return "— of ${ordered.size}"
+        return "#${index + 1} of ${ordered.size}"
     }
 }

@@ -16,24 +16,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow
+import com.coremapmm.fieldsurveyor.device.DeviceStatus
 import com.coremapmm.fieldsurveyor.data.transport.OppositeVariantLookup
 import com.coremapmm.fieldsurveyor.media.JpegTarget
 import com.coremapmm.fieldsurveyor.media.VoiceRecorder
@@ -41,8 +39,6 @@ import com.coremapmm.fieldsurveyor.media.VoiceTarget
 import com.coremapmm.fieldsurveyor.survey.*
 import com.coremapmm.fieldsurveyor.ui.components.StatusPill
 import com.coremapmm.fieldsurveyor.ui.media.OnDemandJpegPreview
-import com.coremapmm.fieldsurveyor.ui.settings.FieldLanguage
-import com.coremapmm.fieldsurveyor.ui.settings.LocalFieldLanguage
 import com.coremapmm.fieldsurveyor.ui.settings.tr
 import java.io.File
 import java.util.Locale
@@ -58,9 +54,19 @@ fun SurveyScreen(survey: SurveyController) {
     val scope = rememberCoroutineScope()
     val window = StopContext.window(state.stops, state.selection?.selectedStopPublicId)
     val permissionAction = remember { mutableStateOf("map") }
-    var pendingKind by remember { mutableStateOf<AnomalyKind?>(null) }
-    var note by remember { mutableStateOf("") }
-    var routeIssue by remember { mutableStateOf<RouteIssueKind?>(null) }
+    var pendingKindName by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingKind by remember { mutableStateOf<AnomalyKind?>(pendingKindName?.let { runCatching { AnomalyKind.valueOf(it) }.getOrNull() }) }
+    var note by rememberSaveable { mutableStateOf("") }
+    var routeIssueName by rememberSaveable { mutableStateOf<String?>(null) }
+    var routeIssue by remember { mutableStateOf(routeIssueName?.let { runCatching { RouteIssueKind.valueOf(it) }.getOrNull() }) }
+    var proposedStopName by rememberSaveable { mutableStateOf("") }
+    var newStopClientId by rememberSaveable { mutableStateOf("") }
+    var newStopPickModeName by rememberSaveable { mutableStateOf(NewStopPickMode.NONE.name) }
+    var newStopSourceName by rememberSaveable { mutableStateOf<String?>(null) }
+    var proposedLat by rememberSaveable { mutableStateOf(Double.NaN) }
+    var proposedLng by rememberSaveable { mutableStateOf(Double.NaN) }
+    var proposedAccuracy by rememberSaveable { mutableStateOf(Float.NaN) }
+    var proposedEpochMs by rememberSaveable { mutableStateOf(0L) }
     var mapPick by remember { mutableStateOf<GpsFix?>(null) }
     var showCamera by remember { mutableStateOf(false) }
     var recording by remember { mutableStateOf(false) }
@@ -76,6 +82,65 @@ fun SurveyScreen(survey: SurveyController) {
     var nowEpochMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val recorder = remember { VoiceRecorder(context) }
     val voiceDraftForCleanup by rememberUpdatedState(voiceDraft)
+
+    fun setPendingKind(kind: AnomalyKind?) {
+        pendingKind = kind
+        pendingKindName = kind?.name
+    }
+
+    fun setRouteIssue(issue: RouteIssueKind?) {
+        routeIssue = issue
+        routeIssueName = issue?.name
+    }
+
+    fun newStopDraft(): NewStopDraft {
+        val proposed = if (!proposedLat.isNaN() && !proposedLng.isNaN()) {
+            GpsFix(
+                proposedLat,
+                proposedLng,
+                proposedAccuracy.takeUnless { it.isNaN() },
+                proposedEpochMs,
+            )
+        } else {
+            mapPick
+        }
+        return NewStopDraft(
+            clientPublicId = newStopClientId,
+            name = proposedStopName,
+            note = note,
+            pickMode = runCatching { NewStopPickMode.valueOf(newStopPickModeName) }.getOrDefault(NewStopPickMode.NONE),
+            proposed = proposed,
+            locationSource = newStopSourceName?.let { runCatching { NewStopLocationSource.valueOf(it) }.getOrNull() },
+        )
+    }
+
+    fun applyNewStopDraft(draft: NewStopDraft) {
+        newStopClientId = draft.clientPublicId
+        proposedStopName = draft.name
+        note = draft.note
+        newStopPickModeName = draft.pickMode.name
+        newStopSourceName = draft.locationSource?.name
+        val proposed = draft.proposed
+        if (proposed == null) {
+            proposedLat = Double.NaN
+            proposedLng = Double.NaN
+            proposedAccuracy = Float.NaN
+            proposedEpochMs = 0L
+            mapPick = null
+        } else {
+            proposedLat = proposed.lat
+            proposedLng = proposed.lng
+            proposedAccuracy = proposed.accuracyM ?: Float.NaN
+            proposedEpochMs = proposed.epochMs
+            mapPick = proposed
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!proposedLat.isNaN() && !proposedLng.isNaN() && mapPick == null) {
+            mapPick = GpsFix(proposedLat, proposedLng, null, proposedEpochMs)
+        }
+    }
 
     val locationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -131,23 +196,40 @@ fun SurveyScreen(survey: SurveyController) {
 
     fun resetDraft() {
         clearMediaDrafts()
-        pendingKind = null
+        setPendingKind(null)
         note = ""
-        routeIssue = null
+        setRouteIssue(null)
+        proposedStopName = ""
+        newStopClientId = ""
+        newStopPickModeName = NewStopPickMode.NONE.name
+        newStopSourceName = null
+        proposedLat = Double.NaN
+        proposedLng = Double.NaN
+        proposedAccuracy = Float.NaN
+        proposedEpochMs = 0L
         mapPick = null
     }
 
     fun submitPendingReport() {
         val kind = pendingKind ?: return
+        val draft = newStopDraft()
         scope.launch {
             val saved = survey.submitReport(
                 kind = kind,
-                note = note,
-                reportLocation = if (kind == AnomalyKind.MOVED) mapPick else null,
+                note = if (kind == AnomalyKind.NEW_STOP) draft.note else note,
+                reportLocation = when (kind) {
+                    AnomalyKind.MOVED -> mapPick
+                    AnomalyKind.NEW_STOP -> draft.proposed
+                    else -> null
+                },
                 routeIssue = if (kind == AnomalyKind.ROUTE) routeIssue else null,
+                proposedStopName = if (kind == AnomalyKind.NEW_STOP) draft.name else "",
                 photoDrafts = photoDrafts.toList(),
                 voiceDraft = voiceDraft,
                 voiceDurationMs = voiceDraftDuration,
+                clientPublicId = if (kind == AnomalyKind.NEW_STOP) draft.clientPublicId else null,
+                locationSource = if (kind == AnomalyKind.NEW_STOP) NewStopReportFlow.locationSourceCode(draft.locationSource) else null,
+                online = DeviceStatus.isOnline(context),
             )
             if (saved) {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -186,19 +268,16 @@ fun SurveyScreen(survey: SurveyController) {
             survey.clearBanner()
         }
     }
-    LaunchedEffect(state.gps?.epochMs) {
+    LaunchedEffect(Unit) {
         while (true) {
             nowEpochMs = System.currentTimeMillis()
+            survey.onLocationTick()
             delay(1_000)
         }
     }
 
-    val gpsQuality = GpsQualityPolicy.quality(state.gps, nowEpochMs)
-    val visibleNearbyStops = if (GpsQualityPolicy.canUseForNearby(state.gps, nowEpochMs)) {
-        state.nearbyStops
-    } else {
-        emptyList()
-    }
+    val location = state.location
+    val visibleNearbyStops = state.nearbyStops
 
     Box(Modifier.fillMaxSize()) {
         SurveyMap(
@@ -207,17 +286,23 @@ fun SurveyScreen(survey: SurveyController) {
             stops = state.stops,
             selectedStopPublicId = state.selection?.selectedStopPublicId,
             nearbyStopPublicIds = visibleNearbyStops.map { it.stop.stopPublicId }.toSet(),
-            gps = state.gps,
+            gps = location.displayFix,
             cameraFollowEnabled = state.cameraFollowEnabled,
             centerOncePending = state.centerOncePending,
             anomalies = state.anomalies,
-            pickMovedGeom = pendingKind == AnomalyKind.MOVED && mapPick == null,
-            pickedPoint = mapPick,
+            pickMovedGeom = (pendingKind == AnomalyKind.MOVED && mapPick == null) ||
+                (pendingKind == AnomalyKind.NEW_STOP && NewStopReportFlow.isPickMode(newStopDraft())),
+            pickedPoint = if (pendingKind == AnomalyKind.NEW_STOP) newStopDraft().proposed else mapPick,
             sheetVisibleFraction = sheetStage.visibleFraction,
             onStopClick = ::selectStop,
             onMapPick = { lat, lng ->
-                mapPick = GpsFix(lat, lng, null, System.currentTimeMillis())
-                sheetStage = SurveySheetStage.FULL
+                if (pendingKind == AnomalyKind.NEW_STOP) {
+                    applyNewStopDraft(NewStopReportFlow.onMapTap(newStopDraft(), lat, lng, System.currentTimeMillis()))
+                    sheetStage = SurveySheetStage.FULL
+                } else {
+                    mapPick = GpsFix(lat, lng, null, System.currentTimeMillis())
+                    sheetStage = SurveySheetStage.FULL
+                }
             },
             onManualPan = survey::manualMapPan,
             onCenterOnceConsumed = survey::cameraCentered,
@@ -276,9 +361,9 @@ fun SurveyScreen(survey: SurveyController) {
                         horizontalArrangement = Arrangement.spacedBy(7.dp),
                     ) {
                         StatusPill(
-                            GpsQualityPolicy.label(state.gps, nowEpochMs),
-                            positive = gpsQuality == GpsQuality.GOOD,
-                            warning = gpsQuality != GpsQuality.GOOD,
+                            tr(location.chipLabel),
+                            positive = location.status == SurveyLocationStatus.Live,
+                            warning = location.status != SurveyLocationStatus.Live,
                         )
                         Spacer(Modifier.weight(1f))
                         Button(
@@ -301,18 +386,12 @@ fun SurveyScreen(survey: SurveyController) {
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
-                    when (gpsQuality) {
-                        GpsQuality.POOR, GpsQuality.CONFIRM_REQUIRED -> Text(
-                            tr("GPS accuracy is poor. Move to open sky and wait."),
+                    location.banner?.let { gpsBanner ->
+                        Text(
+                            tr(gpsBanner),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.labelSmall,
                         )
-                        GpsQuality.STALE -> Text(
-                            tr("GPS fix is stale. Locate again."),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                        else -> Unit
                     }
                     if (state.running || state.sessionReportCount > 0 || state.pendingSyncCount > 0) {
                         Text(
@@ -324,7 +403,11 @@ fun SurveyScreen(survey: SurveyController) {
                     state.duplicateWarning?.let {
                         SurveyNotice(tr(it), warning = true)
                     }
-                    state.message?.takeIf { it.isNotBlank() }?.let {
+                    state.message?.takeIf {
+                        it.isNotBlank() &&
+                            it != location.banner &&
+                            it != SurveyLocationLabels.TEMPORARILY_UNAVAILABLE
+                    }?.let {
                         SurveyNotice(tr(it), warning = false)
                     }
                 }
@@ -344,17 +427,11 @@ fun SurveyScreen(survey: SurveyController) {
                 ) {
                     if (visibleStage.ordinal >= SurveySheetStage.STOPS.ordinal) {
                         SurveySection("${tr("Route stops")} · ${StopProgress.label(state.stops, state.selection?.selectedStopPublicId)}") {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                StopChoiceButton("Previous", window.previous, false, Modifier.weight(1f)) {
-                                    window.previous?.let { selectStop(it.stopPublicId) }
-                                }
-                                StopChoiceButton("Current", window.current, true, Modifier.weight(1f)) {
-                                    window.current?.let { selectStop(it.stopPublicId) }
-                                }
-                                StopChoiceButton("Next", window.next, false, Modifier.weight(1f)) {
-                                    window.next?.let { selectStop(it.stopPublicId) }
-                                }
-                            }
+                            StopWindowRow(
+                                window = window,
+                                sequences = state.stops.map { it.stopSequence },
+                                onSelect = ::selectStop,
+                            )
                             FilledTonalButton(
                                 onClick = {
                                     if (survey.markStopCorrect()) {
@@ -365,9 +442,39 @@ fun SurveyScreen(survey: SurveyController) {
                                 enabled = state.running && window.current != null,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                             ) { Text(tr("Stop is correct")) }
+                            OutlinedButton(
+                                onClick = {
+                                    when {
+                                        !state.running -> survey.setMessage("Start the survey first.")
+                                        window.current == null -> survey.setMessage("Select a stop first.")
+                                        else -> {
+                                            clearMediaDrafts()
+                                            setRouteIssue(null)
+                                            setPendingKind(AnomalyKind.NEW_STOP)
+                                            applyNewStopDraft(
+                                                NewStopReportFlow.newDraft(
+                                                    NewStopReportFlow.reuseDraftUuid(newStopClientId.ifBlank { null }),
+                                                ),
+                                            )
+                                            survey.setMessage("")
+                                            survey.refreshDuplicateWarning(AnomalyKind.NEW_STOP)
+                                            sheetStage = SurveySheetStage.FULL
+                                        }
+                                    }
+                                },
+                                enabled = state.running && window.current != null,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                            ) { Text(tr("Report new stop")) }
+                            state.endOfRouteNotice?.let {
+                                Text(
+                                    tr(it),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
-                    if (visibleStage.ordinal >= SurveySheetStage.NEARBY.ordinal) {
+                    if (visibleStage.ordinal >= SurveySheetStage.STOPS.ordinal) {
                         SurveySection(tr("Nearest stops")) {
                             if (visibleNearbyStops.isEmpty()) {
                                 Text(
@@ -382,6 +489,7 @@ fun SurveyScreen(survey: SurveyController) {
                                             nearby,
                                             nearby.stop.stopPublicId == state.selection?.selectedStopPublicId,
                                             index == 0,
+                                            state.stops.map { it.stopSequence },
                                             Modifier.weight(1f),
                                         ) { selectStop(nearby.stop.stopPublicId) }
                                     }
@@ -396,7 +504,7 @@ fun SurveyScreen(survey: SurveyController) {
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalArrangement = Arrangement.spacedBy(3.dp),
                             ) {
-                                AnomalyKind.entries.forEach { kind ->
+                                AnomalyMapping.reportIssueKinds().forEach { kind ->
                                     val selected = pendingKind == kind
                                     FilterChip(
                                         selected = selected,
@@ -412,9 +520,11 @@ fun SurveyScreen(survey: SurveyController) {
                                                 }
                                                 else -> {
                                                     clearMediaDrafts()
-                                                    pendingKind = kind
+                                                    setPendingKind(kind)
                                                     note = ""
-                                                    routeIssue = null
+                                                    setRouteIssue(null)
+                                                    proposedStopName = ""
+                                                    applyNewStopDraft(NewStopReportFlow.newDraft())
                                                     mapPick = null
                                                     survey.setMessage("")
                                                     survey.refreshDuplicateWarning(kind)
@@ -435,12 +545,31 @@ fun SurveyScreen(survey: SurveyController) {
                             SurveySection(tr("Report details")) {
                                 CaptureFacts(
                                     epochMs = nowEpochMs,
-                                    gps = state.gps,
+                                    gps = location.displayFix,
                                     routeCode = state.selection?.routeCode,
                                     variantCode = state.selection?.variantCode,
                                     snapshotRevision = state.snapshotRevision,
                                 )
-                                ReportKindForm(kind, note, { note = it }, routeIssue, { routeIssue = it }, mapPick)
+                                ReportKindForm(
+                                    kind,
+                                    note,
+                                    { note = it },
+                                    routeIssue,
+                                    { setRouteIssue(it) },
+                                    mapPick,
+                                    proposedStopName,
+                                    { proposedStopName = it },
+                                    newStopDraft(),
+                                    onNewStopDraft = { applyNewStopDraft(it) },
+                                    gps = location.displayFix ?: location.evidenceFix,
+                                    previousStop = window.current,
+                                    nextStop = window.next,
+                                    sequences = state.stops.map { it.stopSequence },
+                                    onChooseOnMap = {
+                                        applyNewStopDraft(NewStopReportFlow.chooseAgain(newStopDraft()))
+                                        sheetStage = SurveySheetStage.MAP
+                                    },
+                                )
                             }
                         }
                         SurveySection(tr("Evidence (optional)")) {
@@ -502,11 +631,17 @@ fun SurveyScreen(survey: SurveyController) {
                             Button(
                                 onClick = {
                                     val kind = pendingKind ?: return@Button
-                                    if (ReportLocationPolicy.requiresPoorAccuracyConfirmation(kind, state.gps, nowEpochMs)) {
+                                    if (kind != AnomalyKind.NEW_STOP &&
+                                        ReportLocationPolicy.requiresPoorAccuracyConfirmation(kind, state.gps, nowEpochMs)
+                                    ) {
                                         confirmPoorGpsReport = true
                                     } else submitPendingReport()
                                 },
-                                enabled = pendingKind != null,
+                                enabled = if (pendingKind == AnomalyKind.NEW_STOP) {
+                                    NewStopReportFlow.canSave(state.running, window.current, newStopDraft())
+                                } else {
+                                    pendingKind != null
+                                },
                                 modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                             ) { Text(tr("Report")) }
                         }
@@ -579,44 +714,14 @@ fun SurveyScreen(survey: SurveyController) {
 }
 
 @Composable
-private fun StopChoiceButton(title: String, stop: OrderedStopRow?, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val icon = when (title) {
-        "Previous" -> Icons.AutoMirrored.Outlined.KeyboardArrowLeft
-        "Next" -> Icons.AutoMirrored.Outlined.KeyboardArrowRight
-        else -> Icons.Outlined.MyLocation
-    }
-    OutlinedButton(
-        onClick = onClick,
-        enabled = stop != null,
-        modifier = modifier.heightIn(min = 88.dp),
-        shape = RoundedCornerShape(14.dp),
-        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 7.dp),
-        colors = if (selected && stop != null) ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ) else ButtonDefaults.outlinedButtonColors(
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                Icon(imageVector = icon, contentDescription = tr(title), modifier = Modifier.size(17.dp))
-                Text(stop?.let { "#${it.stopSequence}" } ?: "—", style = MaterialTheme.typography.labelMedium)
-            }
-            Text(
-                stop?.let { stopName(it) } ?: "—",
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-@Composable
-private fun NearbyStopButton(nearby: NearbyStop, selected: Boolean, nearest: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun NearbyStopButton(
+    nearby: NearbyStop,
+    selected: Boolean,
+    nearest: Boolean,
+    sequences: List<Int>,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
     val colors = when {
         selected -> ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -637,12 +742,12 @@ private fun NearbyStopButton(nearby: NearbyStop, selected: Boolean, nearest: Boo
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                "#${nearby.stop.stopSequence} · ${formatDistance(nearby.distanceM)}",
+                "${StopSequenceDisplay.uiLabel(nearby.stop.stopSequence, sequences)} · ${formatDistance(nearby.distanceM)}",
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
             )
             Text(
-                stopName(nearby.stop),
+                stopDisplayName(nearby.stop),
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -746,6 +851,15 @@ private fun ReportKindForm(
     routeIssue: RouteIssueKind?,
     onRouteIssue: (RouteIssueKind) -> Unit,
     mapPick: GpsFix?,
+    proposedStopName: String,
+    onProposedStopName: (String) -> Unit,
+    newStopDraft: NewStopDraft,
+    onNewStopDraft: (NewStopDraft) -> Unit,
+    gps: GpsFix?,
+    previousStop: com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow?,
+    nextStop: com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow?,
+    sequences: List<Int>,
+    onChooseOnMap: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (kind) {
@@ -754,6 +868,15 @@ private fun ReportKindForm(
                 OptionalNote(note, onNote)
             }
             AnomalyKind.MISSING -> OptionalNote(note, onNote)
+            AnomalyKind.NEW_STOP -> NewStopForm(
+                draft = newStopDraft,
+                onDraft = onNewStopDraft,
+                gps = gps,
+                previousStop = previousStop,
+                nextStop = nextStop,
+                sequences = sequences,
+                onChooseOnMap = onChooseOnMap,
+            )
             AnomalyKind.DATA -> OptionalNote(note, onNote)
             AnomalyKind.ROUTE -> {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -783,6 +906,69 @@ private fun ReportKindForm(
 }
 
 @Composable
+internal fun NewStopForm(
+    draft: NewStopDraft,
+    onDraft: (NewStopDraft) -> Unit,
+    gps: GpsFix?,
+    previousStop: com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow?,
+    nextStop: com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow?,
+    sequences: List<Int>,
+    onChooseOnMap: () -> Unit,
+) {
+    val previousLabel = previousStop?.let {
+        "${StopSequenceDisplay.uiLabel(it.stopSequence, sequences)} ${it.nameEn ?: it.nameMy ?: it.stopPublicId}"
+    } ?: tr("Select a stop first.")
+    val nextLabel = nextStop?.let {
+        "${StopSequenceDisplay.uiLabel(it.stopSequence, sequences)} ${it.nameEn ?: it.nameMy ?: it.stopPublicId}"
+    } ?: "—"
+    Text(tr("Previous stop") + ": $previousLabel", style = MaterialTheme.typography.bodySmall)
+    Text(tr("Next stop") + ": $nextLabel", style = MaterialTheme.typography.bodySmall)
+    OutlinedTextField(
+        draft.name,
+        { onDraft(NewStopReportFlow.withName(draft, it)) },
+        label = { Text(tr("Proposed stop name")) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+    )
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(
+            onClick = { onDraft(NewStopReportFlow.useMyLocation(draft, gps)) },
+            enabled = gps != null,
+            modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("newStopUseMyLocation"),
+        ) { Text(tr("Use my location")) }
+        OutlinedButton(
+            onClick = onChooseOnMap,
+            modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("newStopChooseOnMap"),
+        ) { Text(tr("Choose on map")) }
+    }
+    if (draft.pickMode == NewStopPickMode.PICKING) {
+        Text(tr("Tap the map once to place the new stop."))
+    }
+    draft.proposed?.let { proposed ->
+        Text(
+            tr("Proposed location") + ": " +
+                String.format(Locale.US, "%.5f, %.5f", proposed.lat, proposed.lng),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        Text(
+            tr(if (draft.locationSource == NewStopLocationSource.GPS) "Using GPS" else "Location from map"),
+            style = MaterialTheme.typography.labelSmall,
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(
+                onClick = { onDraft(NewStopReportFlow.removeGeometry(draft)) },
+                modifier = Modifier.testTag("newStopRemove"),
+            ) { Text(tr("Remove")) }
+            TextButton(
+                onClick = onChooseOnMap,
+                modifier = Modifier.testTag("newStopChooseAgain"),
+            ) { Text(tr("Choose again")) }
+        }
+    }
+    OptionalNote(draft.note) { onDraft(draft.copy(note = it.take(4000))) }
+}
+
+@Composable
 private fun OptionalNote(note: String, onNote: (String) -> Unit) = NoteField(note, onNote, "Note (optional)")
 
 @Composable
@@ -790,16 +976,6 @@ private fun NoteField(note: String, onNote: (String) -> Unit, label: String) {
     OutlinedTextField(
         note, onNote, label = { Text(tr(label)) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 3,
     )
-}
-
-@Composable
-private fun stopName(stop: OrderedStopRow): String {
-    val name = if (LocalFieldLanguage.current == FieldLanguage.MYANMAR) {
-        stop.nameMy ?: stop.nameEn
-    } else {
-        stop.nameEn ?: stop.nameMy
-    } ?: stop.stopCode ?: stop.stopPublicId.take(8)
-    return name
 }
 
 internal fun formatDistance(distanceM: Double): String = when {

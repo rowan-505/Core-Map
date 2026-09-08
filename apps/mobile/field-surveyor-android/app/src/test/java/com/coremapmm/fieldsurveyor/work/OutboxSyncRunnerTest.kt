@@ -47,6 +47,27 @@ class OutboxSyncRunnerTest {
     }
 
     @Test
+    fun newStopRetryKeepsTheSameClientUuid() = runBlocking {
+        val reports = MemoryReports()
+        val id = "abababab-abab-4aaa-8aaa-aaaaaaaaaaaa"
+        val payload = """{"clientPublicId":"$id","reportTypeCode":"new_stop","anomalyKind":"NEW_STOP","observedAt":"2026-09-02T09:00:00Z","location":{"lat":16.91,"lng":96.21,"accuracyM":null},"target":{"entityType":"variant","publicId":"22222222-2222-4222-8222-222222222222"},"context":{"snapshotRevision":"rev","previousStopPublicId":"33333333-3333-4333-8333-333333333333","previousStopSequence":4,"proposedStopName":"Corner stall","locationSource":"MAP_PICK"},"note":""}"""
+        reports.upsert(row(id, LocalReportEntity.STATUS_QUEUED).copy(payloadJson = payload))
+        val bodies = mutableListOf<String>()
+        runner(reports) { _, body ->
+            bodies.add(body)
+            OutboxSyncPolicy.classifyThrowable(SocketTimeoutException("timeout"))
+        }.syncOne()
+        runner(reports) { _, body ->
+            bodies.add(body)
+            OutboxHttpResult.Success(201)
+        }.syncOne()
+        assertEquals(id, JSONObject(bodies[0]).getString("clientPublicId"))
+        assertEquals(id, JSONObject(bodies[1]).getString("clientPublicId"))
+        assertEquals("new_stop", JSONObject(bodies[1]).getString("reportTypeCode"))
+        assertEquals(LocalReportEntity.STATUS_SYNCED, reports.rows.getValue(id).status)
+    }
+
+    @Test
     fun lostSuccessResponseThenRetryStillOneServerRow() = runBlocking {
         val reports = MemoryReports()
         val id = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"

@@ -1,44 +1,73 @@
 package com.coremapmm.fieldsurveyor.survey
 
 object GpsFixPolicy {
-    const val STALE_BEHIND_MS = 3_000L
-    const val MIN_MOVE_METERS = 1.0
+    const val STALE_BEHIND_MS = SurveyLocationPolicy.STALE_BEHIND_MS
+    const val MIN_MOVE_METERS = SurveyLocationPolicy.MIN_MOVE_METERS
     const val HEARTBEAT_MS = 2_000L
-    /** Drop lastKnown / cached provider samples that are too old for field capture. */
-    const val MAX_FIX_AGE_MS = FieldLocationConfig.GOOD_FIX_STALE_MS
+    const val MAX_FIX_AGE_MS = SurveyLocationPolicy.STALE_AGE_MS
     const val BETTER_FIX_HOLD_MS = 10_000L
 
     /**
-     * Fused callbacks can still include stale or duplicate jitter. Filter those
-     * while retaining a short-lived, materially better fix for report evidence.
-     * Keep a heartbeat so the blue dot and accuracy label stay fresh.
+     * One fused stream. Keep last-known even when incoming samples are old.
+     * Do not take a worse heartbeat. Movement replaces an old accurate park fix.
      */
     fun publish(previous: GpsFix?, next: GpsFix, nowEpochMs: Long): GpsFix? {
-        if (nowEpochMs - next.epochMs > MAX_FIX_AGE_MS) {
-            return null
-        }
+        val clock = FakeLocationClock(nowEpochMs, nowEpochMs * 1_000_000L)
+        return publish(previous, next, clock)
+    }
+
+    fun publish(previous: GpsFix?, next: GpsFix, clock: LocationClock): GpsFix? {
         if (previous == null) {
             return next
         }
-        if (next.epochMs + STALE_BEHIND_MS < previous.epochMs) {
+        if (isOlderThan(next, previous)) {
             return null
         }
         val previousAccuracy = previous.accuracyM
         val nextAccuracy = next.accuracyM
         val distance = StopContext.haversineMeters(previous.lat, previous.lng, next.lat, next.lng)
-        val previousStillPreferred = nowEpochMs - previous.epochMs <= BETTER_FIX_HOLD_MS &&
+        val previousAge = SurveyLocationPolicy.ageMs(previous, clock)
+        val previousStillPreferred = previousAge <= BETTER_FIX_HOLD_MS &&
             previousAccuracy != null &&
             nextAccuracy != null &&
-            nextAccuracy > previousAccuracy + 3f &&
+            nextAccuracy > previousAccuracy + SurveyLocationPolicy.BETTER_ACCURACY_DELTA_M &&
             distance <= maxOf(previousAccuracy.toDouble(), nextAccuracy.toDouble())
         if (previousStillPreferred) {
             return null
         }
         val moved = distance >= MIN_MOVE_METERS
-        val betterAccuracy = (next.accuracyM ?: Float.MAX_VALUE) + 3f <
+        if (moved) {
+            return next
+        }
+        val betterAccuracy = (next.accuracyM ?: Float.MAX_VALUE) +
+            SurveyLocationPolicy.BETTER_ACCURACY_DELTA_M <
             (previous.accuracyM ?: Float.MAX_VALUE)
-        val heartbeat = next.epochMs - previous.epochMs >= HEARTBEAT_MS
-        return if (moved || betterAccuracy || heartbeat) next else null
+        if (betterAccuracy) {
+            return next
+        }
+        val worse = (next.accuracyM ?: Float.MAX_VALUE) >
+            (previous.accuracyM ?: Float.MAX_VALUE) + SurveyLocationPolicy.BETTER_ACCURACY_DELTA_M
+        if (worse) {
+            return null
+        }
+        val newerByMs = newerByMs(previous, next)
+        return if (newerByMs >= HEARTBEAT_MS) next else null
+    }
+
+    private fun isOlderThan(next: GpsFix, previous: GpsFix): Boolean {
+        if (next.elapsedRealtimeNanos > 0L && previous.elapsedRealtimeNanos > 0L) {
+            return next.elapsedRealtimeNanos + STALE_BEHIND_MS * 1_000_000L <
+                previous.elapsedRealtimeNanos
+        }
+        return next.epochMs + STALE_BEHIND_MS < previous.epochMs
+    }
+
+    private fun newerByMs(previous: GpsFix, next: GpsFix): Long {
+        if (next.elapsedRealtimeNanos > 0L && previous.elapsedRealtimeNanos > 0L) {
+            return ((next.elapsedRealtimeNanos - previous.elapsedRealtimeNanos) / 1_000_000L)
+                .coerceAtLeast(0L)
+        }
+        return (next.epochMs - previous.epochMs).coerceAtLeast(0L)
     }
 }
 
@@ -51,19 +80,41 @@ enum class GpsQuality {
 }
 
 object GpsQualityPolicy {
-    fun quality(fix: GpsFix?, nowMs: Long): GpsQuality = when {
-        fix == null -> GpsQuality.MISSING
-        nowMs - fix.epochMs > FieldLocationConfig.GOOD_FIX_STALE_MS -> GpsQuality.STALE
-        fix.accuracyM == null || fix.accuracyM > FieldLocationConfig.REPORT_CONFIRM_ACCURACY_M ->
-            GpsQuality.CONFIRM_REQUIRED
-        fix.accuracyM > FieldLocationConfig.POOR_ACCURACY_WARNING_M -> GpsQuality.POOR
-        else -> GpsQuality.GOOD
+    fun quality(fix: GpsFix?, nowMs: Long): GpsQuality {
+        val clock = FakeLocationClock(nowMs, nowMs * 1_000_000L)
+        val status = SurveyLocationPolicy.classify(
+            displayFix = fix,
+            permissionGranted = true,
+            locationEnabled = true,
+            tracking = false,
+            oneShot = false,
+            clock = clock,
+        )
+        return when (status) {
+            SurveyLocationStatus.Unavailable, SurveyLocationStatus.Acquiring -> GpsQuality.MISSING
+            SurveyLocationStatus.Stale -> GpsQuality.STALE
+            SurveyLocationStatus.Disabled, SurveyLocationStatus.PermissionDenied -> GpsQuality.MISSING
+            SurveyLocationStatus.Degraded, SurveyLocationStatus.Live -> when {
+                fix?.accuracyM == null ||
+                    (fix.accuracyM ?: Float.MAX_VALUE) > FieldLocationConfig.REPORT_CONFIRM_ACCURACY_M ->
+                    GpsQuality.CONFIRM_REQUIRED
+                (fix.accuracyM ?: 0f) > FieldLocationConfig.POOR_ACCURACY_WARNING_M -> GpsQuality.POOR
+                else -> GpsQuality.GOOD
+            }
+        }
     }
 
-    fun label(fix: GpsFix?, nowMs: Long): String = when (quality(fix, nowMs)) {
-        GpsQuality.MISSING -> "GPS —"
-        GpsQuality.STALE -> fix?.accuracyM?.let { "GPS stale · ±${it.toInt()} m" } ?: "GPS stale"
-        else -> fix?.accuracyM?.let { "GPS ±${it.toInt()} m" } ?: "GPS ±? m"
+    fun label(fix: GpsFix?, nowMs: Long): String {
+        val clock = FakeLocationClock(nowMs, nowMs * 1_000_000L)
+        val status = SurveyLocationPolicy.classify(
+            displayFix = fix,
+            permissionGranted = true,
+            locationEnabled = true,
+            tracking = false,
+            oneShot = false,
+            clock = clock,
+        )
+        return SurveyLocationLabels.chip(status, fix)
     }
 
     fun canUseForNearby(fix: GpsFix?, nowMs: Long): Boolean = when (quality(fix, nowMs)) {

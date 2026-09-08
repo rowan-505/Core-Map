@@ -5,6 +5,7 @@ import android.content.Context
 import android.location.Location
 import android.location.LocationManager
 import android.os.Looper
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -33,11 +34,12 @@ enum class LocationMode {
 /** Field-tunable values for both one-shot and active-survey location requests. */
 object FieldLocationConfig {
     const val ONE_SHOT_TIMEOUT_MS = 9_000L
-    const val TRACKING_INTERVAL_MS = 4_000L
-    const val TRACKING_MIN_INTERVAL_MS = 2_000L
-    const val TRACKING_MIN_DISPLACEMENT_M = 5f
-    const val GOOD_FIX_STALE_MS = 12_000L
-    const val POOR_ACCURACY_WARNING_M = 30f
+    /** Requested fused interval during an active survey. Not a guaranteed GNSS rate. */
+    const val TRACKING_INTERVAL_MS = 500L
+    const val TRACKING_MIN_INTERVAL_MS = 500L
+    const val TRACKING_MIN_DISPLACEMENT_M = 1f
+    const val GOOD_FIX_STALE_MS = 15_000L
+    const val POOR_ACCURACY_WARNING_M = 25f
     const val REPORT_CONFIRM_ACCURACY_M = 50f
     const val NEARBY_STOP_RADIUS_M = 150.0
     const val NEARBY_RECOMPUTE_MOVEMENT_M = 10.0
@@ -71,7 +73,13 @@ class GpsEngine(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var oneShotJob: Job? = null
     private var trackingCallback: LocationCallback? = null
+    private var trackingOnFix: ((GpsFix) -> Unit)? = null
+    private var trackingOnUnavailable: ((TrackingFailure) -> Unit)? = null
+    private var trackingOnAvailable: (() -> Unit)? = null
     private var requestGeneration = 0L
+    private var activeCallbackCount = 0
+
+    fun activeCallbackCount(): Int = activeCallbackCount
 
     @SuppressLint("MissingPermission")
     fun requestOneShot(
@@ -79,6 +87,10 @@ class GpsEngine(context: Context) {
         onFix: (GpsFix) -> Unit,
         onFinished: () -> Unit,
     ) {
+        if (isTracking()) {
+            requestFreshWhileTracking(onFix, onFinished)
+            return
+        }
         stop()
         val generation = ++requestGeneration
         oneShotJob = scope.launch {
@@ -87,14 +99,7 @@ class GpsEngine(context: Context) {
                     includeCached = includeCached,
                     timeoutMs = FieldLocationConfig.ONE_SHOT_TIMEOUT_MS,
                     cached = {
-                        awaitLastLocation()?.let { cached ->
-                        val fix = toFix(cached)
-                        if (System.currentTimeMillis() - fix.epochMs <= GpsFixPolicy.MAX_FIX_AGE_MS) {
-                                fix
-                            } else {
-                                null
-                            }
-                        }
+                        awaitLastLocation()?.let(::toFix)
                     },
                     fresh = { awaitFreshLocation()?.let(::toFix) },
                     emit = onFix,
@@ -114,64 +119,62 @@ class GpsEngine(context: Context) {
     fun startTracking(
         onFix: (GpsFix) -> Unit,
         onUnavailable: (TrackingFailure) -> Unit = {},
+        onAvailable: () -> Unit = {},
     ): Boolean {
-        stop()
+        if (isTracking()) {
+            return true
+        }
+        stopOneShot()
         if (!hasLocationPermission()) {
             onUnavailable(TrackingFailure.PERMISSION_REVOKED)
             return false
         }
         if (!locationEnabled()) onUnavailable(TrackingFailure.LOCATION_DISABLED)
-        val callback = object : LocationCallback() {
-            override fun onLocationResult(result: LocationResult) {
-                result.locations.forEach { onFix(toFix(it)) }
-            }
+        trackingOnFix = onFix
+        trackingOnUnavailable = onUnavailable
+        trackingOnAvailable = onAvailable
+        return registerTrackingCallback()
+    }
 
-            override fun onLocationAvailability(availability: LocationAvailability) {
-                if (!availability.isLocationAvailable) {
-                    onUnavailable(
-                        when {
-                            !hasLocationPermission() -> TrackingFailure.PERMISSION_REVOKED
-                            !locationEnabled() -> TrackingFailure.LOCATION_DISABLED
-                            else -> TrackingFailure.PROVIDER_ERROR
-                        },
-                    )
-                }
-            }
-        }
-        trackingCallback = callback
-        val request = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            FieldLocationConfig.TRACKING_INTERVAL_MS,
-        )
-            .setMinUpdateIntervalMillis(FieldLocationConfig.TRACKING_MIN_INTERVAL_MS)
-            .setMinUpdateDistanceMeters(FieldLocationConfig.TRACKING_MIN_DISPLACEMENT_M)
-            .build()
-        try {
-            client.requestLocationUpdates(request, callback, Looper.getMainLooper())
-                .addOnFailureListener { error ->
-                    if (trackingCallback === callback) trackingCallback = null
-                    onUnavailable(
-                        if (error is SecurityException || !hasLocationPermission()) {
-                            TrackingFailure.PERMISSION_REVOKED
-                        } else {
-                            TrackingFailure.PROVIDER_ERROR
-                        },
-                    )
-                }
-        } catch (_: SecurityException) {
-            trackingCallback = null
-            onUnavailable(TrackingFailure.PERMISSION_REVOKED)
+    fun restartTracking(): Boolean {
+        val onFix = trackingOnFix ?: return false
+        val onUnavailable = trackingOnUnavailable ?: {}
+        val onAvailable = trackingOnAvailable ?: {}
+        clearTrackingCallback()
+        trackingOnFix = onFix
+        trackingOnUnavailable = onUnavailable
+        trackingOnAvailable = onAvailable
+        return registerTrackingCallback()
+    }
+
+    @SuppressLint("MissingPermission")
+    fun requestFreshWhileTracking(
+        onFix: (GpsFix) -> Unit,
+        onFinished: () -> Unit = {},
+    ): Boolean {
+        if (!isTracking()) {
+            onFinished()
             return false
+        }
+        val generation = requestGeneration
+        scope.launch {
+            try {
+                awaitFreshLocation()?.let { onFix(toFix(it)) }
+            } catch (_: SecurityException) {
+            } finally {
+                if (generation == requestGeneration) onFinished()
+            }
         }
         return true
     }
 
     fun stop() {
         requestGeneration += 1
-        oneShotJob?.cancel()
-        oneShotJob = null
-        trackingCallback?.let(client::removeLocationUpdates)
-        trackingCallback = null
+        stopOneShot()
+        trackingOnFix = null
+        trackingOnUnavailable = null
+        trackingOnAvailable = null
+        clearTrackingCallback()
     }
 
     fun isTracking(): Boolean = trackingCallback != null
@@ -186,6 +189,86 @@ class GpsEngine(context: Context) {
             android.content.pm.PackageManager.PERMISSION_GRANTED ||
             ContextCompat.checkSelfPermission(app, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
+
+    @SuppressLint("MissingPermission")
+    private fun registerTrackingCallback(): Boolean {
+        if (!GpsSubscriptionPolicy.shouldRegisterCallback(isTracking())) {
+            return true
+        }
+        val onFix = trackingOnFix ?: return false
+        val onUnavailable = trackingOnUnavailable ?: {}
+        val onAvailable = trackingOnAvailable ?: {}
+        val callback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                result.locations.forEach { onFix(toFix(it)) }
+            }
+
+            override fun onLocationAvailability(availability: LocationAvailability) {
+                if (availability.isLocationAvailable) {
+                    onAvailable()
+                    return
+                }
+                onUnavailable(
+                    when {
+                        !hasLocationPermission() -> TrackingFailure.PERMISSION_REVOKED
+                        !locationEnabled() -> TrackingFailure.LOCATION_DISABLED
+                        else -> TrackingFailure.PROVIDER_ERROR
+                    },
+                )
+            }
+        }
+        trackingCallback = callback
+        activeCallbackCount = 1
+        val request = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            FieldLocationConfig.TRACKING_INTERVAL_MS,
+        )
+            .setMinUpdateIntervalMillis(FieldLocationConfig.TRACKING_MIN_INTERVAL_MS)
+            .setMinUpdateDistanceMeters(FieldLocationConfig.TRACKING_MIN_DISPLACEMENT_M)
+            .build()
+        try {
+            client.requestLocationUpdates(request, callback, Looper.getMainLooper())
+                .addOnFailureListener { error ->
+                    if (trackingCallback === callback) {
+                        clearTrackingCallback()
+                    }
+                    onUnavailable(
+                        if (error is SecurityException || !hasLocationPermission()) {
+                            TrackingFailure.PERMISSION_REVOKED
+                        } else {
+                            TrackingFailure.PROVIDER_ERROR
+                        },
+                    )
+                }
+            warmStartLastKnown(onFix, callback)
+        } catch (_: SecurityException) {
+            clearTrackingCallback()
+            onUnavailable(TrackingFailure.PERMISSION_REVOKED)
+            return false
+        }
+        return true
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun warmStartLastKnown(onFix: (GpsFix) -> Unit, callback: LocationCallback) {
+        client.lastLocation
+            .addOnSuccessListener { location ->
+                if (trackingCallback === callback && location != null) {
+                    onFix(toFix(location))
+                }
+            }
+    }
+
+    private fun stopOneShot() {
+        oneShotJob?.cancel()
+        oneShotJob = null
+    }
+
+    private fun clearTrackingCallback() {
+        trackingCallback?.let(client::removeLocationUpdates)
+        trackingCallback = null
+        activeCallbackCount = 0
+    }
 
     @SuppressLint("MissingPermission")
     private suspend fun awaitLastLocation(): Location? = suspendCancellableCoroutine { continuation ->
@@ -218,6 +301,11 @@ class GpsEngine(context: Context) {
             lng = location.longitude,
             accuracyM = if (location.hasAccuracy()) location.accuracy else null,
             epochMs = location.time.takeIf { it > 0L } ?: System.currentTimeMillis(),
+            elapsedRealtimeNanos = location.elapsedRealtimeNanos.takeIf { it > 0L }
+                ?: SystemClock.elapsedRealtimeNanos(),
+            bearingDeg = location.bearing.takeIf { location.hasBearing() },
+            speedMps = location.speed.takeIf { location.hasSpeed() },
+            bearingAccuracyDeg = if (location.hasBearingAccuracy()) location.bearingAccuracyDegrees else null,
         )
     }
 }

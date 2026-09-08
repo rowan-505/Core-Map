@@ -87,9 +87,15 @@ class SurveyForegroundLifecycleTest {
 
     @Test
     fun fieldLocationConfigurationMatchesSurveyRequirements() {
-        assertEquals(4_000L, FieldLocationConfig.TRACKING_INTERVAL_MS)
-        assertEquals(2_000L, FieldLocationConfig.TRACKING_MIN_INTERVAL_MS)
-        assertEquals(5f, FieldLocationConfig.TRACKING_MIN_DISPLACEMENT_M)
-        assertEquals(12_000L, FieldLocationConfig.GOOD_FIX_STALE_MS)
+        assertEquals(500L, FieldLocationConfig.TRACKING_INTERVAL_MS)
+        assertEquals(500L, FieldLocationConfig.TRACKING_MIN_INTERVAL_MS)
+        assertEquals(1f, FieldLocationConfig.TRACKING_MIN_DISPLACEMENT_M)
+        assertEquals(15_000L, FieldLocationConfig.GOOD_FIX_STALE_MS)
+        assertEquals(5_000L, SurveyLocationPolicy.LIVE_AGE_MS)
+        assertEquals(15_000L, SurveyLocationPolicy.STALE_AGE_MS)
+        assertEquals(25f, SurveyLocationPolicy.DEGRADED_ACCURACY_M)
+        assertEquals(9_000L, TrackingWatchdog.SILENCE_MS)
+        assertEquals(20_000L, TrackingWatchdog.RESTART_COOLDOWN_MS)
+        assertFalse(SurveyTrackingResumePolicy.abandonSurveyWhenServiceDestroyed())
     }
 }

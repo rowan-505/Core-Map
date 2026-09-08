@@ -31,8 +31,8 @@ import kotlinx.coroutines.launch
 
 enum class SurveySheetStage(val visibleFraction: Float) {
     MAP(0.5f / 6f),
-    STOPS(2f / 6f),
-    NEARBY(3f / 6f),
+    STOPS(3f / 6f),
+    NEARBY(3.5f / 6f),
     FULL(1f),
 }
 

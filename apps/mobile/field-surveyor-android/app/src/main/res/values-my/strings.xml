@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">CoreMap ကွင်းဆင်း</string>
+    <string name="survey_notification_title">စစ်တမ်း လုပ်ဆောင်နေသည်</string>
+    <string name="survey_notification_text">တည်နေရာ ခြေရာခံနေသည်</string>
+    <string name="survey_notification_return">စစ်တမ်းသို့ ပြန်သွားမည်</string>
+    <string name="survey_notification_stop">စစ်တမ်း ရပ်မည်</string>
+    <string name="survey_notification_channel">လုပ်ဆောင်နေသော စစ်တမ်း</string>
+    <string name="survey_notification_channel_desc">ကွင်းဆင်းစစ်တမ်းအတွင်း တည်နေရာ ခြေရာခံခြင်း</string>
+</resources>
