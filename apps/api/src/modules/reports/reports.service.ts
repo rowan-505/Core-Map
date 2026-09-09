@@ -1,3 +1,4 @@
+import type { PrismaClient } from "@prisma/client";
 import type { MediaRepository, ReportMediaEvidenceRow } from "../media/media.repo.js";
 import type { FieldRepository } from "../field/field.repo.js";
 import { snapshotRevisionFromParts } from "../field/field-revision.js";
@@ -18,7 +19,10 @@ import {
     type StatusEventRow,
 } from "./reports.repo.js";
 import { isAllowedAdminStatusTransition, isFieldSurveySource } from "./report-admin-status.js";
-import type { AdminReportsQuery, ReportCreateBody } from "./reports.schema.js";
+import { toReportReview, labelReviewMapStops, type ReportReview, type ReportReviewActionCode } from "./report-review.js";
+import { ReportsApplyError, ReportsApplyRepository } from "./reports-apply.repo.js";
+import type { AdminApplyBody, AdminReportsQuery, ReportCreateBody } from "./reports.schema.js";
+import type { TransportRepository } from "../transport/transport.repo.js";
 
 export type ReportRegionCountResponse = {
     region_id: string | null;
@@ -102,6 +106,7 @@ export type ReportResponse = {
     latitude: number | null;
     longitude: number | null;
     admin_area_id: string | null;
+    admin_area_name: string | null;
     priority: string;
     confidence_score: number;
     admin_note: string | null;
@@ -128,6 +133,24 @@ export type AdminReportResponse = ReportResponse & {
     canonical_target: CanonicalTargetPoint | null;
     distance_m: number | null;
     media_count: number;
+    /** Compact field-review projection; null for public reports. */
+    review: ReportReview | null;
+};
+
+export type AdminApplyResult = {
+    report: AdminReportResponse;
+    applied: boolean;
+    idempotent: boolean;
+    action: ReportReviewActionCode;
+    client_action: "OPEN_ROUTE_EDITOR" | null;
+    route_public_id: string | null;
+    comparison: {
+        before: Record<string, unknown> | null;
+        after: Record<string, unknown> | null;
+        affected_variant_count: number | null;
+        affected_route_count: number | null;
+    };
+    message: string | null;
 };
 
 export type ReportMediaEvidenceResponse = {
@@ -186,11 +209,23 @@ export type CreateReportResult = {
 };
 
 export class ReportsService {
+    private readonly applyRepo: ReportsApplyRepository;
+
     constructor(
         private readonly reportsRepo: ReportsRepository,
         private readonly mediaRepo: MediaRepository,
-        private readonly fieldRepo: Pick<FieldRepository, "loadRevisionParts">
-    ) {}
+        private readonly fieldRepo: Pick<FieldRepository, "loadRevisionParts">,
+        prisma: PrismaClient,
+        transportRepo: Pick<
+            TransportRepository,
+            | "applyMoveStopInTx"
+            | "applyRemoveStopFromVariantInTx"
+            | "applyCreateAndInsertStopInTx"
+            | "applyUpdateStopDetailsInTx"
+        >
+    ) {
+        this.applyRepo = new ReportsApplyRepository(prisma, reportsRepo, fieldRepo, transportRepo);
+    }
 
     async create(
         viewer: ReportViewer,
@@ -420,12 +455,140 @@ export class ReportsService {
             this.mediaRepo.listReadyPrivateForReport(report.id),
             this.loadCurrentSnapshotRevision(report.source_code),
         ]);
+        const base = toAdminReportResponse(report, canonical, currentRevision);
+        const review = await this.buildReview(report, base.field, canonical.canonical_target);
         return {
-            ...toAdminReportResponse(report, canonical, currentRevision),
+            ...base,
+            review,
             status_events: events.map(toStatusEventResponse),
             followups: followups.map(toFollowupResponse),
             media: media.map(toMediaEvidenceResponse),
         };
+    }
+
+    /**
+     * Typed apply: locks the report, loads trusted proposal data, applies
+     * canonical transport mutations in one transaction, audits, and resolves.
+     */
+    async adminApply(
+        publicId: string,
+        body: AdminApplyBody,
+        audit: AuditContext
+    ): Promise<AdminApplyResult> {
+        try {
+            const result = await this.applyRepo.apply({
+                reportPublicId: publicId,
+                action: body.action,
+                expectedCanonicalRevision: body.expectedCanonicalRevision,
+                audit,
+            });
+            const currentRevision = await this.loadCurrentSnapshotRevision(result.report.source_code);
+            const canonical = await this.loadCanonicalTarget(result.report);
+            const field = toFieldContext(result.report, currentRevision);
+            const review = await this.buildReview(result.report, field, canonical.canonical_target);
+            return {
+                report: {
+                    ...toAdminReportResponse(result.report, canonical, currentRevision),
+                    review,
+                },
+                applied: result.applied,
+                idempotent: result.idempotent,
+                action: result.action,
+                client_action: result.client_action,
+                route_public_id: result.route_public_id,
+                comparison: result.comparison,
+                message: result.message,
+            };
+        } catch (error) {
+            if (error instanceof ReportsApplyError) {
+                throw new ReportsError(error.message, error.statusCode);
+            }
+            throw error;
+        }
+    }
+
+    private async buildReview(
+        report: ReportRow,
+        field: FieldReportAdminContext | null,
+        currentCanonical: CanonicalTargetPoint | null
+    ): Promise<ReportReview | null> {
+        if (!isFieldSurveySource(report.source_code) || !field) {
+            return toReportReview({
+                reportId: report.public_id,
+                reportTypeCode: report.report_type_code,
+                statusCode: report.status_code,
+                sourceCode: report.source_code,
+                timestamp: (report.observed_at ?? report.created_at).toISOString(),
+                field,
+                currentCanonical,
+                affectedRouteCount: 0,
+                previousStop: null,
+                nextStop: null,
+            });
+        }
+
+        const stopPublicId =
+            field.stop_public_id ??
+            (report.report_type_code === "new_stop" ? field.previous_stop_public_id : null);
+        const focusSequence =
+            report.report_type_code === "new_stop"
+                ? field.previous_stop_sequence
+                : field.stop_sequence;
+        const [affectedRouteCount, neighbors, mapWindow] = await Promise.all([
+            stopPublicId ? this.reportsRepo.countAffectedRoutesForStop(stopPublicId) : Promise.resolve(0),
+            this.reportsRepo.findReviewNeighborStops({
+                variantPublicId: field.variant_public_id,
+                stopSequence:
+                    report.report_type_code === "new_stop"
+                        ? field.previous_stop_sequence
+                        : field.stop_sequence,
+                previousStopPublicId:
+                    report.report_type_code === "new_stop" ? field.previous_stop_public_id : null,
+                nextStopPublicId: field.next_stop_public_id,
+            }),
+            this.reportsRepo.findReviewMapWindow({
+                variantPublicId: field.variant_public_id,
+                focusSequence,
+                focusStopPublicId: stopPublicId,
+            }),
+        ]);
+
+        let previousStop = neighbors.previous;
+        let nextStop = neighbors.next;
+        // For ordinary stop reports, neighbors come from live sequence lookup.
+        // For new_stop, previous is the anchor; prefer report sequence on previous when known.
+        if (report.report_type_code === "new_stop" && previousStop) {
+            previousStop = {
+                ...previousStop,
+                sequence: field.previous_stop_sequence ?? previousStop.sequence,
+                name: previousStop.name ?? field.stop_name,
+            };
+        }
+
+        const targetStopPublicId =
+            report.report_type_code === "new_stop" ? null : field.stop_public_id;
+        const mapContext = {
+            stops: labelReviewMapStops({
+                stops: mapWindow,
+                previousStopPublicId: previousStop?.public_id ?? field.previous_stop_public_id,
+                targetStopPublicId,
+                nextStopPublicId: nextStop?.public_id ?? field.next_stop_public_id,
+            }),
+        };
+
+        return toReportReview({
+            reportId: report.public_id,
+            reportTypeCode: report.report_type_code,
+            statusCode: report.status_code,
+            sourceCode: report.source_code,
+            timestamp: (report.observed_at ?? report.created_at).toISOString(),
+            field,
+            currentCanonical,
+            affectedRouteCount,
+            previousStop,
+            nextStop,
+            mapContext: mapContext.stops.length > 0 ? mapContext : null,
+        });
     }
 
     async adminChangeStatus(
@@ -608,6 +771,7 @@ function toReportResponse(row: ReportRow): ReportResponse {
         latitude: row.latitude !== null ? Number(row.latitude) : null,
         longitude: row.longitude !== null ? Number(row.longitude) : null,
         admin_area_id: row.admin_area_id !== null ? row.admin_area_id.toString() : null,
+        admin_area_name: row.admin_area_name ?? null,
         priority: row.priority,
         confidence_score: row.confidence_score,
         admin_note: row.admin_note,
@@ -644,6 +808,7 @@ function toAdminReportResponse(
         canonical_target: canonical?.canonical_target ?? null,
         distance_m: canonical?.distance_m ?? null,
         media_count: Number(row.media_count ?? 0),
+        review: null,
     };
 }
 

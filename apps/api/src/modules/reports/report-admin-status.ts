@@ -10,7 +10,7 @@ export const PUBLIC_ADMIN_STATUS_TRANSITIONS: Record<string, readonly string[]> 
 };
 
 export const FIELD_ADMIN_STATUS_TRANSITIONS: Record<string, readonly string[]> = {
-    submitted: ["in_review"],
+    submitted: ["in_review", "resolved", "rejected"],
     in_review: ["resolved", "rejected"],
 };
 

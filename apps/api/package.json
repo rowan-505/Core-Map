@@ -41,6 +41,7 @@
     "test:media": "node --import tsx --test src/modules/media/*.test.ts src/config/env.test.ts",
     "smoke:media-private-upload": "tsx src/scripts/smoke-media-private-upload.ts",
     "test:reports": "node --import tsx --test src/modules/reports/*.test.ts",
+    "verify:reports-apply-db": "tsx src/scripts/reports-apply-db-verify.ts",
     "check:streets-names": "tsx scripts/check-street-name-normalization.ts",
     "rebuild:search-index": "tsx src/scripts/rebuild-search-index.ts --preset full",
     "rebuild:search-index:light": "tsx src/scripts/rebuild-search-index.ts --preset light",

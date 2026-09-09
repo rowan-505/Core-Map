@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { ChevronDown, RefreshCw, SlidersHorizontal, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { isAbortError } from "@/src/lib/api";
+import AdminAreaCombobox from "@/src/components/admin-areas/AdminAreaCombobox";
 import { reportsPath } from "@/src/lib/dashboardPaths";
 
 import { listReports } from "./api";
@@ -104,10 +106,14 @@ function targetLabel(report: AdminReport): string {
 
 export default function ReportsPage() {
     const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+    const [debouncedRouteCode, setDebouncedRouteCode] = useState("");
+    const [advancedOpen, setAdvancedOpen] = useState(false);
     const [page, setPage] = useState(1);
-    const [data, setData] = useState<AdminReportList | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const timeout = window.setTimeout(() => setDebouncedRouteCode(filters.routeCode.trim()), 300);
+        return () => window.clearTimeout(timeout);
+    }, [filters.routeCode]);
 
     const apiFilters = useMemo<ReportsListFilters>(
         () => ({
@@ -115,7 +121,7 @@ export default function ReportsPage() {
             status: filters.status || undefined,
             type: filters.type || undefined,
             targetEntityType: filters.targetEntityType || undefined,
-            routeCode: filters.routeCode.trim() || undefined,
+            routeCode: debouncedRouteCode || undefined,
             variantCode: filters.variantCode || undefined,
             anonymous: filters.anonymous === "" ? undefined : filters.anonymous === "true",
             adminAreaId: filters.adminAreaId ? Number(filters.adminAreaId) : undefined,
@@ -124,32 +130,15 @@ export default function ReportsPage() {
             page,
             pageSize: PAGE_SIZE,
         }),
-        [filters, page]
+        [debouncedRouteCode, filters, page]
     );
 
-    const load = useCallback(
-        async (signal?: AbortSignal) => {
-            setLoading(true);
-            setError("");
-            try {
-                const res = await listReports(apiFilters, signal ? { signal } : undefined);
-                setData(res);
-            } catch (err) {
-                if (isAbortError(err)) return;
-                setError(err instanceof Error ? err.message : "Failed to load reports.");
-                setData(null);
-            } finally {
-                setLoading(false);
-            }
-        },
-        [apiFilters]
-    );
-
-    useEffect(() => {
-        const controller = new AbortController();
-        void load(controller.signal);
-        return () => controller.abort();
-    }, [load]);
+    const reportsQuery = useQuery({
+        queryKey: ["reports", "list", apiFilters],
+        queryFn: ({ signal }) => listReports(apiFilters, { signal }),
+        placeholderData: keepPreviousData,
+        staleTime: 30_000,
+    });
 
     const patch = useCallback((next: Partial<Filters>) => {
         setFilters((prev) => ({ ...prev, ...next }));
@@ -158,9 +147,14 @@ export default function ReportsPage() {
 
     const resetFilters = useCallback(() => {
         setFilters(EMPTY_FILTERS);
+        setDebouncedRouteCode("");
         setPage(1);
     }, []);
 
+    const data: AdminReportList | null = reportsQuery.data ?? null;
+    const loading = reportsQuery.isPending;
+    const refreshing = reportsQuery.isFetching && !reportsQuery.isPending;
+    const error = reportsQuery.error instanceof Error ? reportsQuery.error.message : "";
     const items = data?.items ?? [];
     const total = data?.total ?? 0;
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -168,6 +162,15 @@ export default function ReportsPage() {
     const rangeEnd = Math.min(page * PAGE_SIZE, total);
     const fieldTable = filters.source === "field_survey";
     const colSpan = fieldTable ? 9 : 10;
+    const advancedFilterCount = [
+        filters.targetEntityType,
+        filters.routeCode,
+        filters.variantCode,
+        filters.anonymous,
+        filters.adminAreaId,
+        filters.createdFrom,
+        filters.createdTo,
+    ].filter(Boolean).length;
 
     return (
         <main className="p-6">
@@ -190,8 +193,8 @@ export default function ReportsPage() {
                     </Link>
                 </header>
 
-                <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <div className="flex flex-wrap gap-3">
+                <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div className="flex flex-wrap items-end gap-3 p-4">
                         <label className="flex flex-col gap-1">
                             <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
                                 Source
@@ -248,129 +251,109 @@ export default function ReportsPage() {
                             </select>
                         </label>
 
-                        <label className="flex flex-col gap-1">
-                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                Target
-                            </span>
-                            <select
-                                className={SELECT_CLASS}
-                                value={filters.targetEntityType}
-                                onChange={(e) =>
-                                    patch({
-                                        targetEntityType: e.target.value as ReportTargetEntityType | "",
-                                    })
-                                }
+                        <button
+                            type="button"
+                            onClick={() => setAdvancedOpen((open) => !open)}
+                            className={`${SECONDARY_BTN} inline-flex items-center gap-2`}
+                            aria-expanded={advancedOpen}
+                        >
+                            <SlidersHorizontal className="h-4 w-4" aria-hidden />
+                            More filters
+                            {advancedFilterCount > 0 ? (
+                                <span className="rounded-full bg-gray-900 px-1.5 py-0.5 text-[11px] text-white">
+                                    {advancedFilterCount}
+                                </span>
+                            ) : null}
+                            <ChevronDown
+                                className={`h-4 w-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+                                aria-hidden
+                            />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => void reportsQuery.refetch()}
+                            disabled={reportsQuery.isFetching}
+                            className={`${SECONDARY_BTN} inline-flex items-center gap-2`}
+                        >
+                            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden />
+                            Refresh
+                        </button>
+
+                        {filters.source || filters.status || filters.type || advancedFilterCount > 0 ? (
+                            <button
+                                type="button"
+                                onClick={resetFilters}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                             >
-                                <option value="">All</option>
-                                {TARGET_ENTITY_TYPE_OPTIONS.map((o) => (
-                                    <option key={o.value} value={o.value}>
-                                        {o.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                Route
-                            </span>
-                            <input
-                                type="text"
-                                value={filters.routeCode}
-                                onChange={(e) => patch({ routeCode: e.target.value })}
-                                placeholder="YBS-13"
-                                className={`w-32 ${SELECT_CLASS}`}
-                            />
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                D0 / D1
-                            </span>
-                            <select
-                                className={SELECT_CLASS}
-                                value={filters.variantCode}
-                                onChange={(e) =>
-                                    patch({ variantCode: e.target.value as "D0" | "D1" | "" })
-                                }
-                            >
-                                <option value="">All</option>
-                                {FIELD_VARIANT_OPTIONS.map((o) => (
-                                    <option key={o.value} value={o.value}>
-                                        {o.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                Reporter
-                            </span>
-                            <select
-                                className={SELECT_CLASS}
-                                value={filters.anonymous}
-                                onChange={(e) => patch({ anonymous: e.target.value as TriState })}
-                            >
-                                <option value="">Any</option>
-                                <option value="false">Logged-in</option>
-                                <option value="true">Anonymous</option>
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                Region ID
-                            </span>
-                            <input
-                                type="number"
-                                min={1}
-                                value={filters.adminAreaId}
-                                onChange={(e) => patch({ adminAreaId: e.target.value })}
-                                placeholder="Any"
-                                className={`w-28 ${SELECT_CLASS}`}
-                            />
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                From
-                            </span>
-                            <input
-                                type="date"
-                                value={filters.createdFrom}
-                                onChange={(e) => patch({ createdFrom: e.target.value })}
-                                className={SELECT_CLASS}
-                            />
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                To
-                            </span>
-                            <input
-                                type="date"
-                                value={filters.createdTo}
-                                onChange={(e) => patch({ createdTo: e.target.value })}
-                                className={SELECT_CLASS}
-                            />
-                        </label>
-
-                        <div className="flex items-end">
-                            <button type="button" onClick={resetFilters} className={SECONDARY_BTN}>
-                                Reset
+                                <X className="h-4 w-4" aria-hidden />
+                                Clear
                             </button>
-                        </div>
+                        ) : null}
                     </div>
-                </div>
+
+                    {advancedOpen ? (
+                        <div className="grid gap-3 border-t border-gray-100 bg-gray-50/70 p-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <label className="flex flex-col gap-1">
+                                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Target</span>
+                                <select
+                                    className={SELECT_CLASS}
+                                    value={filters.targetEntityType}
+                                    onChange={(e) => patch({ targetEntityType: e.target.value as ReportTargetEntityType | "" })}
+                                >
+                                    <option value="">All targets</option>
+                                    {TARGET_ENTITY_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                            </label>
+                            <label className="flex flex-col gap-1">
+                                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Route</span>
+                                <input type="text" value={filters.routeCode} onChange={(e) => patch({ routeCode: e.target.value })} placeholder="YBS-13" className={SELECT_CLASS} />
+                            </label>
+                            <label className="flex flex-col gap-1">
+                                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">D0 / D1</span>
+                                <select className={SELECT_CLASS} value={filters.variantCode} onChange={(e) => patch({ variantCode: e.target.value as "D0" | "D1" | "" })}>
+                                    <option value="">All variants</option>
+                                    {FIELD_VARIANT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                            </label>
+                            <label className="flex flex-col gap-1">
+                                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Reporter</span>
+                                <select className={SELECT_CLASS} value={filters.anonymous} onChange={(e) => patch({ anonymous: e.target.value as TriState })}>
+                                    <option value="">Any reporter</option>
+                                    <option value="false">Logged-in</option>
+                                    <option value="true">Anonymous</option>
+                                </select>
+                            </label>
+                            <div className="flex flex-col gap-1 sm:col-span-2">
+                                <label htmlFor="report-region-filter" className="text-xs font-medium uppercase tracking-wide text-gray-500">Region</label>
+                                <AdminAreaCombobox
+                                    id="report-region-filter"
+                                    value={filters.adminAreaId || null}
+                                    onChange={(value) => patch({ adminAreaId: value ?? "" })}
+                                    placeholder="Search by region name…"
+                                />
+                            </div>
+                            <label className="flex flex-col gap-1">
+                                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">From</span>
+                                <input type="date" value={filters.createdFrom} onChange={(e) => patch({ createdFrom: e.target.value })} className={SELECT_CLASS} />
+                            </label>
+                            <label className="flex flex-col gap-1">
+                                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">To</span>
+                                <input type="date" value={filters.createdTo} onChange={(e) => patch({ createdTo: e.target.value })} className={SELECT_CLASS} />
+                            </label>
+                        </div>
+                    ) : null}
+                </section>
 
                 {error ? (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                        {error}
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                        <span>{error}</span>
+                        <button type="button" onClick={() => void reportsQuery.refetch()} className="font-semibold underline underline-offset-2">Try again</button>
                     </div>
                 ) : null}
 
-                <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="relative overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+                    {refreshing ? <div className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-indigo-500" /> : null}
                     <table className="min-w-full text-left text-sm">
                         <thead className="border-b text-xs uppercase text-gray-500">
                             {fieldTable ? (
@@ -391,7 +374,7 @@ export default function ReportsPage() {
                                     <th className="px-3 py-2">Status</th>
                                     <th className="px-3 py-2">Type</th>
                                     <th className="px-3 py-2">Target</th>
-                                    <th className="px-3 py-2">Region</th>
+                                    <th className="px-3 py-2">Admin area</th>
                                     <th className="px-3 py-2">Reporter</th>
                                     <th className="px-3 py-2">Priority</th>
                                     <th className="px-3 py-2">Created</th>
@@ -491,7 +474,7 @@ export default function ReportsPage() {
                                         </td>
                                         <td className="px-3 py-2 text-gray-700">{targetLabel(row)}</td>
                                         <td className="px-3 py-2 text-gray-700">
-                                            {row.admin_area_id ?? "—"}
+                                            {row.admin_area_name ?? row.admin_area_id ?? "—"}
                                         </td>
                                         <td className="px-3 py-2">
                                             <ReporterCell report={row} />

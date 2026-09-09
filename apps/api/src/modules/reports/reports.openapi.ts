@@ -11,6 +11,7 @@ import {
 import {
     ADMIN_REPORT_TARGET_ENTITY_TYPES,
     FIELD_VARIANT_FILTER_CODES,
+    REPORT_APPLY_ACTION_CODES,
     REPORT_REWARD_REASON_CODES,
     REPORT_SOURCE_CODES,
     REPORT_STATUS_CODES,
@@ -66,6 +67,7 @@ const reportSchema = {
         latitude: { type: "number", nullable: true },
         longitude: { type: "number", nullable: true },
         admin_area_id: { type: "string", nullable: true },
+        admin_area_name: { type: "string", nullable: true },
         priority: { type: "string" },
         confidence_score: { type: "integer" },
         admin_note: { type: "string", nullable: true },
@@ -190,6 +192,112 @@ const canonicalTargetSchema = {
     additionalProperties: false,
 } as const;
 
+const reviewStopRefSchema = {
+    type: "object",
+    nullable: true,
+    required: ["public_id", "name", "sequence"],
+    properties: {
+        public_id: { type: "string", format: "uuid" },
+        name: { type: "string", nullable: true },
+        sequence: { type: "integer", nullable: true },
+    },
+    additionalProperties: false,
+} as const;
+
+const reviewAllowedActionSchema = {
+    type: "object",
+    required: ["action", "enabled", "disabledReason"],
+    properties: {
+        action: { type: "string", enum: [...REPORT_APPLY_ACTION_CODES] },
+        enabled: { type: "boolean" },
+        disabledReason: { type: "string", nullable: true },
+    },
+    additionalProperties: false,
+} as const;
+
+const reportReviewSchema = {
+    type: "object",
+    nullable: true,
+    required: [
+        "report_id",
+        "report_type",
+        "status",
+        "timestamp",
+        "kind",
+        "route_code",
+        "variant_code",
+        "target_stop",
+        "proposed_change",
+        "current_canonical_revision",
+        "field_snapshot_revision",
+        "coordinates",
+        "previous_stop",
+        "next_stop",
+        "map_context",
+        "affected_route_count",
+        "allowedActions",
+    ],
+    properties: {
+        report_id: { type: "string", format: "uuid" },
+        report_type: { type: "string" },
+        status: { type: "string" },
+        timestamp: { type: "string", format: "date-time" },
+        kind: {
+            type: "string",
+            nullable: true,
+            enum: ["STOP_MOVED", "STOP_MISSING", "NEW_STOP", "WRONG_DATA", "ROUTE_ISSUE", "OTHER"],
+        },
+        route_code: { type: "string", nullable: true },
+        variant_code: { type: "string", nullable: true },
+        target_stop: reviewStopRefSchema,
+        proposed_change: { type: "string", nullable: true },
+        current_canonical_revision: { type: "string", nullable: true },
+        field_snapshot_revision: { type: "string", nullable: true },
+        coordinates: {
+            type: "object",
+            required: ["current", "proposed", "observed"],
+            properties: {
+                current: geoPointSchema,
+                proposed: geoPointSchema,
+                observed: geoPointSchema,
+            },
+            additionalProperties: false,
+        },
+        previous_stop: reviewStopRefSchema,
+        next_stop: reviewStopRefSchema,
+        map_context: {
+            type: "object",
+            nullable: true,
+            required: ["stops"],
+            properties: {
+                stops: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        required: ["public_id", "name", "sequence", "latitude", "longitude", "role"],
+                        properties: {
+                            public_id: { type: "string", format: "uuid" },
+                            name: { type: "string", nullable: true },
+                            sequence: { type: "integer", nullable: true },
+                            latitude: { type: "number" },
+                            longitude: { type: "number" },
+                            role: {
+                                type: "string",
+                                enum: ["previous", "target", "next", "surrounding"],
+                            },
+                        },
+                        additionalProperties: false,
+                    },
+                },
+            },
+            additionalProperties: false,
+        },
+        affected_route_count: { type: "integer", minimum: 0 },
+        allowedActions: { type: "array", items: reviewAllowedActionSchema },
+    },
+    additionalProperties: false,
+} as const;
+
 const adminReportSchema = {
     type: "object",
     required: [
@@ -203,6 +311,7 @@ const adminReportSchema = {
         "canonical_target",
         "distance_m",
         "media_count",
+        "review",
     ],
     properties: {
         ...reportSchema.properties,
@@ -225,6 +334,7 @@ const adminReportSchema = {
         canonical_target: canonicalTargetSchema,
         distance_m: { type: "number", nullable: true },
         media_count: { type: "integer", minimum: 0 },
+        review: reportReviewSchema,
     },
     additionalProperties: false,
 } as const;
@@ -421,6 +531,10 @@ export const getAdminReportsSchema = {
 export const getAdminReportSchema = {
     tags: [Tags.Reports],
     summary: "Get a report (admin)",
+    description:
+        "Returns admin report detail plus a compact `review` projection for field survey reports " +
+        "(proposed change, revisions, coordinates, neighbors, allowedActions). " +
+        "Does not apply canonical transport edits.",
     security: [...bearerAuth],
     params: adminIdParam,
     response: {
@@ -429,6 +543,61 @@ export const getAdminReportSchema = {
         401: messageSchema,
         403: messageSchema,
         404: notFoundSchema,
+    },
+} satisfies FastifySchema;
+
+export const postAdminReportApplySchema = {
+    tags: [Tags.Reports],
+    summary: "Apply a typed review action (admin)",
+    description:
+        "Accepts only `{ action, expectedCanonicalRevision }`. Canonical targets, coordinates, and names " +
+        "are loaded from trusted report evidence — not from the request body. " +
+        "Runs in one DB transaction with report row locking, stale-revision checks (409), " +
+        "transport writes for MOVE_STOP / REMOVE_FROM_ROUTE / CREATE_AND_INSERT_STOP / UPDATE_STOP_DETAILS, " +
+        "and audit + resolve. RESOLVE/REJECT update lifecycle only. OPEN_ROUTE_EDITOR is navigation-only (no mutation). " +
+        "Retry of an already-applied action is idempotent.",
+    security: [...bearerAuth],
+    params: adminIdParam,
+    body: {
+        type: "object",
+        required: ["action", "expectedCanonicalRevision"],
+        additionalProperties: false,
+        properties: {
+            action: { type: "string", enum: [...REPORT_APPLY_ACTION_CODES] },
+            expectedCanonicalRevision: { type: "string", minLength: 1, maxLength: 80 },
+        },
+    },
+    response: {
+        200: {
+            type: "object",
+            required: ["report", "applied", "idempotent", "action", "client_action", "route_public_id", "comparison", "message"],
+            properties: {
+                report: adminReportSchema,
+                applied: { type: "boolean" },
+                idempotent: { type: "boolean" },
+                action: { type: "string", enum: [...REPORT_APPLY_ACTION_CODES] },
+                client_action: { type: "string", nullable: true, enum: ["OPEN_ROUTE_EDITOR"] },
+                route_public_id: { type: "string", format: "uuid", nullable: true },
+                comparison: {
+                    type: "object",
+                    required: ["before", "after", "affected_variant_count", "affected_route_count"],
+                    properties: {
+                        before: { type: "object", nullable: true, additionalProperties: true },
+                        after: { type: "object", nullable: true, additionalProperties: true },
+                        affected_variant_count: { type: "integer", nullable: true },
+                        affected_route_count: { type: "integer", nullable: true },
+                    },
+                    additionalProperties: false,
+                },
+                message: { type: "string", nullable: true },
+            },
+            additionalProperties: false,
+        },
+        400: badRequestSchema,
+        401: messageSchema,
+        403: messageSchema,
+        404: notFoundSchema,
+        409: conflictSchema,
     },
 } satisfies FastifySchema;
 
@@ -563,6 +732,7 @@ export const getReportAnalyticsSummarySchema = {
                 "accepted",
                 "rejected",
                 "duplicate",
+                "resolved",
                 "anonymous",
                 "logged_in",
                 "this_week",
@@ -576,6 +746,7 @@ export const getReportAnalyticsSummarySchema = {
                 accepted: { type: "integer" },
                 rejected: { type: "integer" },
                 duplicate: { type: "integer" },
+                resolved: { type: "integer" },
                 anonymous: { type: "integer" },
                 logged_in: { type: "integer" },
                 this_week: { type: "integer" },

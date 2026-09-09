@@ -58,6 +58,7 @@ export type AdminReport = {
     latitude: number | null;
     longitude: number | null;
     admin_area_id: string | null;
+    admin_area_name?: string | null;
     priority: string;
     confidence_score: number;
     admin_note: string | null;
@@ -74,6 +75,96 @@ export type AdminReport = {
     canonical_target: { latitude: number; longitude: number } | null;
     distance_m: number | null;
     media_count: number;
+    review: ReportReview | null;
+};
+
+export type ReportReviewActionCode =
+    | "MOVE_STOP"
+    | "REMOVE_FROM_ROUTE"
+    | "CREATE_AND_INSERT_STOP"
+    | "UPDATE_STOP_DETAILS"
+    | "OPEN_ROUTE_EDITOR"
+    | "RESOLVE"
+    | "REJECT";
+
+export type ReportReviewKind =
+    | "STOP_MOVED"
+    | "STOP_MISSING"
+    | "NEW_STOP"
+    | "WRONG_DATA"
+    | "ROUTE_ISSUE"
+    | "OTHER";
+
+export type ReportReviewStopRef = {
+    public_id: string;
+    name: string | null;
+    sequence: number | null;
+};
+
+export type ReportReviewMapStopRole = "previous" | "target" | "next" | "surrounding";
+
+export type ReportReviewMapStop = {
+    public_id: string;
+    name: string | null;
+    sequence: number | null;
+    latitude: number;
+    longitude: number;
+    role: ReportReviewMapStopRole;
+};
+
+export type ReportReviewMapContext = {
+    stops: ReportReviewMapStop[];
+};
+
+export type ReportReviewAllowedAction = {
+    action: ReportReviewActionCode;
+    enabled: boolean;
+    disabledReason: string | null;
+};
+
+export type ReportReview = {
+    report_id: string;
+    report_type: string;
+    status: string;
+    timestamp: string;
+    kind: ReportReviewKind | null;
+    route_code: string | null;
+    variant_code: string | null;
+    target_stop: ReportReviewStopRef | null;
+    proposed_change: string | null;
+    current_canonical_revision: string | null;
+    field_snapshot_revision: string | null;
+    coordinates: {
+        current: { latitude: number; longitude: number } | null;
+        proposed: { latitude: number; longitude: number } | null;
+        observed: { latitude: number; longitude: number } | null;
+    };
+    previous_stop: ReportReviewStopRef | null;
+    next_stop: ReportReviewStopRef | null;
+    map_context: ReportReviewMapContext | null;
+    affected_route_count: number;
+    allowedActions: ReportReviewAllowedAction[];
+};
+
+export type ReportApplyRequest = {
+    action: ReportReviewActionCode;
+    expectedCanonicalRevision: string;
+};
+
+export type ReportApplyResult = {
+    report: AdminReport;
+    applied: boolean;
+    idempotent: boolean;
+    action: ReportReviewActionCode;
+    client_action: "OPEN_ROUTE_EDITOR" | null;
+    route_public_id: string | null;
+    comparison: {
+        before: Record<string, unknown> | null;
+        after: Record<string, unknown> | null;
+        affected_variant_count: number | null;
+        affected_route_count: number | null;
+    };
+    message: string | null;
 };
 
 export type ReportMediaEvidence = {
@@ -169,6 +260,7 @@ export type ReportAnalyticsSummary = {
     accepted: number;
     rejected: number;
     duplicate: number;
+    resolved: number;
     anonymous: number;
     logged_in: number;
     this_week: number;

@@ -23,8 +23,13 @@ describe("report admin status transitions", () => {
     });
 
     it("lets field reports go submitted → in_review → resolved, not accepted", () => {
-        assert.deepEqual(allowedAdminStatusTargets("submitted", "field_survey"), ["in_review"]);
+        assert.deepEqual(allowedAdminStatusTargets("submitted", "field_survey"), [
+            "in_review",
+            "resolved",
+            "rejected",
+        ]);
         assert.equal(isAllowedAdminStatusTransition("submitted", "duplicate", "field_survey"), false);
+        assert.equal(isAllowedAdminStatusTransition("submitted", "resolved", "field_survey"), true);
         assert.equal(isAllowedAdminStatusTransition("in_review", "resolved", "field_survey"), true);
         assert.equal(isAllowedAdminStatusTransition("in_review", "rejected", "field_survey"), true);
         assert.equal(isAllowedAdminStatusTransition("in_review", "accepted", "field_survey"), false);

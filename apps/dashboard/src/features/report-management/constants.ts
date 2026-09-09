@@ -76,7 +76,13 @@ export function statusBadgeClass(code: string): string {
 }
 
 export function reportTypeLabel(code: string): string {
-    return REPORT_TYPE_OPTIONS.find((o) => o.value === code)?.label ?? code;
+    const legacyLabels: Record<string, string> = {
+        duplicate_place: "Duplicate place",
+        missing_place: "Missing place",
+        wrong_name: "Wrong name",
+        wrong_route: "Wrong route",
+    };
+    return REPORT_TYPE_OPTIONS.find((o) => o.value === code)?.label ?? legacyLabels[code] ?? code.replaceAll("_", " ");
 }
 
 export function reportTypeBadgeClass(code: string): string {
@@ -87,7 +93,11 @@ export function reportTypeBadgeClass(code: string): string {
 }
 
 export function statusLabel(code: string): string {
-    return REPORT_STATUS_OPTIONS.find((o) => o.value === code)?.label ?? code;
+    const legacyLabels: Record<string, string> = {
+        open: "Open",
+        under_review: "Under review",
+    };
+    return REPORT_STATUS_OPTIONS.find((o) => o.value === code)?.label ?? legacyLabels[code] ?? code.replaceAll("_", " ");
 }
 
 export function targetTypeLabel(code: string | null): string {

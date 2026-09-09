@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 
 import { createPreviewBaseMap } from "@/src/components/map/createPreviewBaseMap";
@@ -8,64 +8,118 @@ import { MAP_PREVIEW_VIEWPORT_FORM } from "@/src/components/map/mapPreviewUi";
 import { PLACE_MAP_DEFAULT_CENTER } from "@/src/components/map/placeMapConfig";
 import { useClientMounted } from "@/src/hooks/useClientMounted";
 
-import { accuracyCircleCoordinates, type EvidenceMapPoint } from "./fieldEvidenceView";
+import {
+    EVIDENCE_MAP_MAX_AUTO_ZOOM,
+    SURVEY_OUTSIDE_MAP_MESSAGE,
+    evidenceMapFitPoints,
+    formatEvidenceDistanceMeters,
+    type EvidenceMapMarker,
+    type EvidenceMapMarkerRole,
+    type EvidenceMapModel,
+} from "./evidenceMapModel";
 
 type ReportLocationCompareMapProps = {
-    points: EvidenceMapPoint[];
-    distanceM: number | null;
-    labels?: Partial<Record<EvidenceMapPoint["role"], string>>;
-    showDistanceWhen?: "canonical" | "gps-to-proposed";
+    model: EvidenceMapModel;
 };
 
-const COLORS: Record<EvidenceMapPoint["role"], string> = {
+const COLORS: Record<EvidenceMapMarkerRole, string> = {
     canonical: "#2563eb",
-    observed: "#ea580c",
     proposed: "#16a34a",
+    observed: "#ea580c",
+    removal: "#dc2626",
+    previous: "#6b7280",
+    next: "#6b7280",
+    surrounding: "#9ca3af",
+    target: "#2563eb",
 };
 
-const DEFAULT_LABELS: Record<EvidenceMapPoint["role"], string> = {
-    canonical: "Current canonical stop",
-    observed: "Observed surveyor location",
-    proposed: "Proposed corrected location",
-};
+const LINE_SOURCE = "report-evidence-lines";
+const LINE_BEFORE = "report-evidence-line-before";
+const LINE_AFTER = "report-evidence-line-after";
+const LINE_INSERT = "report-evidence-line-insert";
 
-const ACCURACY_SOURCE = "report-evidence-accuracy";
-const ACCURACY_FILL = "report-evidence-accuracy-fill";
-const ACCURACY_LINE = "report-evidence-accuracy-line";
+const LEGEND: Array<{ role: EvidenceMapMarkerRole; label: string }> = [
+    { role: "canonical", label: "Current" },
+    { role: "proposed", label: "Proposed" },
+    { role: "observed", label: "Survey GPS" },
+    { role: "removal", label: "Remove" },
+    { role: "surrounding", label: "Route stops" },
+];
 
-function formatDistance(distanceM: number | null): string {
-    if (distanceM === null || !Number.isFinite(distanceM)) {
-        return "Distance unavailable";
-    }
-    if (distanceM < 10) {
-        return `${distanceM.toFixed(1)} m apart`;
-    }
-    return `${Math.round(distanceM)} m apart`;
-}
-
-function makeMarker(color: string, label: string) {
+function makePlainMarker(marker: EvidenceMapMarker) {
     const el = document.createElement("div");
-    el.title = label;
-    el.style.width = "16px";
-    el.style.height = "16px";
-    el.style.borderRadius = "9999px";
-    el.style.background = color;
-    el.style.border = "2px solid #fff";
-    el.style.boxShadow = "0 0 0 1px rgb(0 0 0 / 0.25)";
+    el.title = marker.label;
+    el.setAttribute("aria-label", marker.label);
+    const numbered =
+        marker.role === "surrounding" ||
+        marker.role === "previous" ||
+        marker.role === "next" ||
+        marker.role === "removal";
+    if (numbered && marker.sequence != null) {
+        el.textContent = String(marker.sequence);
+        el.style.minWidth = "20px";
+        el.style.height = "20px";
+        el.style.padding = "0 4px";
+        el.style.borderRadius = "9999px";
+        el.style.background = COLORS[marker.role];
+        el.style.color = "#fff";
+        el.style.fontSize = "10px";
+        el.style.fontWeight = "600";
+        el.style.display = "flex";
+        el.style.alignItems = "center";
+        el.style.justifyContent = "center";
+        el.style.border = "2px solid #fff";
+        el.style.boxShadow = "0 0 0 1px rgb(0 0 0 / 0.2)";
+    } else {
+        el.style.width = "14px";
+        el.style.height = "14px";
+        el.style.borderRadius = "9999px";
+        el.style.background = COLORS[marker.role];
+        el.style.border = "2px solid #fff";
+        el.style.boxShadow = "0 0 0 1px rgb(0 0 0 / 0.25)";
+    }
     return new maplibregl.Marker({ element: el, anchor: "center" });
 }
 
-export default function ReportLocationCompareMap({
-    points,
-    distanceM,
-    labels,
-    showDistanceWhen = "canonical",
-}: ReportLocationCompareMapProps) {
+function fitModel(
+    map: maplibregl.Map,
+    model: EvidenceMapModel,
+    includeObservedOutlier: boolean
+) {
+    const points = evidenceMapFitPoints(model, includeObservedOutlier);
+    if (points.length === 0) {
+        map.jumpTo({ center: PLACE_MAP_DEFAULT_CENTER, zoom: 12 });
+        return;
+    }
+    if (points.length === 1) {
+        const only = points[0]!;
+        map.easeTo({
+            center: [only.longitude, only.latitude],
+            zoom: Math.min(17, EVIDENCE_MAP_MAX_AUTO_ZOOM),
+            duration: 350,
+        });
+        return;
+    }
+    const bounds = new maplibregl.LngLatBounds();
+    for (const point of points) {
+        bounds.extend([point.longitude, point.latitude]);
+    }
+    map.fitBounds(bounds, {
+        padding: 56,
+        maxZoom: EVIDENCE_MAP_MAX_AUTO_ZOOM,
+        duration: 350,
+    });
+}
+
+export default function ReportLocationCompareMap({ model }: ReportLocationCompareMapProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const markersRef = useRef<maplibregl.Marker[]>([]);
     const [mapReady, setMapReady] = useState(false);
+    const [showSurveyLocation, setShowSurveyLocation] = useState(false);
     const clientMounted = useClientMounted();
+
+    const legendRoles = useMemo(() => new Set(model.markers.map((marker) => marker.role)), [model.markers]);
 
     useEffect(() => {
         if (!clientMounted || !containerRef.current || mapRef.current) {
@@ -107,6 +161,19 @@ export default function ReportLocationCompareMap({
     }, [clientMounted]);
 
     useEffect(() => {
+        const root = containerRef.current;
+        const map = mapRef.current;
+        if (!root || !map || !mapReady) {
+            return;
+        }
+        const ro = new ResizeObserver(() => {
+            map.resize();
+        });
+        ro.observe(root);
+        return () => ro.disconnect();
+    }, [mapReady]);
+
+    useEffect(() => {
         const map = mapRef.current;
         if (!map || !mapReady) {
             return;
@@ -117,91 +184,97 @@ export default function ReportLocationCompareMap({
         }
         markersRef.current = [];
 
-        for (const point of points) {
-            const marker = makeMarker(COLORS[point.role], labels?.[point.role] ?? DEFAULT_LABELS[point.role])
-                .setLngLat([point.longitude, point.latitude])
+        for (const marker of model.markers) {
+            const mapMarker = makePlainMarker(marker)
+                .setLngLat([marker.longitude, marker.latitude])
                 .addTo(map);
-            markersRef.current.push(marker);
+            markersRef.current.push(mapMarker);
         }
 
-        const observed = points.find((point) => point.role === "observed" && (point.accuracyM ?? 0) > 0);
-        const circle =
-            observed && observed.accuracyM
-                ? accuracyCircleCoordinates(observed.longitude, observed.latitude, observed.accuracyM)
-                : null;
-        const geojson: GeoJSON.Feature<GeoJSON.Polygon> | GeoJSON.FeatureCollection = circle
-            ? {
-                  type: "Feature",
-                  properties: {},
-                  geometry: { type: "Polygon", coordinates: [circle] },
-              }
-            : { type: "FeatureCollection", features: [] };
+        const features: GeoJSON.Feature[] = model.lines.map((line) => ({
+            type: "Feature",
+            properties: { kind: line.kind },
+            geometry: { type: "LineString", coordinates: line.coordinates },
+        }));
+        const geojson: GeoJSON.FeatureCollection = { type: "FeatureCollection", features };
 
-        if (map.getSource(ACCURACY_SOURCE)) {
-            (map.getSource(ACCURACY_SOURCE) as maplibregl.GeoJSONSource).setData(geojson);
+        if (map.getSource(LINE_SOURCE)) {
+            (map.getSource(LINE_SOURCE) as maplibregl.GeoJSONSource).setData(geojson);
         } else {
-            map.addSource(ACCURACY_SOURCE, { type: "geojson", data: geojson });
+            map.addSource(LINE_SOURCE, { type: "geojson", data: geojson });
             map.addLayer({
-                id: ACCURACY_FILL,
-                type: "fill",
-                source: ACCURACY_SOURCE,
-                paint: { "fill-color": COLORS.observed, "fill-opacity": 0.18 },
-            });
-            map.addLayer({
-                id: ACCURACY_LINE,
+                id: LINE_BEFORE,
                 type: "line",
-                source: ACCURACY_SOURCE,
-                paint: { "line-color": COLORS.observed, "line-width": 1.5, "line-opacity": 0.7 },
+                source: LINE_SOURCE,
+                filter: ["==", ["get", "kind"], "before"],
+                paint: { "line-color": "#6b7280", "line-width": 3, "line-opacity": 0.85 },
+            });
+            map.addLayer({
+                id: LINE_AFTER,
+                type: "line",
+                source: LINE_SOURCE,
+                filter: ["==", ["get", "kind"], "after"],
+                paint: {
+                    "line-color": "#16a34a",
+                    "line-width": 3,
+                    "line-opacity": 0.9,
+                    "line-dasharray": [1.4, 1.4],
+                },
+            });
+            map.addLayer({
+                id: LINE_INSERT,
+                type: "line",
+                source: LINE_SOURCE,
+                filter: ["==", ["get", "kind"], "insert"],
+                paint: { "line-color": "#16a34a", "line-width": 3, "line-opacity": 0.9 },
             });
         }
 
-        if (points.length === 0) {
-            map.jumpTo({ center: PLACE_MAP_DEFAULT_CENTER, zoom: 12 });
-            return;
-        }
-        if (points.length === 1) {
-            const only = points[0]!;
-            map.easeTo({ center: [only.longitude, only.latitude], zoom: 17, duration: 400 });
-            return;
-        }
+        fitModel(map, model, showSurveyLocation);
+    }, [mapReady, model, showSurveyLocation]);
 
-        const bounds = new maplibregl.LngLatBounds();
-        for (const point of points) {
-            bounds.extend([point.longitude, point.latitude]);
-        }
-        map.fitBounds(bounds, { padding: 56, maxZoom: 18, duration: 400 });
-    }, [mapReady, points, labels]);
-
-    if (points.length === 0) {
+    if (model.empty) {
         return <p className="text-sm text-gray-500">No coordinates to compare.</p>;
     }
-
-    const roles = new Set(points.map((point) => point.role));
-    const showDistance =
-        showDistanceWhen === "gps-to-proposed"
-            ? roles.has("observed") && roles.has("proposed")
-            : roles.has("canonical") && (roles.has("observed") || roles.has("proposed"));
 
     return (
         <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
                 <div className="flex flex-wrap gap-3">
-                    {(["canonical", "observed", "proposed"] as const).map((role) =>
-                        roles.has(role) ? (
-                            <span key={role} className="inline-flex items-center gap-1.5">
+                    {LEGEND.map((item) =>
+                        legendRoles.has(item.role) ||
+                        (item.role === "surrounding" &&
+                            (legendRoles.has("previous") || legendRoles.has("next"))) ? (
+                            <span key={item.role} className="inline-flex items-center gap-1.5">
                                 <span
                                     className="inline-block h-2.5 w-2.5 rounded-full"
-                                    style={{ backgroundColor: COLORS[role] }}
+                                    style={{ backgroundColor: COLORS[item.role] }}
                                 />
-                                {labels?.[role] ?? DEFAULT_LABELS[role]}
+                                {item.label}
                             </span>
                         ) : null
                     )}
                 </div>
-                {showDistance ? (
-                    <span className="font-medium text-gray-800">{formatDistance(distanceM)}</span>
+                {model.distance ? (
+                    <span className="font-medium text-gray-800">
+                        {model.distance.label}: {formatEvidenceDistanceMeters(model.distance.meters)}
+                    </span>
                 ) : null}
             </div>
+
+            {model.observedIsOutlier && !showSurveyLocation ? (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-950">
+                    <span>{SURVEY_OUTSIDE_MAP_MESSAGE}</span>
+                    <button
+                        type="button"
+                        className="rounded-md border border-amber-300 bg-white px-2 py-1 font-medium text-amber-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700"
+                        onClick={() => setShowSurveyLocation(true)}
+                    >
+                        Show survey location
+                    </button>
+                </div>
+            ) : null}
+
             <div ref={containerRef} className={MAP_PREVIEW_VIEWPORT_FORM} />
         </div>
     );

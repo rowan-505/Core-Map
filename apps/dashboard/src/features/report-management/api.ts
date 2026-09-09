@@ -8,6 +8,8 @@ import type {
     MediaAccess,
     ReportAnalyticsSummary,
     ReportAnonymousCount,
+    ReportApplyRequest,
+    ReportApplyResult,
     ReportCodeCount,
     ReportRegionCount,
     ReportsListFilters,
@@ -61,6 +63,15 @@ export function changeReportStatus(id: string, statusCode: ReportStatusCode, not
         method: request.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request.body),
+    });
+}
+
+/** Typed apply — body is action + revision only; server loads trusted report evidence. */
+export function applyReportAction(id: string, body: ReportApplyRequest) {
+    return apiFetch<ReportApplyResult>(`/admin/reports/${encodeURIComponent(id)}/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
     });
 }
 

@@ -141,6 +141,26 @@ export const rewardPointsBodySchema = z.object({
     note: z.string().trim().max(1000).optional(),
 });
 
+/** Apply request: action + revision only. Targets/coords/names come from trusted report data. */
+export const REPORT_APPLY_ACTION_CODES = [
+    "MOVE_STOP",
+    "REMOVE_FROM_ROUTE",
+    "CREATE_AND_INSERT_STOP",
+    "UPDATE_STOP_DETAILS",
+    "OPEN_ROUTE_EDITOR",
+    "RESOLVE",
+    "REJECT",
+] as const;
+
+export const adminApplyBodySchema = z
+    .object({
+        action: z.enum(REPORT_APPLY_ACTION_CODES),
+        expectedCanonicalRevision: z.string().trim().min(1).max(80),
+    })
+    .strict();
+
+export type AdminApplyBody = z.infer<typeof adminApplyBodySchema>;
+
 export const reportPublicIdParamSchema = z.object({
     publicId: z.string().trim().uuid(),
 });

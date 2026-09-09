@@ -14,6 +14,25 @@ export const DASHBOARD_ACCESS_ROLES = new Set(["viewer", "admin", "super_admin"]
 /** Canonical dashboard/transport writes. `surveyor` must never be added here. */
 export const DASHBOARD_WRITE_ROLES = new Set(["admin", "super_admin"]);
 
+/** Field-report review/apply permission — same gate as dashboard writes today. */
+export const REPORTS_REVIEW_ROLES = DASHBOARD_WRITE_ROLES;
+
+export function canReviewReports(roles: readonly string[] | null | undefined): boolean {
+    return (roles ?? []).some((role) => REPORTS_REVIEW_ROLES.has(role));
+}
+
+export async function requireReportsReview(
+    request: FastifyRequest,
+    reply: FastifyReply
+): Promise<void | FastifyReply> {
+    if (!canReviewReports(request.user?.roles)) {
+        return reply.code(403).send({
+            code: "FORBIDDEN",
+            message: "Report review requires an administrator role.",
+        });
+    }
+}
+
 /** JWT role for the field survey app. Least privilege: no dashboard or transport writes. */
 export const FIELD_SURVEYOR_ROLE = "surveyor";
 
@@ -115,6 +134,7 @@ declare module "fastify" {
         requireDashboardAccess: typeof requireDashboardAccess;
         requireDashboardWrite: typeof requireDashboardWrite;
         requireFieldSurveyor: typeof requireFieldSurveyor;
+        requireReportsReview: typeof requireReportsReview;
         requireRole: (
             ...allowedRoles: string[]
         ) => (request: FastifyRequest, reply: FastifyReply) => Promise<void | FastifyReply>;
@@ -146,6 +166,7 @@ export default fp(async function authPlugin(app) {
     app.decorate("requireDashboardAccess", requireDashboardAccess);
     app.decorate("requireDashboardWrite", requireDashboardWrite);
     app.decorate("requireFieldSurveyor", requireFieldSurveyor);
+    app.decorate("requireReportsReview", requireReportsReview);
 
     /**
      * Role gate factory. Use as a preHandler AFTER `app.authenticate`, e.g.

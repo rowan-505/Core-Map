@@ -3,9 +3,11 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { DEV_AUTH_BYPASS_USER, isAuthBypassActive, type JwtUser } from "../../plugins/auth.js";
 import { FieldRepository } from "../field/field.repo.js";
 import { MediaRepository } from "../media/media.repo.js";
+import { TransportRepository } from "../transport/transport.repo.js";
 import { ReportsRepository, type AuditContext } from "./reports.repo.js";
 import { ReportsError, ReportsService, type ReportViewer } from "./reports.service.js";
 import {
+    adminApplyBodySchema,
     adminNoteBodySchema,
     adminReportIdParamSchema,
     adminReportsQuerySchema,
@@ -29,6 +31,7 @@ import {
     getReportSchema,
     patchAdminReportNoteSchema,
     patchAdminReportStatusSchema,
+    postAdminReportApplySchema,
     postAdminRequestInfoSchema,
     postAdminRewardPointsSchema,
     postFollowupSchema,
@@ -73,18 +76,21 @@ async function optionalJwtUser(request: FastifyRequest): Promise<JwtUser | null>
 }
 
 const reportsRoutes: FastifyPluginAsync = async (app) => {
+    const reportsRepo = new ReportsRepository(app.prisma);
     const reportsService = new ReportsService(
-        new ReportsRepository(app.prisma),
+        reportsRepo,
         new MediaRepository(app.prisma),
-        new FieldRepository(app.prisma)
+        new FieldRepository(app.prisma),
+        app.prisma,
+        new TransportRepository(app.prisma)
     );
     const requireAdmin = app.requireRole("admin", "super_admin");
     const adminGuard = { preHandler: [app.authenticate, requireAdmin] };
+    const reportsReviewGuard = { preHandler: [app.authenticate, app.requireReportsReview] };
 
     /** Resolves the admin's internal user id (nullable under dev bypass) for audit linkage. */
     async function adminAudit(request: FastifyRequest): Promise<AuditContext> {
-        const repo = new ReportsRepository(app.prisma);
-        const actorUserId = await repo.findActiveUserIdByPublicId(request.user.sub);
+        const actorUserId = await reportsRepo.findActiveUserIdByPublicId(request.user.sub);
         return auditContext(request, actorUserId);
     }
 
@@ -231,6 +237,27 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
             return handleReportsError(error, reply);
         }
     });
+
+    app.post(
+        "/admin/reports/:id/apply",
+        { ...reportsReviewGuard, schema: postAdminReportApplySchema },
+        async (request, reply) => {
+            const params = adminReportIdParamSchema.safeParse(request.params);
+            if (!params.success) {
+                return reply.code(400).send({ message: "Invalid report id", issues: params.error.flatten() });
+            }
+            const body = adminApplyBodySchema.safeParse(request.body);
+            if (!body.success) {
+                return reply.code(400).send({ message: "Invalid apply payload", issues: body.error.flatten() });
+            }
+            try {
+                const audit = await adminAudit(request);
+                return reply.send(await reportsService.adminApply(params.data.id, body.data, audit));
+            } catch (error) {
+                return handleReportsError(error, reply);
+            }
+        }
+    );
 
     app.patch(
         "/admin/reports/:id/status",

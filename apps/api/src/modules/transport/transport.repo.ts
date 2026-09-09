@@ -9257,4 +9257,421 @@ export class TransportRepository {
 
         return { variants };
     }
+
+    // -------------------------------------------------------------------------
+    // Field-report apply helpers (run inside the caller's transaction)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Move a stop point for field-report apply. PostGIS-safe point update +
+     * transport audit. Does not start its own transaction.
+     */
+    async applyMoveStopInTx(
+        tx: Prisma.TransactionClient,
+        input: {
+            stopPublicId: string;
+            latitude: number;
+            longitude: number;
+            audit?: TransportAuditContext;
+        }
+    ): Promise<{
+        before: { latitude: number; longitude: number };
+        after: { latitude: number; longitude: number };
+        affectedVariantCount: number;
+    }> {
+        const beforeRows = await tx.$queryRaw<
+            { id: bigint; point_lng: number | null; point_lat: number | null }[]
+        >`
+            SELECT id,
+                   ST_X(geom)::float8 AS point_lng,
+                   ST_Y(geom)::float8 AS point_lat
+            FROM transport.stops
+            WHERE public_id = ${input.stopPublicId}::uuid AND deleted_at IS NULL
+            FOR UPDATE
+        `;
+        const before = beforeRows[0];
+        if (!before || before.point_lat == null || before.point_lng == null) {
+            throw new TransportNotFoundError("stop", input.stopPublicId);
+        }
+
+        await tx.$executeRaw`
+            UPDATE transport.stops
+            SET geom = ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326),
+                source_refs = COALESCE(source_refs, '{}'::jsonb)
+                    || jsonb_build_object(
+                        'location_edited_via', 'field_report_apply',
+                        'location_edited_by', 'admin_dashboard'
+                    ),
+                updated_at = now()
+            WHERE id = ${before.id}
+        `;
+        await tx.$executeRaw`
+            UPDATE transport.route_stops
+            SET review_geom = NULL, updated_at = now()
+            WHERE stop_id = ${before.id} AND review_geom IS NOT NULL
+        `;
+
+        const variantCountRows = await tx.$queryRaw<{ count: bigint | number }[]>`
+            SELECT count(DISTINCT rs.route_variant_id) AS count
+            FROM transport.route_stops rs
+            JOIN transport.route_variants v
+              ON v.id = rs.route_variant_id AND v.deleted_at IS NULL
+            WHERE rs.stop_id = ${before.id}
+        `;
+        const affectedVariantCount = Number(variantCountRows[0]?.count ?? 0);
+
+        await insertTransportAuditLog(tx, {
+            action: "transport.stop.point_move",
+            entityType: "transport_stop",
+            entityId: before.id,
+            entityPublicId: input.stopPublicId,
+            changedFields: ["geom"],
+            oldValues: { latitude: before.point_lat, longitude: before.point_lng },
+            newValues: { latitude: input.latitude, longitude: input.longitude },
+            metadata: {
+                via: "field_report_apply",
+                affected_variant_count: affectedVariantCount,
+            },
+            context: input.audit,
+        });
+
+        await this.syncLinkedTerminalsFromStop(tx, {
+            stopId: before.id,
+            stopPublicId: input.stopPublicId,
+            point: { longitude: input.longitude, latitude: input.latitude },
+            audit: input.audit,
+        });
+
+        return {
+            before: { latitude: before.point_lat, longitude: before.point_lng },
+            after: { latitude: input.latitude, longitude: input.longitude },
+            affectedVariantCount,
+        };
+    }
+
+    /**
+     * Remove one stop occurrence from one variant and resequence 1..N.
+     * Never deletes the stop row.
+     */
+    async applyRemoveStopFromVariantInTx(
+        tx: Prisma.TransactionClient,
+        input: {
+            variantPublicId: string;
+            stopPublicId: string;
+            stopSequence: number | null;
+            audit?: TransportAuditContext;
+            reason?: string;
+        }
+    ): Promise<{
+        removedRouteStopId: string;
+        removedSequence: number;
+        resequencedCount: number;
+        sequenceValid: boolean;
+    }> {
+        const membership = await tx.$queryRaw<
+            {
+                id: bigint;
+                route_variant_id: bigint;
+                stop_id: bigint;
+                stop_sequence: number;
+                pickup_type: number;
+                drop_off_type: number;
+                is_timing_point: boolean;
+            }[]
+        >`
+            SELECT rs.id, rs.route_variant_id, rs.stop_id, rs.stop_sequence,
+                   rs.pickup_type, rs.drop_off_type, rs.is_timing_point
+            FROM transport.route_stops rs
+            JOIN transport.route_variants v ON v.id = rs.route_variant_id
+            JOIN transport.stops s ON s.id = rs.stop_id
+            WHERE v.public_id = ${input.variantPublicId}::uuid
+              AND v.deleted_at IS NULL
+              AND s.public_id = ${input.stopPublicId}::uuid
+              AND s.deleted_at IS NULL
+              AND (
+                    ${input.stopSequence}::int IS NULL
+                    OR rs.stop_sequence = ${input.stopSequence}::int
+                  )
+            ORDER BY rs.stop_sequence ASC, rs.id ASC
+            FOR UPDATE
+        `;
+        if (membership.length === 0) {
+            throw new TransportNotFoundError(
+                "route stop",
+                `${input.stopPublicId}@${input.variantPublicId}`
+            );
+        }
+        if (membership.length > 1) {
+            throw new TransportRouteMetadataError(
+                "Multiple route-stop occurrences match this report. Apply requires an exact stop sequence."
+            );
+        }
+        const before = membership[0];
+
+        await tx.$executeRaw`DELETE FROM transport.route_stops WHERE id = ${before.id}`;
+
+        const remaining = await tx.$queryRaw<
+            { id: bigint; stop_sequence: number }[]
+        >`
+            SELECT id, stop_sequence
+            FROM transport.route_stops
+            WHERE route_variant_id = ${before.route_variant_id}
+            ORDER BY stop_sequence ASC
+            FOR UPDATE
+        `;
+        const changed = remaining
+            .map((r, idx) => ({ id: r.id, target: idx + 1, current: r.stop_sequence }))
+            .filter((r) => r.current !== r.target);
+        if (changed.length > 0) {
+            const tempBase = remaining[remaining.length - 1].stop_sequence + 1;
+            const tempRows = changed.map(
+                (r, i) => Prisma.sql`(${r.id}::bigint, ${tempBase + i}::int)`
+            );
+            await tx.$executeRaw(Prisma.sql`
+                UPDATE transport.route_stops rs
+                SET stop_sequence = v.temp_sequence, updated_at = now()
+                FROM (VALUES ${Prisma.join(tempRows)}) AS v(id, temp_sequence)
+                WHERE rs.id = v.id
+            `);
+            const finalRows = changed.map(
+                (r) => Prisma.sql`(${r.id}::bigint, ${r.target}::int)`
+            );
+            await tx.$executeRaw(Prisma.sql`
+                UPDATE transport.route_stops rs
+                SET stop_sequence = v.final_sequence, updated_at = now()
+                FROM (VALUES ${Prisma.join(finalRows)}) AS v(id, final_sequence)
+                WHERE rs.id = v.id
+            `);
+        }
+
+        const validation = await tx.$queryRaw<{ ok: boolean }[]>`
+            SELECT
+                COALESCE(bool_and(stop_sequence >= 1), true)
+                AND COALESCE(min(stop_sequence), 1) = 1
+                AND COALESCE(max(stop_sequence), 0) = count(*)::int
+                AND count(*) = count(DISTINCT stop_sequence)
+                AS ok
+            FROM transport.route_stops
+            WHERE route_variant_id = ${before.route_variant_id}
+        `;
+        const sequenceValid = validation[0]?.ok === true;
+        if (!sequenceValid) {
+            throw new TransportRouteMetadataError(
+                "Variant stop sequence is invalid after removal."
+            );
+        }
+
+        await insertTransportAuditLog(tx, {
+            action: "transport.route_stop.remove",
+            entityType: "transport_route_stop",
+            entityId: before.id,
+            entityPublicId: null,
+            changedFields: [],
+            oldValues: {
+                id: String(before.id),
+                route_variant_id: String(before.route_variant_id),
+                stop_id: String(before.stop_id),
+                stop_sequence: before.stop_sequence,
+            },
+            newValues: null,
+            metadata: {
+                variant_public_id: input.variantPublicId,
+                via: "field_report_apply",
+                resequenced_count: remaining.length,
+                ...(input.reason ? { reason: input.reason } : {}),
+            },
+            context: input.audit,
+        });
+
+        return {
+            removedRouteStopId: String(before.id),
+            removedSequence: before.stop_sequence,
+            resequencedCount: remaining.length,
+            sequenceValid,
+        };
+    }
+
+    /**
+     * Create a stop and insert it after the recorded previous stop on the variant.
+     */
+    async applyCreateAndInsertStopInTx(
+        tx: Prisma.TransactionClient,
+        input: {
+            variantPublicId: string;
+            previousStopPublicId: string;
+            name: string;
+            latitude: number;
+            longitude: number;
+            mode?: string;
+            stopType?: string;
+            audit?: TransportAuditContext;
+        }
+    ): Promise<{
+        stopPublicId: string;
+        routeStopId: string;
+        name: string;
+        latitude: number;
+        longitude: number;
+    }> {
+        const variant = await this.resolveVariantForInsert(tx, input.variantPublicId);
+
+        const previousRows = await tx.$queryRaw<{ id: bigint; stop_sequence: number }[]>`
+            SELECT rs.id, rs.stop_sequence
+            FROM transport.route_stops rs
+            JOIN transport.stops s ON s.id = rs.stop_id
+            WHERE rs.route_variant_id = ${variant.id}
+              AND s.public_id = ${input.previousStopPublicId}::uuid
+              AND s.deleted_at IS NULL
+            ORDER BY rs.stop_sequence ASC, rs.id ASC
+            LIMIT 2
+        `;
+        if (previousRows.length === 0) {
+            throw new TransportNotFoundError(
+                "previous route stop",
+                input.previousStopPublicId
+            );
+        }
+        if (previousRows.length > 1) {
+            throw new TransportRouteMetadataError(
+                "Previous stop appears more than once on this variant; cannot insert safely."
+            );
+        }
+        const anchorRouteStopId = String(previousRows[0].id);
+        const mode = input.mode ?? "bus";
+        const stopType = input.stopType ?? "bus_stop";
+        const name = input.name.trim();
+
+        const insertedStopRows = await tx.$queryRaw<{ id: bigint; public_id: string }[]>`
+            INSERT INTO transport.stops (
+                name, name_mm, name_en, mode, stop_type,
+                review_status, is_active, geom
+            )
+            VALUES (
+                ${name},
+                ${name},
+                NULL,
+                ${mode},
+                ${stopType},
+                'needs_review',
+                true,
+                ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326)
+            )
+            RETURNING id, public_id::text AS public_id
+        `;
+        const stopId = insertedStopRows[0].id;
+        const stopPublicId = insertedStopRows[0].public_id;
+        await this.upsertLocalizedStopName(tx, stopId, "my", name);
+
+        await insertTransportAuditLog(tx, {
+            action: "transport.stop.create",
+            entityType: "transport_stop",
+            entityId: stopId,
+            entityPublicId: stopPublicId,
+            changedFields: ["name", "name_mm", "mode", "stop_type", "geom"],
+            oldValues: {},
+            newValues: {
+                name,
+                name_mm: name,
+                mode,
+                stop_type: stopType,
+                latitude: input.latitude,
+                longitude: input.longitude,
+            },
+            metadata: {
+                via: "field_report_apply",
+                variant_public_id: input.variantPublicId,
+            },
+            context: input.audit,
+        });
+
+        const routeStopId = await this.insertStopIntoVariantTx(tx, {
+            variantId: variant.id,
+            variantPublicId: input.variantPublicId,
+            stopId,
+            stopRef: stopPublicId,
+            position: "after",
+            anchorRouteStopId,
+            pickup_type: 0,
+            drop_off_type: 0,
+            is_timing_point: false,
+            audit: input.audit,
+            extraMetadata: {
+                via: "field_report_apply",
+                created_stop: true,
+                created_stop_public_id: stopPublicId,
+            },
+        });
+
+        return {
+            stopPublicId,
+            routeStopId: String(routeStopId),
+            name,
+            latitude: input.latitude,
+            longitude: input.longitude,
+        };
+    }
+
+    /** Update stop display name from structured proposed fields only. */
+    async applyUpdateStopDetailsInTx(
+        tx: Prisma.TransactionClient,
+        input: {
+            stopPublicId: string;
+            proposedStopName: string;
+            audit?: TransportAuditContext;
+        }
+    ): Promise<{
+        before: { name: string | null; name_mm: string | null; name_en: string | null };
+        after: { name: string; name_mm: string; name_en: string | null };
+    }> {
+        const name = input.proposedStopName.trim();
+        if (!name) {
+            throw new TransportNameRequiredError();
+        }
+        const beforeRows = await tx.$queryRaw<
+            { id: bigint; name: string | null; name_mm: string | null; name_en: string | null }[]
+        >`
+            SELECT id, name, name_mm, name_en
+            FROM transport.stops
+            WHERE public_id = ${input.stopPublicId}::uuid AND deleted_at IS NULL
+            FOR UPDATE
+        `;
+        const before = beforeRows[0];
+        if (!before) {
+            throw new TransportNotFoundError("stop", input.stopPublicId);
+        }
+
+        await this.upsertLocalizedStopName(tx, before.id, "my", name);
+        await tx.$executeRaw`
+            UPDATE transport.stops
+            SET name = ${name},
+                name_mm = ${name},
+                updated_at = now()
+            WHERE id = ${before.id}
+        `;
+
+        await insertTransportAuditLog(tx, {
+            action: "transport.stop.update",
+            entityType: "transport_stop",
+            entityId: before.id,
+            entityPublicId: input.stopPublicId,
+            changedFields: ["name", "name_mm"],
+            oldValues: {
+                name: before.name,
+                name_mm: before.name_mm,
+                name_en: before.name_en,
+            },
+            newValues: { name, name_mm: name, name_en: before.name_en },
+            metadata: { via: "field_report_apply" },
+            context: input.audit,
+        });
+
+        return {
+            before: {
+                name: before.name,
+                name_mm: before.name_mm,
+                name_en: before.name_en,
+            },
+            after: { name, name_mm: name, name_en: before.name_en },
+        };
+    }
 }

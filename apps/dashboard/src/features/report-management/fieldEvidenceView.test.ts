@@ -68,6 +68,7 @@ function report(partial: Partial<AdminReportDetail> = {}): AdminReportDetail {
         canonical_target: { latitude: 16.8, longitude: 96.15 },
         distance_m: 120,
         media_count: 0,
+        review: null,
         status_events: [],
         followups: [],
         media: [],

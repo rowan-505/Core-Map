@@ -48,6 +48,7 @@ export type ReportRow = {
     latitude: number | null;
     longitude: number | null;
     admin_area_id: bigint | null;
+    admin_area_name?: string | null;
     priority: string;
     confidence_score: number;
     reviewed_by: bigint | null;
@@ -116,6 +117,7 @@ export type ReportAnalyticsSummaryRow = {
     accepted: number;
     rejected: number;
     duplicate: number;
+    resolved: number;
     anonymous: number;
     logged_in: number;
     this_week: number;
@@ -179,6 +181,7 @@ const reportSelect = Prisma.sql`
         ST_Y(r.geom) AS latitude,
         ST_X(r.geom) AS longitude,
         r.admin_area_id,
+        report_area.canonical_name AS admin_area_name,
         r.priority,
         r.confidence_score,
         r.reviewed_by,
@@ -213,6 +216,7 @@ const reportSelect = Prisma.sql`
     JOIN ref.ref_report_types rt ON rt.code = r.report_type_code
     JOIN ref.ref_report_statuses rs ON rs.code = r.status_code
     LEFT JOIN app_auth.auth_users u ON u.id = r.created_by
+    LEFT JOIN core.core_admin_areas report_area ON report_area.id = r.admin_area_id
     LEFT JOIN transport.routes field_route
       ON r.source_code = 'field_survey'
      AND field_route.public_id = COALESCE(
@@ -314,6 +318,261 @@ export class ReportsRepository {
             longitude: Number(row.longitude),
             distance_m: row.distance_m === null ? null : Number(row.distance_m),
         };
+    }
+
+    /** Distinct active routes that still reference this stop via route_stops. */
+    async countAffectedRoutesForStop(stopPublicId: string): Promise<number> {
+        const rows = await this.prisma.$queryRaw<{ count: bigint | number }[]>(Prisma.sql`
+            SELECT count(DISTINCT r.id) AS count
+            FROM transport.stops s
+            JOIN transport.route_stops rs ON rs.stop_id = s.id
+            JOIN transport.route_variants v
+              ON v.id = rs.route_variant_id
+             AND v.deleted_at IS NULL
+            JOIN transport.routes r
+              ON r.id = v.route_id
+             AND r.deleted_at IS NULL
+            WHERE s.public_id = ${stopPublicId}::uuid
+              AND s.deleted_at IS NULL
+        `);
+        return Number(rows[0]?.count ?? 0);
+    }
+
+    /**
+     * Previous / next stops on a variant around a sequence, or by public IDs when provided.
+     * Read-only; used for the report review projection only.
+     */
+    async findReviewNeighborStops(input: {
+        variantPublicId: string | null;
+        stopSequence: number | null;
+        previousStopPublicId: string | null;
+        nextStopPublicId: string | null;
+    }): Promise<{
+        previous: { public_id: string; name: string | null; sequence: number | null } | null;
+        next: { public_id: string; name: string | null; sequence: number | null } | null;
+    }> {
+        const byId = async (
+            publicId: string | null
+        ): Promise<{ public_id: string; name: string | null; sequence: number | null } | null> => {
+            if (!publicId) {
+                return null;
+            }
+            const rows = await this.prisma.$queryRaw<
+                { public_id: string; name: string | null; sequence: number | null }[]
+            >(Prisma.sql`
+                SELECT
+                    s.public_id::text AS public_id,
+                    COALESCE(sn_en.name, sn_mm.name, s.name) AS name,
+                    NULL::int AS sequence
+                FROM transport.stops s
+                LEFT JOIN LATERAL (
+                    SELECT n.name
+                    FROM transport.stop_names AS n
+                    WHERE n.stop_id = s.id
+                      AND lower(btrim(coalesce(n.language_code, ''))) = 'en'
+                    ORDER BY n.is_primary DESC, n.search_weight DESC, n.id ASC
+                    LIMIT 1
+                ) AS sn_en ON true
+                LEFT JOIN LATERAL (
+                    SELECT n.name
+                    FROM transport.stop_names AS n
+                    WHERE n.stop_id = s.id
+                      AND lower(btrim(coalesce(n.language_code, ''))) = 'my'
+                    ORDER BY n.is_primary DESC, n.search_weight DESC, n.id ASC
+                    LIMIT 1
+                ) AS sn_mm ON true
+                WHERE s.public_id = ${publicId}::uuid
+                  AND s.deleted_at IS NULL
+                LIMIT 1
+            `);
+            const row = rows[0];
+            return row
+                ? { public_id: row.public_id, name: row.name, sequence: row.sequence }
+                : { public_id: publicId, name: null, sequence: null };
+        };
+
+        if (input.previousStopPublicId || input.nextStopPublicId) {
+            const [previous, next] = await Promise.all([
+                byId(input.previousStopPublicId),
+                byId(input.nextStopPublicId),
+            ]);
+            return { previous, next };
+        }
+
+        if (!input.variantPublicId || input.stopSequence === null) {
+            return { previous: null, next: null };
+        }
+
+        const rows = await this.prisma.$queryRaw<
+            {
+                side: string;
+                public_id: string;
+                name: string | null;
+                sequence: number;
+            }[]
+        >(Prisma.sql`
+            WITH ordered AS (
+                SELECT
+                    rs.stop_sequence,
+                    s.public_id::text AS public_id,
+                    COALESCE(sn_en.name, sn_mm.name, s.name) AS name
+                FROM transport.route_variants v
+                JOIN transport.route_stops rs ON rs.route_variant_id = v.id
+                JOIN transport.stops s ON s.id = rs.stop_id AND s.deleted_at IS NULL
+                LEFT JOIN LATERAL (
+                    SELECT n.name
+                    FROM transport.stop_names AS n
+                    WHERE n.stop_id = s.id
+                      AND lower(btrim(coalesce(n.language_code, ''))) = 'en'
+                    ORDER BY n.is_primary DESC, n.search_weight DESC, n.id ASC
+                    LIMIT 1
+                ) AS sn_en ON true
+                LEFT JOIN LATERAL (
+                    SELECT n.name
+                    FROM transport.stop_names AS n
+                    WHERE n.stop_id = s.id
+                      AND lower(btrim(coalesce(n.language_code, ''))) = 'my'
+                    ORDER BY n.is_primary DESC, n.search_weight DESC, n.id ASC
+                    LIMIT 1
+                ) AS sn_mm ON true
+                WHERE v.public_id = ${input.variantPublicId}::uuid
+                  AND v.deleted_at IS NULL
+            )
+            (
+                SELECT 'previous' AS side, public_id, name, stop_sequence AS sequence
+                FROM ordered
+                WHERE stop_sequence < ${input.stopSequence}
+                ORDER BY stop_sequence DESC
+                LIMIT 1
+            )
+            UNION ALL
+            (
+                SELECT 'next' AS side, public_id, name, stop_sequence AS sequence
+                FROM ordered
+                WHERE stop_sequence > ${input.stopSequence}
+                ORDER BY stop_sequence ASC
+                LIMIT 1
+            )
+        `);
+
+        let previous: { public_id: string; name: string | null; sequence: number | null } | null =
+            null;
+        let next: { public_id: string; name: string | null; sequence: number | null } | null = null;
+        for (const row of rows) {
+            const ref = {
+                public_id: row.public_id,
+                name: row.name,
+                sequence: Number(row.sequence),
+            };
+            if (row.side === "previous") {
+                previous = ref;
+            } else if (row.side === "next") {
+                next = ref;
+            }
+        }
+        return { previous, next };
+    }
+
+    /**
+     * Local ordered-stop window around a focus sequence for the evidence map.
+     * Caps radius so we never load a full national route set.
+     */
+    async findReviewMapWindow(input: {
+        variantPublicId: string | null;
+        focusSequence: number | null;
+        focusStopPublicId: string | null;
+        windowRadius?: number;
+    }): Promise<
+        Array<{
+            public_id: string;
+            name: string | null;
+            sequence: number;
+            latitude: number;
+            longitude: number;
+        }>
+    > {
+        if (!input.variantPublicId) {
+            return [];
+        }
+        const radius = Math.max(1, Math.min(input.windowRadius ?? 3, 5));
+
+        let focusSequence = input.focusSequence;
+        if (focusSequence === null && input.focusStopPublicId) {
+            const focusRows = await this.prisma.$queryRaw<{ sequence: number }[]>(Prisma.sql`
+                SELECT rs.stop_sequence AS sequence
+                FROM transport.route_variants v
+                JOIN transport.route_stops rs ON rs.route_variant_id = v.id
+                JOIN transport.stops s ON s.id = rs.stop_id AND s.deleted_at IS NULL
+                WHERE v.public_id = ${input.variantPublicId}::uuid
+                  AND v.deleted_at IS NULL
+                  AND s.public_id = ${input.focusStopPublicId}::uuid
+                ORDER BY rs.stop_sequence ASC
+                LIMIT 1
+            `);
+            focusSequence = focusRows[0] ? Number(focusRows[0].sequence) : null;
+        }
+        if (focusSequence === null || !Number.isFinite(focusSequence)) {
+            return [];
+        }
+
+        const minSeq = focusSequence - radius;
+        const maxSeq = focusSequence + radius;
+        const rows = await this.prisma.$queryRaw<
+            {
+                public_id: string;
+                name: string | null;
+                sequence: number;
+                latitude: number;
+                longitude: number;
+            }[]
+        >(Prisma.sql`
+            SELECT
+                s.public_id::text AS public_id,
+                COALESCE(sn_en.name, sn_mm.name, s.name) AS name,
+                rs.stop_sequence AS sequence,
+                ST_Y(COALESCE(s.geom, rs.review_geom))::float8 AS latitude,
+                ST_X(COALESCE(s.geom, rs.review_geom))::float8 AS longitude
+            FROM transport.route_variants v
+            JOIN transport.route_stops rs ON rs.route_variant_id = v.id
+            JOIN transport.stops s ON s.id = rs.stop_id AND s.deleted_at IS NULL
+            LEFT JOIN LATERAL (
+                SELECT n.name
+                FROM transport.stop_names AS n
+                WHERE n.stop_id = s.id
+                  AND lower(btrim(coalesce(n.language_code, ''))) = 'en'
+                ORDER BY n.is_primary DESC, n.search_weight DESC, n.id ASC
+                LIMIT 1
+            ) AS sn_en ON true
+            LEFT JOIN LATERAL (
+                SELECT n.name
+                FROM transport.stop_names AS n
+                WHERE n.stop_id = s.id
+                  AND lower(btrim(coalesce(n.language_code, ''))) = 'my'
+                ORDER BY n.is_primary DESC, n.search_weight DESC, n.id ASC
+                LIMIT 1
+            ) AS sn_mm ON true
+            WHERE v.public_id = ${input.variantPublicId}::uuid
+              AND v.deleted_at IS NULL
+              AND rs.stop_sequence BETWEEN ${minSeq} AND ${maxSeq}
+              AND COALESCE(s.geom, rs.review_geom) IS NOT NULL
+            ORDER BY rs.stop_sequence ASC
+        `);
+
+        return rows
+            .map((row) => ({
+                public_id: row.public_id,
+                name: row.name,
+                sequence: Number(row.sequence),
+                latitude: Number(row.latitude),
+                longitude: Number(row.longitude),
+            }))
+            .filter(
+                (row) =>
+                    Number.isFinite(row.latitude) &&
+                    Number.isFinite(row.longitude) &&
+                    Math.abs(row.latitude) <= 90 &&
+                    Math.abs(row.longitude) <= 180
+            );
     }
 
     /** Resolves the internal user id from a JWT subject (public_id uuid); null when missing. */
@@ -467,6 +726,33 @@ export class ReportsRepository {
         return rows[0] ?? null;
     }
 
+    /** Lock a report row for apply; returns the full admin select shape. */
+    async lockByPublicIdForUpdate(
+        tx: Prisma.TransactionClient,
+        publicId: string
+    ): Promise<ReportRow | null> {
+        const locked = await tx.$queryRaw<{ id: bigint }[]>`
+            SELECT id
+            FROM feedback.user_reports
+            WHERE public_id = ${publicId}::uuid
+            FOR UPDATE
+        `;
+        if (!locked[0]) {
+            return null;
+        }
+        return selectById(tx, locked[0].id);
+    }
+
+    async findByIdInTx(
+        tx: Prisma.TransactionClient,
+        reportId: bigint
+    ): Promise<ReportRow | null> {
+        const rows = await tx.$queryRaw<ReportRow[]>(
+            Prisma.sql`${reportSelect} WHERE r.id = ${reportId} LIMIT 1`
+        );
+        return rows[0] ?? null;
+    }
+
     async listForUser(userId: bigint, limit: number): Promise<ReportRow[]> {
         return this.prisma.$queryRaw<ReportRow[]>(Prisma.sql`
             ${reportSelect}
@@ -589,6 +875,7 @@ export class ReportsRepository {
                 (COUNT(*) FILTER (WHERE status_code = 'accepted'))::int AS accepted,
                 (COUNT(*) FILTER (WHERE status_code = 'rejected'))::int AS rejected,
                 (COUNT(*) FILTER (WHERE status_code = 'duplicate'))::int AS duplicate,
+                (COUNT(*) FILTER (WHERE status_code = 'resolved'))::int AS resolved,
                 (COUNT(*) FILTER (WHERE is_anonymous))::int AS anonymous,
                 (COUNT(*) FILTER (WHERE NOT is_anonymous))::int AS logged_in,
                 (COUNT(*) FILTER (WHERE created_at >= date_trunc('week', now())))::int AS this_week,
