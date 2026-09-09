@@ -1,6 +1,6 @@
 # CoreMap API
 
-> **Generated:** 2026-09-04T13:38:46.367Z (UTC)
+> **Generated:** 2026-09-09T19:03:31.676Z (UTC)
 > **OpenAPI:** This file is produced from `buildApp().swagger()` in `scripts/generate-api-docs.ts` — the same JSON as `GET /openapi.json` when the server is running.
 
 ## Base URLs
@@ -5635,7 +5635,7 @@ Authenticated field-surveyor snapshot reads. JWT role `surveyor` only. No dashbo
 
 **Summary:** Field YBS transport snapshot
 
-Authenticated surveyor-only compact YBS bus snapshot. Send `revision` to keep a cached copy when it matches `snapshotRevision`. Public UUIDs only. Gzip is expected at the reverse proxy, not in this API process.
+Authenticated surveyor-only compact YBS bus snapshot served from a prebuilt gzip artifact. Send `revision` to keep a cached copy when it matches `snapshotRevision` (`{ unchanged: true }`, HTTP 200). Send If-None-Match for HTTP 304. The request path never rebuilds the snapshot. Public UUIDs only. D0 and D1 always come from the same snapshotRevision.
 
 **Security:** Bearer JWT (`Authorization: Bearer …`)
 
@@ -5654,6 +5654,9 @@ Authenticated surveyor-only compact YBS bus snapshot. Send `revision` to keep a 
     "unchanged": true
   }
   ```
+
+- **`304`**
+  - ETag matches If-None-Match
 
 - **`400`**
 
@@ -5678,6 +5681,15 @@ Authenticated surveyor-only compact YBS bus snapshot. Send `revision` to keep a 
   ```
 
 - **`403`**
+
+  ```json
+  {
+    "code": "string",
+    "message": "string"
+  }
+  ```
+
+- **`503`**
 
   ```json
   {
@@ -5717,6 +5729,11 @@ Surveyor-only. Writes one feedback.user_reports row with source_code=field_surve
     "variantPublicId": "00000000-0000-4000-8000-000000000000",
     "stopPublicId": "00000000-0000-4000-8000-000000000000",
     "stopSequence": 0,
+    "previousStopPublicId": "00000000-0000-4000-8000-000000000000",
+    "previousStopSequence": 0,
+    "nextStopPublicId": "00000000-0000-4000-8000-000000000000",
+    "proposedStopName": "string",
+    "locationSource": "GPS",
     "canonicalSnapshot": {}
   },
   "surveySession": {
@@ -5836,6 +5853,7 @@ Surveyor-only. Writes one feedback.user_reports row with source_code=field_surve
 
   ```json
   {
+    "code": "string",
     "message": "string"
   }
   ```
@@ -6985,7 +7003,8 @@ Authenticated. Creates a pending media.assets row and returns a short-lived pres
 {
   "mediaType": "image",
   "mimeType": "image/jpeg",
-  "byteSize": 0
+  "byteSize": 0,
+  "checksumSha256": "string"
 }
 ```
 
@@ -9241,11 +9260,31 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
           "route_public_id": "00000000-0000-4000-8000-000000000000",
           "variant_code": "string",
           "variant_public_id": "00000000-0000-4000-8000-000000000000",
+          "origin_name": "string",
+          "destination_name": "string",
           "stop_public_id": "00000000-0000-4000-8000-000000000000",
           "stop_name": "string",
           "stop_sequence": 0,
+          "previous_stop_public_id": "00000000-0000-4000-8000-000000000000",
+          "previous_stop_sequence": 0,
+          "next_stop_public_id": "00000000-0000-4000-8000-000000000000",
+          "proposed_stop_name": "string",
+          "location_source": "string",
           "snapshot_revision": "string",
-          "canonical_snapshot": null
+          "snapshot_stale": false,
+          "current_snapshot_revision": "string",
+          "survey_session_public_id": "00000000-0000-4000-8000-000000000000",
+          "survey_session_status": "string",
+          "canonical_snapshot": null,
+          "observed_location": {
+            "latitude": 0,
+            "longitude": 0,
+            "accuracy_m": 0
+          },
+          "proposed_location": {
+            "latitude": 0,
+            "longitude": 0
+          }
         },
         "canonical_target": {
           "latitude": 0,
@@ -9253,6 +9292,67 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
         },
         "distance_m": 0,
         "media_count": 0,
+        "review": {
+          "report_id": "00000000-0000-4000-8000-000000000000",
+          "report_type": "string",
+          "status": "string",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "kind": "STOP_MOVED",
+          "route_code": "string",
+          "variant_code": "string",
+          "target_stop": {
+            "public_id": "00000000-0000-4000-8000-000000000000",
+            "name": "string",
+            "sequence": 0
+          },
+          "proposed_change": "string",
+          "current_canonical_revision": "string",
+          "field_snapshot_revision": "string",
+          "coordinates": {
+            "current": {
+              "latitude": 0,
+              "longitude": 0
+            },
+            "proposed": {
+              "latitude": 0,
+              "longitude": 0
+            },
+            "observed": {
+              "latitude": 0,
+              "longitude": 0
+            }
+          },
+          "previous_stop": {
+            "public_id": "00000000-0000-4000-8000-000000000000",
+            "name": "string",
+            "sequence": 0
+          },
+          "next_stop": {
+            "public_id": "00000000-0000-4000-8000-000000000000",
+            "name": "string",
+            "sequence": 0
+          },
+          "map_context": {
+            "stops": [
+              {
+                "public_id": "(…)",
+                "name": "(…)",
+                "sequence": "(…)",
+                "latitude": "(…)",
+                "longitude": "(…)",
+                "role": "(…)"
+              }
+            ]
+          },
+          "affected_route_count": 0,
+          "allowedActions": [
+            {
+              "action": "MOVE_STOP",
+              "enabled": false,
+              "disabledReason": "string"
+            }
+          ]
+        },
         "reason_code": "string",
         "target_entity_type": "string",
         "target_entity_id": "string",
@@ -9261,7 +9361,6 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
         "latitude": 0,
         "longitude": 0,
         "admin_area_id": "string",
-        "admin_note": "string",
         "…": "(more fields — see OpenAPI spec)"
       }
     ],
@@ -9304,6 +9403,8 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
 #### `GET` `/admin/reports/{id}`
 
 **Summary:** Get a report (admin)
+
+Returns admin report detail plus a compact `review` projection for field survey reports (proposed change, revisions, coordinates, neighbors, allowedActions). Does not apply canonical transport edits.
 
 **Security:** Bearer JWT (`Authorization: Bearer …`)
 
@@ -9348,11 +9449,31 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
       "route_public_id": "00000000-0000-4000-8000-000000000000",
       "variant_code": "string",
       "variant_public_id": "00000000-0000-4000-8000-000000000000",
+      "origin_name": "string",
+      "destination_name": "string",
       "stop_public_id": "00000000-0000-4000-8000-000000000000",
       "stop_name": "string",
       "stop_sequence": 0,
+      "previous_stop_public_id": "00000000-0000-4000-8000-000000000000",
+      "previous_stop_sequence": 0,
+      "next_stop_public_id": "00000000-0000-4000-8000-000000000000",
+      "proposed_stop_name": "string",
+      "location_source": "string",
       "snapshot_revision": "string",
-      "canonical_snapshot": null
+      "snapshot_stale": false,
+      "current_snapshot_revision": "string",
+      "survey_session_public_id": "00000000-0000-4000-8000-000000000000",
+      "survey_session_status": "string",
+      "canonical_snapshot": null,
+      "observed_location": {
+        "latitude": 0,
+        "longitude": 0,
+        "accuracy_m": 0
+      },
+      "proposed_location": {
+        "latitude": 0,
+        "longitude": 0
+      }
     },
     "canonical_target": {
       "latitude": 0,
@@ -9360,6 +9481,67 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
     },
     "distance_m": 0,
     "media_count": 0,
+    "review": {
+      "report_id": "00000000-0000-4000-8000-000000000000",
+      "report_type": "string",
+      "status": "string",
+      "timestamp": "2026-01-01T00:00:00.000Z",
+      "kind": "STOP_MOVED",
+      "route_code": "string",
+      "variant_code": "string",
+      "target_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "proposed_change": "string",
+      "current_canonical_revision": "string",
+      "field_snapshot_revision": "string",
+      "coordinates": {
+        "current": {
+          "latitude": 0,
+          "longitude": 0
+        },
+        "proposed": {
+          "latitude": 0,
+          "longitude": 0
+        },
+        "observed": {
+          "latitude": 0,
+          "longitude": 0
+        }
+      },
+      "previous_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "next_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "map_context": {
+        "stops": [
+          {
+            "public_id": "00000000-0000-4000-8000-000000000000",
+            "name": "string",
+            "sequence": 0,
+            "latitude": 0,
+            "longitude": 0,
+            "role": "previous"
+          }
+        ]
+      },
+      "affected_route_count": 0,
+      "allowedActions": [
+        {
+          "action": "MOVE_STOP",
+          "enabled": false,
+          "disabledReason": "string"
+        }
+      ]
+    },
     "followups": [
       {
         "actor_type": "admin",
@@ -9394,7 +9576,6 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
     "target_entity_id": "string",
     "target_public_id": "string",
     "title": "string",
-    "latitude": 0,
     "…": "(more fields — see OpenAPI spec)"
   }
   ```
@@ -9492,11 +9673,31 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
       "route_public_id": "00000000-0000-4000-8000-000000000000",
       "variant_code": "string",
       "variant_public_id": "00000000-0000-4000-8000-000000000000",
+      "origin_name": "string",
+      "destination_name": "string",
       "stop_public_id": "00000000-0000-4000-8000-000000000000",
       "stop_name": "string",
       "stop_sequence": 0,
+      "previous_stop_public_id": "00000000-0000-4000-8000-000000000000",
+      "previous_stop_sequence": 0,
+      "next_stop_public_id": "00000000-0000-4000-8000-000000000000",
+      "proposed_stop_name": "string",
+      "location_source": "string",
       "snapshot_revision": "string",
-      "canonical_snapshot": null
+      "snapshot_stale": false,
+      "current_snapshot_revision": "string",
+      "survey_session_public_id": "00000000-0000-4000-8000-000000000000",
+      "survey_session_status": "string",
+      "canonical_snapshot": null,
+      "observed_location": {
+        "latitude": 0,
+        "longitude": 0,
+        "accuracy_m": 0
+      },
+      "proposed_location": {
+        "latitude": 0,
+        "longitude": 0
+      }
     },
     "canonical_target": {
       "latitude": 0,
@@ -9504,6 +9705,67 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
     },
     "distance_m": 0,
     "media_count": 0,
+    "review": {
+      "report_id": "00000000-0000-4000-8000-000000000000",
+      "report_type": "string",
+      "status": "string",
+      "timestamp": "2026-01-01T00:00:00.000Z",
+      "kind": "STOP_MOVED",
+      "route_code": "string",
+      "variant_code": "string",
+      "target_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "proposed_change": "string",
+      "current_canonical_revision": "string",
+      "field_snapshot_revision": "string",
+      "coordinates": {
+        "current": {
+          "latitude": 0,
+          "longitude": 0
+        },
+        "proposed": {
+          "latitude": 0,
+          "longitude": 0
+        },
+        "observed": {
+          "latitude": 0,
+          "longitude": 0
+        }
+      },
+      "previous_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "next_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "map_context": {
+        "stops": [
+          {
+            "public_id": "00000000-0000-4000-8000-000000000000",
+            "name": "string",
+            "sequence": 0,
+            "latitude": 0,
+            "longitude": 0,
+            "role": "previous"
+          }
+        ]
+      },
+      "affected_route_count": 0,
+      "allowedActions": [
+        {
+          "action": "MOVE_STOP",
+          "enabled": false,
+          "disabledReason": "string"
+        }
+      ]
+    },
     "reason_code": "string",
     "target_entity_type": "string",
     "target_entity_id": "string",
@@ -9512,7 +9774,6 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
     "latitude": 0,
     "longitude": 0,
     "admin_area_id": "string",
-    "admin_note": "string",
     "…": "(more fields — see OpenAPI spec)"
   }
   ```
@@ -9548,6 +9809,229 @@ User report / contribution flow (signed-in and anonymous), admin review, status 
   ```
 
 - **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `POST` `/admin/reports/{id}/apply`
+
+**Summary:** Apply a typed review action (admin)
+
+Accepts only `{ action, expectedCanonicalRevision }`. Canonical targets, coordinates, and names are loaded from trusted report evidence — not from the request body. Runs in one DB transaction with report row locking, stale-revision checks (409), transport writes for MOVE_STOP / REMOVE_FROM_ROUTE / CREATE_AND_INSERT_STOP / UPDATE_STOP_DETAILS, and audit + resolve. RESOLVE/REJECT update lifecycle only. OPEN_ROUTE_EDITOR is navigation-only (no mutation). Retry of an already-applied action is idempotent.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| id | Path | yes | string, uuid |
+
+
+**Request body** (`application/json`)
+
+```json
+{
+  "action": "MOVE_STOP",
+  "expectedCanonicalRevision": "string"
+}
+```
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "report": {
+      "public_id": "00000000-0000-4000-8000-000000000000",
+      "is_anonymous": false,
+      "eligible_for_points": false,
+      "report_type": {
+        "code": "string",
+        "name": "string"
+      },
+      "status": {
+        "code": "string",
+        "name": "string"
+      },
+      "description": "string",
+      "priority": "string",
+      "confidence_score": 0,
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "updated_at": "2026-01-01T00:00:00.000Z",
+      "anonymous_id": "string",
+      "author": {
+        "public_id": "string",
+        "display_name": "string",
+        "email": "string"
+      },
+      "source_code": "public",
+      "observed_at": "2026-01-01T00:00:00.000Z",
+      "location_accuracy_m": 0,
+      "field": {
+        "route_code": "string",
+        "route_public_id": "00000000-0000-4000-8000-000000000000",
+        "variant_code": "string",
+        "variant_public_id": "00000000-0000-4000-8000-000000000000",
+        "origin_name": "string",
+        "destination_name": "string",
+        "stop_public_id": "00000000-0000-4000-8000-000000000000",
+        "stop_name": "string",
+        "stop_sequence": 0,
+        "previous_stop_public_id": "00000000-0000-4000-8000-000000000000",
+        "previous_stop_sequence": 0,
+        "next_stop_public_id": "00000000-0000-4000-8000-000000000000",
+        "proposed_stop_name": "string",
+        "location_source": "string",
+        "snapshot_revision": "string",
+        "snapshot_stale": false,
+        "current_snapshot_revision": "string",
+        "survey_session_public_id": "00000000-0000-4000-8000-000000000000",
+        "survey_session_status": "string",
+        "canonical_snapshot": null,
+        "observed_location": {
+          "latitude": 0,
+          "longitude": 0,
+          "accuracy_m": 0
+        },
+        "proposed_location": {
+          "latitude": 0,
+          "longitude": 0
+        }
+      },
+      "canonical_target": {
+        "latitude": 0,
+        "longitude": 0
+      },
+      "distance_m": 0,
+      "media_count": 0,
+      "review": {
+        "report_id": "00000000-0000-4000-8000-000000000000",
+        "report_type": "string",
+        "status": "string",
+        "timestamp": "2026-01-01T00:00:00.000Z",
+        "kind": "STOP_MOVED",
+        "route_code": "string",
+        "variant_code": "string",
+        "target_stop": {
+          "public_id": "00000000-0000-4000-8000-000000000000",
+          "name": "string",
+          "sequence": 0
+        },
+        "proposed_change": "string",
+        "current_canonical_revision": "string",
+        "field_snapshot_revision": "string",
+        "coordinates": {
+          "current": {
+            "latitude": 0,
+            "longitude": 0
+          },
+          "proposed": {
+            "latitude": 0,
+            "longitude": 0
+          },
+          "observed": {
+            "latitude": 0,
+            "longitude": 0
+          }
+        },
+        "previous_stop": {
+          "public_id": "00000000-0000-4000-8000-000000000000",
+          "name": "string",
+          "sequence": 0
+        },
+        "next_stop": {
+          "public_id": "00000000-0000-4000-8000-000000000000",
+          "name": "string",
+          "sequence": 0
+        },
+        "map_context": {
+          "stops": [
+            {
+              "public_id": "00000000-0000-4000-8000-000000000000",
+              "name": "string",
+              "sequence": 0,
+              "latitude": 0,
+              "longitude": 0,
+              "role": "previous"
+            }
+          ]
+        },
+        "affected_route_count": 0,
+        "allowedActions": [
+          {
+            "action": "MOVE_STOP",
+            "enabled": false,
+            "disabledReason": "string"
+          }
+        ]
+      },
+      "reason_code": "string",
+      "target_entity_type": "string",
+      "target_entity_id": "string",
+      "target_public_id": "string",
+      "title": "string",
+      "latitude": 0,
+      "longitude": 0,
+      "admin_area_id": "string",
+      "…": "(more fields — see OpenAPI spec)"
+    },
+    "applied": false,
+    "idempotent": false,
+    "action": "MOVE_STOP",
+    "client_action": "OPEN_ROUTE_EDITOR",
+    "route_public_id": "00000000-0000-4000-8000-000000000000",
+    "comparison": {
+      "before": {},
+      "after": {},
+      "affected_variant_count": 0,
+      "affected_route_count": 0
+    },
+    "message": "string"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`409`**
 
   ```json
   {
@@ -9612,11 +10096,31 @@ Adds an admin follow-up message and moves the report to 'needs_more_info' withou
       "route_public_id": "00000000-0000-4000-8000-000000000000",
       "variant_code": "string",
       "variant_public_id": "00000000-0000-4000-8000-000000000000",
+      "origin_name": "string",
+      "destination_name": "string",
       "stop_public_id": "00000000-0000-4000-8000-000000000000",
       "stop_name": "string",
       "stop_sequence": 0,
+      "previous_stop_public_id": "00000000-0000-4000-8000-000000000000",
+      "previous_stop_sequence": 0,
+      "next_stop_public_id": "00000000-0000-4000-8000-000000000000",
+      "proposed_stop_name": "string",
+      "location_source": "string",
       "snapshot_revision": "string",
-      "canonical_snapshot": null
+      "snapshot_stale": false,
+      "current_snapshot_revision": "string",
+      "survey_session_public_id": "00000000-0000-4000-8000-000000000000",
+      "survey_session_status": "string",
+      "canonical_snapshot": null,
+      "observed_location": {
+        "latitude": 0,
+        "longitude": 0,
+        "accuracy_m": 0
+      },
+      "proposed_location": {
+        "latitude": 0,
+        "longitude": 0
+      }
     },
     "canonical_target": {
       "latitude": 0,
@@ -9624,6 +10128,67 @@ Adds an admin follow-up message and moves the report to 'needs_more_info' withou
     },
     "distance_m": 0,
     "media_count": 0,
+    "review": {
+      "report_id": "00000000-0000-4000-8000-000000000000",
+      "report_type": "string",
+      "status": "string",
+      "timestamp": "2026-01-01T00:00:00.000Z",
+      "kind": "STOP_MOVED",
+      "route_code": "string",
+      "variant_code": "string",
+      "target_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "proposed_change": "string",
+      "current_canonical_revision": "string",
+      "field_snapshot_revision": "string",
+      "coordinates": {
+        "current": {
+          "latitude": 0,
+          "longitude": 0
+        },
+        "proposed": {
+          "latitude": 0,
+          "longitude": 0
+        },
+        "observed": {
+          "latitude": 0,
+          "longitude": 0
+        }
+      },
+      "previous_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "next_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "map_context": {
+        "stops": [
+          {
+            "public_id": "00000000-0000-4000-8000-000000000000",
+            "name": "string",
+            "sequence": 0,
+            "latitude": 0,
+            "longitude": 0,
+            "role": "previous"
+          }
+        ]
+      },
+      "affected_route_count": 0,
+      "allowedActions": [
+        {
+          "action": "MOVE_STOP",
+          "enabled": false,
+          "disabledReason": "string"
+        }
+      ]
+    },
     "followups": [
       {
         "actor_type": "admin",
@@ -9639,7 +10204,6 @@ Adds an admin follow-up message and moves the report to 'needs_more_info' withou
     "title": "string",
     "latitude": 0,
     "longitude": 0,
-    "admin_area_id": "string",
     "…": "(more fields — see OpenAPI spec)"
   }
   ```
@@ -9750,11 +10314,31 @@ Manually grants points to the author of an ACCEPTED report via the append-only p
         "route_public_id": "00000000-0000-4000-8000-000000000000",
         "variant_code": "string",
         "variant_public_id": "00000000-0000-4000-8000-000000000000",
+        "origin_name": "string",
+        "destination_name": "string",
         "stop_public_id": "00000000-0000-4000-8000-000000000000",
         "stop_name": "string",
         "stop_sequence": 0,
+        "previous_stop_public_id": "00000000-0000-4000-8000-000000000000",
+        "previous_stop_sequence": 0,
+        "next_stop_public_id": "00000000-0000-4000-8000-000000000000",
+        "proposed_stop_name": "string",
+        "location_source": "string",
         "snapshot_revision": "string",
-        "canonical_snapshot": null
+        "snapshot_stale": false,
+        "current_snapshot_revision": "string",
+        "survey_session_public_id": "00000000-0000-4000-8000-000000000000",
+        "survey_session_status": "string",
+        "canonical_snapshot": null,
+        "observed_location": {
+          "latitude": 0,
+          "longitude": 0,
+          "accuracy_m": 0
+        },
+        "proposed_location": {
+          "latitude": 0,
+          "longitude": 0
+        }
       },
       "canonical_target": {
         "latitude": 0,
@@ -9762,6 +10346,67 @@ Manually grants points to the author of an ACCEPTED report via the append-only p
       },
       "distance_m": 0,
       "media_count": 0,
+      "review": {
+        "report_id": "00000000-0000-4000-8000-000000000000",
+        "report_type": "string",
+        "status": "string",
+        "timestamp": "2026-01-01T00:00:00.000Z",
+        "kind": "STOP_MOVED",
+        "route_code": "string",
+        "variant_code": "string",
+        "target_stop": {
+          "public_id": "00000000-0000-4000-8000-000000000000",
+          "name": "string",
+          "sequence": 0
+        },
+        "proposed_change": "string",
+        "current_canonical_revision": "string",
+        "field_snapshot_revision": "string",
+        "coordinates": {
+          "current": {
+            "latitude": 0,
+            "longitude": 0
+          },
+          "proposed": {
+            "latitude": 0,
+            "longitude": 0
+          },
+          "observed": {
+            "latitude": 0,
+            "longitude": 0
+          }
+        },
+        "previous_stop": {
+          "public_id": "00000000-0000-4000-8000-000000000000",
+          "name": "string",
+          "sequence": 0
+        },
+        "next_stop": {
+          "public_id": "00000000-0000-4000-8000-000000000000",
+          "name": "string",
+          "sequence": 0
+        },
+        "map_context": {
+          "stops": [
+            {
+              "public_id": "00000000-0000-4000-8000-000000000000",
+              "name": "string",
+              "sequence": 0,
+              "latitude": 0,
+              "longitude": 0,
+              "role": "previous"
+            }
+          ]
+        },
+        "affected_route_count": 0,
+        "allowedActions": [
+          {
+            "action": "MOVE_STOP",
+            "enabled": false,
+            "disabledReason": "string"
+          }
+        ]
+      },
       "reason_code": "string",
       "target_entity_type": "string",
       "target_entity_id": "string",
@@ -9770,7 +10415,6 @@ Manually grants points to the author of an ACCEPTED report via the append-only p
       "latitude": 0,
       "longitude": 0,
       "admin_area_id": "string",
-      "admin_note": "string",
       "…": "(more fields — see OpenAPI spec)"
     },
     "summary": {
@@ -9884,11 +10528,31 @@ Manually grants points to the author of an ACCEPTED report via the append-only p
       "route_public_id": "00000000-0000-4000-8000-000000000000",
       "variant_code": "string",
       "variant_public_id": "00000000-0000-4000-8000-000000000000",
+      "origin_name": "string",
+      "destination_name": "string",
       "stop_public_id": "00000000-0000-4000-8000-000000000000",
       "stop_name": "string",
       "stop_sequence": 0,
+      "previous_stop_public_id": "00000000-0000-4000-8000-000000000000",
+      "previous_stop_sequence": 0,
+      "next_stop_public_id": "00000000-0000-4000-8000-000000000000",
+      "proposed_stop_name": "string",
+      "location_source": "string",
       "snapshot_revision": "string",
-      "canonical_snapshot": null
+      "snapshot_stale": false,
+      "current_snapshot_revision": "string",
+      "survey_session_public_id": "00000000-0000-4000-8000-000000000000",
+      "survey_session_status": "string",
+      "canonical_snapshot": null,
+      "observed_location": {
+        "latitude": 0,
+        "longitude": 0,
+        "accuracy_m": 0
+      },
+      "proposed_location": {
+        "latitude": 0,
+        "longitude": 0
+      }
     },
     "canonical_target": {
       "latitude": 0,
@@ -9896,6 +10560,67 @@ Manually grants points to the author of an ACCEPTED report via the append-only p
     },
     "distance_m": 0,
     "media_count": 0,
+    "review": {
+      "report_id": "00000000-0000-4000-8000-000000000000",
+      "report_type": "string",
+      "status": "string",
+      "timestamp": "2026-01-01T00:00:00.000Z",
+      "kind": "STOP_MOVED",
+      "route_code": "string",
+      "variant_code": "string",
+      "target_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "proposed_change": "string",
+      "current_canonical_revision": "string",
+      "field_snapshot_revision": "string",
+      "coordinates": {
+        "current": {
+          "latitude": 0,
+          "longitude": 0
+        },
+        "proposed": {
+          "latitude": 0,
+          "longitude": 0
+        },
+        "observed": {
+          "latitude": 0,
+          "longitude": 0
+        }
+      },
+      "previous_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "next_stop": {
+        "public_id": "00000000-0000-4000-8000-000000000000",
+        "name": "string",
+        "sequence": 0
+      },
+      "map_context": {
+        "stops": [
+          {
+            "public_id": "00000000-0000-4000-8000-000000000000",
+            "name": "string",
+            "sequence": 0,
+            "latitude": 0,
+            "longitude": 0,
+            "role": "previous"
+          }
+        ]
+      },
+      "affected_route_count": 0,
+      "allowedActions": [
+        {
+          "action": "MOVE_STOP",
+          "enabled": false,
+          "disabledReason": "string"
+        }
+      ]
+    },
     "reason_code": "string",
     "target_entity_type": "string",
     "target_entity_id": "string",
@@ -9904,7 +10629,6 @@ Manually grants points to the author of an ACCEPTED report via the append-only p
     "latitude": 0,
     "longitude": 0,
     "admin_area_id": "string",
-    "admin_note": "string",
     "…": "(more fields — see OpenAPI spec)"
   }
   ```
@@ -10115,6 +10839,7 @@ Manually grants points to the author of an ACCEPTED report via the append-only p
     "accepted": 0,
     "rejected": 0,
     "duplicate": 0,
+    "resolved": 0,
     "anonymous": 0,
     "logged_in": 0,
     "this_week": 0,
@@ -10182,6 +10907,7 @@ Returns the authenticated user's reports (newest first).
       "latitude": 0,
       "longitude": 0,
       "admin_area_id": "string",
+      "admin_area_name": "string",
       "admin_note": "string",
       "reviewed_at": "2026-01-01T00:00:00.000Z",
       "reward_granted_at": "2026-01-01T00:00:00.000Z"
@@ -10267,6 +10993,7 @@ Creates a report. Works for signed-in users (created_by set, point-eligible) and
     "latitude": 0,
     "longitude": 0,
     "admin_area_id": "string",
+    "admin_area_name": "string",
     "admin_note": "string",
     "reviewed_at": "2026-01-01T00:00:00.000Z",
     "reward_granted_at": "2026-01-01T00:00:00.000Z",
@@ -10303,6 +11030,7 @@ Creates a report. Works for signed-in users (created_by set, point-eligible) and
     "latitude": 0,
     "longitude": 0,
     "admin_area_id": "string",
+    "admin_area_name": "string",
     "admin_note": "string",
     "reviewed_at": "2026-01-01T00:00:00.000Z",
     "reward_granted_at": "2026-01-01T00:00:00.000Z",
@@ -10392,6 +11120,7 @@ Returns a single report. Authored reports require the owner; anonymous reports r
     "latitude": 0,
     "longitude": 0,
     "admin_area_id": "string",
+    "admin_area_name": "string",
     "admin_note": "string",
     "reviewed_at": "2026-01-01T00:00:00.000Z",
     "reward_granted_at": "2026-01-01T00:00:00.000Z"
@@ -10479,6 +11208,7 @@ Adds a follow-up message from the report owner and moves the report back to 'sub
     "latitude": 0,
     "longitude": 0,
     "admin_area_id": "string",
+    "admin_area_name": "string",
     "admin_note": "string",
     "reviewed_at": "2026-01-01T00:00:00.000Z",
     "reward_granted_at": "2026-01-01T00:00:00.000Z"
@@ -26231,4 +26961,4 @@ Many routes return JSON error bodies for failed validation, auth, or missing res
 
 ---
 
-*OpenAPI version: 3.0.3 · API version: 0.1.0 · Operations: 303*
+*OpenAPI version: 3.0.3 · API version: 0.1.0 · Operations: 304*

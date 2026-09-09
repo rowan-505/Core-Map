@@ -80,10 +80,10 @@ function report(overrides: Partial<ReportRow> = {}): ReportRow {
 function makeApplyRepo(input: {
     report: ReportRow;
     parts?: FieldRevisionParts;
-    move?: () => Promise<unknown>;
-    remove?: () => Promise<unknown>;
-    create?: () => Promise<unknown>;
-    updateDetails?: () => Promise<unknown>;
+    move?: (...args: unknown[]) => Promise<unknown>;
+    remove?: (...args: unknown[]) => Promise<unknown>;
+    create?: (...args: unknown[]) => Promise<unknown>;
+    updateDetails?: (...args: unknown[]) => Promise<unknown>;
     onExecute?: (sql: string) => void;
 }) {
     let current = input.report;
@@ -364,4 +364,145 @@ test("RESOLVE without canonical change only updates lifecycle", async () => {
     assert.equal(result.applied, true);
     assert.equal(moved, 0);
     assert.equal((result.comparison.after as { status_code: string }).status_code, "resolved");
+});
+
+test("REMOVE_FROM_ROUTE success preserves shared stop and resolves", async () => {
+    let removed = 0;
+    const { repo } = makeApplyRepo({
+        report: report({
+            report_type_code: "missing_item",
+            report_type_name: "Missing item",
+            report_data: {
+                snapshotRevision: "v1-capture",
+                routePublicId: routeId,
+                variantPublicId: variantId,
+                variantCode: "D0",
+                stopPublicId: stopId,
+                stopSequence: 3,
+            },
+        }),
+        remove: async () => {
+            removed += 1;
+            return {
+                removedRouteStopId: "9",
+                removedSequence: 3,
+                resequencedCount: 4,
+                sequenceValid: true,
+            };
+        },
+    });
+    const result = await repo.apply({
+        reportPublicId: reportId,
+        action: "REMOVE_FROM_ROUTE",
+        expectedCanonicalRevision: liveRev(),
+        audit,
+    });
+    assert.equal(result.applied, true);
+    assert.equal(removed, 1);
+    assert.equal(result.comparison.affected_variant_count, 1);
+    assert.equal((result.comparison.after as { sequence_valid: boolean }).sequence_valid, true);
+});
+
+test("UPDATE_STOP_DETAILS changes only structured proposed name fields", async () => {
+    let updated = 0;
+    const { repo } = makeApplyRepo({
+        report: report({
+            report_type_code: "wrong_info",
+            report_type_name: "Wrong info",
+            report_data: {
+                snapshotRevision: "v1-capture",
+                routePublicId: routeId,
+                variantPublicId: variantId,
+                variantCode: "D0",
+                stopPublicId: stopId,
+                stopSequence: 3,
+                proposedStopName: "Renamed stop",
+            },
+        }),
+        updateDetails: async (_tx: unknown, rawArgs: unknown) => {
+            updated += 1;
+            const args = rawArgs as { proposedStopName: string };
+            assert.equal(args.proposedStopName, "Renamed stop");
+            return {
+                before: { name: "Old", name_mm: "Old", name_en: "Old EN" },
+                after: { name: "Renamed stop", name_mm: "Renamed stop", name_en: "Old EN" },
+            };
+        },
+    });
+    const result = await repo.apply({
+        reportPublicId: reportId,
+        action: "UPDATE_STOP_DETAILS",
+        expectedCanonicalRevision: liveRev(),
+        audit,
+    });
+    assert.equal(result.applied, true);
+    assert.equal(updated, 1);
+    assert.equal((result.comparison.after as { name: string }).name, "Renamed stop");
+    assert.equal((result.comparison.after as { name_en: string }).name_en, "Old EN");
+});
+
+test("REJECT without canonical change only updates lifecycle", async () => {
+    let moved = 0;
+    let removed = 0;
+    const { repo } = makeApplyRepo({
+        report: report({ report_type_code: "other_map_issue" }),
+        move: async () => {
+            moved += 1;
+            return null;
+        },
+        remove: async () => {
+            removed += 1;
+            return null;
+        },
+    });
+    const result = await repo.apply({
+        reportPublicId: reportId,
+        action: "REJECT",
+        expectedCanonicalRevision: liveRev(),
+        audit,
+    });
+    assert.equal(result.applied, true);
+    assert.equal(moved, 0);
+    assert.equal(removed, 0);
+    assert.equal((result.comparison.after as { status_code: string }).status_code, "rejected");
+});
+
+test("rejected report retry is idempotent and does not re-run mutation", async () => {
+    let removed = 0;
+    const rejected = report({
+        report_type_code: "missing_item",
+        status_code: "rejected",
+        status_name: "Rejected",
+        report_data: {
+            snapshotRevision: "v1-capture",
+            stopPublicId: stopId,
+            variantPublicId: variantId,
+            variantCode: "D0",
+            apply: {
+                action: "REJECT",
+                comparison: {
+                    before: { status_code: "in_review" },
+                    after: { status_code: "rejected" },
+                    affected_variant_count: null,
+                    affected_route_count: null,
+                },
+            },
+        },
+    });
+    const { repo } = makeApplyRepo({
+        report: rejected,
+        remove: async () => {
+            removed += 1;
+            return null;
+        },
+    });
+    const result = await repo.apply({
+        reportPublicId: reportId,
+        action: "REJECT",
+        expectedCanonicalRevision: liveRev(),
+        audit,
+    });
+    assert.equal(result.idempotent, true);
+    assert.equal(result.applied, true);
+    assert.equal(removed, 0);
 });

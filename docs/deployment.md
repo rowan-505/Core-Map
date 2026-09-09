@@ -25,4 +25,15 @@
 3. Dashboard login and one review page.
 4. No direct DB from clients.
 
+## Field report resolution (admin apply)
+
+Before promoting `POST /admin/reports/:id/apply`:
+
+1. `npm run test:reports` in `apps/api` and `apps/dashboard`.
+2. On disposable PostGIS only (`127.0.0.1` + DB `coremap_field_test`):
+   `DATABASE_URL=... NODE_ENV=test npm run verify:reports-apply-db`
+3. Confirm no new migration is required for the candidate commit (current apply uses existing feedback/transport/audit tables).
+4. Staging must report READY FOR PRODUCTION before any production deploy.
+5. Production first apply: one real low-risk report only; verify audit + idempotent retry.
+
 App-specific notes stay next to code READMEs under `apps/` and `infrastructure/`.

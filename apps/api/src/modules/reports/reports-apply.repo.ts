@@ -145,7 +145,8 @@ export class ReportsApplyRepository {
         this.assertFieldSurvey(locked);
 
         const existingApply = asApplyRecord(locked.report_data);
-        if (locked.status_code === "resolved" && existingApply?.action === input.action) {
+        const terminalStatuses = new Set(["resolved", "rejected"]);
+        if (terminalStatuses.has(locked.status_code) && existingApply?.action === input.action) {
             return {
                 report: locked,
                 applied: true,
