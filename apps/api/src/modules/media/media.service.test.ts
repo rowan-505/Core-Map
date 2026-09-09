@@ -394,7 +394,7 @@ test("complete hashes object body when R2 metadata checksum is missing", async (
         findAsset: async () =>
             asset({
                 checksum_sha256: digest,
-                byte_size: payload.length,
+                byte_size: BigInt(payload.length),
             }),
         head: async () => ({
             exists: true,
@@ -409,7 +409,7 @@ test("complete hashes object body when R2 metadata checksum is missing", async (
                 status: "ready",
                 ready_at: new Date(),
                 checksum_sha256: digest,
-                byte_size: payload.length,
+                byte_size: BigInt(payload.length),
             });
         },
     });
