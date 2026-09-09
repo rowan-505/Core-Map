@@ -53,7 +53,7 @@ class FieldMediaApi(
             MediaUploadIntent(
                 publicId = json.getString("publicId"),
                 putUrl = upload.getString("url"),
-                contentType = headers.optString("Content-Type", "image/jpeg"),
+                contentType = headers.optString("Content-Type", mimeType),
                 contentLength = headers.optString("Content-Length", byteSize.toString()),
             )
         }
@@ -61,6 +61,8 @@ class FieldMediaApi(
 
     fun putObject(intent: MediaUploadIntent, file: File): OutboxHttpResult {
         val mediaType = intent.contentType.toMediaType()
+        // Only Content-Type is signed for R2. Do not send x-amz-meta-* (causes 403).
+        // API complete() verifies SHA-256 by hashing the stored object.
         val request = Request.Builder()
             .url(intent.putUrl)
             .put(file.asRequestBody(mediaType))

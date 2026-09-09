@@ -385,6 +385,61 @@ test("complete rejects checksum mismatch without marking ready", async () => {
     assert.equal(marked, false);
 });
 
+test("complete hashes object body when R2 metadata checksum is missing", async () => {
+    const { createHash } = await import("node:crypto");
+    const payload = Buffer.from("field-photo-bytes");
+    const digest = createHash("sha256").update(payload).digest("hex");
+    let marked = false;
+    const svc = serviceWith({
+        findAsset: async () =>
+            asset({
+                checksum_sha256: digest,
+                byte_size: payload.length,
+            }),
+        head: async () => ({
+            exists: true,
+            contentLength: payload.length,
+            contentType: "image/jpeg",
+            checksumSha256: null,
+        }),
+        getObject: async () => payload,
+        markReady: async () => {
+            marked = true;
+            return asset({
+                status: "ready",
+                ready_at: new Date(),
+                checksum_sha256: digest,
+                byte_size: payload.length,
+            });
+        },
+    });
+    const result = await svc.complete("user-sub", assetId);
+    assert.equal(result.status, "ready");
+    assert.equal(marked, true);
+});
+
+test("complete rejects body hash mismatch when metadata checksum is missing", async () => {
+    let marked = false;
+    const svc = serviceWith({
+        head: async () => ({
+            exists: true,
+            contentLength: 123,
+            contentType: "image/jpeg",
+            checksumSha256: null,
+        }),
+        getObject: async () => Buffer.from("wrong-bytes"),
+        markReady: async () => {
+            marked = true;
+            return asset({ status: "ready", ready_at: new Date() });
+        },
+    });
+    await assert.rejects(
+        () => svc.complete("user-sub", assetId),
+        (error: unknown) => error instanceof MediaError && error.code === "OBJECT_CHECKSUM_MISMATCH"
+    );
+    assert.equal(marked, false);
+});
+
 test("complete hides another user's asset", async () => {
     const svc = serviceWith({
         findAsset: async () => asset({ created_by: otherUser }),

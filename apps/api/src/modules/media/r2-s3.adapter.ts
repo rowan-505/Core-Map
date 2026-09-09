@@ -59,6 +59,8 @@ export class R2ObjectStore implements ObjectStore {
     ) {}
 
     async createPresignedPut(input: PresignedPutInput): Promise<{ url: string; expiresAt: Date }> {
+        // Do not sign user Metadata on the PUT. R2 often rejects or ignores
+        // x-amz-meta-* on presigned uploads; complete() hashes the object body instead.
         const url = await getSignedUrl(
             this.client,
             new PutObjectCommand({
@@ -66,7 +68,6 @@ export class R2ObjectStore implements ObjectStore {
                 Key: input.objectKey,
                 ContentType: input.contentType,
                 ContentLength: input.contentLength,
-                Metadata: { sha256: input.checksumSha256 },
             }),
             { expiresIn: input.expiresInSeconds }
         );

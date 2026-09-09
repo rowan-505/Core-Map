@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { MediaStorageNotConfiguredError } from "../../config/env.js";
 import type { FieldReportsRepository } from "../field/field-reports.repo.js";
@@ -35,7 +35,10 @@ export type MediaUploadResponse = {
     upload: {
         method: "PUT";
         url: string;
-        headers: { "Content-Type": string; "Content-Length": string };
+        headers: {
+            "Content-Type": string;
+            "Content-Length": string;
+        };
         expiresAt: string;
     };
 };
@@ -151,15 +154,32 @@ export class MediaService {
         if (head.contentType && !mimeCompatible(asset.mime_type, head.contentType)) {
             throw new MediaError("Uploaded object type does not match", 409, "OBJECT_TYPE_MISMATCH");
         }
-        if (
-            asset.checksum_sha256 &&
-            head.checksumSha256?.toLowerCase() !== asset.checksum_sha256
-        ) {
-            throw new MediaError(
-                "Uploaded object checksum does not match",
-                409,
-                "OBJECT_CHECKSUM_MISMATCH"
-            );
+        if (asset.checksum_sha256) {
+            const expected = asset.checksum_sha256.toLowerCase();
+            const fromMeta = head.checksumSha256?.toLowerCase() ?? null;
+            if (fromMeta && fromMeta !== expected) {
+                throw new MediaError(
+                    "Uploaded object checksum does not match",
+                    409,
+                    "OBJECT_CHECKSUM_MISMATCH"
+                );
+            }
+            // Older clients PUT without x-amz-meta-sha256, so HEAD has no checksum.
+            // Hash the object body once so stuck pending uploads can still complete.
+            if (!fromMeta) {
+                const bytes = await this.objectStore.getObject({
+                    bucket: this.config.privateBucket,
+                    objectKey: asset.object_key,
+                });
+                const actual = createHash("sha256").update(bytes).digest("hex");
+                if (actual !== expected) {
+                    throw new MediaError(
+                        "Uploaded object checksum does not match",
+                        409,
+                        "OBJECT_CHECKSUM_MISMATCH"
+                    );
+                }
+            }
         }
         if (asset.status === "ready") {
             return toCompleteResponse(asset);
