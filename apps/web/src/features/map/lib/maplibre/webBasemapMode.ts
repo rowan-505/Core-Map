@@ -29,10 +29,10 @@ export const WEB_IMAGERY_OFF_FILL_LAYERS = [
   'background',
   'overview-ocean',
   'overview-land',
+  'myanmar-country-fill',
   'overview-lakes',
   'overview-rivers',
   'overview-countries-fill',
-  'overview-mmr-admin1-fill',
 ] as const;
 
 /** Regional + overview vector layers toggled per map mode (excludes runtime GeoJSON overlays). */
@@ -62,14 +62,9 @@ export const WEB_TOGGLE_VECTOR_LAYERS = [
   'overview-coastline',
   'neighbor-country-boundary-line',
   'myanmar-internal-admin-boundary-line',
-  'myanmar-admin0-boundary-casing-z02',
-  'myanmar-admin0-boundary-line-z02',
-  'myanmar-admin0-boundary-casing-z34',
-  'myanmar-admin0-boundary-line-z34',
-  'myanmar-admin0-boundary-casing-z56',
-  'myanmar-admin0-boundary-line-z56',
+  'myanmar-country-outline',
   'overview-country-labels',
-  'overview-mmr-admin1-labels',
+  'overview-admin-state-region-labels',
   'overview-populated-places',
 ] as const;
 
@@ -93,14 +88,9 @@ export const WEB_HYBRID_ON_LAYERS = new Set<string>([
   'admin-labels-village-local',
   'neighbor-country-boundary-line',
   'myanmar-internal-admin-boundary-line',
-  'myanmar-admin0-boundary-casing-z02',
-  'myanmar-admin0-boundary-line-z02',
-  'myanmar-admin0-boundary-casing-z34',
-  'myanmar-admin0-boundary-line-z34',
-  'myanmar-admin0-boundary-casing-z56',
-  'myanmar-admin0-boundary-line-z56',
+  'myanmar-country-outline',
   'overview-country-labels',
-  'overview-mmr-admin1-labels',
+  'overview-admin-state-region-labels',
   'overview-populated-places',
 ]);
 

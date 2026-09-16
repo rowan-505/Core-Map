@@ -36,7 +36,7 @@ describe('patchOverviewLayersForProgressiveDetail', () => {
   it('keeps country labels low-zoom only and caps admin1/places at z10', () => {
     const layers = patchOverviewLayersForProgressiveDetail(createOverviewLayers());
     const country = layers.find((l) => l.id === 'overview-country-labels');
-    const admin1 = layers.find((l) => l.id === 'overview-mmr-admin1-labels');
+    const admin1 = layers.find((l) => l.id === 'overview-admin-state-region-labels');
     const places = layers.find((l) => l.id === 'overview-populated-places');
     assert.equal(country?.maxzoom, 6.5);
     assert.equal(admin1?.maxzoom, OVERVIEW_LABELS_END_ZOOM);
@@ -51,33 +51,38 @@ describe('patchOverviewLayersForProgressiveDetail', () => {
     assert.equal(after.find((l) => l.id === 'overview-land')?.maxzoom, before[1]?.maxzoom);
   });
 
-  it('hides overview admin0/neighbor at z7; internal admin1 stays through z10', () => {
-    const layers = patchOverviewLayersForProgressiveDetail(createOverviewLayers());
+  it('hides neighbor/coastline at z7; country fill/outline keep temporary z9/z10 hide', () => {
+    const before = createOverviewLayers();
+    const layers = patchOverviewLayersForProgressiveDetail(before);
     assert.equal(OVERVIEW_BOUNDARY_MAX_ZOOM, 7);
     for (const id of ['neighbor-country-boundary-line', 'overview-coastline'] as const) {
       assert.equal(layers.find((l) => l.id === id)?.maxzoom, OVERVIEW_BOUNDARY_MAX_ZOOM);
     }
     assert.equal(
       layers.find((l) => l.id === 'myanmar-internal-admin-boundary-line')?.maxzoom,
-      OVERVIEW_LABELS_END_ZOOM,
+      14,
     );
-    assert.equal(layers.find((l) => l.id === 'myanmar-admin0-boundary-line-z56')?.maxzoom, 7);
-    assert.equal(layers.find((l) => l.id === 'myanmar-admin0-boundary-casing-z02')?.maxzoom, 3);
+    assert.equal(layers.find((l) => l.id === 'myanmar-country-fill')?.maxzoom, 9);
+    assert.equal(layers.find((l) => l.id === 'myanmar-country-outline')?.maxzoom, 10);
+    assert.equal(
+      layers.find((l) => l.id === 'myanmar-country-fill')?.maxzoom,
+      before.find((l) => l.id === 'myanmar-country-fill')?.maxzoom,
+    );
+    assert.equal(
+      layers.find((l) => l.id === 'myanmar-country-outline')?.maxzoom,
+      before.find((l) => l.id === 'myanmar-country-outline')?.maxzoom,
+    );
     assert.equal(
       layers.find((l) => l.id === 'neighbor-country-boundary-line')?.minzoom,
       0,
     );
-    assert.equal(layers.find((l) => l.id === 'myanmar-admin0-boundary-line-z02')?.minzoom, 0);
-    assert.equal(layers.find((l) => l.id === 'myanmar-admin0-boundary-line-z34')?.minzoom, 3);
-    assert.equal(layers.find((l) => l.id === 'myanmar-internal-admin-boundary-line')?.minzoom, 3);
+    assert.equal(layers.find((l) => l.id === 'myanmar-country-outline')?.minzoom, 2);
+    assert.equal(layers.find((l) => l.id === 'myanmar-internal-admin-boundary-line')?.minzoom, 4);
     const ids = layers.map((l) => l.id);
     assert.ok(
-      ids.indexOf('myanmar-internal-admin-boundary-line') < ids.indexOf('myanmar-admin0-boundary-casing-z02'),
-      'internal admin boundaries below Myanmar admin0 casing',
-    );
-    assert.ok(
-      ids.indexOf('myanmar-admin0-boundary-casing-z56') < ids.indexOf('myanmar-admin0-boundary-line-z56'),
-      'Myanmar admin0 casing below main line',
+      ids.indexOf('myanmar-internal-admin-boundary-line') <
+        ids.indexOf('myanmar-country-outline'),
+      'internal admin boundaries below Myanmar country outline',
     );
   });
 
@@ -98,6 +103,5 @@ describe('patchOverviewLayersForProgressiveDetail', () => {
     assert.ok(widthJson.includes('state_region'));
     assert.ok(JSON.stringify(opacity).includes('0.45'));
     assert.ok(color.includes('aaa4bd'));
-    assert.ok(JSON.stringify(opacity).includes('"country"'));
   });
 });

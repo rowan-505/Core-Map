@@ -1,12 +1,12 @@
 {
   "region": "kayin",
-  "version": "v1",
-  "filename": "kayin-v1.pmtiles",
-  "url": "http://localhost:8080/regions/kayin/kayin-v1.pmtiles",
+  "version": "v2-qa1",
+  "filename": "kayin-v2-qa1.pmtiles",
+  "url": "http://localhost:8080/regions/kayin/kayin-v2-qa1.pmtiles",
   "minZoom": 8,
-  "maxZoom": 20,
+  "maxZoom": 16,
   "minzoom": 8,
-  "maxzoom": 20,
-  "nativeMaxzoom": 20,
+  "maxzoom": 16,
+  "nativeMaxzoom": 16,
   "recommendedMapMaxZoom": 20
 }

@@ -1,0 +1,65 @@
+{
+  "region": "kachin",
+  "version": "v2-density",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/kachin/kachin-v2-density.pmtiles",
+  "file_size_bytes": 65984205,
+  "created_at": "2026-09-06T19:58:23+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 65984205,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172890, lat: 9.525930) (long: 101.170092, lat: 28.592209)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 96.380310, lat: 25.688563)\ncenter zoom: 16\naddressed tiles count: 363405\ntile entries count: 140370\ntile contents count: 127192\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nattribution Local Map\ngenerator tile-join v2.79.0\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=14' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-kachin-v2-density-208469.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/admin_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-kachin-v2-density-208469.mbtiles '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/water_polygons.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-kachin-v2-density-208469.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-kachin-v2-density-208469.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/buildings.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/settlements.annotated.geojsonseq' '--named-layer=protected_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/protected_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-kachin-v2-density-208469.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-kachin-v2-density-208469/streets.annotated.geojsonseq; tile-join -f -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-kachin-v2-density-208469.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-kachin-v2-density-208469.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-kachin-v2-density-208469.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-kachin-v2-density-208469.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-kachin-v2-density-\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 16355407,
+      "mtime_ns": 1788724470083913291
+    },
+    "streets.geojson": {
+      "size_bytes": 19290407,
+      "mtime_ns": 1788724473118672155
+    },
+    "road_labels.geojson": {
+      "size_bytes": 872338,
+      "mtime_ns": 1788724474504040019
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 2243435,
+      "mtime_ns": 1788724475368854663
+    },
+    "water_lines.geojson": {
+      "size_bytes": 4316558,
+      "mtime_ns": 1788724476408371110
+    },
+    "landuse.geojson": {
+      "size_bytes": 4464135,
+      "mtime_ns": 1788724478275775706
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 3905498,
+      "mtime_ns": 1788724479393750843
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 3905498,
+      "mtime_ns": 1788724480455076869
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 38355,
+      "mtime_ns": 1788724481275670331
+    },
+    "settlements.geojson": {
+      "size_bytes": 793133,
+      "mtime_ns": 1788724482022518301
+    },
+    "coastlines.geojson": {
+      "size_bytes": 161,
+      "mtime_ns": 1788724482699756622
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 188472,
+      "mtime_ns": 1788724483420341253
+    }
+  }
+}

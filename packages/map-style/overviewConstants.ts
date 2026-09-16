@@ -1,25 +1,47 @@
-/** MapLibre vector source id for the Myanmar overview PMTiles archive (z0–z8). */
+/** MapLibre vector source id for the Myanmar overview PMTiles archive (native z0–z8). */
 export const OVERVIEW_VECTOR_SOURCE_ID = 'overview' as const;
 
-/** Overview tiles are built for low zoom only; hide layers above this zoom. */
-export const OVERVIEW_MAX_ZOOM = 8;
+/**
+ * Native tippecanoe / PMTiles max zoom for overview tiles.
+ * Camera may go higher; MapLibre overzooms these z8 tiles.
+ */
+export const OVERVIEW_NATIVE_MAX_ZOOM = 8;
 
-/** MapLibre layer `maxzoom` — tiles stop at z8; layers use 9 so z8 is still visible. */
-export const OVERVIEW_LAYER_MAX_ZOOM = 9;
-
-/** Public map viewport — locked to the overview PMTiles extent (z0–z8). */
-export const MYANMAR_OVERVIEW_CENTER: [number, number] = [96.2, 20.5];
-
-/** Opening zoom — frames Myanmar and neighbors within overview tiles. */
-export const MYANMAR_OVERVIEW_ZOOM = 4.7;
-
-/** Users cannot zoom out past the overview country framing. */
-export const MYANMAR_OVERVIEW_MIN_ZOOM = 4.3;
+/** @deprecated Prefer OVERVIEW_NATIVE_MAX_ZOOM */
+export const OVERVIEW_MAX_ZOOM = OVERVIEW_NATIVE_MAX_ZOOM;
 
 /**
- * Pan limits for overview PMTiles bbox (SW then NE, [lng, lat]).
- * Slightly wider than Myanmar alone so edge panning does not hit a hard wall immediately.
+ * Public map camera max zoom (overzooms overview z8 and regional z16).
+ * Keep in sync with packages/map-style/regionalZoomPolicy PUBLIC_MAP_MAX_ZOOM.
  */
+export const OVERVIEW_PUBLIC_CAMERA_MAX_ZOOM = 20;
+
+/**
+ * Temporary MapLibre maxzoom for Myanmar country fill (imprecise geom hide).
+ * Keep visible at national zooms; fully off by ~z9. Relax after QGIS country geom.
+ */
+export const OVERVIEW_MYANMAR_COUNTRY_FILL_MAX_ZOOM = 9;
+
+/**
+ * Temporary MapLibre maxzoom for Myanmar country outline (imprecise geom hide).
+ * Fades after fill; fully off by ~z10. Relax after QGIS country geom.
+ */
+export const OVERVIEW_MYANMAR_COUNTRY_OUTLINE_MAX_ZOOM = 10;
+
+/**
+ * @deprecated Prefer OVERVIEW_MYANMAR_COUNTRY_FILL_MAX_ZOOM /
+ * OVERVIEW_MYANMAR_COUNTRY_OUTLINE_MAX_ZOOM (temporary high-zoom hide).
+ */
+export const OVERVIEW_COUNTRY_LAYER_MAX_ZOOM = OVERVIEW_MYANMAR_COUNTRY_OUTLINE_MAX_ZOOM;
+
+/** MapLibre layer maxzoom for non-persistent overview context (optional fade). */
+export const OVERVIEW_LAYER_MAX_ZOOM = OVERVIEW_NATIVE_MAX_ZOOM + 1;
+
+/** Public map viewport — locked to the overview PMTiles extent framing. */
+export const MYANMAR_OVERVIEW_CENTER: [number, number] = [96.2, 20.5];
+export const MYANMAR_OVERVIEW_ZOOM = 4.7;
+export const MYANMAR_OVERVIEW_MIN_ZOOM = 4.3;
+
 export const MYANMAR_OVERVIEW_MAX_BOUNDS: readonly [[number, number], [number, number]] = [
   [78.0, 3.0],
   [112.0, 34.0],
@@ -28,20 +50,14 @@ export const MYANMAR_OVERVIEW_MAX_BOUNDS: readonly [[number, number], [number, n
 export const DEFAULT_OVERVIEW_CURRENT_JSON_URL =
   'http://localhost:8080/overview/regions/current.json';
 
-/**
- * Placeholder token in committed `overview-map.json` — never fetch tiles from this URL.
- * Runtime callers inject `VITE_OVERVIEW_PMTILES_URL` (web) or pass HTTP(S) URL to
- * `createOverviewStyle()`.
- */
 export const OVERVIEW_PMTILES_URL_PLACEHOLDER = '__OVERVIEW_PMTILES_URL__' as const;
 
-/** Committed overview MapLibre style source URL (template only). */
 export const OVERVIEW_PMTILES_SOURCE_URL_PLACEHOLDER =
   `pmtiles://${OVERVIEW_PMTILES_URL_PLACEHOLDER}` as const;
 
 /**
- * Vector tile layer names in the overview PMTiles archive (tippecanoe `-L` / MapLibre `source-layer`).
- * Keep in sync with infrastructure/tiles/pmtiles/overview build and overview-map.json.
+ * Vector tile layer names in the overview PMTiles archive.
+ * Keep in sync with infrastructure/tiles/pmtiles/overview build and styles.
  */
 export const OVERVIEW_PMTILES_SOURCE_LAYERS = [
   'land',
@@ -52,22 +68,25 @@ export const OVERVIEW_PMTILES_SOURCE_LAYERS = [
   'populated_places',
   'lakes',
   'rivers',
-  'mmr_admin0_z0_2',
-  'mmr_admin0_z3_4',
-  'mmr_admin0_z5_6',
-  'mmr_admin1',
+  'myanmar_country',
+  'myanmar_state_region',
+  'myanmar_state_labels',
 ] as const;
 
-/** High-precision Myanmar admin0 PMTiles source-layers (zoom-tier geometry). */
-export const OVERVIEW_MMR_ADMIN0_ZOOM_TIER_SOURCE_LAYERS = [
-  'mmr_admin0_z0_2',
-  'mmr_admin0_z3_4',
-  'mmr_admin0_z5_6',
-] as const;
+export const OVERVIEW_MYANMAR_COUNTRY_SOURCE_LAYER = 'myanmar_country' as const;
+export const OVERVIEW_MYANMAR_STATE_REGION_SOURCE_LAYER = 'myanmar_state_region' as const;
+export const OVERVIEW_MYANMAR_STATE_LABELS_SOURCE_LAYER = 'myanmar_state_labels' as const;
+
+/** @deprecated Use OVERVIEW_MYANMAR_COUNTRY_SOURCE_LAYER */
+export const OVERVIEW_ADMIN_COUNTRY_SOURCE_LAYER = OVERVIEW_MYANMAR_COUNTRY_SOURCE_LAYER;
+/** @deprecated Use OVERVIEW_MYANMAR_STATE_REGION_SOURCE_LAYER */
+export const OVERVIEW_ADMIN_STATE_REGION_SOURCE_LAYER = OVERVIEW_MYANMAR_STATE_REGION_SOURCE_LAYER;
+/** @deprecated Use OVERVIEW_MYANMAR_STATE_LABELS_SOURCE_LAYER */
+export const OVERVIEW_ADMIN_STATE_REGION_LABELS_SOURCE_LAYER =
+  OVERVIEW_MYANMAR_STATE_LABELS_SOURCE_LAYER;
 
 export type OverviewPmtilesSourceLayer = (typeof OVERVIEW_PMTILES_SOURCE_LAYERS)[number];
 
-/** Regional OSM / PostGIS source-layers that must not appear in overview style. */
 export const OVERVIEW_FORBIDDEN_SOURCE_LAYERS = [
   'landuse',
   'water_polygons',
@@ -79,22 +98,31 @@ export const OVERVIEW_FORBIDDEN_SOURCE_LAYERS = [
   'buildings',
   'admin_area_label_points',
   'road_labels',
+  'admin_country',
+  'admin_country_outline',
+  'admin_country_land_border',
+  'admin_state_region',
+  'admin_state_region_boundaries',
+  'admin_state_region_labels',
+  'myanmar_coastline',
+  'myanmar_major_islands',
+  'mmr_admin0',
+  'mmr_admin0_z0_2',
+  'mmr_admin0_z3_4',
+  'mmr_admin0_z5_6',
+  'mmr_admin0_overview',
+  'mmr_admin1',
+  'mmr_country_highlight',
 ] as const;
 
-/** Country neighbor labels — z4–6 only; Myanmar excluded (MIMU admin1 labels cover Myanmar). */
 export const OVERVIEW_COUNTRY_LABEL_MIN_ZOOM = 3;
 export const OVERVIEW_COUNTRY_LABEL_MAX_ZOOM = 6.5;
-
-/** Myanmar state/region labels — visible from z4 with reference-style subtle purple-gray. */
-export const OVERVIEW_MMR_ADMIN1_LABEL_MIN_ZOOM = 4;
-
-/** Major cities — after country/admin context is established. */
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_MIN_ZOOM = 4;
+/** State labels stay through regional handoff start; fade by z9–z10. */
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_MAX_ZOOM = 9;
 export const OVERVIEW_POPULATED_PLACES_MIN_ZOOM = 7;
 
-/**
- * Exclude Natural Earth Myanmar segments from neighbor `country_boundaries` so only
- * `mmr_admin0_z0_2` / `z3_4` / `z5_6` (NE land-aligned tiers) draw the Myanmar outer ring z0–z6.
- */
+/** Exclude Natural Earth Myanmar segments from neighbor country_boundaries. */
 export const OVERVIEW_EXCLUDE_MMR_COUNTRY_BOUNDARY_FILTER = [
   '!',
   [
@@ -110,68 +138,40 @@ export const OVERVIEW_EXCLUDE_MMR_COUNTRY_BOUNDARY_FILTER = [
   ],
 ] as const;
 
-/** Overview boundary layer ids (paint order: neighbor → internal → admin0 casing → admin0 line). */
 export const OVERVIEW_NEIGHBOR_COUNTRY_BOUNDARY_LAYER_ID = 'neighbor-country-boundary-line' as const;
-
-export const OVERVIEW_MMR_INTERNAL_ADMIN_BOUNDARY_LAYER_ID =
+export const OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_LAYER_ID =
   'myanmar-internal-admin-boundary-line' as const;
+export const OVERVIEW_MYANMAR_COUNTRY_FILL_LAYER_ID = 'myanmar-country-fill' as const;
+export const OVERVIEW_MYANMAR_COUNTRY_OUTLINE_LAYER_ID = 'myanmar-country-outline' as const;
 
-/** Myanmar admin0 zoom-tier MapLibre layers (land-aligned NE, z0–z6). */
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_TIERS = [
-  {
-    sourceLayer: 'mmr_admin0_z0_2',
-    casingLayerId: 'myanmar-admin0-boundary-casing-z02',
-    lineLayerId: 'myanmar-admin0-boundary-line-z02',
-    minZoom: 0,
-    maxZoom: 3,
-    zoomBand: 'z0-z2',
-  },
-  {
-    sourceLayer: 'mmr_admin0_z3_4',
-    casingLayerId: 'myanmar-admin0-boundary-casing-z34',
-    lineLayerId: 'myanmar-admin0-boundary-line-z34',
-    minZoom: 3,
-    maxZoom: 5,
-    zoomBand: 'z3-z4',
-  },
-  {
-    sourceLayer: 'mmr_admin0_z5_6',
-    casingLayerId: 'myanmar-admin0-boundary-casing-z56',
-    lineLayerId: 'myanmar-admin0-boundary-line-z56',
-    minZoom: 5,
-    maxZoom: 7,
-    zoomBand: 'z5-z6',
-  },
+/** @deprecated Prefer OVERVIEW_MYANMAR_COUNTRY_OUTLINE_LAYER_ID */
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_LINE_LAYER_ID =
+  OVERVIEW_MYANMAR_COUNTRY_OUTLINE_LAYER_ID;
+/** @deprecated casing removed in v2 simple pipeline */
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_CASING_LAYER_ID =
+  'myanmar-admin-country-boundary-casing' as const;
+
+export const OVERVIEW_LAND_FILL_COLOR = '#e8ebe0' as const;
+/** Subtle Myanmar country tint vs surrounding NE land. */
+export const OVERVIEW_MYANMAR_COUNTRY_FILL_COLOR = '#dfe8d6' as const;
+/** Temporary fade — hide imprecise country fill by ~z9 (style only; PMTiles unchanged). */
+export const OVERVIEW_MYANMAR_COUNTRY_FILL_OPACITY = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  2,
+  0.14,
+  4,
+  0.11,
+  7,
+  0.08,
+  8.5,
+  0.03,
+  9,
+  0,
 ] as const;
 
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_LAYER_IDS = OVERVIEW_MMR_ADMIN0_BOUNDARY_TIERS.map(
-  (t) => t.casingLayerId,
-) as readonly string[];
-
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_LAYER_IDS = OVERVIEW_MMR_ADMIN0_BOUNDARY_TIERS.map(
-  (t) => t.lineLayerId,
-) as readonly string[];
-
-/** @deprecated Use tier line ids from {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_TIERS}. */
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_LAYER_ID = 'myanmar-admin0-boundary-line-z56' as const;
-
-/** @deprecated Use tier casing ids from {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_TIERS}. */
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_LAYER_ID =
-  'myanmar-admin0-boundary-casing-z56' as const;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_LAYER_ID}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_LAYER_ID = OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_LAYER_ID;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_LAYER_ID}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_CASING_LAYER_ID =
-  OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_LAYER_ID;
-
-/** Overview Myanmar admin0 hidden at z7+ (regional OSM admin takes over). */
-export const OVERVIEW_MMR_ADMIN0_OVERVIEW_MAX_ZOOM = 7;
-
-/** Neighbor country boundaries — visible but lighter than Myanmar admin0. */
 export const OVERVIEW_NEIGHBOR_COUNTRY_BOUNDARY_COLOR = '#b8b4c7';
-
 export const OVERVIEW_NEIGHBOR_COUNTRY_BOUNDARY_OPACITY = [
   'interpolate',
   ['linear'],
@@ -183,7 +183,6 @@ export const OVERVIEW_NEIGHBOR_COUNTRY_BOUNDARY_OPACITY = [
   6,
   0.52,
 ] as const;
-
 export const OVERVIEW_NEIGHBOR_COUNTRY_BOUNDARY_WIDTH = [
   'interpolate',
   ['linear'],
@@ -196,77 +195,75 @@ export const OVERVIEW_NEIGHBOR_COUNTRY_BOUNDARY_WIDTH = [
   0.85,
 ] as const;
 
-/** Myanmar admin0 inner stroke — medium purple, elegant z0–z6 silhouette. */
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_COLOR = '#5f5478';
-
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_MIN_ZOOM = 0;
-
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_OPACITY = [
+export const OVERVIEW_MYANMAR_COUNTRY_OUTLINE_COLOR = '#4a5568';
+export const OVERVIEW_MYANMAR_COUNTRY_OUTLINE_MIN_ZOOM = 2;
+/** Temporary fade — hide imprecise country outline by ~z10 (style only; PMTiles unchanged). */
+export const OVERVIEW_MYANMAR_COUNTRY_OUTLINE_OPACITY = [
   'interpolate',
   ['linear'],
   ['zoom'],
-  0,
-  0.72,
   3,
-  0.82,
+  0.8,
   6,
-  0.88,
-] as const;
-
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_WIDTH = [
-  'interpolate',
-  ['linear'],
-  ['zoom'],
-  0,
-  0.9,
-  3,
-  1.25,
-  6,
-  1.65,
-] as const;
-
-/** Subtle land-tone halo under Myanmar admin0 (not thick white). */
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_COLOR = '#f6f5ee';
-
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_OPACITY = [
-  'interpolate',
-  ['linear'],
-  ['zoom'],
-  0,
+  0.75,
+  8.5,
+  0.7,
+  9.5,
   0.35,
-  3,
-  0.45,
-  6,
-  0.55,
+  10,
+  0,
 ] as const;
-
-export const OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_WIDTH = [
+export const OVERVIEW_MYANMAR_COUNTRY_OUTLINE_WIDTH = [
   'interpolate',
   ['linear'],
   ['zoom'],
-  0,
-  1.4,
-  3,
-  1.8,
+  2,
+  0.8,
+  4,
+  1.05,
   6,
-  2.2,
+  1.3,
+  8,
+  1.5,
+  10,
+  1.55,
 ] as const;
 
-/** Regional OSM admin0/admin1 boundaries from z7+ (`admin_boundaries` source-layer). */
+/** @deprecated */
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_LINE_COLOR = OVERVIEW_MYANMAR_COUNTRY_OUTLINE_COLOR;
+/** @deprecated — temporary outline maxzoom until precise country geom */
+export const OVERVIEW_ADMIN_COUNTRY_OVERVIEW_MAX_ZOOM = OVERVIEW_MYANMAR_COUNTRY_OUTLINE_MAX_ZOOM;
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_MIN_ZOOM = OVERVIEW_MYANMAR_COUNTRY_OUTLINE_MIN_ZOOM;
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_LINE_OPACITY = OVERVIEW_MYANMAR_COUNTRY_OUTLINE_OPACITY;
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_LINE_WIDTH = OVERVIEW_MYANMAR_COUNTRY_OUTLINE_WIDTH;
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_CASING_COLOR = '#f6f5ee';
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_CASING_OPACITY = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  2,
+  0.2,
+  6,
+  0.3,
+] as const;
+export const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_CASING_WIDTH = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  2,
+  1.4,
+  6,
+  2.0,
+] as const;
+
 export const REGIONAL_ADMIN_PRIMARY_BOUNDARY_MIN_ZOOM = 7;
-
-/** Regional z7+ state/region boundaries (overview admin0 outer border hides at z7). */
 export const REGIONAL_ADMIN_PRIMARY_LEVEL_CODES = ['state_region'] as const;
-
 export const REGIONAL_ADMIN_PRIMARY_LEVEL_FILTER = [
   'in',
   ['get', 'admin_level_code'],
   ['literal', [...REGIONAL_ADMIN_PRIMARY_LEVEL_CODES]],
 ] as const;
-
 export const REGIONAL_ADMIN_PRIMARY_BOUNDARY_COLOR = '#aaa4bd';
-
-/** Top-level zoom interpolate; case only inside stops (MapLibre paint rule). */
 export const REGIONAL_ADMIN_PRIMARY_BOUNDARY_WIDTH = [
   'interpolate',
   ['linear'],
@@ -276,200 +273,185 @@ export const REGIONAL_ADMIN_PRIMARY_BOUNDARY_WIDTH = [
   10,
   ['case', REGIONAL_ADMIN_PRIMARY_LEVEL_FILTER, 0.9, 0.55],
 ] as const;
-
-/** Top-level zoom interpolate; country outer border hidden; lower admin stays weak. */
 export const REGIONAL_ADMIN_PRIMARY_BOUNDARY_OPACITY = [
   'interpolate',
   ['linear'],
   ['zoom'],
   7,
-  [
-    'case',
-    ['==', ['get', 'admin_level_code'], 'country'],
-    0,
-    REGIONAL_ADMIN_PRIMARY_LEVEL_FILTER,
-    0.45,
-    ['==', ['get', 'admin_level_code'], 'village'],
-    0,
-    0.22,
-  ],
-  10,
-  [
-    'case',
-    ['==', ['get', 'admin_level_code'], 'country'],
-    0,
-    REGIONAL_ADMIN_PRIMARY_LEVEL_FILTER,
-    0.45,
-    ['==', ['get', 'admin_level_code'], 'village'],
-    0,
-    0.28,
-  ],
-] as const;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_COLOR}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_COLOR = OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_COLOR;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_MIN_ZOOM}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_MIN_ZOOM = OVERVIEW_MMR_ADMIN0_BOUNDARY_MIN_ZOOM;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_OPACITY}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_OPACITY = OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_OPACITY;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_WIDTH}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_WIDTH = OVERVIEW_MMR_ADMIN0_BOUNDARY_LINE_WIDTH;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_COLOR}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_CASING_COLOR = OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_COLOR;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_OPACITY}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_CASING_OPACITY = OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_OPACITY;
-
-/** @deprecated Use {@link OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_WIDTH}. */
-export const OVERVIEW_MMR_COUNTRY_HIGHLIGHT_CASING_WIDTH = OVERVIEW_MMR_ADMIN0_BOUNDARY_CASING_WIDTH;
-
-/** Myanmar admin1/state internal boundaries — subtle purple-gray from z3. */
-export const OVERVIEW_MMR_ADMIN1_BOUNDARY_COLOR = '#aaa4bd';
-
-export const OVERVIEW_MMR_ADMIN1_BOUNDARY_MIN_ZOOM = 3;
-
-/** Overview mmr_admin1 lines stay through z10; regional state_region takes over from z7. */
-export const OVERVIEW_MMR_ADMIN1_BOUNDARY_MAX_ZOOM = 10;
-
-export const OVERVIEW_MMR_ADMIN1_BOUNDARY_OPACITY = [
-  'interpolate',
-  ['linear'],
-  ['zoom'],
-  3,
   0.35,
-  5,
-  0.48,
-  6,
-  0.55,
+  10,
+  0.45,
 ] as const;
 
-export const OVERVIEW_MMR_ADMIN1_BOUNDARY_WIDTH = [
+export const OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_COLOR = '#8a9099';
+export const OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_MIN_ZOOM = 4;
+/** Internal state lines fade when regional detail takes over. */
+export const OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_MAX_ZOOM = 14;
+export const OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_OPACITY = [
   'interpolate',
   ['linear'],
   ['zoom'],
-  3,
-  0.45,
-  5,
-  0.65,
+  4,
+  0.25,
   6,
-  0.8,
+  0.35,
+  10,
+  0.3,
+  14,
+  0.15,
+] as const;
+export const OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_WIDTH = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  4,
+  0.35,
+  6,
+  0.5,
+  10,
+  0.6,
+  14,
+  0.45,
 ] as const;
 
-/** Neighbor country labels — clean gray on cream halo. */
-export const OVERVIEW_COUNTRY_LABEL_TEXT_COLOR = '#6f7488';
+/** Optional very subtle state fill — kept off by default in style (opacity 0). */
+export const OVERVIEW_ADMIN_STATE_REGION_FILL_COLOR = [
+  'interpolate',
+  ['linear'],
+  ['%', ['to-number', ['coalesce', ['get', 'core_id'], 0]], 16],
+  0,
+  '#eef3f6',
+  8,
+  '#eef4ef',
+  15,
+  '#f3eef3',
+] as const;
 
+export const OVERVIEW_COUNTRY_LABEL_TEXT_COLOR = '#5a5f66';
 export const OVERVIEW_COUNTRY_LABEL_HALO_COLOR = '#f4f3ec';
-
-export const OVERVIEW_COUNTRY_LABEL_HALO_WIDTH = 0.9;
-
+export const OVERVIEW_COUNTRY_LABEL_HALO_WIDTH = 1.2;
 export const OVERVIEW_COUNTRY_LABEL_TEXT_SIZE = [
   'interpolate',
   ['linear'],
   ['zoom'],
   3,
-  10.5,
+  11,
   5,
+  13,
+  6.5,
   12,
 ] as const;
 
-/** Myanmar admin1 labels — reference-style muted purple-gray. */
-export const OVERVIEW_MMR_ADMIN1_LABEL_TEXT_COLOR = '#74708b';
-
-export const OVERVIEW_MMR_ADMIN1_LABEL_HALO_COLOR = '#f4f3ec';
-
-export const OVERVIEW_MMR_ADMIN1_LABEL_HALO_WIDTH = 0.8;
-
-export const OVERVIEW_MMR_ADMIN1_LABEL_TEXT_SIZE = [
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_COLOR = '#6a6f78';
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_HALO_COLOR = '#f4f3ec';
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_HALO_WIDTH = 1.05;
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_SIZE = [
   'interpolate',
   ['linear'],
   ['zoom'],
   4,
-  10.5,
-  5,
+  10,
+  6,
+  11,
+  8,
   11.5,
-  6,
-  12.5,
 ] as const;
-
-export const OVERVIEW_MMR_ADMIN1_LABEL_TEXT_OPACITY = [
+/** Tight padding so all 15 short state names can place; still no allow-overlap. */
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_PADDING = 3;
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_OPACITY = [
   'interpolate',
   ['linear'],
   ['zoom'],
   4,
-  0.55,
+  0.72,
   5,
-  0.75,
-  6,
   0.85,
+  6,
+  0.9,
+  8,
+  0.85,
+  9,
+  0.35,
+  10,
+  0,
 ] as const;
 
-/** Hide Myanmar country polygon label when admin1 labels are visible. */
-export const OVERVIEW_EXCLUDE_MMR_COUNTRY_LABEL_FILTER = [
-  '!',
-  [
-    'any',
-    ['==', ['upcase', ['coalesce', ['get', 'ISO_A3'], ['get', 'iso_a3'], '']], 'MMR'],
-    ['==', ['upcase', ['coalesce', ['get', 'ADMIN'], '']], 'MYANMAR'],
-    ['==', ['upcase', ['coalesce', ['get', 'BRK_A3'], '']], 'MMR'],
-  ],
-] as const;
-
-/**
- * Country labels — fewer names at low zoom; neighbors only.
- * Tighter `LABELRANK` below z6; excludes micro-states (`TINY`) and Myanmar.
- */
-export const OVERVIEW_COUNTRY_LABEL_FILTER = [
-  'all',
-  ['!=', ['coalesce', ['get', 'TINY'], 0], 1],
-  [
-    '<=',
-    ['coalesce', ['get', 'LABELRANK'], 10],
-    ['step', ['zoom'], 4, 5.5, 5, 6, 6],
-  ],
-  OVERVIEW_EXCLUDE_MMR_COUNTRY_LABEL_FILTER,
-] as const;
-
-/** Admin1 labels — one name per state/region polygon feature with a non-empty ST* field. */
-export const OVERVIEW_MMR_ADMIN1_LABEL_FILTER = [
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_FILTER = [
   'all',
   [
     '!=',
     [
       'coalesce',
-      ['get', 'ST_MMR'],
-      ['get', 'ST'],
-      ['get', 'SR_MMR'],
-      ['get', 'SR'],
+      ['get', 'label_name_mm'],
+      ['get', 'name_mm'],
+      ['get', 'label_name_en'],
+      ['get', 'name_en'],
+      ['get', 'name'],
       '',
     ],
     '',
   ],
 ] as const;
 
-/**
- * Major cities — capitals or high-importance settlements only.
- * Layer `minzoom: 5` controls when labels appear; no zoom `step` in filter.
- */
+export const OVERVIEW_COUNTRY_LABEL_FILTER = [
+  'all',
+  ['!=', ['coalesce', ['get', 'TINY'], 0], 1],
+  ['<=', ['coalesce', ['get', 'LABELRANK'], 10], 5],
+  ['!=', ['upcase', ['coalesce', ['get', 'ADM0_A3'], '']], 'MMR'],
+] as const;
+
+export const OVERVIEW_LAKES_FILTER = ['all'] as const;
+export const OVERVIEW_RIVERS_FILTER = ['all'] as const;
 export const OVERVIEW_MAJOR_CITY_FILTER = [
   'any',
-  ['<=', ['to-number', ['coalesce', ['get', 'SCALERANK'], ['get', 'scalerank'], 99]], 4],
-  ['==', ['to-number', ['coalesce', ['get', 'ADM0CAP'], ['get', 'adm0cap'], 0]], 1],
+  ['==', ['coalesce', ['get', 'ADM0CAP'], 0], 1],
+  ['<=', ['coalesce', ['get', 'SCALERANK'], 10], 4],
 ] as const;
 
-/** Large lakes — `min_zoom` from tile props; layer `minzoom: 6` limits visibility. */
-export const OVERVIEW_LAKES_FILTER = [
-  'all',
-  ['<=', ['coalesce', ['get', 'min_zoom'], 0], ['zoom']],
-  ['<=', ['coalesce', ['get', 'scalerank'], 99], 6],
-] as const;
-
-/** Major rivers — same rank gate as lakes; layer `minzoom: 6`. */
-export const OVERVIEW_RIVERS_FILTER = [
-  'all',
-  ['<=', ['coalesce', ['get', 'min_zoom'], 0], ['zoom']],
-  ['<=', ['coalesce', ['get', 'scalerank'], 99], 6],
+/**
+ * Overview state labels: prefer export aliases when present (after rebuild),
+ * else map core_id → short Myanmar name so current v2 tiles work without waiting.
+ */
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_FIELD = [
+  'coalesce',
+  ['get', 'label_name_mm'],
+  [
+    'match',
+    ['to-number', ['coalesce', ['get', 'core_id'], 0]],
+    13,
+    'ရန်ကုန်',
+    5089,
+    'မွန်',
+    5879,
+    'ကရင်',
+    6007,
+    'ကယား',
+    6031,
+    'နေပြည်တော်',
+    6329,
+    'ရှမ်း',
+    6667,
+    'ကချင်',
+    6703,
+    'စစ်ကိုင်း',
+    6722,
+    'ရခိုင်',
+    6744,
+    'ချင်း',
+    6832,
+    'မန္တလေး',
+    7027,
+    'မကွေး',
+    7169,
+    'ပဲခူး',
+    7279,
+    'ဧရာဝတီ',
+    7449,
+    'တနင်္သာရီ',
+    ['coalesce', ['get', 'name_mm'], ''],
+  ],
+  ['get', 'label_name_en'],
+  ['get', 'name_en'],
+  ['get', 'name'],
+  '',
 ] as const;

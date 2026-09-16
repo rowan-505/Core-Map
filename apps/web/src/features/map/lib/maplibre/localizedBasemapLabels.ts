@@ -35,7 +35,7 @@ function specHasTextField(layout: LayerSpecification['layout']): layout is NonNu
 }
 
 /**
- * Resolves `text-field` for a symbol layer — overview layers keep Natural Earth/MIMU fields.
+ * Resolves `text-field` for a symbol layer — overview uses Natural Earth / Core name fields.
  * Exported for unit tests without a MapLibre runtime.
  */
 export function resolveSymbolLayerTextField(

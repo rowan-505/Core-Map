@@ -43,7 +43,7 @@ export function findMissingRequiredRegionalStyleSourceLayers(): string[] {
   return REQUIRED_REGIONAL_STYLE_SOURCE_LAYERS.filter((name) => !referenced.has(name));
 }
 
-/** Ensures composed regional layers are not capped below public max zoom (native tiles z20). */
+/** Ensures composed regional layers are not capped below public camera max zoom (z20 overzoom of native z16). */
 export function validateRegionalOverzoomLayerMaxZoom(layers: LayerSpecification[]): string[] {
   const issues: string[] = [];
   for (const layer of layers) {

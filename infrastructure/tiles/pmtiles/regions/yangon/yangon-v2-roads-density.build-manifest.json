@@ -1,0 +1,25 @@
+{
+  "region": "yangon",
+  "version": "v2-roads-density",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/yangon/yangon-v2-roads-density.pmtiles",
+  "file_size_bytes": 38026477,
+  "created_at": "2026-09-06T17:16:12+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 38026477,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 93.225051, lat: 13.981708) (long: 96.811523, lat: 17.873565)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 95.781555, lat: 17.012141)\ncenter zoom: 16\naddressed tiles count: 30108\ntile entries count: 30108\ntile contents count: 30108\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nminzoom 8\nname /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-yangon-v2-roads-density-120016.mbtiles + /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-yangon-v2-roads-density-120016.mbtiles\nmaxzoom 16\ntilestats <object, use --metadata to view full JSON metadata>\ntype overlay\nvector_layers <object, use --metadata to view full JSON metadata>\nversion 2\nantimeridian_adjusted_bounds 93.225051,13.981708,96.811523,17.873565\nattribution Local Map\ndescription /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-yangon-v2-roads-density-120016.mbtiles\nformat pbf\ngenerator tile-join v2.79.0\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-yangon-v2-roads-density-120016.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-roads-density-120016/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-yangon-v2-roads-density-120016.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-roads-density-120016/streets.annotated.geojsonseq; tile-join -f -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-yangon-v2-roads-density-120016.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-yangon-v2-roads-density-120016.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-yangon-v2-roads-density-120016.mbtiles"
+  },
+  "inputs": {
+    "streets.geojson": {
+      "size_bytes": 51313561,
+      "mtime_ns": 1788704932630810386
+    },
+    "road_labels.geojson": {
+      "size_bytes": 5780474,
+      "mtime_ns": 1788704936758549873
+    }
+  }
+}

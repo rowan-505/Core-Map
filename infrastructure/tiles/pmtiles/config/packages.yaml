@@ -1,0 +1,142 @@
+# PMTiles package configuration (v1)
+#
+# A package key maps to one or more admin boundaries from local
+# tile_source.admin_areas. Export unions those polygons, then applies the
+# existing package-edge buffer (~10 km).
+#
+# v1: one package per Myanmar state/region (15 packages).
+# Later: split oversized packages by listing district (or other) members, e.g.:
+#
+#   shan-north:
+#     label: Shan North
+#     members:
+#       - { admin_level: district, name_en: "..." }
+#
+# Rules:
+# - Do not use arbitrary grids.
+# - Members match by exact admin_level + name_en / name_mm (and optional core_id).
+# - Exact names only — never fuzzy-match extra state_region rows (e.g. Wa).
+
+version: 1
+
+packages:
+  yangon:
+    label: Yangon Region
+    members:
+      - admin_level: state_region
+        name_en: Yangon Region
+        name_mm: ရန်ကုန်တိုင်းဒေသကြီး
+
+  bago:
+    label: Bago Region
+    members:
+      - admin_level: state_region
+        name_en: Bago Region
+        name_mm: ပဲခူးတိုင်းဒေသကြီး
+        osm_relation_id: 5996474
+
+  ayeyarwady:
+    label: Ayeyarwady Region
+    members:
+      - admin_level: state_region
+        # Snapshot name_en blank; name_mm may include ZWSP — resolver strips ZWSP.
+        name_mm: ဧရာဝတီတိုင်း
+        osm_relation_id: 5996473
+
+  mandalay:
+    label: Mandalay Region
+    members:
+      - admin_level: state_region
+        name_en: Mandalay Region
+        name_mm: မန္တလေးတိုင်း
+        osm_relation_id: 5996480
+
+  magway:
+    label: Magway Region
+    members:
+      - admin_level: state_region
+        name_en: Magway Region
+        name_mm: မကွေးတိုင်းဒေသကြီး
+        osm_relation_id: 5996479
+
+  sagaing:
+    label: Sagaing Region
+    members:
+      - admin_level: state_region
+        name_en: Sagaing Region
+        name_mm: စစ်ကိုင်းတိုင်းဒေသကြီး
+        osm_relation_id: 5996484
+
+  tanintharyi:
+    label: Tanintharyi Region
+    members:
+      - admin_level: state_region
+        name_en: Tanintharyi Region
+        name_mm: တနင်္သာရီတိုင်း
+        osm_relation_id: 5996486
+
+  naypyitaw:
+    # Local snapshot spelling is Naypyidaw.
+    label: Naypyidaw Union Territory
+    members:
+      - admin_level: state_region
+        name_en: Naypyidaw Union Territory
+        name_mm: နေပြည်တော် ပြည်ထောင်စုနယ်မြေ
+        osm_relation_id: 5996482
+
+  kachin:
+    label: Kachin State
+    members:
+      - admin_level: state_region
+        # Snapshot name_en blank — match Myanmar name.
+        name_mm: ကချင်ပြည်နယ်
+        osm_relation_id: 5996476
+
+  kayah:
+    label: Kayah State
+    members:
+      - admin_level: state_region
+        name_en: Kayah State
+        name_mm: ကယားပြည်နယ်
+        osm_relation_id: 5996477
+
+  kayin:
+    label: Kayin State
+    members:
+      - admin_level: state_region
+        name_en: Kayin State
+        name_mm: ကရင်ပြည်နယ်
+        osm_relation_id: 5996478
+
+  chin:
+    label: Chin State
+    members:
+      - admin_level: state_region
+        name_en: Chin State
+        name_mm: ချင်းပြည်နယ်
+        osm_relation_id: 5996475
+
+  mon:
+    label: Mon State
+    members:
+      - admin_level: state_region
+        name_en: Mon State
+        name_mm: မွန်ပြည်နယ်
+        osm_relation_id: 5996481
+
+  rakhine:
+    label: Rakhine State
+    members:
+      - admin_level: state_region
+        name_en: Rakhine State
+        name_mm: ရခိုင်ပြည်နယ်
+        osm_relation_id: 5996483
+
+  # Exact "Shan State" only — do not include Wa state_region rows.
+  shan:
+    label: Shan State
+    members:
+      - admin_level: state_region
+        name_en: Shan State
+        name_mm: ရှမ်းပြည်နယ်
+        osm_relation_id: 5996485

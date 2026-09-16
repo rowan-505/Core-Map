@@ -1,0 +1,231 @@
+{
+  "generatedAt": "2026-09-15T20:35:14+00:00",
+  "baseUrl": "http://localhost:8080",
+  "label": "mixed",
+  "packageCount": 15,
+  "overview": {
+    "version": "v2",
+    "filename": "myanmar-overview-v2.pmtiles",
+    "url": "http://localhost:8080/overview/regions/myanmar-overview-v2.pmtiles",
+    "bounds": [
+      90.0,
+      9.0,
+      102.0,
+      29.0
+    ],
+    "minZoom": 0,
+    "maxZoom": 8
+  },
+  "packages": [
+    {
+      "key": "yangon",
+      "version": "v2",
+      "filename": "yangon-v2.pmtiles",
+      "url": "http://localhost:8080/regions/yangon/yangon-v2.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        93.07505099999999,
+        13.831709,
+        96.96130600000001,
+        18.023564999999998
+      ]
+    },
+    {
+      "key": "bago",
+      "version": "v2-qa1",
+      "filename": "bago-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/bago/bago-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        94.44130999999999,
+        16.499193,
+        97.518056,
+        19.745751
+      ]
+    },
+    {
+      "key": "ayeyarwady",
+      "version": "v2-qa1",
+      "filename": "ayeyarwady-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/ayeyarwady/ayeyarwady-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        94.05178699999999,
+        15.536826999999999,
+        96.35545,
+        18.812465999999997
+      ]
+    },
+    {
+      "key": "mandalay",
+      "version": "v2-qa1",
+      "filename": "mandalay-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/mandalay/mandalay-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        94.544536,
+        19.917392000000003,
+        97.21352300000001,
+        23.977824
+      ]
+    },
+    {
+      "key": "magway",
+      "version": "v2-qa1",
+      "filename": "magway-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/magway/magway-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        93.691125,
+        18.561752000000002,
+        96.311002,
+        23.138230999999998
+      ]
+    },
+    {
+      "key": "sagaing",
+      "version": "v2-qa1",
+      "filename": "sagaing-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/sagaing/sagaing-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        93.658085,
+        21.31446,
+        97.15913300000001,
+        27.44305
+      ]
+    },
+    {
+      "key": "tanintharyi",
+      "version": "v2-qa1",
+      "filename": "tanintharyi-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/tanintharyi/tanintharyi-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        97.62800299999999,
+        9.633255,
+        99.906901,
+        15.355813
+      ]
+    },
+    {
+      "key": "naypyitaw",
+      "version": "v2-qa1",
+      "filename": "naypyitaw-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/naypyitaw/naypyitaw-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        95.329933,
+        19.087565,
+        96.951924,
+        20.612372999999998
+      ]
+    },
+    {
+      "key": "kachin",
+      "version": "v2-qa1",
+      "filename": "kachin-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/kachin/kachin-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        95.593854,
+        23.328052000000003,
+        99.047414,
+        28.528757
+      ]
+    },
+    {
+      "key": "kayah",
+      "version": "v2-qa1",
+      "filename": "kayah-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/kayah/kayah-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        96.452264,
+        18.249570000000002,
+        98.105204,
+        20.2518
+      ]
+    },
+    {
+      "key": "kayin",
+      "version": "v2-qa1",
+      "filename": "kayin-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/kayin/kayin-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        96.12654599999999,
+        15.013112,
+        99.101797,
+        19.768127999999997
+      ]
+    },
+    {
+      "key": "chin",
+      "version": "v2-qa1",
+      "filename": "chin-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/chin/chin-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        92.415987,
+        20.521223000000003,
+        94.56250100000001,
+        24.270872999999998
+      ]
+    },
+    {
+      "key": "mon",
+      "version": "v2-qa1",
+      "filename": "mon-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/mon/mon-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        96.419399,
+        14.584259,
+        98.492677,
+        18.091414
+      ]
+    },
+    {
+      "key": "rakhine",
+      "version": "v2-qa1",
+      "filename": "rakhine-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/rakhine/rakhine-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        91.987208,
+        17.032966000000002,
+        95.259489,
+        21.665112999999998
+      ]
+    },
+    {
+      "key": "shan",
+      "version": "v2-qa1",
+      "filename": "shan-v2-qa1.pmtiles",
+      "url": "http://localhost:8080/regions/shan/shan-v2-qa1.pmtiles",
+      "minZoom": 8,
+      "maxZoom": 16,
+      "bounds": [
+        95.87289399999999,
+        19.044148,
+        101.37853600000001,
+        24.441912
+      ]
+    }
+  ]
+}

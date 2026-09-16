@@ -10,8 +10,8 @@ This directory is **intentionally ignored by Git**. It holds large, reproducible
 
 Tile builds need local copies of:
 
-- Natural Earth 1:10m shapefiles (overview basemap)
-- MIMU Myanmar admin boundaries and P-code spreadsheets
+- Natural Earth 1:10m shapefiles (overview world/neighbor/hydrography context)
+- Core admin GeoJSONSeq exported from local `tile_source.admin_areas`
 - Clipped / converted GeoJSONSeq used by tippecanoe
 - Temporary extraction and cache files
 
@@ -21,28 +21,30 @@ These files are too large for the repo and can be re-downloaded or regenerated f
 
 ## Expected local layout
 
-Create these folders on your machine as needed:
-
 ```text
 infrastructure/tiles/data/
   .gitkeep
   README.md                 ← only committed files in this tree
 
   natural-earth/            ← Natural Earth downloads
-    *.zip                   ← source archives (gitignored)
-    unzipped/               ← extracted shapefiles
-
-  mimu/                     ← MIMU Myanmar admin data
-    *.zip                   ← source archives (gitignored)
-    *.xlsm                  ← P-code spreadsheets (gitignored)
+    zip/                    ← source archives (gitignored)
     unzipped/               ← extracted shapefiles
 
   processed/                ← tippecanoe-ready GeoJSONSeq
     natural-earth/clipped/  ← output of clip-natural-earth-overview.sh
-    mimu/                   ← mmr_admin0 / mmr_admin1 GeoJSONSeq
+    overview/               ← Core export: myanmar_country, myanmar_state_region, myanmar_state_labels
 
   tmp/                      ← optional scratch (safe to delete)
 ```
+
+**Myanmar admin** is not stored as a third-party download here. Export it from the local tile DB:
+
+```bash
+npm run tiles:sync
+npm run tiles:export:overview-admin
+```
+
+Do **not** create or use a third-party Myanmar admin folder under `processed/` — the active overview pipeline rejects that path.
 
 PMTiles outputs live under **`infrastructure/tiles/pmtiles/`** (also gitignored when `*.pmtiles`).
 
@@ -55,10 +57,7 @@ PMTiles outputs live under **`infrastructure/tiles/pmtiles/`** (also gitignored 
 | `infrastructure/tiles/data/.gitkeep` | Yes |
 | `infrastructure/tiles/data/README.md` | Yes |
 | Everything else under `data/` | **No** |
-| `infrastructure/tiles/pmtiles/overview/regions/current.json` | Yes (pointer only) |
 | `*.pmtiles`, shapefiles, ZIPs, GeoJSONSeq | **No** |
-
-Root `.gitignore` rules: `/infrastructure/tiles/data/**` with exceptions for `.gitkeep` and this README.
 
 ---
 

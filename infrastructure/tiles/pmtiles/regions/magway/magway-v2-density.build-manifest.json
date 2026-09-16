@@ -1,0 +1,65 @@
+{
+  "region": "magway",
+  "version": "v2-density",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/magway/magway-v2-density.pmtiles",
+  "file_size_bytes": 127730147,
+  "created_at": "2026-09-06T19:40:24+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 127730147,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172890, lat: 9.525930) (long: 101.170092, lat: 28.547886)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 94.919128, lat: 20.156520)\ncenter zoom: 16\naddressed tiles count: 351925\ntile entries count: 174392\ntile contents count: 166411\nclustered: true\ninternal compression: gzip\ntile compression: gzip\ntype overlay\nvector_layers <object, use --metadata to view full JSON metadata>\nantimeridian_adjusted_bounds 92.172890,9.525930,101.170092,28.547886\nattribution Local Map\nformat pbf\nmaxzoom 16\nname /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-magway-v2-density-184448.mbtiles + /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-magway-v2-density-184448.mbtiles\ntilestats <object, use --metadata to view full JSON metadata>\nversion 2\ndescription /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-magway-v2-density-184448.mbtiles\ngenerator tile-join v2.79.0\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=14' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-magway-v2-density-184448.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/admin_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-magway-v2-density-184448.mbtiles '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/water_polygons.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-magway-v2-density-184448.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-magway-v2-density-184448.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/streets.annotated.geojsonseq; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-magway-v2-density-184448.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/buildings.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-density-184448/settlements.annotated.geojsonseq' '--named-layer=protected_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-magway-v2-dens\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 88948810,
+      "mtime_ns": 1788723340822207496
+    },
+    "streets.geojson": {
+      "size_bytes": 67076930,
+      "mtime_ns": 1788723350977627454
+    },
+    "road_labels.geojson": {
+      "size_bytes": 871056,
+      "mtime_ns": 1788723357359543935
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 3501466,
+      "mtime_ns": 1788723358040238145
+    },
+    "water_lines.geojson": {
+      "size_bytes": 6989155,
+      "mtime_ns": 1788723359121987668
+    },
+    "landuse.geojson": {
+      "size_bytes": 9671801,
+      "mtime_ns": 1788723361043484083
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 3997730,
+      "mtime_ns": 1788723362123094488
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 3997730,
+      "mtime_ns": 1788723362909163767
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 58770,
+      "mtime_ns": 1788723363447052213
+    },
+    "settlements.geojson": {
+      "size_bytes": 2538801,
+      "mtime_ns": 1788723363967462898
+    },
+    "coastlines.geojson": {
+      "size_bytes": 161,
+      "mtime_ns": 1788723364416325919
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 394627,
+      "mtime_ns": 1788723364862582729
+    }
+  }
+}

@@ -83,6 +83,51 @@ export type CoreReviewLandAreaRow = {
     source_refs: unknown;
 };
 
+export type LandAreaDemoteSnapshotRow = {
+    id: string;
+    public_id: string;
+    external_id: string | null;
+    class_code: string | null;
+    land_area_class_id: string | null;
+    admin_area_id: string | null;
+    region_code: string | null;
+    detail_level: string | null;
+    crop_code: string | null;
+    irrigated: boolean | null;
+    seasonality: string | null;
+    area_m2: number | null;
+    confidence_score: number | null;
+    manual_override: boolean;
+    verification_status: string | null;
+    is_verified: boolean;
+    is_active: boolean;
+    deleted_at: Date | string | null;
+    created_at: Date | string | null;
+    updated_at: Date | string | null;
+    verified_at: Date | string | null;
+    verified_by: string | null;
+    verification_note: string | null;
+    source_registry_id: string | null;
+    source_snapshot_id: string | null;
+    source_feature_type: string | null;
+    source_feature_id: string | null;
+    source_tags: unknown;
+    source_refs: unknown;
+    normalized_data: unknown;
+    name: string | null;
+    geometry: { type: "Polygon" | "MultiPolygon"; coordinates: unknown } | null;
+    centroid: unknown;
+};
+
+export type LandAreaDemoteNameRow = {
+    language_code: string | null;
+    script_code: string | null;
+    name_type: string | null;
+    is_primary: boolean | null;
+    search_weight: number | null;
+    name: string;
+};
+
 type DbClient = PrismaClient | PrismaNamespace.TransactionClient;
 
 function sortDir(order: "asc" | "desc"): Prisma.Sql {
@@ -260,16 +305,21 @@ export class CoreReviewLandAreasRepository {
 
     /** Resolve stable ref code → land_area_class_id. Free-text is never authoritative without a ref hit. */
     async resolveLandAreaClassIdByCode(code: string): Promise<bigint | null> {
+        const resolved = await this.resolveActiveLandAreaClass(code);
+        return resolved?.id ?? null;
+    }
+
+    async resolveActiveLandAreaClass(code: string): Promise<{ id: bigint; code: string } | null> {
         const normalized = code.trim().toLowerCase();
         if (!normalized) {
             return null;
         }
-        const rows = await this.prisma.$queryRaw<{ id: bigint }[]>`
-            SELECT id FROM ref.ref_land_area_classes
+        const rows = await this.prisma.$queryRaw<{ id: bigint; code: string }[]>`
+            SELECT id, code FROM ref.ref_land_area_classes
             WHERE lower(btrim(code)) = ${normalized} AND is_active IS TRUE
             LIMIT 1
         `;
-        return rows[0]?.id ?? null;
+        return rows[0] ?? null;
     }
 
     private async resolveLandAreaClassIdFromBody(
@@ -369,6 +419,17 @@ export class CoreReviewLandAreasRepository {
             ]);
         }
         return normalized;
+    }
+
+    async assertPromotablePolygon(geojson: unknown): Promise<string> {
+        const normalized = await this.validatePolygon(geojson);
+        const analysis = await analyzePolygonGeometry(this.prisma, geojsonSqlParam(normalized));
+        if (!analysis || analysis.area_m2 === null || !(analysis.area_m2 > 0)) {
+            throw new CoreReviewValidationError("Geometry must have a non-empty area.", [
+                { path: "geometry", message: "Geometry must have a non-empty area." },
+            ]);
+        }
+        return geojsonSqlParam(normalized);
     }
 
     async createLandArea(body: Record<string, unknown>): Promise<string | null> {
@@ -560,6 +621,482 @@ export class CoreReviewLandAreasRepository {
             }
         });
         return true;
+    }
+
+    async findOsmLandAreaByIdentity(args: {
+        sourceFeatureType: "way" | "relation";
+        sourceFeatureId: bigint;
+        featureKey: string;
+    }): Promise<{
+        id: string;
+        public_id: string;
+        external_id: string | null;
+        source_feature_type: string | null;
+        source_feature_id: string | null;
+        is_active: boolean;
+        deleted_at: Date | string | null;
+    } | null> {
+        const rows = await this.prisma.$queryRaw<
+            {
+                id: string;
+                public_id: string;
+                external_id: string | null;
+                source_feature_type: string | null;
+                source_feature_id: string | null;
+                is_active: boolean;
+                deleted_at: Date | string | null;
+            }[]
+        >(Prisma.sql`
+            SELECT
+                lu.id::text AS id,
+                lu.public_id::text AS public_id,
+                lu.external_id,
+                lu.source_feature_type,
+                lu.source_feature_id::text AS source_feature_id,
+                lu.is_active,
+                lu.deleted_at
+            FROM core.core_land_areas AS lu
+            LEFT JOIN system.system_source_registry AS registry
+                ON registry.id = lu.source_registry_id
+            WHERE
+                (
+                    registry.source_code = 'osm_myanmar'
+                    AND lu.source_feature_type = ${args.sourceFeatureType}
+                    AND lu.source_feature_id = ${args.sourceFeatureId}
+                )
+                OR system.pipeline_osm_identity_key(lu.external_id) = ${args.featureKey}
+                OR (
+                    lu.source_feature_id = ${args.sourceFeatureId}
+                    AND lu.source_feature_type IS NULL
+                    AND lu.external_id ~ '^[0-9]+$'
+                    AND lu.external_id::bigint = ${args.sourceFeatureId}
+                )
+            ORDER BY
+                CASE
+                    WHEN registry.source_code = 'osm_myanmar'
+                        AND lu.source_feature_type = ${args.sourceFeatureType}
+                        AND lu.source_feature_id = ${args.sourceFeatureId}
+                        THEN 0
+                    WHEN system.pipeline_osm_identity_key(lu.external_id) = ${args.featureKey}
+                        THEN 1
+                    ELSE 2
+                END,
+                lu.id ASC
+            LIMIT 1
+        `);
+        return rows[0] ?? null;
+    }
+
+    async createPromotedOsmLandArea(args: {
+        geojsonText: string;
+        landAreaClassId: bigint;
+        classCode: string;
+        nameSlots: LandAreaFeatureNameSlots;
+        featureKey: string;
+        sourceFeatureType: "way" | "relation";
+        sourceFeatureId: bigint;
+        sourceRefs: Record<string, unknown>;
+        cropCode: string | null;
+    }): Promise<CoreReviewLandAreaRow | null> {
+        const geomExpr = polygonGeomExpr(args.geojsonText);
+        const legacyName = legacyDisplayName(args.nameSlots);
+        const sourceRefsJson = JSON.stringify(args.sourceRefs);
+        const normalizedJson = JSON.stringify({
+            class_code: args.classCode,
+            land_area_class_id: String(args.landAreaClassId),
+            promotion: { feature_key: args.featureKey },
+        });
+
+        return this.prisma.$transaction(async (tx) => {
+            const rows = await tx.$queryRaw<{ public_id: string; id: bigint }[]>(Prisma.sql`
+                WITH registry AS (
+                    SELECT id
+                    FROM system.system_source_registry
+                    WHERE source_code = 'osm_myanmar'
+                      AND is_active IS TRUE
+                    LIMIT 1
+                )
+                INSERT INTO core.core_land_areas (
+                    external_id,
+                    public_id,
+                    name,
+                    land_area_class_id,
+                    geom,
+                    centroid,
+                    area_m2,
+                    confidence_score,
+                    manual_override,
+                    source_tags,
+                    crop_code,
+                    irrigated,
+                    seasonality,
+                    detail_level,
+                    is_active,
+                    verification_status,
+                    source_refs,
+                    normalized_data,
+                    source_registry_id,
+                    source_feature_type,
+                    source_feature_id,
+                    created_at,
+                    updated_at,
+                    deleted_at
+                )
+                SELECT
+                    ${args.featureKey},
+                    gen_random_uuid(),
+                    ${legacyName},
+                    ${args.landAreaClassId},
+                    ${geomExpr},
+                    ${centroidFromGeomExpr(geomExpr)},
+                    ST_Area((${geomExpr})::geography),
+                    80,
+                    false,
+                    '{}'::jsonb,
+                    ${args.cropCode},
+                    NULL,
+                    NULL,
+                    'zone',
+                    true,
+                    'unverified',
+                    ${sourceRefsJson}::jsonb,
+                    ${normalizedJson}::jsonb,
+                    registry.id,
+                    ${args.sourceFeatureType},
+                    ${args.sourceFeatureId},
+                    now(),
+                    now(),
+                    NULL::timestamptz
+                FROM registry
+                WHERE ${geomExpr} IS NOT NULL
+                  AND ST_IsValid(${geomExpr})
+                  AND NOT ST_IsEmpty(${geomExpr})
+                RETURNING public_id::text AS public_id, id
+            `);
+            const row = rows[0];
+            if (!row) {
+                return null;
+            }
+            await syncLandAreaFeatureNames(tx, row.id, args.nameSlots);
+            return this.getLandAreaById(row.public_id);
+        });
+    }
+
+    async updatePromotedOsmLandArea(args: {
+        publicId: string;
+        geojsonText: string;
+        landAreaClassId: bigint;
+        classCode: string;
+        nameSlots: LandAreaFeatureNameSlots;
+        featureKey: string;
+        sourceFeatureType: "way" | "relation";
+        sourceFeatureId: bigint;
+        sourceRefs: Record<string, unknown>;
+        cropCode: string | null;
+    }): Promise<CoreReviewLandAreaRow | null> {
+        const geomExpr = polygonGeomExpr(args.geojsonText);
+        const sourceRefsJson = JSON.stringify(args.sourceRefs);
+        const normalizedJson = JSON.stringify({
+            class_code: args.classCode,
+            land_area_class_id: String(args.landAreaClassId),
+            promotion: { feature_key: args.featureKey },
+        });
+        const existing = await this.getLandAreaById(args.publicId);
+        if (!existing) {
+            return null;
+        }
+        const legacyName = legacyDisplayName(args.nameSlots);
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.$executeRaw(Prisma.sql`
+                WITH registry AS (
+                    SELECT id
+                    FROM system.system_source_registry
+                    WHERE source_code = 'osm_myanmar'
+                      AND is_active IS TRUE
+                    LIMIT 1
+                )
+                UPDATE core.core_land_areas AS lu
+                SET
+                    geom = ${geomExpr},
+                    centroid = ${centroidFromGeomExpr(geomExpr)},
+                    area_m2 = ST_Area((${geomExpr})::geography),
+                    land_area_class_id = ${args.landAreaClassId},
+                    crop_code = COALESCE(${args.cropCode}, lu.crop_code),
+                    name = COALESCE(${legacyName}, lu.name),
+                    normalized_data = COALESCE(lu.normalized_data, '{}'::jsonb) || ${normalizedJson}::jsonb,
+                    source_refs = COALESCE(lu.source_refs, '{}'::jsonb) || ${sourceRefsJson}::jsonb,
+                    external_id = CASE
+                        WHEN system.pipeline_osm_identity_key(lu.external_id) = ${args.featureKey}
+                            THEN lu.external_id
+                        ELSE ${args.featureKey}
+                    END,
+                    source_registry_id = COALESCE(lu.source_registry_id, registry.id),
+                    source_feature_type = COALESCE(lu.source_feature_type, ${args.sourceFeatureType}),
+                    source_feature_id = COALESCE(lu.source_feature_id, ${args.sourceFeatureId}),
+                    updated_at = now()
+                FROM registry
+                WHERE lu.public_id = CAST(${args.publicId} AS uuid)
+                  AND lu.deleted_at IS NULL
+                  AND lu.is_active IS TRUE
+                  AND ${geomExpr} IS NOT NULL
+                  AND ST_IsValid(${geomExpr})
+                  AND NOT ST_IsEmpty(${geomExpr})
+            `);
+            await syncLandAreaFeatureNames(tx, BigInt(existing.id), args.nameSlots);
+        });
+
+        return this.getLandAreaById(args.publicId);
+    }
+
+    async getLandAreaDemoteSnapshot(publicId: string): Promise<LandAreaDemoteSnapshotRow | null> {
+        const rows = await this.prisma.$queryRaw<LandAreaDemoteSnapshotRow[]>(Prisma.sql`
+            SELECT
+                lu.id::text AS id,
+                lu.public_id::text AS public_id,
+                lu.external_id,
+                lc.code AS class_code,
+                lu.land_area_class_id::text AS land_area_class_id,
+                lu.admin_area_id::text AS admin_area_id,
+                lu.region_code,
+                lu.detail_level,
+                lu.crop_code,
+                lu.irrigated,
+                lu.seasonality,
+                lu.area_m2::float8 AS area_m2,
+                lu.confidence_score::float8 AS confidence_score,
+                lu.manual_override,
+                lu.verification_status,
+                lu.is_verified,
+                lu.is_active,
+                lu.deleted_at,
+                lu.created_at,
+                lu.updated_at,
+                lu.verified_at,
+                lu.verified_by::text AS verified_by,
+                lu.verification_note,
+                lu.source_registry_id::text AS source_registry_id,
+                lu.source_snapshot_id::text AS source_snapshot_id,
+                lu.source_feature_type,
+                lu.source_feature_id::text AS source_feature_id,
+                lu.source_tags,
+                lu.source_refs,
+                lu.normalized_data,
+                lu.name,
+                ST_AsGeoJSON(lu.geom)::json AS geometry,
+                ST_AsGeoJSON(lu.centroid)::json AS centroid
+            FROM core.core_land_areas AS lu
+            LEFT JOIN ref.ref_land_area_classes AS lc ON lc.id = lu.land_area_class_id
+            WHERE lu.public_id = CAST(${publicId} AS uuid)
+              AND lu.deleted_at IS NULL
+              AND lu.is_active IS TRUE
+            LIMIT 1
+        `);
+        return rows[0] ?? null;
+    }
+
+    async listLandAreaNamesForDemote(landAreaId: bigint): Promise<LandAreaDemoteNameRow[]> {
+        return this.prisma.$queryRaw<LandAreaDemoteNameRow[]>(Prisma.sql`
+            SELECT
+                n.language_code,
+                n.script_code,
+                n.name_type,
+                n.is_primary,
+                n.search_weight::double precision AS search_weight,
+                n.name
+            FROM core.core_land_area_names AS n
+            WHERE n.land_area_id = ${landAreaId}
+            ORDER BY n.is_primary DESC NULLS LAST, n.id
+        `);
+    }
+
+    async countImportReviewLandAreaLinks(landAreaId: bigint): Promise<number> {
+        const renamed = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+            SELECT to_regclass('import_review.land_area_candidates')::text AS rel
+        `);
+        if (renamed[0]?.rel) {
+            const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+                SELECT COUNT(*)::bigint AS count
+                FROM import_review.land_area_candidates AS c
+                WHERE c.matched_core_id = ${landAreaId}
+                   OR c.promoted_core_id = ${landAreaId}
+            `);
+            return Number(rows[0]?.count ?? 0n);
+        }
+        const legacy = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+            SELECT to_regclass('import_review.landuse_candidates')::text AS rel
+        `);
+        if (!legacy[0]?.rel) {
+            return 0;
+        }
+        const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+            SELECT COUNT(*)::bigint AS count
+            FROM import_review.landuse_candidates AS c
+            WHERE c.matched_core_id = ${landAreaId}
+               OR c.promoted_core_id = ${landAreaId}
+        `);
+        return Number(rows[0]?.count ?? 0n);
+    }
+
+    async countOpenLandAreaReports(landAreaId: bigint, publicId: string): Promise<number> {
+        const present = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+            SELECT to_regclass('feedback.user_reports')::text AS rel
+        `);
+        if (!present[0]?.rel) {
+            return 0;
+        }
+        const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+            SELECT COUNT(*)::bigint AS count
+            FROM feedback.user_reports AS r
+            WHERE r.target_entity_type IN ('land_area', 'landuse')
+              AND r.status_code IN ('submitted', 'in_review', 'needs_more_info')
+              AND (
+                    r.target_entity_id = ${landAreaId}
+                    OR r.target_public_id = CAST(${publicId} AS uuid)
+              )
+        `);
+        return Number(rows[0]?.count ?? 0n);
+    }
+
+    async removeActiveLandAreaForDemote(args: {
+        publicId: string;
+        actorUserId: bigint | null;
+        before: Record<string, unknown>;
+    }): Promise<{ id: string; public_id: string } | null> {
+        return this.prisma.$transaction(async (tx) => {
+            const rows = await tx.$queryRaw<{ id: string; public_id: string }[]>(Prisma.sql`
+                DELETE FROM core.core_land_areas AS lu
+                WHERE lu.public_id = CAST(${args.publicId} AS uuid)
+                  AND lu.deleted_at IS NULL
+                  AND lu.is_active IS TRUE
+                RETURNING lu.id::text AS id, lu.public_id::text AS public_id
+            `);
+            const removed = rows[0];
+            if (!removed) {
+                return null;
+            }
+            const landAreaId = BigInt(removed.id);
+            const searchPresent = await tx.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+                SELECT to_regclass('search.search_documents')::text AS rel
+            `);
+            if (searchPresent[0]?.rel) {
+                await tx.$executeRaw(Prisma.sql`
+                    DELETE FROM search.search_documents
+                    WHERE entity_type IN ('land_area', 'landuse')
+                      AND entity_id = ${landAreaId}
+                `);
+            }
+            const before = Prisma.sql`${JSON.stringify(args.before)}::jsonb`;
+            await tx.$executeRaw(Prisma.sql`
+                INSERT INTO system.audit_logs (
+                    actor_user_id,
+                    action_type,
+                    entity_type,
+                    entity_id,
+                    before_snapshot,
+                    after_snapshot
+                )
+                VALUES (
+                    ${args.actorUserId},
+                    'land_area_demote_to_local',
+                    'land_area',
+                    ${landAreaId},
+                    ${before},
+                    NULL
+                )
+            `);
+            return removed;
+        });
+    }
+
+    async findLandAreaRenderSuppression(featureKey: string): Promise<{ feature_key: string } | null> {
+        const present = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+            SELECT to_regclass('core.core_land_area_render_suppressions')::text AS rel
+        `);
+        if (!present[0]?.rel) {
+            return null;
+        }
+        const rows = await this.prisma.$queryRaw<{ feature_key: string }[]>(Prisma.sql`
+            SELECT feature_key
+            FROM core.core_land_area_render_suppressions
+            WHERE feature_key = ${featureKey}
+            LIMIT 1
+        `);
+        return rows[0] ?? null;
+    }
+
+    async upsertLandAreaRenderSuppression(args: {
+        featureKey: string;
+        actorUserId: bigint | null;
+        reason?: string;
+    }): Promise<{ feature_key: string; created: boolean }> {
+        const inserted = await this.prisma.$queryRaw<{ feature_key: string }[]>(Prisma.sql`
+            INSERT INTO core.core_land_area_render_suppressions (feature_key, reason, created_by)
+            VALUES (${args.featureKey}, ${args.reason ?? "delete"}, ${args.actorUserId})
+            ON CONFLICT (feature_key) DO NOTHING
+            RETURNING feature_key
+        `);
+        if (inserted[0]) {
+            return { feature_key: inserted[0].feature_key, created: true };
+        }
+        return { feature_key: args.featureKey, created: false };
+    }
+
+    async clearLandAreaRenderSuppression(featureKey: string): Promise<boolean> {
+        const result = await this.prisma.$executeRaw(Prisma.sql`
+            DELETE FROM core.core_land_area_render_suppressions
+            WHERE feature_key = ${featureKey}
+        `);
+        return Number(result) > 0;
+    }
+
+    async removeLandAreaForDelete(args: {
+        publicId: string;
+        actorUserId: bigint | null;
+        before: Record<string, unknown>;
+    }): Promise<{ id: string; public_id: string } | null> {
+        return this.prisma.$transaction(async (tx) => {
+            const rows = await tx.$queryRaw<{ id: string; public_id: string }[]>(Prisma.sql`
+                DELETE FROM core.core_land_areas AS lu
+                WHERE lu.public_id = CAST(${args.publicId} AS uuid)
+                RETURNING lu.id::text AS id, lu.public_id::text AS public_id
+            `);
+            const removed = rows[0];
+            if (!removed) {
+                return null;
+            }
+            const landAreaId = BigInt(removed.id);
+            const searchPresent = await tx.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+                SELECT to_regclass('search.search_documents')::text AS rel
+            `);
+            if (searchPresent[0]?.rel) {
+                await tx.$executeRaw(Prisma.sql`
+                    DELETE FROM search.search_documents
+                    WHERE entity_type IN ('land_area', 'landuse')
+                      AND entity_id = ${landAreaId}
+                `);
+            }
+            const before = Prisma.sql`${JSON.stringify(args.before)}::jsonb`;
+            await tx.$executeRaw(Prisma.sql`
+                INSERT INTO system.audit_logs (
+                    actor_user_id,
+                    action_type,
+                    entity_type,
+                    entity_id,
+                    before_snapshot,
+                    after_snapshot
+                )
+                VALUES (
+                    ${args.actorUserId},
+                    'land_area_delete_from_tiles',
+                    'land_area',
+                    ${landAreaId},
+                    ${before},
+                    NULL
+                )
+            `);
+            return removed;
+        });
     }
 }
 

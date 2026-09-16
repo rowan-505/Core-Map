@@ -1,0 +1,65 @@
+{
+  "region": "tanintharyi",
+  "version": "v2-qa1",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/tanintharyi/tanintharyi-v2-qa1.pmtiles",
+  "file_size_bytes": 100078322,
+  "created_at": "2026-09-07T23:23:39+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 100078322,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172890, lat: 9.525930) (long: 101.170092, lat: 28.547886)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 98.467712, lat: 10.690297)\ncenter zoom: 16\naddressed tiles count: 3403686\ntile entries count: 183162\ntile contents count: 145233\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nmaxzoom 16\nname /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-tanintharyi-v2-qa1-903134.mbtiles + /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-tanintharyi-v2-qa1-903134.mbtiles\ntilestats <object, use --metadata to view full JSON metadata>\nvector_layers <object, use --metadata to view full JSON metadata>\nversion 2\nantimeridian_adjusted_bounds 92.172890,9.525930,101.170092,28.547886\nattribution Local Map\ndescription /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-tanintharyi-v2-qa1-903134.mbtiles\nformat pbf\ngenerator tile-join v2.79.0\nminzoom 8\nstrategies [{},{},{},{},{},{},{},{},{\"tiny_polygons\":1923},{\"tiny_polygons\":359},{\"tiny_polygons\":120},{\"tiny_polygons\":33},{\"tiny_polygons\":17},{\"tiny_polygons\":16},{\"tiny_polygons\":143},{\"tiny_polygons\":123},{\"tiny_polygons\":86}]\ntype overlay\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-tanintharyi-v2-qa1-903134.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-tanintharyi-v2-qa1-903134.mbtiles '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/water_polygons.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-tanintharyi-v2-qa1-903134.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/streets.annotated.geojsonseq; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-tanintharyi-v2-qa1-903134.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/buildings.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/settlements.annotated.geojsonseq' '--named-layer=coastlines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/coastlines.annotated.geojsonseq' '--named-layer=protected_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-tanintharyi-v2-qa1-903134/protected_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-a\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 35446165,
+      "mtime_ns": 1788821705554634976
+    },
+    "streets.geojson": {
+      "size_bytes": 26247755,
+      "mtime_ns": 1788821709624834068
+    },
+    "road_labels.geojson": {
+      "size_bytes": 759349,
+      "mtime_ns": 1788821710884042231
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 676197,
+      "mtime_ns": 1788821711454346500
+    },
+    "water_lines.geojson": {
+      "size_bytes": 3538045,
+      "mtime_ns": 1788821712189608255
+    },
+    "landuse.geojson": {
+      "size_bytes": 5767578,
+      "mtime_ns": 1788821713870827502
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 3174612,
+      "mtime_ns": 1788821714864316772
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 3174612,
+      "mtime_ns": 1788821715664774140
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 30682,
+      "mtime_ns": 1788821716272762952
+    },
+    "settlements.geojson": {
+      "size_bytes": 647148,
+      "mtime_ns": 1788821716824426108
+    },
+    "coastlines.geojson": {
+      "size_bytes": 4416375,
+      "mtime_ns": 1788821717646227700
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 105104,
+      "mtime_ns": 1788821718298672608
+    }
+  }
+}

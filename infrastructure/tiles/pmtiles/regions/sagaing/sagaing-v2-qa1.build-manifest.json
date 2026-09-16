@@ -1,0 +1,65 @@
+{
+  "region": "sagaing",
+  "version": "v2-qa1",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/sagaing/sagaing-v2-qa1.pmtiles",
+  "file_size_bytes": 260082479,
+  "created_at": "2026-09-07T22:19:47+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 260082479,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172890, lat: 9.525930) (long: 101.170092, lat: 28.547886)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 97.709656, lat: 24.299544)\ncenter zoom: 16\naddressed tiles count: 3421693\ntile entries count: 371809\ntile contents count: 295481\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nvector_layers <object, use --metadata to view full JSON metadata>\nformat pbf\ngenerator tile-join v2.79.0\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-sagaing-v2-qa1-816275.mbtiles '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/water_polygons.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-sagaing-v2-qa1-816275.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-sagaing-v2-qa1-816275.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/streets.annotated.geojsonseq; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-sagaing-v2-qa1-816275.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/buildings.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/settlements.annotated.geojsonseq' '--named-layer=protected_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/protected_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-sagaing-v2-qa1-816275.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-sagaing-v2-qa1-816275/admin_areas.annotated.geojsonseq'; tile-join -f -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-sagaing-v2-qa1-816275.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-sagaing-v2-qa1-816275.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-sagaing-v2-qa1-816275.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-sagaing-v2-qa1-816275.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-sagaing-v2-qa1-816275.\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 270768608,
+      "mtime_ns": 1788817619182685052
+    },
+    "streets.geojson": {
+      "size_bytes": 57509498,
+      "mtime_ns": 1788817641057372972
+    },
+    "road_labels.geojson": {
+      "size_bytes": 1718234,
+      "mtime_ns": 1788817645794587233
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 4744206,
+      "mtime_ns": 1788817646589237542
+    },
+    "water_lines.geojson": {
+      "size_bytes": 7294151,
+      "mtime_ns": 1788817647631357571
+    },
+    "landuse.geojson": {
+      "size_bytes": 12589667,
+      "mtime_ns": 1788817649585651771
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 4847048,
+      "mtime_ns": 1788817650667123833
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 4847048,
+      "mtime_ns": 1788817651549554130
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 105900,
+      "mtime_ns": 1788817652168198226
+    },
+    "settlements.geojson": {
+      "size_bytes": 3044259,
+      "mtime_ns": 1788817652707943922
+    },
+    "coastlines.geojson": {
+      "size_bytes": 161,
+      "mtime_ns": 1788817653165700731
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 84622,
+      "mtime_ns": 1788817653610697279
+    }
+  }
+}

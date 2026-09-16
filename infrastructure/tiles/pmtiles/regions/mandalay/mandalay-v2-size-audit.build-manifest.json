@@ -1,0 +1,65 @@
+{
+  "region": "mandalay",
+  "version": "v2-size-audit",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/mandalay/mandalay-v2-size-audit.pmtiles",
+  "file_size_bytes": 61398828,
+  "created_at": "2026-09-06T14:53:49+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 61398828,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172918, lat: 9.526084) (long: 101.170080, lat: 28.547835)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 96.215515, lat: 21.327757)\ncenter zoom: 16\naddressed tiles count: 336749\ntile entries count: 151615\ntile contents count: 145482\nclustered: true\ninternal compression: gzip\ntile compression: gzip\ntilestats <object, use --metadata to view full JSON metadata>\ntype overlay\nversion 2\nattribution Local Map\ndescription /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-mandalay-v2-size-audit-33955.mbtiles\nformat pbf\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=14' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-mandalay-v2-size-audit-33955.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/admin_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-mandalay-v2-size-audit-33955.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --coalesce-smallest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=750000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-mandalay-v2-size-audit-33955.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/streets.annotated.geojsonseq; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-mandalay-v2-size-audit-33955.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/buildings.annotated.geojsonseq' '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/water_polygons.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/settlements.annotated.geojsonseq' '--named-layer=protected_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-mandalay-v2-size-audit-33955/protected_areas.annotated.geojsonseq'; tile-join -f -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-mandalay-v2-size-audit-33955.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-mandalay-v2-size-audit-33955.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-mandalay-v2-size-audit-33955.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-mandalay-v2-size-audit-33955.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-mandalay-v2-size-audit-33955.mbtiles\nminzoom 8\n\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 608041517,
+      "mtime_ns": 1788706032567785662
+    },
+    "streets.geojson": {
+      "size_bytes": 103609325,
+      "mtime_ns": 1788706079987548338
+    },
+    "road_labels.geojson": {
+      "size_bytes": 2706998,
+      "mtime_ns": 1788706088958350837
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 4601156,
+      "mtime_ns": 1788706089726112476
+    },
+    "water_lines.geojson": {
+      "size_bytes": 7775218,
+      "mtime_ns": 1788706090735774047
+    },
+    "landuse.geojson": {
+      "size_bytes": 13281365,
+      "mtime_ns": 1788706092904559387
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 3920141,
+      "mtime_ns": 1788706094047323906
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 3920141,
+      "mtime_ns": 1788706094787008942
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 106633,
+      "mtime_ns": 1788706095290788408
+    },
+    "settlements.geojson": {
+      "size_bytes": 2779914,
+      "mtime_ns": 1788706095785698327
+    },
+    "coastlines.geojson": {
+      "size_bytes": 161,
+      "mtime_ns": 1788706096216495367
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 218421,
+      "mtime_ns": 1788706096618621616
+    }
+  }
+}

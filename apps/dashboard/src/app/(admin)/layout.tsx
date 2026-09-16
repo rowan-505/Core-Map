@@ -13,9 +13,9 @@ export default function AdminModuleLayout({ children }: { children: ReactNode })
     return (
         <DashboardQueryProvider>
             <BuildingTileVersionProvider>
-                <div className="flex min-h-screen bg-gray-100">
+                <div className="flex h-screen overflow-hidden bg-gray-100">
                     <DashboardSidebar />
-                    <div className="min-w-0 flex-1">
+                    <div className="relative min-h-0 min-w-0 flex-1 overflow-y-auto">
                         <DashboardViewerRouteGate>{children}</DashboardViewerRouteGate>
                     </div>
                 </div>

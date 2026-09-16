@@ -53,11 +53,13 @@ describe('regional basemap style ↔ PMTiles contract', () => {
     assert.equal(roadLabels?.maxzoom, 20);
   });
 
-  it('composeWebMapStyle keeps local-basemap source maxzoom at native z20', () => {
+  it('composeWebMapStyle keeps local-basemap source maxzoom at native z16 (overzoom to camera z20)', () => {
     const style = composeWebMapStyle(BaseMapStyle as never, 'https://cdn.example/overview.pmtiles');
     const src = style.sources?.['local-basemap'] as { maxzoom?: number; minzoom?: number } | undefined;
     assert.equal(src?.minzoom, 0);
     assert.equal(src?.maxzoom, REGIONAL_VECTOR_SOURCE_MAX_ZOOM);
+    assert.equal(REGIONAL_VECTOR_SOURCE_MAX_ZOOM, 16);
+    assert.equal(REGIONAL_LAYER_OVERZOOM_MIN_MAX_ZOOM, 20);
   });
 
   it('yangon-v2.pmtiles includes required source-layers when archive exists', () => {

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# CoreMap Myanmar overview bbox
+# Clip Natural Earth 1:10m layers for CoreMap overview PMTiles.
+# Myanmar admin outline/fill come from Core tile_source.admin_areas (separate export).
+# This script prepares world/neighbors/hydrography context only.
+
 # GDAL -spat order: minLng minLat maxLng maxLat
 MIN_LNG=75
 MIN_LAT=0
@@ -16,6 +19,7 @@ mkdir -p "$OUT"
 
 echo "Clipping Natural Earth data to bbox:"
 echo "  minLng=$MIN_LNG minLat=$MIN_LAT maxLng=$MAX_LNG maxLat=$MAX_LAT"
+echo "  (Myanmar admin is Core export — not produced here)"
 echo ""
 
 clip_layer() {
@@ -61,35 +65,10 @@ clip_layer \
   "$NE_UNZIPPED/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp" \
   "$OUT/countries.geojsonseq"
 
-COUNTRIES_SHP="$NE_UNZIPPED/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp"
-if [ ! -f "$COUNTRIES_SHP" ]; then
-  echo "❌ Missing source for mmr_country_highlight:"
-  echo "   $COUNTRIES_SHP"
-  exit 1
-fi
-
-echo "→ Clipping mmr_country_highlight (Myanmar polygon from NE admin0 countries)"
-ogr2ogr \
-  -f GeoJSONSeq \
-  -t_srs EPSG:4326 \
-  -spat "$MIN_LNG" "$MIN_LAT" "$MAX_LNG" "$MAX_LAT" \
-  -where "ADM0_A3='MMR' OR ISO_A3='MMR' OR SOV_A3='MMR'" \
-  "$OUT/mmr_country_highlight.geojsonseq" \
-  "$COUNTRIES_SHP"
-echo "  ✅ $OUT/mmr_country_highlight.geojsonseq"
-
-echo "→ Preparing high-precision Myanmar admin0 boundary tiers (z0-2 / z3-4 / z5-6)"
-python3 "$ROOT/scripts/prepare-mmr-admin0-boundaries.py" "$OUT"
-
 clip_layer \
   "country_boundaries" \
   "$NE_UNZIPPED/ne_10m_admin_0_boundary_lines_land/ne_10m_admin_0_boundary_lines_land.shp" \
   "$OUT/country_boundaries.geojsonseq"
-
-clip_layer \
-  "admin1_global" \
-  "$NE_UNZIPPED/ne_10m_admin_1_states_provinces/ne_10m_admin_1_states_provinces.shp" \
-  "$OUT/admin1_global.geojsonseq"
 
 clip_layer \
   "populated_places" \
@@ -106,7 +85,23 @@ clip_layer \
   "$NE_UNZIPPED/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp" \
   "$OUT/rivers.geojsonseq"
 
+# Remove legacy NE-derived Myanmar outline artifacts if present (unused by Core overview build).
+for legacy in \
+  "$OUT/mmr_country_highlight.geojsonseq" \
+  "$OUT/mmr_admin0_overview.geojsonseq" \
+  "$OUT/mmr_admin0_z0_2.geojsonseq" \
+  "$OUT/mmr_admin0_z3_4.geojsonseq" \
+  "$OUT/mmr_admin0_z5_6.geojsonseq" \
+  "$OUT/admin1_global.geojsonseq"
+do
+  if [[ -f "$legacy" ]]; then
+    rm -f "$legacy"
+    echo "  removed unused legacy clip artifact: $(basename "$legacy")"
+  fi
+done
+
 echo ""
 echo "✅ Natural Earth clipping complete."
 echo "Output folder:"
 echo "  $OUT"
+echo "Next: npm run tiles:export:overview-admin && npm run tiles:build:overview"

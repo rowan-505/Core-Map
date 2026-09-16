@@ -4,6 +4,9 @@ Build-time GeoJSON → GeoJSONSeq with per-feature tippecanoe minzoom/maxzoom hi
 
 Does not change export SQL. Layer names stay identical to base-map.json source-layer ids.
 Writes a sidecar <output>.stats.json with before/after counts and zoom visibility.
+
+Native tile maxzooms below are the production detail ceiling. MapLibre camera max can
+remain z20 via vector overzooming (see build-region.sh recommendedMapMaxZoom).
 """
 from __future__ import annotations
 
@@ -15,33 +18,38 @@ from typing import Any
 
 # Must match packages/map-style/base-map.json source-layer names.
 # Native tile detail caps (tippecanoe per-feature maxzoom). Public map camera max is z20.
-# build-region.sh runs admin_areas/admin_boundaries in a separate tippecanoe pass capped at z14
-# (per-feature hints here still apply inside that pass).
+# Continuous basemap layers must exist through archive native maxzoom (16) so MapLibre
+# overzoom at camera z17–z20 still has geometry. Style layer maxzoom controls visibility.
 LAYER_MAXZOOM: dict[str, int] = {
-    "streets": 20,
-    "road_labels": 20,
-    "buildings": 20,
-    "admin_areas": 14,
-    "admin_boundaries": 14,
-    "admin_area_label_points": 20,
-    "landuse": 20,
-    "water_polygons": 20,
-    "water_lines": 20,
-    "village_labels": 20,
+    "streets": 16,
+    "road_labels": 16,
+    "buildings": 16,
+    "admin_areas": 16,
+    "admin_boundaries": 16,
+    "admin_area_label_points": 16,
+    "landuse": 16,
+    "water_polygons": 16,
+    "water_lines": 16,
+    "settlements": 16,
+    "village_labels": 16,  # legacy alias; export now uses settlements
+    "coastlines": 16,
+    "protected_areas": 16,
 }
 
+DEFAULT_LAYER_MAXZOOM = 16
+
 ADMIN_BOUNDARY_LEVEL_MAXZOOM: dict[str, int] = {
-    "country": 14,
-    "state_region": 14,
-    "state": 14,
-    "region": 14,
-    "district": 14,
-    "township": 18,
-    "ward_village_tract": 20,
-    "ward": 20,
-    "village_tract": 20,
+    "country": 16,
+    "state_region": 16,
+    "state": 16,
+    "region": 16,
+    "district": 16,
+    "township": 16,
+    "ward_village_tract": 16,
+    "ward": 16,
+    "village_tract": 16,
 }
-ADMIN_BOUNDARY_DEFAULT_MAXZOOM = 14
+ADMIN_BOUNDARY_DEFAULT_MAXZOOM = 16
 
 LAYER_MINZOOM: dict[str, int] = {
     "road_labels": 12,
@@ -51,7 +59,10 @@ LAYER_MINZOOM: dict[str, int] = {
     "landuse": 8,
     "water_polygons": 8,
     "water_lines": 9,
+    "settlements": 11,
     "village_labels": 12,
+    "coastlines": 8,
+    "protected_areas": 10,
 }
 
 # Admin label points — match base-map.json symbol layer minzoom tiers.
@@ -71,7 +82,8 @@ ADMIN_LEVEL_MINZOOM: dict[str, int] = {
 }
 ADMIN_LEVEL_DEFAULT_MINZOOM = 10
 
-# Road class → tile minzoom. All features keep maxzoom 20 (full detail through z20).
+# Road-class fallback only when feature has no DB min_zoom.
+# Prefer tile_source.streets.min_zoom when present — do not maintain a second hierarchy.
 STREET_CLASS_MINZOOM: dict[str, int] = {
     "motorway": 8,
     "trunk": 8,
@@ -89,13 +101,35 @@ STREET_CLASS_MINZOOM: dict[str, int] = {
 }
 
 STREET_CLASS_DEFAULT_MINZOOM = 12
-VISIBILITY_ZOOMS = (8, 10, 12, 14, 16, 18)
+VISIBILITY_ZOOMS = (8, 10, 12, 14, 16)
 
 
-def street_minzoom(properties: dict[str, Any]) -> int:
+def parse_optional_zoom(value: Any) -> int | None:
+    """Parse a zoom property (int/float/str). Returns None if missing or invalid."""
+    if value is None or value is False:
+        return None
+    if isinstance(value, str) and not value.strip():
+        return None
+    try:
+        zoom = int(float(value))
+    except (TypeError, ValueError):
+        return None
+    if zoom < 0 or zoom > 22:
+        return None
+    return zoom
+
+
+def street_class_minzoom(properties: dict[str, Any]) -> int:
     raw = properties.get("road_class_code") or properties.get("road_class") or "unknown"
     code = str(raw).strip().lower() or "unknown"
     return STREET_CLASS_MINZOOM.get(code, STREET_CLASS_DEFAULT_MINZOOM)
+
+
+def street_minzoom(properties: dict[str, Any]) -> int:
+    db_zoom = parse_optional_zoom(properties.get("min_zoom"))
+    if db_zoom is not None:
+        return db_zoom
+    return street_class_minzoom(properties)
 
 
 def admin_label_minzoom(properties: dict[str, Any]) -> int:
@@ -121,7 +155,7 @@ def admin_boundary_maxzoom(properties: dict[str, Any]) -> int:
 def feature_maxzoom(layer: str, properties: dict[str, Any]) -> int:
     if layer in ("admin_boundaries", "admin_areas"):
         return admin_boundary_maxzoom(properties)
-    return LAYER_MAXZOOM.get(layer, 20)
+    return LAYER_MAXZOOM.get(layer, DEFAULT_LAYER_MAXZOOM)
 
 
 def annotate_feature(layer: str, feature: dict[str, Any]) -> dict[str, Any]:
@@ -204,7 +238,7 @@ def main() -> int:
     layer = sys.argv[1]
     input_path = Path(sys.argv[2])
     output_path = Path(sys.argv[3])
-    layer_maxzoom = int(LAYER_MAXZOOM.get(layer, 20))
+    layer_maxzoom = int(LAYER_MAXZOOM.get(layer, DEFAULT_LAYER_MAXZOOM))
 
     if not input_path.is_file():
         print(f"error: missing input file: {input_path}", file=sys.stderr)

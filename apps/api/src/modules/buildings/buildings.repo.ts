@@ -111,6 +111,67 @@ export type BuildingPersistSnapshot = {
     is_verified: boolean;
 };
 
+export type OsmBuildingIdentityMatch = {
+    id: string;
+    public_id: string;
+    external_id: string | null;
+    source_feature_type: string | null;
+    source_feature_id: string | null;
+    is_active: boolean;
+    deleted_at: Date | string | null;
+};
+
+export type BuildingDemoteNameRow = {
+    language_code: string;
+    script_code: string | null;
+    name_type: string;
+    is_primary: boolean;
+    search_weight: number | null;
+    name: string;
+};
+
+export type BuildingDemoteSnapshotRow = {
+    id: string;
+    public_id: string;
+    external_id: string | null;
+    class_code: string;
+    building_type_id: string | null;
+    admin_area_id: string | null;
+    region_code: string | null;
+    levels: number | null;
+    height_m: number | null;
+    area_m2: number | null;
+    confidence_score: number | null;
+    verification_status: string | null;
+    is_verified: boolean;
+    is_active: boolean;
+    deleted_at: Date | string | null;
+    is_geometry_manually_edited: boolean;
+    is_attributes_manually_edited: boolean;
+    created_at: Date | string | null;
+    updated_at: Date | string | null;
+    created_by: string | null;
+    updated_by: string | null;
+    verified_at: Date | string | null;
+    verified_by: string | null;
+    verification_note: string | null;
+    source_registry_id: string | null;
+    source_snapshot_id: string | null;
+    source_feature_type: string | null;
+    source_feature_id: string | null;
+    source_refs: unknown;
+    normalized_data: unknown;
+    name: string | null;
+    geometry: { type: "Polygon" | "MultiPolygon"; coordinates: unknown } | null;
+    centroid: unknown;
+};
+
+export type BuildingDemoteDependency = {
+    code: string;
+    count: number;
+    message: string;
+};
+
 export type RefBuildingTypeRow = {
     id: string;
     code: string;
@@ -943,5 +1004,511 @@ export class BuildingsRepository {
         `);
 
         return rows[0] ?? null;
+    }
+
+    async findOsmBuildingByIdentity(args: {
+        sourceFeatureType: "way" | "relation";
+        sourceFeatureId: bigint;
+        featureKey: string;
+    }): Promise<OsmBuildingIdentityMatch | null> {
+        const rows = await this.prisma.$queryRaw<OsmBuildingIdentityMatch[]>(Prisma.sql`
+            SELECT
+                b.id::text AS id,
+                b.public_id::text AS public_id,
+                b.external_id,
+                b.source_feature_type,
+                b.source_feature_id::text AS source_feature_id,
+                b.is_active,
+                b.deleted_at
+            FROM core.core_buildings AS b
+            LEFT JOIN system.system_source_registry AS registry
+                ON registry.id = b.source_registry_id
+            WHERE
+                (
+                    registry.source_code = 'osm_myanmar'
+                    AND b.source_feature_type = ${args.sourceFeatureType}
+                    AND b.source_feature_id = ${args.sourceFeatureId}
+                )
+                OR system.pipeline_osm_identity_key(b.external_id) = ${args.featureKey}
+                OR (
+                    b.source_feature_id = ${args.sourceFeatureId}
+                    AND b.source_feature_type IS NULL
+                    AND b.external_id ~ '^[0-9]+$'
+                    AND b.external_id::bigint = ${args.sourceFeatureId}
+                )
+            ORDER BY
+                CASE
+                    WHEN registry.source_code = 'osm_myanmar'
+                        AND b.source_feature_type = ${args.sourceFeatureType}
+                        AND b.source_feature_id = ${args.sourceFeatureId}
+                        THEN 0
+                    WHEN system.pipeline_osm_identity_key(b.external_id) = ${args.featureKey}
+                        THEN 1
+                    ELSE 2
+                END,
+                b.id ASC
+            LIMIT 1
+        `);
+
+        return rows[0] ?? null;
+    }
+
+    async createPromotedOsmBuilding(
+        geojsonText: string,
+        snapshot: BuildingPersistSnapshot,
+        identity: {
+            featureKey: string;
+            sourceFeatureType: "way" | "relation";
+            sourceFeatureId: bigint;
+            sourceRefs: Record<string, unknown>;
+            editorId: bigint | null;
+        }
+    ): Promise<BuildingDetailRow | null> {
+        return this.prisma.$transaction(async (tx) => {
+            const normalizedJson = JSON.stringify(snapshot.normalized_data);
+            const sourceRefsJson = JSON.stringify(identity.sourceRefs);
+
+            const persistedAdminFk = snapshot.admin_area_resolve_spatial
+                ? Prisma.sql`NULL::bigint`
+                : Prisma.sql`${snapshot.admin_area_id}`;
+
+            const rows = await tx.$queryRaw<{ public_id: string; id: string }[]>(Prisma.sql`
+                WITH inp AS (
+                    SELECT ST_SetSRID(ST_GeomFromGeoJSON(${geojsonText})::geometry, 4326) AS g_raw
+                ),
+                prep AS (
+                    SELECT CASE
+                        WHEN ST_GeometryType(g_raw) = 'ST_Polygon'
+                            THEN ST_Multi(g_raw)::geometry(MultiPolygon, 4326)
+                        WHEN ST_GeometryType(g_raw) = 'ST_MultiPolygon'
+                            THEN g_raw::geometry(MultiPolygon, 4326)
+                        ELSE NULL::geometry(MultiPolygon, 4326)
+                    END AS geom
+                    FROM inp
+                ),
+                ready AS (
+                    SELECT
+                        geom,
+                        ST_PointOnSurface(geom)::geometry(Point, 4326) AS centroid,
+                        ST_Area(geom::geography)::double precision AS area_m2
+                    FROM prep
+                    WHERE geom IS NOT NULL
+                      AND ST_IsValid(geom)
+                      AND NOT ST_IsEmpty(geom)
+                ),
+                registry AS (
+                    SELECT id
+                    FROM system.system_source_registry
+                    WHERE source_code = 'osm_myanmar'
+                      AND is_active IS TRUE
+                    LIMIT 1
+                )
+                INSERT INTO core.core_buildings (
+                    external_id,
+                    name,
+                    normalized_data,
+                    source_refs,
+                    geom,
+                    building_type_id,
+                    admin_area_id,
+                    levels,
+                    height_m,
+                    centroid,
+                    area_m2,
+                    confidence_score,
+                    verification_status,
+                    is_active,
+                    created_at,
+                    updated_at,
+                    deleted_at,
+                    created_by,
+                    updated_by,
+                    source_registry_id,
+                    source_feature_type,
+                    source_feature_id
+                )
+                SELECT
+                    ${identity.featureKey},
+                    NULL::text,
+                    ${normalizedJson}::jsonb,
+                    ${sourceRefsJson}::jsonb,
+                    ready.geom,
+                    ${snapshot.building_type_id},
+                    ${persistedAdminFk},
+                    ${snapshot.levels},
+                    ${snapshot.height_m},
+                    ready.centroid,
+                    ready.area_m2,
+                    ${snapshot.confidence_score},
+                    ${snapshot.verification_status},
+                    TRUE,
+                    NOW(),
+                    NOW(),
+                    NULL::timestamptz,
+                    ${identity.editorId},
+                    ${identity.editorId},
+                    registry.id,
+                    ${identity.sourceFeatureType},
+                    ${identity.sourceFeatureId}
+                FROM ready
+                INNER JOIN registry ON TRUE
+                RETURNING
+                    id::text AS id,
+                    public_id::text AS public_id
+            `);
+
+            const inserted = rows[0] ?? null;
+            if (!inserted) {
+                return null;
+            }
+
+            if (snapshot.admin_area_resolve_spatial) {
+                await this.tryInferDashboardBuildingAdminAreaFromGeometry(BigInt(inserted.id), tx);
+            }
+
+            return this.refetchBuildingAfterWrite(inserted.public_id, snapshot, "active", tx);
+        });
+    }
+
+    async updatePromotedOsmBuilding(
+        publicId: string,
+        geojsonText: string,
+        snapshot: BuildingPersistSnapshot,
+        identity: {
+            featureKey: string;
+            sourceFeatureType: "way" | "relation";
+            sourceFeatureId: bigint;
+            sourceRefs: Record<string, unknown>;
+            editorId: bigint | null;
+        }
+    ): Promise<BuildingDetailRow | null> {
+        const normalizedJson = JSON.stringify(snapshot.normalized_data);
+        const sourceRefsJson = JSON.stringify(identity.sourceRefs);
+
+        const persistedAdminFk = snapshot.admin_area_resolve_spatial
+            ? Prisma.sql`NULL::bigint`
+            : Prisma.sql`${snapshot.admin_area_id}`;
+
+        const rows = await this.prisma.$queryRaw<{ id: string; public_id: string }[]>(Prisma.sql`
+            WITH inp AS (
+                SELECT ST_SetSRID(ST_GeomFromGeoJSON(${geojsonText})::geometry, 4326) AS g_raw
+            ),
+            prep AS (
+                SELECT CASE
+                    WHEN ST_GeometryType(g_raw) = 'ST_Polygon'
+                        THEN ST_Multi(g_raw)::geometry(MultiPolygon, 4326)
+                    WHEN ST_GeometryType(g_raw) = 'ST_MultiPolygon'
+                        THEN g_raw::geometry(MultiPolygon, 4326)
+                    ELSE NULL::geometry(MultiPolygon, 4326)
+                END AS geom
+                FROM inp
+            ),
+            ready AS (
+                SELECT
+                    geom,
+                    ST_PointOnSurface(geom)::geometry(Point, 4326) AS centroid,
+                    ST_Area(geom::geography)::double precision AS area_m2
+                FROM prep
+                WHERE geom IS NOT NULL
+                  AND ST_IsValid(geom)
+                  AND NOT ST_IsEmpty(geom)
+            ),
+            registry AS (
+                SELECT id
+                FROM system.system_source_registry
+                WHERE source_code = 'osm_myanmar'
+                  AND is_active IS TRUE
+                LIMIT 1
+            ),
+            updated AS (
+                UPDATE core.core_buildings AS b
+                SET
+                    geom = ready.geom,
+                    centroid = ready.centroid,
+                    area_m2 = ready.area_m2,
+                    building_type_id = ${snapshot.building_type_id},
+                    admin_area_id = COALESCE(${persistedAdminFk}, b.admin_area_id),
+                    normalized_data = b.normalized_data || ${normalizedJson}::jsonb,
+                    source_refs = COALESCE(b.source_refs, '{}'::jsonb) || ${sourceRefsJson}::jsonb,
+                    levels = ${snapshot.levels},
+                    height_m = ${snapshot.height_m},
+                    confidence_score = ${snapshot.confidence_score},
+                    external_id = CASE
+                        WHEN system.pipeline_osm_identity_key(b.external_id) = ${identity.featureKey}
+                            THEN b.external_id
+                        ELSE ${identity.featureKey}
+                    END,
+                    source_registry_id = COALESCE(b.source_registry_id, registry.id),
+                    source_feature_type = COALESCE(b.source_feature_type, ${identity.sourceFeatureType}),
+                    source_feature_id = COALESCE(b.source_feature_id, ${identity.sourceFeatureId}),
+                    updated_by = COALESCE(${identity.editorId}, b.updated_by),
+                    updated_at = NOW()
+                FROM ready, registry
+                WHERE b.public_id = CAST(${publicId} AS uuid)
+                  AND b.deleted_at IS NULL
+                  AND b.is_active IS TRUE
+                RETURNING
+                    b.id::text AS id,
+                    b.public_id::text AS public_id
+            )
+            SELECT id, public_id FROM updated
+        `);
+
+        const updated = rows[0] ?? null;
+        if (!updated) {
+            return null;
+        }
+
+        if (snapshot.admin_area_resolve_spatial) {
+            await this.tryInferDashboardBuildingAdminAreaFromGeometry(BigInt(updated.id));
+        }
+
+        return this.refetchBuildingAfterWrite(publicId, snapshot, "active");
+    }
+
+    async getBuildingDemoteSnapshot(publicId: string): Promise<BuildingDemoteSnapshotRow | null> {
+        const rows = await this.prisma.$queryRaw<BuildingDemoteSnapshotRow[]>(Prisma.sql`
+            SELECT
+                b.id::text AS id,
+                b.public_id::text AS public_id,
+                b.external_id,
+                ${buildingClassCodeSelectSql},
+                b.building_type_id::text AS building_type_id,
+                b.admin_area_id::text AS admin_area_id,
+                b.region_code,
+                b.levels,
+                b.height_m::double precision AS height_m,
+                b.area_m2::double precision AS area_m2,
+                b.confidence_score::double precision AS confidence_score,
+                b.verification_status,
+                b.is_verified,
+                b.is_active,
+                b.deleted_at,
+                COALESCE(b.is_geometry_manually_edited, false) AS is_geometry_manually_edited,
+                COALESCE(b.is_attributes_manually_edited, false) AS is_attributes_manually_edited,
+                b.created_at,
+                b.updated_at,
+                b.created_by::text AS created_by,
+                b.updated_by::text AS updated_by,
+                b.verified_at,
+                b.verified_by::text AS verified_by,
+                b.verification_note,
+                b.source_registry_id::text AS source_registry_id,
+                b.source_snapshot_id::text AS source_snapshot_id,
+                b.source_feature_type,
+                b.source_feature_id::text AS source_feature_id,
+                b.source_refs,
+                b.normalized_data,
+                b.name,
+                ST_AsGeoJSON(b.geom)::json AS geometry,
+                ST_AsGeoJSON(b.centroid)::json AS centroid
+            FROM core.core_buildings AS b
+            LEFT JOIN ref.ref_building_types AS bt ON bt.id = b.building_type_id
+            WHERE b.public_id = CAST(${publicId} AS uuid)
+              AND b.deleted_at IS NULL
+              AND b.is_active IS TRUE
+            LIMIT 1
+        `);
+        return rows[0] ?? null;
+    }
+
+    async listBuildingNamesForDemote(buildingId: bigint): Promise<BuildingDemoteNameRow[]> {
+        return this.prisma.$queryRaw<BuildingDemoteNameRow[]>(Prisma.sql`
+            SELECT
+                n.language_code,
+                n.script_code,
+                n.name_type,
+                n.is_primary,
+                n.search_weight::double precision AS search_weight,
+                n.name
+            FROM core.core_building_names AS n
+            WHERE n.building_id = ${buildingId}
+            ORDER BY n.is_primary DESC NULLS LAST, n.id
+        `);
+    }
+
+    async countPlaceBuildingLinks(buildingId: bigint): Promise<number> {
+        const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+            SELECT COUNT(*)::bigint AS count
+            FROM core.core_place_buildings AS pb
+            WHERE pb.building_id = ${buildingId}
+        `);
+        return Number(rows[0]?.count ?? 0n);
+    }
+
+    async countMatchedAddressCandidates(buildingId: bigint): Promise<number> {
+        const present = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+            SELECT to_regclass('import_review.address_candidates')::text AS rel
+        `);
+        if (!present[0]?.rel) {
+            return 0;
+        }
+        const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+            SELECT COUNT(*)::bigint AS count
+            FROM import_review.address_candidates AS c
+            WHERE c.matched_building_id = ${buildingId}
+        `);
+        return Number(rows[0]?.count ?? 0n);
+    }
+
+    async countOpenBuildingReports(buildingId: bigint, publicId: string): Promise<number> {
+        const present = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+            SELECT to_regclass('feedback.user_reports')::text AS rel
+        `);
+        if (!present[0]?.rel) {
+            return 0;
+        }
+        const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+            SELECT COUNT(*)::bigint AS count
+            FROM feedback.user_reports AS r
+            WHERE r.target_entity_type = 'building'
+              AND r.status_code IN ('submitted', 'in_review', 'needs_more_info')
+              AND (
+                    r.target_entity_id = ${buildingId}
+                    OR r.target_public_id = CAST(${publicId} AS uuid)
+              )
+        `);
+        return Number(rows[0]?.count ?? 0n);
+    }
+
+    async removeActiveBuildingForDemote(args: {
+        publicId: string;
+        actorUserId: bigint | null;
+        before: Record<string, unknown>;
+    }): Promise<{ id: string; public_id: string } | null> {
+        return this.prisma.$transaction(async (tx) => {
+            const rows = await tx.$queryRaw<{ id: string; public_id: string }[]>(Prisma.sql`
+                DELETE FROM core.core_buildings AS b
+                WHERE b.public_id = CAST(${args.publicId} AS uuid)
+                  AND b.deleted_at IS NULL
+                  AND b.is_active IS TRUE
+                RETURNING b.id::text AS id, b.public_id::text AS public_id
+            `);
+            const removed = rows[0];
+            if (!removed) {
+                return null;
+            }
+            const buildingId = BigInt(removed.id);
+            const searchPresent = await tx.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+                SELECT to_regclass('search.search_documents')::text AS rel
+            `);
+            if (searchPresent[0]?.rel) {
+                await tx.$executeRaw(Prisma.sql`
+                    DELETE FROM search.search_documents
+                    WHERE entity_type = 'building'
+                      AND entity_id = ${buildingId}
+                `);
+            }
+            const before = Prisma.sql`${JSON.stringify(args.before)}::jsonb`;
+            await tx.$executeRaw(Prisma.sql`
+                INSERT INTO system.audit_logs (
+                    actor_user_id,
+                    action_type,
+                    entity_type,
+                    entity_id,
+                    before_snapshot,
+                    after_snapshot
+                )
+                VALUES (
+                    ${args.actorUserId},
+                    'building_demote_to_local',
+                    'building',
+                    ${buildingId},
+                    ${before},
+                    NULL
+                )
+            `);
+            return removed;
+        });
+    }
+
+    async findBuildingRenderSuppression(featureKey: string): Promise<{ feature_key: string } | null> {
+        const present = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+            SELECT to_regclass('core.core_building_render_suppressions')::text AS rel
+        `);
+        if (!present[0]?.rel) {
+            return null;
+        }
+        const rows = await this.prisma.$queryRaw<{ feature_key: string }[]>(Prisma.sql`
+            SELECT feature_key
+            FROM core.core_building_render_suppressions
+            WHERE feature_key = ${featureKey}
+            LIMIT 1
+        `);
+        return rows[0] ?? null;
+    }
+
+    async upsertBuildingRenderSuppression(args: {
+        featureKey: string;
+        actorUserId: bigint | null;
+        reason?: string;
+    }): Promise<{ feature_key: string; created: boolean }> {
+        const inserted = await this.prisma.$queryRaw<{ feature_key: string }[]>(Prisma.sql`
+            INSERT INTO core.core_building_render_suppressions (feature_key, reason, created_by)
+            VALUES (${args.featureKey}, ${args.reason ?? "delete"}, ${args.actorUserId})
+            ON CONFLICT (feature_key) DO NOTHING
+            RETURNING feature_key
+        `);
+        if (inserted[0]) {
+            return { feature_key: inserted[0].feature_key, created: true };
+        }
+        return { feature_key: args.featureKey, created: false };
+    }
+
+    async clearBuildingRenderSuppression(featureKey: string): Promise<boolean> {
+        const result = await this.prisma.$executeRaw(Prisma.sql`
+            DELETE FROM core.core_building_render_suppressions
+            WHERE feature_key = ${featureKey}
+        `);
+        return Number(result) > 0;
+    }
+
+    async removeBuildingForDelete(args: {
+        publicId: string;
+        actorUserId: bigint | null;
+        before: Record<string, unknown>;
+    }): Promise<{ id: string; public_id: string } | null> {
+        return this.prisma.$transaction(async (tx) => {
+            const rows = await tx.$queryRaw<{ id: string; public_id: string }[]>(Prisma.sql`
+                DELETE FROM core.core_buildings AS b
+                WHERE b.public_id = CAST(${args.publicId} AS uuid)
+                RETURNING b.id::text AS id, b.public_id::text AS public_id
+            `);
+            const removed = rows[0];
+            if (!removed) {
+                return null;
+            }
+            const buildingId = BigInt(removed.id);
+            const searchPresent = await tx.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
+                SELECT to_regclass('search.search_documents')::text AS rel
+            `);
+            if (searchPresent[0]?.rel) {
+                await tx.$executeRaw(Prisma.sql`
+                    DELETE FROM search.search_documents
+                    WHERE entity_type = 'building'
+                      AND entity_id = ${buildingId}
+                `);
+            }
+            const before = Prisma.sql`${JSON.stringify(args.before)}::jsonb`;
+            await tx.$executeRaw(Prisma.sql`
+                INSERT INTO system.audit_logs (
+                    actor_user_id,
+                    action_type,
+                    entity_type,
+                    entity_id,
+                    before_snapshot,
+                    after_snapshot
+                )
+                VALUES (
+                    ${args.actorUserId},
+                    'building_delete_from_tiles',
+                    'building',
+                    ${buildingId},
+                    ${before},
+                    NULL
+                )
+            `);
+            return removed;
+        });
     }
 }

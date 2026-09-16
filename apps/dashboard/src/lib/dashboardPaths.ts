@@ -5,6 +5,8 @@ export const IMPORT_REVIEW_PATH = `${DASHBOARD_PATH}/import-review`;
 export const REFERENCES_PATH = `${DASHBOARD_PATH}/references`;
 export const STATS_PATH = `${DASHBOARD_PATH}/stats`;
 export const ROUTING_ADMIN_PATH = `${DASHBOARD_PATH}/routing`;
+export const LOCAL_BASEMAP_PATH = `${DASHBOARD_PATH}/local-basemap`;
+export const DEV_MAP_PATH = `${DASHBOARD_PATH}/dev-map`;
 export const TRANSPORT_PATH = `${DASHBOARD_PATH}/transport`;
 export const USERS_PATH = `${DASHBOARD_PATH}/users`;
 export const USER_ANALYTICS_PATH = `${DASHBOARD_PATH}/user-analytics`;
@@ -36,6 +38,14 @@ export function statsPath(segment?: string): string {
 
 export function routingAdminPath(segment?: string): string {
     return joinPath(ROUTING_ADMIN_PATH, segment);
+}
+
+export function localBasemapPath(segment?: string): string {
+    return joinPath(LOCAL_BASEMAP_PATH, segment);
+}
+
+export function devMapPath(segment?: string): string {
+    return joinPath(DEV_MAP_PATH, segment);
 }
 
 export function transportPath(segment?: string): string {

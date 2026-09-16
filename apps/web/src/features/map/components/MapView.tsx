@@ -68,6 +68,17 @@ import {
   startRegionalPmtilesLoader,
   type RegionalPmtilesLoaderHandle,
 } from '@/lib/basemaps/regionLoader';
+import { LocalPmtilesQaBadge } from './LocalPmtilesQaBadge';
+import {
+  fitLocalPmtilesQaRegionalViewport,
+  getLastLoadedLocalPmtilesQaManifest,
+  isLoadAllLocalRegionPmtilesQaEnabled,
+  isLocalPmtilesQaParityMode,
+  localPmtilesQaHasOverview,
+  localPmtilesQaToBasemapManifest,
+  packageKeyFromQaSourceId,
+  setLocalPmtilesQaActiveRegionIds,
+} from '../lib/maplibre/localRegionPmtilesQa';
 import {
   ensureUserLocationLayers,
   updateUserLocationLayers,
@@ -104,6 +115,9 @@ function MapViewInner({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapEngine | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [localPmtilesQaError, setLocalPmtilesQaError] = useState<string | null>(null);
+  const [localPmtilesQaErrorCount, setLocalPmtilesQaErrorCount] = useState(0);
+  const [localPmtilesQaCameraZoom, setLocalPmtilesQaCameraZoom] = useState<number | null>(null);
 
   const languageMode = useMapUiStore((s) => s.languageMode);
   const mapMode = useMapUiStore((s) => s.mapMode);
@@ -207,10 +221,15 @@ function MapViewInner({
     if (hasUserInteractedRef.current || !shouldFitPublicMapOverviewOnLoad()) return;
     if (el.clientWidth < 1 || el.clientHeight < 1) return;
 
-    fitPublicMapOverviewViewport(
-      map,
-      getPublicMapOverviewStartupFitPadding(cameraLayoutRef.current.isSidebarOpen),
-    );
+    const padding = getPublicMapOverviewStartupFitPadding(cameraLayoutRef.current.isSidebarOpen);
+
+    // Regional-only local QA has no overview tiles below z8 — do not use production overview framing.
+    if (isLoadAllLocalRegionPmtilesQaEnabled() && !localPmtilesQaHasOverview()) {
+      fitLocalPmtilesQaRegionalViewport(map, padding);
+      return;
+    }
+
+    fitPublicMapOverviewViewport(map, padding);
   };
 
   /** One-time map engine; teardown on unmount (StrictMode-safe). */
@@ -400,11 +419,114 @@ function MapViewInner({
   /**
    * Dynamic regional PMTiles: load only the regions visible in the viewport at z>=7,
    * unload them when out of view. Overlays are re-stacked on top after each change.
+   *
+   * Local QA parity uses the same loader with localhost URLs from the QA manifest.
+   * Local QA stress (`?qaPackage=all`) skips the loader — all packages are already in the style.
    */
   useEffect(() => {
     if (!mapReady) return;
     const map = mapRef.current;
     if (!map) return;
+
+    const qaEnabled = isLoadAllLocalRegionPmtilesQaEnabled();
+    const qaParity = qaEnabled && isLocalPmtilesQaParityMode();
+
+    if (qaEnabled) {
+      const onError = (e: {
+        error?: Error & { status?: number; url?: string };
+        sourceId?: string;
+        tile?: { z?: number; x?: number; y?: number };
+      }) => {
+        const sourceId = e.sourceId ?? '(unknown-source)';
+        const packageId = packageKeyFromQaSourceId(e.sourceId) ?? '(n/a)';
+        const errMsg = e.error?.message || String(e.error ?? 'PMTiles source/tile failed');
+        const tile =
+          e.tile && typeof e.tile.z === 'number'
+            ? ` tile=${e.tile.z}/${e.tile.x}/${e.tile.y}`
+            : '';
+        console.error('[pmtiles-qa] source/tile error', {
+          sourceId,
+          packageId,
+          error: errMsg,
+          status: e.error?.status,
+          url: e.error?.url,
+          tile: e.tile,
+        });
+        setLocalPmtilesQaErrorCount((n) => n + 1);
+        setLocalPmtilesQaError(`${packageId}: ${errMsg}${tile}`);
+      };
+      const syncZoom = () => {
+        setLocalPmtilesQaCameraZoom(map.getZoom());
+      };
+      syncZoom();
+      map.on('error', onError);
+      map.on('zoom', syncZoom);
+      map.on('moveend', syncZoom);
+
+      if (!qaParity) {
+        return () => {
+          map.off('error', onError);
+          map.off('zoom', syncZoom);
+          map.off('moveend', syncZoom);
+        };
+      }
+
+      let cancelled = false;
+      let handle: RegionalPmtilesLoaderHandle | null = null;
+      const qaManifest = getLastLoadedLocalPmtilesQaManifest();
+      let localBasemapManifest;
+      try {
+        if (!qaManifest) {
+          throw new Error('[pmtiles-qa] parity loader missing QA manifest');
+        }
+        localBasemapManifest = localPmtilesQaToBasemapManifest(qaManifest, qaManifest.packages);
+      } catch (err) {
+        console.error('[pmtiles-qa] cannot start viewport loader:', err);
+        setLocalPmtilesQaErrorCount((n) => n + 1);
+        setLocalPmtilesQaError(err instanceof Error ? err.message : String(err));
+        return () => {
+          map.off('error', onError);
+          map.off('zoom', syncZoom);
+          map.off('moveend', syncZoom);
+        };
+      }
+
+      void startRegionalPmtilesLoader(
+        map,
+        () => {
+          const camera = snapshotMapCamera(map);
+          applyWebBasemapModePreservingCamera(map, mapModeRef.current, camera);
+          applyMapOverlayStackOrder(map);
+        },
+        {
+          manifest: localBasemapManifest,
+          onLoadedChange: (ids) => {
+            setLocalPmtilesQaActiveRegionIds(ids);
+          },
+        },
+      )
+        .then((started) => {
+          if (cancelled) {
+            started.destroy();
+            return;
+          }
+          handle = started;
+          setLocalPmtilesQaActiveRegionIds(started.getLoadedRegionIds());
+        })
+        .catch((err) => {
+          console.warn('[pmtiles-qa] local region loader failed:', err);
+          setLocalPmtilesQaErrorCount((n) => n + 1);
+          setLocalPmtilesQaError(err instanceof Error ? err.message : String(err));
+        });
+
+      return () => {
+        cancelled = true;
+        handle?.destroy();
+        map.off('error', onError);
+        map.off('zoom', syncZoom);
+        map.off('moveend', syncZoom);
+      };
+    }
 
     let cancelled = false;
     let handle: RegionalPmtilesLoaderHandle | null = null;
@@ -773,6 +895,11 @@ function MapViewInner({
   return (
     <div className={`relative h-full w-full ${className ?? ''}`}>
       <div ref={containerRef} className="h-full w-full" />
+      <LocalPmtilesQaBadge
+        cameraZoom={localPmtilesQaCameraZoom}
+        errorCount={localPmtilesQaErrorCount}
+        loadError={localPmtilesQaError}
+      />
       {basemapModeError ? (
         <p
           className="pointer-events-none absolute left-1/2 top-16 z-20 w-[min(20rem,calc(100%-1.5rem))] -translate-x-1/2 rounded-2xl bg-amber-50 px-3 py-2 text-center text-xs leading-5 text-amber-950 ring-1 ring-amber-200 shadow-lg shadow-neutral-900/10"

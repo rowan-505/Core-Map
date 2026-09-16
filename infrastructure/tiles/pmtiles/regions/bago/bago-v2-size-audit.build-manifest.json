@@ -1,0 +1,65 @@
+{
+  "region": "bago",
+  "version": "v2-size-audit",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/bago/bago-v2-size-audit.pmtiles",
+  "file_size_bytes": 68486920,
+  "created_at": "2026-09-06T14:38:00+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 68486920,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172918, lat: 9.526084) (long: 101.170080, lat: 28.547835)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 95.798035, lat: 18.789318)\ncenter zoom: 16\naddressed tiles count: 343201\ntile entries count: 165926\ntile contents count: 158939\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nstrategies [{},{},{},{},{},{},{},{},{\"dropped_by_rate\":20091,\"tiny_polygons\":5},{\"dropped_by_rate\":24338,\"tiny_polygons\":3},{\"dropped_by_rate\":26560},{\"dropped_by_rate\":40882,\"tiny_polygons\":2},{\"dropped_by_rate\":108059,\"tiny_polygons\":3},{\"dropped_by_rate\":147280,\"tiny_polygons\":9},{\"dropped_by_rate\":763590,\"tiny_polygons\":36},{\"dropped_by_rate\":622549,\"tiny_polygons\":50},{\"dropped_by_rate\":630488,\"tiny_polygons\":32}]\ntype overlay\nattribution Local Map\ngenerator tile-join v2.49.0\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=14' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-bago-v2-size-audit-21015.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/admin_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-bago-v2-size-audit-21015.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-bago-v2-size-audit-21015.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/buildings.annotated.geojsonseq' '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/water_polygons.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/settlements.annotated.geojsonseq' '--named-layer=coastlines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/coastlines.annotated.geojsonseq' '--named-layer=protected_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/protected_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --coalesce-smallest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=750000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-bago-v2-size-audit-21015.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-bago-v2-size-audit-21015/streets.annotated.geojsonseq; tile-join -f -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-bago-v2-size-audit-21015.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-bago-v2-size-audit-21015.mbtiles /home/nyihtet/code\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 151322038,
+      "mtime_ns": 1788705168328337501
+    },
+    "streets.geojson": {
+      "size_bytes": 86901997,
+      "mtime_ns": 1788705186161244647
+    },
+    "road_labels.geojson": {
+      "size_bytes": 784741,
+      "mtime_ns": 1788705193982484227
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 6342217,
+      "mtime_ns": 1788705194833462925
+    },
+    "water_lines.geojson": {
+      "size_bytes": 8347278,
+      "mtime_ns": 1788705195972510401
+    },
+    "landuse.geojson": {
+      "size_bytes": 16712442,
+      "mtime_ns": 1788705198390307253
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 4981097,
+      "mtime_ns": 1788705200371206093
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 4981097,
+      "mtime_ns": 1788705201316383968
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 84959,
+      "mtime_ns": 1788705201914369452
+    },
+    "settlements.geojson": {
+      "size_bytes": 3277729,
+      "mtime_ns": 1788705202475036479
+    },
+    "coastlines.geojson": {
+      "size_bytes": 4416375,
+      "mtime_ns": 1788705203389589112
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 184242,
+      "mtime_ns": 1788705204276875755
+    }
+  }
+}

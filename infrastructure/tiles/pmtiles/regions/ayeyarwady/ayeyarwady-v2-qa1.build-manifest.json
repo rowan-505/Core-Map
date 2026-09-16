@@ -1,0 +1,65 @@
+{
+  "region": "ayeyarwady",
+  "version": "v2-qa1",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/ayeyarwady/ayeyarwady-v2-qa1.pmtiles",
+  "file_size_bytes": 325393214,
+  "created_at": "2026-09-07T08:55:54+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 325393214,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172890, lat: 9.525930) (long: 101.170092, lat: 28.547886)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 94.276428, lat: 15.990375)\ncenter zoom: 16\naddressed tiles count: 3364251\ntile entries count: 260079\ntile contents count: 225275\nclustered: true\ninternal compression: gzip\ntile compression: gzip\ngenerator tile-join v2.79.0\ntype overlay\nvector_layers <object, use --metadata to view full JSON metadata>\nattribution Local Map\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-ayeyarwady-v2-qa1-433475.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-ayeyarwady-v2-qa1-433475.mbtiles '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/water_polygons.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-ayeyarwady-v2-qa1-433475.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/streets.annotated.geojsonseq; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-ayeyarwady-v2-qa1-433475.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/buildings.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/settlements.annotated.geojsonseq' '--named-layer=coastlines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/coastlines.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-ayeyarwady-v2-qa1-433475.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-ayeyarwady-v2-qa1-433475/admin_areas.annotated.geojsonseq'; tile-join -f -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-ayeyarwady-v2-qa1-433475.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-ayeyarwady-v2-qa1-433475.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-ayeyarwady-v2-qa1-433475.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-ayeyarwady-v2-qa1-433475.mbtiles /home/nyihtet/code/core-\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 615344125,
+      "mtime_ns": 1788769126711474857
+    },
+    "streets.geojson": {
+      "size_bytes": 103690811,
+      "mtime_ns": 1788769178873948220
+    },
+    "road_labels.geojson": {
+      "size_bytes": 649520,
+      "mtime_ns": 1788769186591420391
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 6356540,
+      "mtime_ns": 1788769187494629057
+    },
+    "water_lines.geojson": {
+      "size_bytes": 14720470,
+      "mtime_ns": 1788769189019788737
+    },
+    "landuse.geojson": {
+      "size_bytes": 31208260,
+      "mtime_ns": 1788769192375610513
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 4343076,
+      "mtime_ns": 1788769194108414525
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 4343076,
+      "mtime_ns": 1788769194941474233
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 109497,
+      "mtime_ns": 1788769195587757745
+    },
+    "settlements.geojson": {
+      "size_bytes": 4929598,
+      "mtime_ns": 1788769196262802523
+    },
+    "coastlines.geojson": {
+      "size_bytes": 4416375,
+      "mtime_ns": 1788769197178993181
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 161,
+      "mtime_ns": 1788769197792338785
+    }
+  }
+}

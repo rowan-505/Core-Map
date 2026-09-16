@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { parseBuildingOsmFeatureKey } from "../../lib/osm/building-osm-feature-key.js";
 import { coreReviewVerificationStatusWriteSchema } from "../core-review/core-review-verification-write.js";
 
 const coord2Schema = z.tuple([z.number().finite(), z.number().finite()]);
@@ -158,6 +159,78 @@ const optionalAdminAreaIdCreateSchema = z.preprocess((value) => {
 
     return undefined;
 }, z.bigint().optional());
+
+export const promoteOsmBuildingBodySchema = z
+    .object({
+        feature_key: z.string().trim().min(1),
+        local_source: z.enum(["archive", "base"]),
+        geometry: buildingGeometrySchema,
+        class_code: optionalTrimmedStringSchema,
+        name: optionalNameSchema,
+        name_mm: optionalNameSchema,
+        name_en: optionalNameSchema,
+    })
+    .strict()
+    .superRefine((body, ctx) => {
+        if (!parseBuildingOsmFeatureKey(body.feature_key)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["feature_key"],
+                message:
+                    "feature_key must be a canonical building OSM identity (osm:way:<id> or osm:relation:<id>).",
+            });
+        }
+    });
+
+export const demoteOsmBuildingBodySchema = z
+    .object({
+        feature_key: z.string().trim().min(1),
+    })
+    .strict()
+    .superRefine((body, ctx) => {
+        if (!parseBuildingOsmFeatureKey(body.feature_key)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["feature_key"],
+                message:
+                    "feature_key must be a canonical building OSM identity (osm:way:<id> or osm:relation:<id>).",
+            });
+        }
+    });
+
+export const deleteOsmBuildingBodySchema = z
+    .object({
+        feature_key: z.string().trim().min(1),
+        confirm: z.literal("DELETE"),
+    })
+    .strict()
+    .superRefine((body, ctx) => {
+        if (!parseBuildingOsmFeatureKey(body.feature_key)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["feature_key"],
+                message:
+                    "feature_key must be a canonical building OSM identity (osm:way:<id> or osm:relation:<id>).",
+            });
+        }
+    });
+
+export const clearBuildingRenderSuppressionBodySchema = z
+    .object({
+        feature_key: z.string().trim().min(1),
+        confirm: z.literal("CLEAR_SUPPRESSION"),
+    })
+    .strict()
+    .superRefine((body, ctx) => {
+        if (!parseBuildingOsmFeatureKey(body.feature_key)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["feature_key"],
+                message:
+                    "feature_key must be a canonical building OSM identity (osm:way:<id> or osm:relation:<id>).",
+            });
+        }
+    });
 
 export const createBuildingBodySchema = z
     .object({

@@ -13,9 +13,15 @@
  */
 import type { Map as MaplibreMap } from "maplibre-gl";
 
+import { clampRegionalVectorSourceMaxZoom } from "@local-map/map-style/regionalZoomPolicy";
+
 import { loadDashboardBasemapManifest, type BasemapManifest } from "./manifest";
 import { bboxOverlapArea, mapBoundsToBbox } from "./bbox";
-import { addRegionLayers, regionLayerIds, removeRegionLayers } from "./regionLayers";
+import {
+    addRegionLayers as addDashboardRegionLayers,
+    regionLayerIds as dashboardRegionLayerIds,
+    removeRegionLayers as removeDashboardRegionLayers,
+} from "./regionLayers";
 
 /** Regional detail appears at or above this zoom (overview-only below). */
 export const REGIONAL_MIN_ZOOM = 7;
@@ -59,13 +65,41 @@ export interface RegionalPmtilesLoaderHandle {
     destroy(): void;
 }
 
+/** Optional layer factory — Dev Map injects public `base-map.json` clones instead of dashboard-map. */
+export type RegionalPmtilesLayerOps = {
+    addRegionLayers: (
+        map: RegionLoaderMap,
+        regionId: string,
+        sourceId: string,
+        beforeId?: string,
+    ) => void;
+    removeRegionLayers: (map: RegionLoaderMap, regionId: string) => void;
+    regionLayerIds: (regionId: string) => string[];
+};
+
 export interface StartRegionalPmtilesLoaderOptions {
     /**
      * Layer ids that form the static base (overview vector layers + `background` + satellite raster).
      * Regional layers are inserted directly above these and below any other (overlay) layer.
      */
     baseLayerIds?: readonly string[];
+    /**
+     * Layer clone/remove helpers. Defaults to dashboard-map.json templates.
+     * Pass public base-map.json ops for Dev Map visual parity with the web map.
+     */
+    layerOps?: RegionalPmtilesLayerOps;
+    /**
+     * When true, set each regional vector source `maxzoom` via
+     * {@link clampRegionalVectorSourceMaxZoom} (public web map behavior).
+     */
+    clampRegionalSourceMaxZoom?: boolean;
 }
+
+const DEFAULT_LAYER_OPS: RegionalPmtilesLayerOps = {
+    addRegionLayers: addDashboardRegionLayers,
+    removeRegionLayers: removeDashboardRegionLayers,
+    regionLayerIds: dashboardRegionLayerIds,
+};
 
 /** Source id for a region's PMTiles vector source. */
 export function regionSourceId(regionId: string): string {
@@ -123,6 +157,8 @@ function syncRegions(
     loaded: Set<string>,
     baseLayerIds: Set<string>,
     managedRegionLayerIds: Set<string>,
+    layerOps: RegionalPmtilesLayerOps,
+    clampRegionalSourceMaxZoom: boolean,
 ): void {
     const zoom = map.getZoom();
     const visibleIds = getVisibleRegionIds(map, manifest);
@@ -139,9 +175,28 @@ function syncRegions(
         if (!visible.has(region.id) || loaded.has(region.id)) continue;
         const sourceId = regionSourceId(region.id);
         if (!map.getSource(sourceId)) {
-            map.addSource(sourceId, { type: "vector", url: `pmtiles://${region.url}` });
+            const sourceSpec: {
+                type: "vector";
+                url: string;
+                minzoom?: number;
+                maxzoom?: number;
+            } = {
+                type: "vector",
+                url: `pmtiles://${region.url}`,
+            };
+            if (typeof region.minZoom === "number" && Number.isFinite(region.minZoom)) {
+                sourceSpec.minzoom = region.minZoom;
+            }
+            if (clampRegionalSourceMaxZoom) {
+                sourceSpec.maxzoom = clampRegionalVectorSourceMaxZoom(
+                    typeof region.maxZoom === "number" && Number.isFinite(region.maxZoom)
+                        ? region.maxZoom
+                        : undefined,
+                );
+            }
+            map.addSource(sourceId, sourceSpec);
         }
-        addRegionLayers(map, region.id, sourceId, beforeId);
+        layerOps.addRegionLayers(map, region.id, sourceId, beforeId);
         loaded.add(region.id);
         added.push(region.id);
         devLog(`[dashboard:regions] + ${region.id} pmtiles://${region.url}`);
@@ -151,7 +206,7 @@ function syncRegions(
     // overview base is never managed here, so the map never goes blank.
     for (const regionId of [...loaded]) {
         if (visible.has(regionId)) continue;
-        removeRegionLayers(map, regionId);
+        layerOps.removeRegionLayers(map, regionId);
         const sourceId = regionSourceId(regionId);
         if (map.getSource(sourceId)) {
             map.removeSource(sourceId);
@@ -179,10 +234,12 @@ export async function startRegionalPmtilesLoader(
     options?: StartRegionalPmtilesLoaderOptions,
 ): Promise<RegionalPmtilesLoaderHandle> {
     const manifest = await loadDashboardBasemapManifest();
+    const layerOps = options?.layerOps ?? DEFAULT_LAYER_OPS;
+    const clampRegionalSourceMaxZoom = options?.clampRegionalSourceMaxZoom === true;
     const loaded = new Set<string>();
     const baseLayerIds = new Set<string>(options?.baseLayerIds ?? []);
     const managedRegionLayerIds = new Set<string>(
-        manifest.regions.flatMap((region) => regionLayerIds(region.id)),
+        manifest.regions.flatMap((region) => layerOps.regionLayerIds(region.id)),
     );
     let throttleTimer: ReturnType<typeof setTimeout> | null = null;
     let destroyed = false;
@@ -190,7 +247,15 @@ export async function startRegionalPmtilesLoader(
     const runSync = () => {
         if (destroyed) return;
         try {
-            syncRegions(map, manifest, loaded, baseLayerIds, managedRegionLayerIds);
+            syncRegions(
+                map,
+                manifest,
+                loaded,
+                baseLayerIds,
+                managedRegionLayerIds,
+                layerOps,
+                clampRegionalSourceMaxZoom,
+            );
         } catch (err) {
             if (DEV) console.warn("[dashboard:regions] sync failed:", err);
         }

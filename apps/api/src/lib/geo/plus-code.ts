@@ -1,4 +1,10 @@
-import { decode, encode, expand } from "pluscodes";
+import pluscodes from "pluscodes";
+
+const { decode, encode, expand } = pluscodes as {
+    decode: (code: string) => unknown;
+    encode: (coords: { latitude: number; longitude: number }) => string | null;
+    expand: (...args: unknown[]) => unknown;
+};
 
 /**
  * Generate a full Open Location Code (Plus Code) from coordinates.

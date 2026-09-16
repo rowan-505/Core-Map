@@ -1245,6 +1245,24 @@ function clearAuthTokens() {
  */
 let refreshInFlight: Promise<boolean> | null = null;
 
+/** Read the stored dashboard access JWT (browser only). */
+export function getDashboardAccessToken(): string | null {
+    return getAccessToken();
+}
+
+function isAccessTokenExpiredOrStale(token: string, skewSeconds = 45): boolean {
+    try {
+        const parts = token.split(".");
+        if (parts.length < 2 || !parts[1]) return true;
+        const json = atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"));
+        const payload = JSON.parse(json) as { exp?: unknown };
+        if (typeof payload.exp !== "number") return false;
+        return payload.exp * 1000 <= Date.now() + skewSeconds * 1000;
+    } catch {
+        return true;
+    }
+}
+
 /**
  * Exchanges the stored refresh token for a new access + refresh token pair and
  * persists both (rotation). Returns false when no/invalid refresh token exists.
@@ -1296,6 +1314,22 @@ async function refreshSession(): Promise<boolean> {
     }
 
     return refreshInFlight;
+}
+
+/**
+ * Returns a usable access token, refreshing when missing/expired.
+ * Used by MapLibre lifecycle tiles (transformRequest is sync — call this before tile load).
+ */
+export async function ensureDashboardAccessToken(): Promise<string | null> {
+    const current = getAccessToken();
+    if (current && !isAccessTokenExpiredOrStale(current)) {
+        return current;
+    }
+    const refreshed = await refreshSession();
+    if (!refreshed) {
+        return getAccessToken();
+    }
+    return getAccessToken();
 }
 
 /**

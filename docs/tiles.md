@@ -7,7 +7,7 @@ Tiles are for **rendering only**. PostGIS stays the source of truth.
 | Piece | Path | Role |
 |-------|------|------|
 | Regional PMTiles | `infrastructure/tiles/pmtiles/` | Region basemaps |
-| Overview PMTiles | `infrastructure/tiles/pmtiles/overview/` | Low-zoom national |
+| Overview PMTiles | `infrastructure/tiles/pmtiles/overview/` | Low-zoom national (Core admin + Natural Earth; no MIMU) |
 | Style | `packages/map-style/` | MapLibre style |
 | Martin | `infrastructure/tiles/martin/` | Optional dynamic MVT |
 | R2 | `infrastructure/cloud/r2/` | CDN hosting |
@@ -22,4 +22,5 @@ Tiles are for **rendering only**. PostGIS stays the source of truth.
 PostGIS tiles views → GeoJSON → tippecanoe → .pmtiles → R2
 ```
 
-Ops detail: [`infrastructure/tiles/README.md`](../infrastructure/tiles/README.md).
+Ops detail: [`infrastructure/tiles/README.md`](../infrastructure/tiles/README.md).  
+Overview operator workflow: [`infrastructure/tiles/pmtiles/overview/README.md`](../infrastructure/tiles/pmtiles/overview/README.md).
