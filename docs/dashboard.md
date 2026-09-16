@@ -18,6 +18,7 @@ http://localhost:3000
 | Import review | Promote staging conflicts into core |
 | Reference | Lookup tables and config |
 | Ops | Tiles, routing builds, health (as built) |
+| Dev Map | Local-only map inspector — [dashboard-dev-map.md](dashboard-dev-map.md) |
 
 API client: `apps/dashboard/src/lib/api.ts`.
 

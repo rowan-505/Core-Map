@@ -19,6 +19,15 @@ import {
     listCoreReviewLandAreas,
 } from "./entities/land-areas.handler.js";
 import { CoreReviewLandAreasRepository } from "./entities/land-areas.repo.js";
+import { LandAreasPromoteService } from "./entities/land-areas-promote.service.js";
+import { LandAreasDemoteService } from "./entities/land-areas-demote.service.js";
+import { LandAreasDeleteService } from "./entities/land-areas-delete.service.js";
+import type {
+    ClearLandAreaRenderSuppressionBody,
+    DeleteOsmLandAreaBody,
+    DemoteOsmLandAreaBody,
+    PromoteOsmLandAreaBody,
+} from "./entities/land-areas-promote.schema.js";
 import { getCoreReviewStreetDetail, countCoreReviewStreets, listCoreReviewStreets } from "./entities/streets.handler.js";
 import {
     getCoreReviewAddressDetail,
@@ -131,6 +140,9 @@ export class CoreReviewService {
     private readonly genericWriteService: CoreReviewGenericWriteService;
     private readonly lifecycleService: CoreReviewLifecycleService;
     private readonly landAreasRepo: CoreReviewLandAreasRepository;
+    private readonly landAreasPromoteService: LandAreasPromoteService;
+    private readonly landAreasDemoteService: LandAreasDemoteService;
+    private readonly landAreasDeleteService: LandAreasDeleteService;
     private readonly addressesRepo: CoreReviewAddressesRepository;
     private readonly addressesWriteService: CoreReviewAddressesWriteService;
     private readonly settlementsRepo: CoreReviewSettlementsRepository;
@@ -152,6 +164,9 @@ export class CoreReviewService {
         this.genericWriteService = new CoreReviewGenericWriteService(prisma);
         this.lifecycleService = new CoreReviewLifecycleService(prisma);
         this.landAreasRepo = new CoreReviewLandAreasRepository(prisma);
+        this.landAreasPromoteService = new LandAreasPromoteService(this.landAreasRepo);
+        this.landAreasDemoteService = new LandAreasDemoteService(this.landAreasRepo);
+        this.landAreasDeleteService = new LandAreasDeleteService(this.landAreasRepo);
         this.addressesRepo = new CoreReviewAddressesRepository(prisma);
         this.addressesWriteService = new CoreReviewAddressesWriteService(prisma);
         this.settlementsRepo = new CoreReviewSettlementsRepository(prisma);
@@ -295,6 +310,26 @@ export class CoreReviewService {
             return Promise.resolve(null);
         }
         return listSettlementDuplicateWarnings(this.settlementsRepo, params);
+    }
+
+    async promoteLandAreaFromSource(body: PromoteOsmLandAreaBody) {
+        return this.landAreasPromoteService.promoteOsmLandArea(body);
+    }
+
+    async preflightDemoteLandAreaFromCore(body: DemoteOsmLandAreaBody) {
+        return this.landAreasDemoteService.preflightDemoteOsmLandArea(body);
+    }
+
+    async removeDemotedLandAreaFromCore(body: DemoteOsmLandAreaBody, user: JwtUser) {
+        return this.landAreasDemoteService.removeDemotedOsmLandArea(body, user);
+    }
+
+    async deleteLandAreaFromSource(body: DeleteOsmLandAreaBody, user: JwtUser) {
+        return this.landAreasDeleteService.deleteOsmLandAreaFromTiles(body, user);
+    }
+
+    async clearLandAreaRenderSuppression(body: ClearLandAreaRenderSuppressionBody) {
+        return this.landAreasDeleteService.clearLandAreaRenderSuppression(body);
     }
 
     async create(

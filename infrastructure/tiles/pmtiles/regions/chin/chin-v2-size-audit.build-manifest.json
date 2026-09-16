@@ -1,0 +1,65 @@
+{
+  "region": "chin",
+  "version": "v2-size-audit",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/chin/chin-v2-size-audit.pmtiles",
+  "file_size_bytes": 30325764,
+  "created_at": "2026-09-06T15:24:26+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 30325764,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172918, lat: 9.526084) (long: 101.170080, lat: 28.547835)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 93.100891, lat: 22.829352)\ncenter zoom: 16\naddressed tiles count: 280668\ntile entries count: 88673\ntile contents count: 81377\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nformat pbf\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=14' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-chin-v2-size-audit-78860.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/admin_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-chin-v2-size-audit-78860.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-chin-v2-size-audit-78860.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/buildings.annotated.geojsonseq' '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/water_polygons.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/settlements.annotated.geojsonseq' '--named-layer=protected_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/protected_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --coalesce-smallest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=750000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-chin-v2-size-audit-78860.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-chin-v2-size-audit-78860/streets.annotated.geojsonseq; tile-join -f -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-chin-v2-size-audit-78860.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-chin-v2-size-audit-78860.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-chin-v2-size-audit-78860.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-chin-v2-size-audit-78860.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-chin-v2-size-audit-78860.mbtiles\nmaxzoom 16\nname /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-chin-v2-size-audit-78860.mbtiles + /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-chin-v2-size-audit-78860.mbtiles\ntype overlay\nvector_layers <object, use --metadata to view full JSON metadata>\ndescriptio\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 36041917,
+      "mtime_ns": 1788708093591642729
+    },
+    "streets.geojson": {
+      "size_bytes": 20229774,
+      "mtime_ns": 1788708098273412276
+    },
+    "road_labels.geojson": {
+      "size_bytes": 227200,
+      "mtime_ns": 1788708099851067146
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 607309,
+      "mtime_ns": 1788708100515924476
+    },
+    "water_lines.geojson": {
+      "size_bytes": 3818450,
+      "mtime_ns": 1788708101476410103
+    },
+    "landuse.geojson": {
+      "size_bytes": 3581304,
+      "mtime_ns": 1788708103014948817
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 3115921,
+      "mtime_ns": 1788708103725263100
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 3115921,
+      "mtime_ns": 1788708104451663666
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 18143,
+      "mtime_ns": 1788708104969943321
+    },
+    "settlements.geojson": {
+      "size_bytes": 745821,
+      "mtime_ns": 1788708105430559722
+    },
+    "coastlines.geojson": {
+      "size_bytes": 161,
+      "mtime_ns": 1788708105856257928
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 6412,
+      "mtime_ns": 1788708106316160432
+    }
+  }
+}

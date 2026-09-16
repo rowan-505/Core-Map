@@ -1,15 +1,15 @@
-/** Overview tile label fields. Regional `name_mm` / `name_en` are not on these layers. */
+/** Overview tile label fields — Core admin uses name_mm / name_en / name. */
 import type { ExpressionSpecification } from 'maplibre-gl';
 
 export const OVERVIEW_LABEL_LAYER_IDS = [
   'overview-country-labels',
-  'overview-mmr-admin1-labels',
+  'overview-admin-state-region-labels',
   'overview-populated-places',
 ] as const;
 
 export type OverviewLabelLayerId = (typeof OVERVIEW_LABEL_LAYER_IDS)[number];
 
-/** Country polygons — uppercase attribute names from the overview export. */
+/** Country polygons — uppercase attribute names from Natural Earth. */
 export const OVERVIEW_COUNTRY_LABEL_TEXT_FIELD: ExpressionSpecification = [
   'coalesce',
   ['get', 'NAME'],
@@ -27,24 +27,55 @@ export const OVERVIEW_POPULATED_PLACES_TEXT_FIELD: ExpressionSpecification = [
   ['get', 'nameascii'],
 ];
 
-/** State/region polygons — ST / SR name fields, plus lowercase fallbacks. */
-export const OVERVIEW_MMR_ADMIN1_LABEL_TEXT_FIELD: ExpressionSpecification = [
+/** Core state/region label points — short overview names (alias or core_id map). */
+export const OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_FIELD: ExpressionSpecification = [
   'coalesce',
-  ['get', 'ST'],
-  ['get', 'ST_MMR'],
-  ['get', 'SR'],
-  ['get', 'SR_MMR'],
-  ['get', 'NAME'],
-  ['get', 'name'],
+  ['get', 'label_name_mm'],
+  [
+    'match',
+    ['to-number', ['coalesce', ['get', 'core_id'], 0]],
+    13,
+    'ရန်ကုန်',
+    5089,
+    'မွန်',
+    5879,
+    'ကရင်',
+    6007,
+    'ကယား',
+    6031,
+    'နေပြည်တော်',
+    6329,
+    'ရှမ်း',
+    6667,
+    'ကချင်',
+    6703,
+    'စစ်ကိုင်း',
+    6722,
+    'ရခိုင်',
+    6744,
+    'ချင်း',
+    6832,
+    'မန္တလေး',
+    7027,
+    'မကွေး',
+    7169,
+    'ပဲခူး',
+    7279,
+    'ဧရာဝတီ',
+    7449,
+    'တနင်္သာရီ',
+    ['coalesce', ['get', 'name_mm'], ''],
+  ],
+  ['get', 'label_name_en'],
   ['get', 'name_en'],
-  ['get', 'name_mm'],
+  ['get', 'name'],
 ];
 
 const OVERVIEW_LABEL_TEXT_FIELD_BY_LAYER_ID: Readonly<
   Record<OverviewLabelLayerId, ExpressionSpecification>
 > = {
   'overview-country-labels': OVERVIEW_COUNTRY_LABEL_TEXT_FIELD,
-  'overview-mmr-admin1-labels': OVERVIEW_MMR_ADMIN1_LABEL_TEXT_FIELD,
+  'overview-admin-state-region-labels': OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_FIELD,
   'overview-populated-places': OVERVIEW_POPULATED_PLACES_TEXT_FIELD,
 };
 

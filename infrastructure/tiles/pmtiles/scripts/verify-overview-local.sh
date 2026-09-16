@@ -1,26 +1,31 @@
 #!/usr/bin/env bash
 # Sanity-check local overview PMTiles layout before starting the web app.
+#
+# Usage:
+#   npm run tiles:verify:overview
+#   bash infrastructure/tiles/pmtiles/scripts/verify-overview-local.sh [version]
 set -euo pipefail
 
 PMTILES_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+VERSION="${1:-v2}"
 OVERVIEW_DIR="${PMTILES_ROOT}/overview/regions"
-PMTILES_FILE="${OVERVIEW_DIR}/myanmar-overview-v1.pmtiles"
+PMTILES_FILE="${OVERVIEW_DIR}/myanmar-overview-${VERSION}.pmtiles"
 CURRENT_JSON="${PMTILES_ROOT}/overview/current.json"
 SERVE_URL="${OVERVIEW_SERVE_URL:-http://localhost:8080}"
-PMTILES_HTTP_URL="${SERVE_URL}/overview/regions/myanmar-overview-v1.pmtiles"
+PMTILES_HTTP_URL="${SERVE_URL}/overview/regions/myanmar-overview-${VERSION}.pmtiles"
 CURRENT_HTTP_URL="${SERVE_URL}/overview/current.json"
 
 fail=0
 
-echo "Overview PMTiles local verify"
+echo "[verify-overview] start"
 echo "  expected file:  ${PMTILES_FILE}"
 echo "  expected json:  ${CURRENT_JSON}"
 echo ""
 
 if [[ ! -f "$PMTILES_FILE" ]]; then
   echo "❌ Missing PMTiles file."
-  echo "   Place myanmar-overview-v1.pmtiles at:"
-  echo "   infrastructure/tiles/pmtiles/overview/regions/myanmar-overview-v1.pmtiles"
+  echo "   Place myanmar-overview-${VERSION}.pmtiles at:"
+  echo "   infrastructure/tiles/pmtiles/overview/regions/myanmar-overview-${VERSION}.pmtiles"
   echo "   (The file is gitignored — copy or build it locally.)"
   fail=1
 else
@@ -40,9 +45,10 @@ if [[ ! -f "$CURRENT_JSON" ]]; then
 else
   echo "✅ current.json present"
   if command -v python3 >/dev/null 2>&1; then
-    python3 - <<PY
+    if ! python3 - <<PY
 import json, sys
 path = "${CURRENT_JSON}"
+filename = "myanmar-overview-${VERSION}.pmtiles"
 with open(path) as f:
     doc = json.load(f)
 url = doc.get("url", "")
@@ -50,7 +56,39 @@ if not url:
     print("❌ current.json: missing url field", file=sys.stderr)
     sys.exit(1)
 print(f"   url field: {url}")
+if doc.get("filename") and doc.get("filename") != filename:
+    print(f"⚠️  current.json filename={doc.get('filename')} (expected {filename})")
+layers = doc.get("layers") or []
+required = {
+    "myanmar_country",
+    "myanmar_state_region",
+    "myanmar_state_labels",
+}
+missing = sorted(required - set(layers))
+if missing:
+    print(f"❌ current.json missing layers: {', '.join(missing)}", file=sys.stderr)
+    sys.exit(1)
+forbidden = [
+    x for x in layers
+    if x.startswith("mmr_admin")
+    or x in (
+        "mmr_country_highlight",
+        "admin_country",
+        "admin_country_outline",
+        "admin_country_land_border",
+        "admin_state_region",
+        "myanmar_coastline",
+        "myanmar_major_islands",
+    )
+]
+if forbidden:
+    print(f"❌ current.json still lists legacy layers: {', '.join(forbidden)}", file=sys.stderr)
+    sys.exit(1)
+print("   layers include myanmar_country + myanmar_state_region + myanmar_state_labels")
 PY
+    then
+      fail=1
+    fi
   fi
 fi
 
@@ -81,11 +119,16 @@ fi
 
 echo ""
 if [[ "$fail" -ne 0 ]]; then
+  echo "[verify-overview] FAILURE"
   echo "Fix the issues above, then see docs/tiles/pmtiles/overview-local-dev.md"
   exit 1
 fi
 
+echo "[verify-overview] SUCCESS"
 echo "Next:"
 echo "  1. npm run tiles:serve          # terminal 1 — port 8080, CORS on"
 echo "  2. cd apps/web && VITE_MAP_BASEMAP=overview npm run dev   # terminal 2"
 echo "  3. Open http://localhost:5173 — Myanmar overview at z≈4.7"
+echo "  4. Upload only when ready: npm run tiles:upload:overview -- ${VERSION}"
+echo "  5. Verify R2:              npm run tiles:verify:r2:overview -- ${VERSION}"
+echo "  6. Switch pointer later:   CONFIRM=1 npm run tiles:switch:overview -- ${VERSION}"

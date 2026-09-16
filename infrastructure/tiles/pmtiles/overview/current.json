@@ -1,17 +1,27 @@
 {
   "region": "overview",
   "type": "overview",
-  "version": "v1",
-  "filename": "myanmar-overview-v1.pmtiles",
-  "url": "http://localhost:8080/overview/regions/myanmar-overview-v1.pmtiles",
+  "version": "v2",
+  "filename": "myanmar-overview-v2.pmtiles",
+  "url": "http://localhost:8080/overview/regions/myanmar-overview-v2.pmtiles",
   "minZoom": 0,
   "maxZoom": 8,
-  "center": [96.2, 20.5],
+  "nativeMaxZoom": 8,
+  "center": [
+    96.2,
+    20.5
+  ],
   "initialZoom": 4.7,
   "minMapZoom": 4.3,
   "maxBounds": [
-    [78.0, 3.0],
-    [112.0, 34.0]
+    [
+      78.0,
+      3.0
+    ],
+    [
+      112.0,
+      34.0
+    ]
   ],
   "layers": [
     "land",
@@ -22,9 +32,14 @@
     "populated_places",
     "lakes",
     "rivers",
-    "mmr_admin0_z0_2",
-    "mmr_admin0_z3_4",
-    "mmr_admin0_z5_6",
-    "mmr_admin1"
-  ]
+    "myanmar_country",
+    "myanmar_state_region",
+    "myanmar_state_labels"
+  ],
+  "notes": {
+    "myanmarNationalShape": "myanmar_country from tile_source.admin_areas country row",
+    "mimu": "not used",
+    "overzoom": "native z8 tiles overzoom in MapLibre through camera z20",
+    "geometry": "temporary country geom may be imperfect; replace in Supabase then tiles:sync + rebuild v2"
+  }
 }

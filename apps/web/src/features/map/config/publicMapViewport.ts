@@ -77,7 +77,9 @@ export const PUBLIC_MAP_OVERVIEW_MAX_BOUNDS: readonly [
   [112.0, 34.0],
 ];
 
-export const PUBLIC_MAP_MAX_ZOOM = 20;
+/** Public camera max zoom — overzooms native regional z16 tiles at z17–z20. */
+import { PUBLIC_MAP_MAX_ZOOM } from '../../../../../../packages/map-style/regionalZoomPolicy.js';
+export { PUBLIC_MAP_MAX_ZOOM };
 export const PUBLIC_MAP_VIEWPORT_SESSION_KEY = 'coremap.public-map.viewport.v1';
 
 export const MYANMAR_OVERVIEW_CENTER = PUBLIC_MAP_OVERVIEW_CENTER;

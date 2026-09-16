@@ -1,30 +1,44 @@
 #!/usr/bin/env bash
 # Local static server for the PMTiles tree (same URL layout as CDN / R2).
+#
+# Uses Python so it works in WSL even when Windows npm/npx is on PATH.
+# Windows npm may start bash in C:\Windows; INIT_CWD still points at the repo.
 set -euo pipefail
 
-PMTILES_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REPO_ROOT="$(cd "$PMTILES_ROOT/../../.." && pwd)"
+to_linux_path() {
+  local raw="${1:-}"
+  raw="${raw//\\//}"
+  if [[ "$raw" =~ [Ww]sl\.localhost/[^/]+/(.*) ]]; then
+    echo "/${BASH_REMATCH[1]}"
+    return
+  fi
+  echo "$raw"
+}
 
-if ! command -v npx >/dev/null 2>&1; then
-  echo "error: npx not found. Install Node.js so npx is available." >&2
+SCRIPT_PATH="${BASH_SOURCE[0]:-}"
+SCRIPT_DIR=""
+if [[ -n "$SCRIPT_PATH" && -f "$SCRIPT_PATH" ]]; then
+  SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+fi
+
+if [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/serve-local.py" ]]; then
+  ROOT="$(to_linux_path "${INIT_CWD:-}")"
+  if [[ -z "$ROOT" || ! -d "$ROOT" ]]; then
+    echo "error: cannot find repo (INIT_CWD=${INIT_CWD:-unset} cwd=$(pwd))" >&2
+    echo "Run from the repo: bash infrastructure/tiles/pmtiles/scripts/serve-local.sh" >&2
+    exit 1
+  fi
+  SCRIPT_DIR="$ROOT/infrastructure/tiles/pmtiles/scripts"
+fi
+
+if [[ ! -f "$SCRIPT_DIR/serve-local.py" ]]; then
+  echo "error: missing $SCRIPT_DIR/serve-local.py" >&2
   exit 1
 fi
 
-echo "" >&2
-echo "  Local PMTiles static server" >&2
-echo "  --------------------------" >&2
-echo "  Repo root:     ${REPO_ROOT}" >&2
-echo "  Served path:   infrastructure/tiles/pmtiles" >&2
-echo "  Listen:        http://localhost:8080" >&2
-echo "  CORS:          enabled (--cors)" >&2
-echo "" >&2
-echo "  Example URLs:" >&2
-echo "    http://localhost:8080/regions/yangon/current.json" >&2
-echo "    http://localhost:8080/overview/current.json" >&2
-echo "    http://localhost:8080/overview/regions/myanmar-overview-v1.pmtiles" >&2
-echo "" >&2
-echo "  Command: npx serve infrastructure/tiles/pmtiles -l 8080 --cors" >&2
-echo "" >&2
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "error: python3 not found. Install Python 3 in WSL, then retry." >&2
+  exit 1
+fi
 
-cd "$REPO_ROOT"
-exec npx --yes serve infrastructure/tiles/pmtiles -l 8080 --cors
+exec python3 "$SCRIPT_DIR/serve-local.py"

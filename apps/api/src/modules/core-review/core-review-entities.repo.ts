@@ -309,6 +309,10 @@ export class CoreReviewEntitiesRepository {
     }
 
     async getAdminAreaByPublicId(publicId: string, options: { anyStatus?: boolean } = {}) {
+        const trimmed = publicId.trim();
+        const idWhere = /^\d+$/.test(trimmed)
+            ? Prisma.sql`a.id = ${BigInt(trimmed)}`
+            : Prisma.sql`a.public_id = CAST(${trimmed} AS uuid)`;
         const rows = await this.prisma.$queryRaw<Record<string, unknown>[]>(Prisma.sql`
             SELECT
                 a.id::text AS id,
@@ -330,7 +334,7 @@ export class CoreReviewEntitiesRepository {
             FROM core.core_admin_areas AS a
             ${ADMIN_AREA_BOUNDARY_JOINS}
             ${ADMIN_AREA_NAME_JOINS}
-            WHERE a.public_id = CAST(${publicId} AS uuid)
+            WHERE ${idWhere}
             LIMIT 1
         `);
         return rows[0] ?? null;

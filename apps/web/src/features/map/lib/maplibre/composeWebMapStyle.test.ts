@@ -47,7 +47,7 @@ describe('composeWebMapStyle', () => {
   it('fades overview labels before regional detail dominates', () => {
     const style = composeWebMapStyle(BaseMapStyle as never, 'https://cdn.example/overview.pmtiles');
     const country = style.layers?.find((l) => l.id === 'overview-country-labels');
-    const admin1 = style.layers?.find((l) => l.id === 'overview-mmr-admin1-labels');
+    const admin1 = style.layers?.find((l) => l.id === 'overview-admin-state-region-labels');
     assert.equal(country?.maxzoom, 6.5);
     assert.equal(admin1?.maxzoom, 10);
   });

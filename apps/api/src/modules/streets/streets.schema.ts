@@ -107,7 +107,8 @@ export const nearestStreetPointQuerySchema = z.object({
 export type NearestStreetPointQuery = z.infer<typeof nearestStreetPointQuerySchema>;
 
 export const streetIdParamsSchema = z.object({
-    id: z.string().uuid(),
+    /** `public_id` (UUID) or internal `id` (digits) — Dev Map / PMTiles often expose core_id. */
+    id: z.union([z.string().uuid(), z.string().regex(/^\d+$/, "Must be a UUID or numeric street id")]),
 });
 
 const streetIdentifySchema = z.union([

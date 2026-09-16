@@ -1200,7 +1200,11 @@ export class StreetsRepository {
             LEFT JOIN ref.ref_road_classes AS rc
                 ON rc.id = s.road_class_id
             LEFT JOIN LATERAL (${streetNamesJsonSql()}) AS street_names ON true
-            WHERE s.public_id = CAST(${publicId} AS uuid)
+            WHERE ${
+                /^\d+$/.test(publicId.trim())
+                    ? Prisma.sql`s.id = ${BigInt(publicId.trim())}`
+                    : Prisma.sql`s.public_id = CAST(${publicId} AS uuid)`
+            }
               AND (${lifecycleClause})
             LIMIT 1
         `);

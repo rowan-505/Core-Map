@@ -45,7 +45,7 @@ class OfflineStyleTest {
               "sources": {
                 "local-basemap": {
                   "type": "vector",
-                  "url": "pmtiles://https://tiles.coremapmm.com/basemaps/yangon/v1/basemap.pmtiles"
+                  "url": "pmtiles://https://tiles.coremapmm.com/basemaps/yangon/v2/basemap.pmtiles"
                 }
               },
               "layers": [

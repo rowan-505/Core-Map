@@ -22,7 +22,14 @@ usage() {
   echo "  regional: infrastructure/tiles/pmtiles/regions/<region>/<region>-<version>.pmtiles" >&2
   echo "  overview: infrastructure/tiles/pmtiles/overview/regions/myanmar-overview-<version>.pmtiles" >&2
   echo "" >&2
-  echo "R2 object key: coremap-tiles-prod/basemaps/<region>/<version>/basemap.pmtiles" >&2
+  echo "R2 object keys:" >&2
+  echo "  regional: basemaps/<region>/<version>/basemap.pmtiles" >&2
+  echo "  overview: basemaps/overview/<version>/myanmar-overview-<version>.pmtiles" >&2
+  echo "" >&2
+  echo "overview helpers:" >&2
+  echo "  npm run tiles:upload:overview -- v2" >&2
+  echo "  npm run tiles:verify:r2:overview -- v2" >&2
+  echo "  CONFIRM=1 npm run tiles:switch:overview -- v2" >&2
 }
 
 if [[ $# -ne 2 ]]; then
@@ -59,17 +66,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PMTILES_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 UPLOAD_R2="${SCRIPT_DIR}/upload-r2.sh"
 BUCKET="coremap-tiles-prod"
-OBJECT_KEY="basemaps/${REGION}/${VERSION}/basemap.pmtiles"
 
 if [[ "$REGION" == "overview" ]]; then
   LOCAL_FILE="${PMTILES_ROOT}/overview/regions/myanmar-overview-${VERSION}.pmtiles"
+  OBJECT_KEY="basemaps/overview/${VERSION}/myanmar-overview-${VERSION}.pmtiles"
 else
   LOCAL_FILE="${PMTILES_ROOT}/regions/${REGION}/${REGION}-${VERSION}.pmtiles"
+  OBJECT_KEY="basemaps/${REGION}/${VERSION}/basemap.pmtiles"
 fi
 
 if [[ ! -f "$LOCAL_FILE" ]]; then
   echo "error: local PMTiles file not found: ${LOCAL_FILE}" >&2
-  echo "hint: build first, e.g. npm run tiles:rebuild -- ${REGION} ${VERSION}" >&2
+  if [[ "$REGION" == "overview" ]]; then
+    echo "hint: npm run tiles:rebuild:overview -- ${VERSION}" >&2
+  else
+    echo "hint: build first, e.g. npm run tiles:rebuild -- ${REGION} ${VERSION}" >&2
+  fi
   exit 1
 fi
 
@@ -77,6 +89,9 @@ echo "" >&2
 echo "[tiles:upload] region=${REGION} version=${VERSION}" >&2
 echo "[tiles:upload] local:  ${LOCAL_FILE}" >&2
 echo "[tiles:upload] remote: ${BUCKET}/${OBJECT_KEY}" >&2
+if [[ "$REGION" == "overview" ]]; then
+  echo "[tiles:upload] note: upload only — switch pointer separately after R2 verify" >&2
+fi
 echo "" >&2
 
 exec bash "${UPLOAD_R2}" "${LOCAL_FILE}" "${REGION}" "${VERSION}"

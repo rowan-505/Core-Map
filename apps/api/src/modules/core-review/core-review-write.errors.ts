@@ -25,3 +25,26 @@ export class CoreReviewLifecycleNotSupportedError extends Error {
         this.name = "CoreReviewLifecycleNotSupportedError";
     }
 }
+
+export class CoreReviewSuppressedError extends Error {
+    constructor(message = "Record is deleted or suppressed in Core") {
+        super(message);
+        this.name = "CoreReviewSuppressedError";
+    }
+}
+
+export type CoreReviewDemoteDependency = {
+    code: string;
+    count: number;
+    message: string;
+};
+
+export class CoreReviewDemoteBlockedError extends Error {
+    readonly dependencies: CoreReviewDemoteDependency[];
+
+    constructor(message: string, dependencies: CoreReviewDemoteDependency[]) {
+        super(message);
+        this.name = "CoreReviewDemoteBlockedError";
+        this.dependencies = dependencies;
+    }
+}

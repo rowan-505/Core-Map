@@ -1,0 +1,65 @@
+{
+  "region": "naypyitaw",
+  "version": "v2-size-audit",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/naypyitaw/naypyitaw-v2-size-audit.pmtiles",
+  "file_size_bytes": 19769540,
+  "created_at": "2026-09-06T15:10:26+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 19769540,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172918, lat: 9.526084) (long: 101.170080, lat: 28.547835)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 96.528625, lat: 20.053351)\ncenter zoom: 16\naddressed tiles count: 247645\ntile entries count: 53185\ntile contents count: 48550\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nantimeridian_adjusted_bounds 95.476685,19.139979,96.806030,20.468189\nattribution Local Map\ndescription /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-naypyitaw-v2-size-audit-59204.mbtiles\nformat pbf\ngenerator tile-join v2.49.0\nmaxzoom 16\nname /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-naypyitaw-v2-size-audit-59204.mbtiles + /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-naypyitaw-v2-size-audit-59204.mbtiles\ntilestats <object, use --metadata to view full JSON metadata>\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=14' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-naypyitaw-v2-size-audit-59204.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/admin_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-naypyitaw-v2-size-audit-59204.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-naypyitaw-v2-size-audit-59204.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/buildings.annotated.geojsonseq' '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/water_polygons.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/settlements.annotated.geojsonseq' '--named-layer=protected_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/protected_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --coalesce-smallest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=750000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-naypyitaw-v2-size-audit-59204.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-naypyitaw-v2-size-audit-59204/streets.annotated.geojsonseq; tile-join -f -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-naypyitaw-v2-size-audit-59204.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-naypyitaw-v2-size-audit-59204.mbtiles /home/nyiht\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 75471293,
+      "mtime_ns": 1788707273682013152
+    },
+    "streets.geojson": {
+      "size_bytes": 28378493,
+      "mtime_ns": 1788707280049349976
+    },
+    "road_labels.geojson": {
+      "size_bytes": 750988,
+      "mtime_ns": 1788707281133276830
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 1411898,
+      "mtime_ns": 1788707281537101644
+    },
+    "water_lines.geojson": {
+      "size_bytes": 2195349,
+      "mtime_ns": 1788707282010091725
+    },
+    "landuse.geojson": {
+      "size_bytes": 2673223,
+      "mtime_ns": 1788707283132982478
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 3080157,
+      "mtime_ns": 1788707283682897731
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 3080157,
+      "mtime_ns": 1788707284229754811
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 20788,
+      "mtime_ns": 1788707284599877453
+    },
+    "settlements.geojson": {
+      "size_bytes": 478433,
+      "mtime_ns": 1788707284913820486
+    },
+    "coastlines.geojson": {
+      "size_bytes": 161,
+      "mtime_ns": 1788707285199789505
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 181855,
+      "mtime_ns": 1788707285512312096
+    }
+  }
+}

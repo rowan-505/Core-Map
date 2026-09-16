@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""
-Validate overview PMTiles vector_layers match style/registry expectations.
-
-Fails if:
-  - any required source-layer is missing from the archive
-  - forbidden legacy layers are present (mmr_country_highlight, mmr_admin0, mmr_admin0_overview)
-"""
+"""Validate overview PMTiles vector_layers for Core country + Natural Earth hybrid."""
 from __future__ import annotations
 
 import json
@@ -22,16 +16,27 @@ REQUIRED_LAYERS = [
     "populated_places",
     "lakes",
     "rivers",
+    "myanmar_country",
+    "myanmar_state_region",
+    "myanmar_state_labels",
+]
+
+FORBIDDEN_LAYERS = [
+    "admin_country",
+    "admin_country_outline",
+    "admin_country_land_border",
+    "admin_state_region",
+    "admin_state_region_boundaries",
+    "admin_state_region_labels",
+    "myanmar_coastline",
+    "myanmar_major_islands",
+    "mmr_country_highlight",
+    "mmr_admin0",
+    "mmr_admin0_overview",
     "mmr_admin0_z0_2",
     "mmr_admin0_z3_4",
     "mmr_admin0_z5_6",
     "mmr_admin1",
-]
-
-FORBIDDEN_LAYERS = [
-    "mmr_country_highlight",
-    "mmr_admin0",
-    "mmr_admin0_overview",
 ]
 
 
@@ -73,7 +78,7 @@ def main() -> None:
         raise SystemExit(1)
 
     print(f"✅ PMTiles metadata OK ({len(present)} layers)")
-    print("   includes mmr_admin0_z0_2/z3_4/z5_6; no legacy admin0 layers")
+    print("   myanmar_country + myanmar_state_region + myanmar_state_labels; no MIMU")
 
 
 if __name__ == "__main__":

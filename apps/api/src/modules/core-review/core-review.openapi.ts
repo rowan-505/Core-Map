@@ -183,6 +183,99 @@ const coreReviewWriteDetailResponse = {
     500: messageSchema,
 };
 
+export const postCoreReviewLandAreaPromoteSchema = {
+    tags: ["core-review"],
+    summary: "Promote a local OSM land area into Core",
+    body: {
+        type: "object",
+        required: ["feature_key", "local_source", "geometry", "class_code"],
+        additionalProperties: false,
+        properties: {
+            feature_key: { type: "string" },
+            local_source: { type: "string", enum: ["archive", "base"] },
+            class_code: { type: "string" },
+            name: { type: ["string", "null"] },
+            name_mm: { type: ["string", "null"] },
+            name_en: { type: ["string", "null"] },
+            geometry: { type: "object", additionalProperties: true },
+        },
+    },
+    response: {
+        200: { type: "object", additionalProperties: true },
+        201: { type: "object", additionalProperties: true },
+        400: badRequestSchema,
+        403: messageSchema,
+        409: messageSchema,
+        500: messageSchema,
+    },
+} as const;
+
+export const postCoreReviewLandAreaDemoteSchema = {
+    tags: ["core-review"],
+    summary: "Preflight or hard-remove a Core OSM land area for local demotion",
+    description:
+        "Does not soft-delete. Removal is a hard delete used only after local Archive is written.",
+    body: {
+        type: "object",
+        required: ["feature_key"],
+        additionalProperties: false,
+        properties: {
+            feature_key: { type: "string" },
+        },
+    },
+    response: {
+        200: { type: "object", additionalProperties: true },
+        400: badRequestSchema,
+        403: messageSchema,
+        404: notFoundSchema,
+        409: { type: "object", additionalProperties: true },
+        500: messageSchema,
+    },
+} as const;
+
+export const postCoreReviewLandAreaDeleteSchema = {
+    tags: ["core-review"],
+    summary: "DELETE a land area from public rendering (identity suppression)",
+    description:
+        "Writes a tiny render-suppression row and removes Core when safe. Requires confirm=DELETE.",
+    body: {
+        type: "object",
+        required: ["feature_key", "confirm"],
+        additionalProperties: false,
+        properties: {
+            feature_key: { type: "string" },
+            confirm: { type: "string", enum: ["DELETE"] },
+        },
+    },
+    response: {
+        200: { type: "object", additionalProperties: true },
+        400: badRequestSchema,
+        403: messageSchema,
+        409: { type: "object", additionalProperties: true },
+        500: messageSchema,
+    },
+} as const;
+
+export const postCoreReviewLandAreaClearSuppressionSchema = {
+    tags: ["core-review"],
+    summary: "Clear a land-area render suppression so promote can run again",
+    body: {
+        type: "object",
+        required: ["feature_key", "confirm"],
+        additionalProperties: false,
+        properties: {
+            feature_key: { type: "string" },
+            confirm: { type: "string", enum: ["CLEAR_SUPPRESSION"] },
+        },
+    },
+    response: {
+        200: { type: "object", additionalProperties: true },
+        400: badRequestSchema,
+        403: messageSchema,
+        500: messageSchema,
+    },
+} as const;
+
 export const postCoreReviewEntitySchema = {
     tags: ["core-review"],
     summary: "Create core schema entity",

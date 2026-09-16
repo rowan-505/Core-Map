@@ -14,6 +14,8 @@ import {
 } from "@/src/lib/dashboardNavigation";
 import { accountPath } from "@/src/lib/dashboardPaths";
 import { useDashboardRoleAccess } from "@/src/hooks/useDashboardRoleAccess";
+import { isLocalBasemapAdminUiEnabled } from "@/src/features/local-basemap/isLocalBasemapAdminUiEnabled";
+import { isDevMapUiEnabled } from "@/src/features/dev-map/isDevMapUiEnabled";
 
 function NavItem({
     item,
@@ -47,9 +49,14 @@ export default function DashboardSidebar() {
     const access = useDashboardRoleAccess();
     const moduleItems = !access.ready
         ? []
-        : access.isViewer
-          ? dashboardSidebarItems.filter((item) => viewerDashboardModules.has(item.moduleKey))
-          : dashboardSidebarItems;
+        : (access.isViewer
+              ? dashboardSidebarItems.filter((item) => viewerDashboardModules.has(item.moduleKey))
+              : dashboardSidebarItems
+          ).filter(
+              (item) =>
+                  (item.moduleKey !== "local-basemap" || isLocalBasemapAdminUiEnabled()) &&
+                  (item.moduleKey !== "dev-map" || isDevMapUiEnabled())
+          );
 
     return (
         <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col border-r border-gray-200 bg-white">

@@ -14,6 +14,7 @@ Product README is at the [repo root](../README.md). Short guides start here.
 | API | [api.md](api.md) |
 | Public map | [web-map.md](web-map.md) |
 | Admin UI | [dashboard.md](dashboard.md) |
+| Dev Map (internal inspector) | [dashboard-dev-map.md](dashboard-dev-map.md) |
 | Tiles | [tiles.md](tiles.md) |
 | OSM / import | [data-pipeline.md](data-pipeline.md) |
 | Search / address / routing | [search-routing.md](search-routing.md) |

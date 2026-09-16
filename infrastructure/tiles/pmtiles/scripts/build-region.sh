@@ -18,7 +18,7 @@
 #   npm run tiles:build -- yangon v2 --roads-only
 #
 # Optional env:
-#   PMTILES_MIN_ZOOM=8   PMTILES_MAX_ZOOM=20   PMTILES_DEBUG=1   BASE_URL=...
+#   PMTILES_MIN_ZOOM=8   PMTILES_MAX_ZOOM=16   PMTILES_DEBUG=1   BASE_URL=...
 #
 # Prerequisites: tippecanoe, tile-join, pmtiles, python3, ogr2ogr
 set -euo pipefail
@@ -69,6 +69,7 @@ OUT_PMTILES="${OUT_DIR}/${REGION}-${VERSION}.pmtiles"
 PREP_DIR="${PMTILES_ROOT}/.tmp-prep-${REGION}-${VERSION}-$$"
 MBTILES_ADMIN="${PMTILES_ROOT}/.tmp-build-admin-${REGION}-${VERSION}-$$.mbtiles"
 MBTILES_LIGHT="${PMTILES_ROOT}/.tmp-build-light-${REGION}-${VERSION}-$$.mbtiles"
+MBTILES_WATER="${PMTILES_ROOT}/.tmp-build-water-${REGION}-${VERSION}-$$.mbtiles"
 MBTILES_LABELS="${PMTILES_ROOT}/.tmp-build-labels-${REGION}-${VERSION}-$$.mbtiles"
 MBTILES_STREETS="${PMTILES_ROOT}/.tmp-build-streets-${REGION}-${VERSION}-$$.mbtiles"
 MBTILES="${PMTILES_ROOT}/.tmp-build-${REGION}-${VERSION}-$$.mbtiles"
@@ -78,12 +79,15 @@ PREPARE_PY="${SCRIPT_DIR}/prepare-tippecanoe-input.py"
 VALIDATE_GEOJSON_PY="${SCRIPT_DIR}/validate-geojson.py"
 VERIFY_BUILD_PY="${SCRIPT_DIR}/verify-pmtiles-build.py"
 BUILD_MANIFEST="${OUT_DIR}/${REGION}-${VERSION}.build-manifest.json"
-PMTILES_ADMIN_MAX_ZOOM=14
+# Admin pass must match archive native maxzoom so admin geometry remains in z15–z16 tiles.
+PMTILES_ADMIN_MAX_ZOOM="${PMTILES_ADMIN_MAX_ZOOM:-16}"
 BUILD_STARTED_AT="$(date +%s)"
 BUILD_SUCCESS=false
 PMTILES_DEBUG="${PMTILES_DEBUG:-0}"
 PMTILES_MIN_ZOOM="${PMTILES_MIN_ZOOM:-8}"
-PMTILES_MAX_ZOOM="${PMTILES_MAX_ZOOM:-20}"
+# Native archive ceiling (per-layer tippecanoe maxzoom hints live in prepare-tippecanoe-input.py).
+# MapLibre camera can still go to z20 via overzoom (recommendedMapMaxZoom).
+PMTILES_MAX_ZOOM="${PMTILES_MAX_ZOOM:-16}"
 PMTILES_CURRENT_STAGE="starting"
 PMTILES_LAST_CMD=""
 
@@ -188,7 +192,7 @@ cleanup() {
     log "failure log preserved at: ${BUILD_LOG}"
   fi
   rm -rf "$PREP_DIR"
-  rm -f "$MBTILES_ADMIN" "$MBTILES_LIGHT" "$MBTILES_LABELS" "$MBTILES_STREETS" "$MBTILES" "$PMTILES_NEW" "$CURRENT_NEW"
+  rm -f "$MBTILES_ADMIN" "$MBTILES_LIGHT" "$MBTILES_WATER" "$MBTILES_LABELS" "$MBTILES_STREETS" "$MBTILES" "$PMTILES_NEW" "$CURRENT_NEW"
   close_log_fds
 }
 
@@ -238,8 +242,10 @@ if layer == "streets" and stats.get("road_class_histogram"):
 PY
 }
 
-if [[ -n "${DATABASE_URL:-}" ]]; then
-  local_map_log_database_url_host
+if [[ -n "${LOCAL_TILE_DATABASE_URL:-}" ]]; then
+  local_map_log_local_tile_database_url_host || true
+elif [[ -n "${DATABASE_URL:-}" ]]; then
+  local_map_log_database_url_host || true
 fi
 
 echo "" >&2
@@ -272,19 +278,19 @@ done
 
 ALL_LAYERS=(
   buildings streets road_labels water_polygons water_lines
-  landuse admin_boundaries admin_areas admin_area_label_points village_labels
+  landuse admin_boundaries admin_areas admin_area_label_points settlements
+  coastlines protected_areas
 )
 
 INVENTORY_LAYERS=(
   streets road_labels admin_areas admin_boundaries admin_area_label_points
-  buildings landuse water_lines water_polygons
+  buildings landuse water_lines water_polygons settlements coastlines protected_areas
 )
 
 LIGHT_LAYER_BASES=(
   buildings water_polygons water_lines landuse admin_boundaries admin_areas
-  admin_area_label_points village_labels
+  admin_area_label_points settlements coastlines protected_areas
 )
-
 LAYERS=()
 if [[ "$ROADS_ONLY" == "1" ]]; then
   LAYERS=(streets road_labels)
@@ -337,7 +343,7 @@ trap cleanup EXIT
 
 rm -rf "$PREP_DIR"
 mkdir -p "$PREP_DIR"
-rm -f "$MBTILES_LIGHT" "$MBTILES_LABELS" "$MBTILES_STREETS" "$MBTILES" "$PMTILES_NEW" "$CURRENT_NEW"
+rm -f "$MBTILES_LIGHT" "$MBTILES_WATER" "$MBTILES_LABELS" "$MBTILES_STREETS" "$MBTILES" "$PMTILES_NEW" "$CURRENT_NEW"
 
 build_stage "$PCT_PREPARE" "preparing GeoJSONSeq + zoom hints"
 pmtiles_ticker_start "$PCT_PREPARE" "$PCT_LIGHT" "preparing GeoJSONSeq + zoom hints"
@@ -404,28 +410,61 @@ common_flags=(
 
 ADMIN_LIGHT=()
 NON_ADMIN_LIGHT=()
+WATER_LIGHT=()
 for base in "${LIGHT_LAYERS[@]}"; do
   case "$base" in
     admin_areas|admin_boundaries) ADMIN_LIGHT+=("$base") ;;
+    # Water polygons get a dedicated tippecanoe pass. Bundling them with
+    # buildings/landuse under --drop-densest-as-needed drops large rivers/lakes
+    # (straight truncated edges / missing water at z8–z12). Do not change streets.
+    water_polygons) WATER_LIGHT+=("$base") ;;
     *) NON_ADMIN_LIGHT+=("$base") ;;
   esac
 done
 
 HAS_ADMIN_LIGHT=0
 HAS_NON_ADMIN_LIGHT=0
+HAS_WATER_LIGHT=0
 HAS_LIGHT=0
 [[ ${#ADMIN_LIGHT[@]} -gt 0 ]] && HAS_ADMIN_LIGHT=1
 [[ ${#NON_ADMIN_LIGHT[@]} -gt 0 ]] && HAS_NON_ADMIN_LIGHT=1
-[[ "$HAS_ADMIN_LIGHT" == "1" || "$HAS_NON_ADMIN_LIGHT" == "1" ]] && HAS_LIGHT=1
+[[ ${#WATER_LIGHT[@]} -gt 0 ]] && HAS_WATER_LIGHT=1
+[[ "$HAS_ADMIN_LIGHT" == "1" || "$HAS_NON_ADMIN_LIGHT" == "1" || "$HAS_WATER_LIGHT" == "1" ]] && HAS_LIGHT=1
 
 LIGHT_TICKER_END="$PCT_STREETS"
 [[ "$LIGHT_ONLY" == "1" ]] && LIGHT_TICKER_END="$PCT_FINALIZE"
-ADMIN_TICKER_END="$LIGHT_TICKER_END"
-if [[ "$HAS_ADMIN_LIGHT" == "1" && "$HAS_NON_ADMIN_LIGHT" == "1" ]]; then
-  ADMIN_TICKER_END="$(awk -v a="$PCT_LIGHT" -v b="$LIGHT_TICKER_END" 'BEGIN { printf "%.2f", (a + b) / 2 }')"
+# Split the light ticker window across admin → other light → water (when present).
+LIGHT_SEGMENT_COUNT=0
+[[ "$HAS_ADMIN_LIGHT" == "1" ]] && LIGHT_SEGMENT_COUNT=$((LIGHT_SEGMENT_COUNT + 1))
+[[ "$HAS_NON_ADMIN_LIGHT" == "1" ]] && LIGHT_SEGMENT_COUNT=$((LIGHT_SEGMENT_COUNT + 1))
+[[ "$HAS_WATER_LIGHT" == "1" ]] && LIGHT_SEGMENT_COUNT=$((LIGHT_SEGMENT_COUNT + 1))
+[[ "$LIGHT_SEGMENT_COUNT" -lt 1 ]] && LIGHT_SEGMENT_COUNT=1
+LIGHT_SEGMENT_SPAN="$(awk -v a="$PCT_LIGHT" -v b="$LIGHT_TICKER_END" -v n="$LIGHT_SEGMENT_COUNT" \
+  'BEGIN { printf "%.6f", (b - a) / n }')"
+segment_end() {
+  local idx="$1"
+  awk -v a="$PCT_LIGHT" -v span="$LIGHT_SEGMENT_SPAN" -v i="$idx" -v end="$LIGHT_TICKER_END" \
+    'BEGIN {
+      v = a + span * i
+      if (v > end) v = end
+      printf "%.2f", v
+    }'
+}
+SEGMENT_I=0
+ADMIN_TICKER_START="$PCT_LIGHT"
+ADMIN_TICKER_END="$PCT_LIGHT"
+if [[ "$HAS_ADMIN_LIGHT" == "1" ]]; then
+  SEGMENT_I=$((SEGMENT_I + 1))
+  ADMIN_TICKER_END="$(segment_end "$SEGMENT_I")"
 fi
-NON_ADMIN_LIGHT_START="$PCT_LIGHT"
-[[ "$HAS_ADMIN_LIGHT" == "1" ]] && NON_ADMIN_LIGHT_START="$ADMIN_TICKER_END"
+NON_ADMIN_LIGHT_START="$ADMIN_TICKER_END"
+NON_ADMIN_LIGHT_END="$ADMIN_TICKER_END"
+if [[ "$HAS_NON_ADMIN_LIGHT" == "1" ]]; then
+  SEGMENT_I=$((SEGMENT_I + 1))
+  NON_ADMIN_LIGHT_END="$(segment_end "$SEGMENT_I")"
+fi
+WATER_TICKER_START="$NON_ADMIN_LIGHT_END"
+WATER_TICKER_END="$LIGHT_TICKER_END"
 
 admin_common_flags=(
   tippecanoe --force -pC
@@ -436,38 +475,69 @@ admin_common_flags=(
 )
 
 if [[ "$HAS_ADMIN_LIGHT" == "1" ]]; then
-  build_stage "$PCT_LIGHT" "building admin layers (admin_areas/admin_boundaries, max z${PMTILES_ADMIN_MAX_ZOOM})"
+  build_stage "$ADMIN_TICKER_START" "building admin layers (admin_areas/admin_boundaries, max z${PMTILES_ADMIN_MAX_ZOOM})"
   admin_named=()
   for base in "${ADMIN_LIGHT[@]}"; do
     admin_named+=(--named-layer="${base}:${PREP_DIR}/${base}.annotated.geojsonseq")
   done
   admin_cmd=("${admin_common_flags[@]}" -o "$MBTILES_ADMIN" "${admin_named[@]}")
-  run_tippecanoe_tickered "$PCT_LIGHT" "$ADMIN_TICKER_END" "building admin layers (z14)" "${admin_cmd[@]}"
+  run_tippecanoe_tickered "$ADMIN_TICKER_START" "$ADMIN_TICKER_END" "building admin layers (z${PMTILES_ADMIN_MAX_ZOOM})" "${admin_cmd[@]}"
 fi
 
 if [[ "$HAS_NON_ADMIN_LIGHT" == "1" ]]; then
-  build_stage "$NON_ADMIN_LIGHT_START" "building light layers (water/landuse/buildings/labels)"
+  build_stage "$NON_ADMIN_LIGHT_START" "building light layers (landuse/buildings/labels; water separate)"
   light_named=()
   for base in "${NON_ADMIN_LIGHT[@]}"; do
     light_named+=(--named-layer="${base}:${PREP_DIR}/${base}.annotated.geojsonseq")
   done
   light_cmd=("${common_flags[@]}" -o "$MBTILES_LIGHT" "${light_named[@]}")
-  run_tippecanoe_tickered "$NON_ADMIN_LIGHT_START" "$LIGHT_TICKER_END" "building light layers" "${light_cmd[@]}"
+  run_tippecanoe_tickered "$NON_ADMIN_LIGHT_START" "$NON_ADMIN_LIGHT_END" "building light layers" "${light_cmd[@]}"
+fi
+
+if [[ "$HAS_WATER_LIGHT" == "1" ]]; then
+  # Prefer coalesce over drop so large rivers/lakes stay complete under tile-size pressure.
+  # Keep low-zoom simplification; do not use --drop-densest-as-needed for water polygons.
+  build_stage "$WATER_TICKER_START" "building water polygons (dedicated pass)"
+  PMTILES_WATER_MAX_TILE_BYTES="${PMTILES_WATER_MAX_TILE_BYTES:-2000000}"
+  water_named=()
+  for base in "${WATER_LIGHT[@]}"; do
+    water_named+=(--named-layer="${base}:${PREP_DIR}/${base}.annotated.geojsonseq")
+  done
+  water_cmd=(
+    tippecanoe --force -pC
+    "--minimum-zoom=${PMTILES_MIN_ZOOM}"
+    "--maximum-zoom=${PMTILES_MAX_ZOOM}"
+    --coalesce-densest-as-needed
+    --simplify-only-low-zooms
+    --simplification=10
+    --no-feature-limit
+    "--maximum-tile-bytes=${PMTILES_WATER_MAX_TILE_BYTES}"
+    --attribution="Local Map"
+    -o "$MBTILES_WATER"
+    "${water_named[@]}"
+  )
+  run_tippecanoe_tickered "$WATER_TICKER_START" "$WATER_TICKER_END" "building water polygons" "${water_cmd[@]}"
 fi
 
 if [[ "$HAS_STREETS" == "1" ]]; then
   build_stage "$PCT_STREETS" "building roads (streets dense pass)"
-  # Per-feature minzoom hints reduce low/mid zoom density; coalesce instead of drop at high zoom.
+  # Streets density policy (keep z8–z16 + DB/class minzoom hierarchy):
+  # - Prefer coalesce over drop so major roads stay continuous under tile-size pressure.
+  # - Do NOT use --coalesce-smallest-as-needed: it merges small line segments into
+  #   neighbors and was associated with catastrophic sparsification (dropped_by_rate)
+  #   on tippecanoe 2.49 size-audit builds.
+  # - Cap tile bytes (default 2MB) instead of unlimited --no-tile-size-limit.
+  # - Keep --no-feature-limit; hierarchy comes from prepare-tippecanoe-input.py minzoom.
+  PMTILES_STREETS_MAX_TILE_BYTES="${PMTILES_STREETS_MAX_TILE_BYTES:-2000000}"
   streets_cmd=(
     tippecanoe --force -pC
     "--minimum-zoom=${PMTILES_MIN_ZOOM}"
     "--maximum-zoom=${PMTILES_MAX_ZOOM}"
     --coalesce-densest-as-needed
-    --coalesce-smallest-as-needed
     --simplify-only-low-zooms
     --simplification=10
     --no-feature-limit
-    --maximum-tile-bytes=750000
+    "--maximum-tile-bytes=${PMTILES_STREETS_MAX_TILE_BYTES}"
     --read-parallel
     --reorder
     --attribution="Local Map"
@@ -491,6 +561,7 @@ fi
 join_inputs=()
 [[ "$HAS_ADMIN_LIGHT" == "1" && -f "$MBTILES_ADMIN" ]] && join_inputs+=("$MBTILES_ADMIN")
 [[ "$HAS_NON_ADMIN_LIGHT" == "1" && -f "$MBTILES_LIGHT" ]] && join_inputs+=("$MBTILES_LIGHT")
+[[ "$HAS_WATER_LIGHT" == "1" && -f "$MBTILES_WATER" ]] && join_inputs+=("$MBTILES_WATER")
 [[ "$HAS_STREETS" == "1" && -f "$MBTILES_STREETS" ]] && join_inputs+=("$MBTILES_STREETS")
 [[ "$HAS_LABELS" == "1" && -f "$MBTILES_LABELS" ]] && join_inputs+=("$MBTILES_LABELS")
 
@@ -546,7 +617,7 @@ run_logged "verify PMTiles output" python3 "$VERIFY_BUILD_PY" \
 
 trap - EXIT
 rm -rf "$PREP_DIR"
-rm -f "$MBTILES_ADMIN" "$MBTILES_LIGHT" "$MBTILES_LABELS" "$MBTILES_STREETS" "$MBTILES"
+rm -f "$MBTILES_ADMIN" "$MBTILES_LIGHT" "$MBTILES_WATER" "$MBTILES_LABELS" "$MBTILES_STREETS" "$MBTILES"
 BUILD_SUCCESS=true
 
 build_stage "$PCT_DONE" "done"

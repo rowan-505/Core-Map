@@ -1,0 +1,65 @@
+{
+  "region": "yangon",
+  "version": "v2-accept",
+  "output_path": "/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/regions/yangon/yangon-v2-accept.pmtiles",
+  "file_size_bytes": 77711260,
+  "created_at": "2026-09-06T18:05:27+00:00",
+  "verification": {
+    "ok": true,
+    "file_exists": true,
+    "min_size_ok": true,
+    "file_size_bytes": 77711260,
+    "pmtiles_show_ok": true,
+    "pmtiles_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: 92.172890, lat: 9.525930) (long: 101.170092, lat: 28.547886)\nmin zoom: 8\nmax zoom: 16\ncenter: (long: 96.072693, lat: 16.970114)\ncenter zoom: 16\naddressed tiles count: 253378\ntile entries count: 63699\ntile contents count: 58565\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nversion 2\nattribution Local Map\ndescription /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-yangon-v2-accept-139752.mbtiles\nformat pbf\nname /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-yangon-v2-accept-139752.mbtiles + /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-yangon-v2-accept-139752.mbtiles\nstrategies [{},{},{},{},{},{},{},{},{\"tiny_polygons\":4480},{\"tiny_polygons\":2051},{\"tiny_polygons\":805},{\"tiny_polygons\":63},{\"tiny_polygons\":23},{\"tiny_polygons\":21},{\"dropped_as_needed\":48180,\"tiny_polygons\":333,\"tile_size_desired\":707470},{\"tiny_polygons\":321},{\"tiny_polygons\":184}]\ntilestats <object, use --metadata to view full JSON metadata>\ntype overlay\nantimeridian_adjusted_bounds 92.172890,9.525930,101.170092,28.547886\ngenerator tile-join v2.79.0\ngenerator_options tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=14' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-admin-yangon-v2-accept-139752.mbtiles '--named-layer=admin_boundaries:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/admin_boundaries.annotated.geojsonseq' '--named-layer=admin_areas:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/admin_areas.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-water-yangon-v2-accept-139752.mbtiles '--named-layer=water_polygons:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/water_polygons.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-labels-yangon-v2-accept-139752.mbtiles '--named-layer=road_labels:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/road_labels.annotated.geojsonseq'; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --coalesce-densest-as-needed --simplify-only-low-zooms '--simplification=10' --no-feature-limit '--maximum-tile-bytes=2000000' --read-parallel --reorder '--attribution=Local Map' -l streets -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-streets-yangon-v2-accept-139752.mbtiles /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/streets.annotated.geojsonseq; tippecanoe --force -pC '--minimum-zoom=8' '--maximum-zoom=16' --drop-densest-as-needed '--attribution=Local Map' -o /home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-build-light-yangon-v2-accept-139752.mbtiles '--named-layer=buildings:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/buildings.annotated.geojsonseq' '--named-layer=water_lines:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/water_lines.annotated.geojsonseq' '--named-layer=landuse:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/landuse.annotated.geojsonseq' '--named-layer=admin_area_label_points:/home/nyihtet/code/core-map/infrastructure/tiles/pmtiles/.tmp-prep-yangon-v2-accept-139752/admin_area_label_points.annotated.geojsonseq' '--named-layer=settlements:/home/nyihtet/code/core-map/infrastructure/tile\n...(truncated)"
+  },
+  "inputs": {
+    "buildings.geojson": {
+      "size_bytes": 97191662,
+      "mtime_ns": 1788717696450055877
+    },
+    "streets.geojson": {
+      "size_bytes": 51313561,
+      "mtime_ns": 1788717706331864891
+    },
+    "road_labels.geojson": {
+      "size_bytes": 5780474,
+      "mtime_ns": 1788717710677272147
+    },
+    "water_polygons.geojson": {
+      "size_bytes": 3199364,
+      "mtime_ns": 1788717711407569445
+    },
+    "water_lines.geojson": {
+      "size_bytes": 2115158,
+      "mtime_ns": 1788717712054920602
+    },
+    "landuse.geojson": {
+      "size_bytes": 5086856,
+      "mtime_ns": 1788717713465158322
+    },
+    "admin_boundaries.geojson": {
+      "size_bytes": 4045982,
+      "mtime_ns": 1788717714236422937
+    },
+    "admin_areas.geojson": {
+      "size_bytes": 4045982,
+      "mtime_ns": 1788717714947469295
+    },
+    "admin_area_label_points.geojson": {
+      "size_bytes": 345053,
+      "mtime_ns": 1788717715427171973
+    },
+    "settlements.geojson": {
+      "size_bytes": 1601512,
+      "mtime_ns": 1788717715877211920
+    },
+    "coastlines.geojson": {
+      "size_bytes": 4416375,
+      "mtime_ns": 1788717716614195724
+    },
+    "protected_areas.geojson": {
+      "size_bytes": 179932,
+      "mtime_ns": 1788717717162596694
+    }
+  }
+}

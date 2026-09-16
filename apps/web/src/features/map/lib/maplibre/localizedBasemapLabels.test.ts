@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   OVERVIEW_COUNTRY_LABEL_TEXT_FIELD,
-  OVERVIEW_MMR_ADMIN1_LABEL_TEXT_FIELD,
+  OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_FIELD,
   OVERVIEW_POPULATED_PLACES_TEXT_FIELD,
   getOverviewLabelTextField,
   isOverviewLabelLayerId,
@@ -16,7 +16,7 @@ function expressionUsesGet(expr: unknown, field: string): boolean {
 describe('overview label text-field map (used by localizedBasemapLabels)', () => {
   it('registers all overview label layer ids', () => {
     assert.ok(isOverviewLabelLayerId('overview-country-labels'));
-    assert.ok(isOverviewLabelLayerId('overview-mmr-admin1-labels'));
+    assert.ok(isOverviewLabelLayerId('overview-admin-state-region-labels'));
     assert.ok(isOverviewLabelLayerId('overview-populated-places'));
     assert.equal(isOverviewLabelLayerId('overview-ocean'), false);
     assert.equal(isOverviewLabelLayerId('road-labels'), false);
@@ -38,11 +38,13 @@ describe('overview label text-field map (used by localizedBasemapLabels)', () =>
     assert.ok(expressionUsesGet(expr, 'NAMEASCII'));
   });
 
-  it('mmr_admin1 labels use ST/ST_MMR/SR fields', () => {
-    const expr = getOverviewLabelTextField('overview-mmr-admin1-labels');
-    assert.deepEqual(expr, OVERVIEW_MMR_ADMIN1_LABEL_TEXT_FIELD);
-    assert.ok(expressionUsesGet(expr, 'ST'));
-    assert.ok(expressionUsesGet(expr, 'ST_MMR'));
-    assert.ok(expressionUsesGet(expr, 'SR'));
+  it('admin_state_region labels prefer overview short aliases / core_id map', () => {
+    const expr = getOverviewLabelTextField('overview-admin-state-region-labels');
+    assert.deepEqual(expr, OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_FIELD);
+    assert.ok(expressionUsesGet(expr, 'label_name_mm'));
+    assert.ok(expressionUsesGet(expr, 'core_id'));
+    assert.ok(expressionUsesGet(expr, 'name_mm'));
+    assert.ok(!expressionUsesGet(expr, 'ST'));
+    assert.ok(!expressionUsesGet(expr, 'ST_MMR'));
   });
 });

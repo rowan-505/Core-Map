@@ -4,18 +4,20 @@
  *
  * Zoom bands (MapLibre zoom levels):
  * - z4.3–z6.9: overview only — regional vector layers stay off (minzoom gates).
- * - z7+: regional OSM water/admin takes over; overview admin0 + neighbor lines hidden; admin1 internal lines z7–z10.
+ * - z7+: regional OSM water/admin takes over; overview neighbor lines hidden; Myanmar country fill/outline persist via overzoom.
  * - z10+: overview labels off; regional roads, labels, and buildings dominate.
  *
- * Myanmar admin0 purple outline uses land-aligned zoom tiers `mmr_admin0_z0_2` / `z3_4` / `z5_6`.
+ * Myanmar national fill/outline use Core `myanmar_country`. While the country
+ * geom is imprecise, style maxzoom temporarily hides fill by ~z9 and outline by
+ * ~z10 (smooth opacity fade). Do not apply the neighbor handoff maxzoom (z7).
  * Regional country/state admin from OSM/core `admin_boundaries` at z7+.
  *
  * Tile URLs are unchanged; only layer minzoom/maxzoom/opacity are adjusted at compose time.
  */
 import type { ExpressionSpecification, LayerSpecification } from 'maplibre-gl';
 import {
-  OVERVIEW_MMR_ADMIN1_BOUNDARY_MAX_ZOOM,
-  OVERVIEW_MMR_INTERNAL_ADMIN_BOUNDARY_LAYER_ID,
+  OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_MAX_ZOOM,
+  OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_LAYER_ID,
   REGIONAL_ADMIN_PRIMARY_BOUNDARY_COLOR,
   REGIONAL_ADMIN_PRIMARY_BOUNDARY_OPACITY,
   REGIONAL_ADMIN_PRIMARY_BOUNDARY_WIDTH,
@@ -41,12 +43,12 @@ export const OVERVIEW_ONLY_MAX_ZOOM = 6.9;
 export const REGIONAL_BASE_APPEAR_ZOOM = 7;
 
 /**
- * MapLibre layer maxzoom floor for basemap geometry — must stay at or above public z20.
+ * MapLibre layer maxzoom floor for basemap geometry — must stay at or above public z20 (overzoom).
  * @deprecated Prefer {@link REGIONAL_LAYER_OVERZOOM_MIN_MAX_ZOOM}.
  */
 export const REGIONAL_OVERZOOM_MAX_ZOOM = REGIONAL_LAYER_OVERZOOM_MIN_MAX_ZOOM;
 
-/** Vector source maxzoom (native regional tiles z20). */
+/** Vector source maxzoom — native regional tiles z16 (camera may overzoom to z20). */
 export const REGIONAL_VECTOR_SOURCE_MAX_ZOOM = REGIONAL_VECTOR_SOURCE_OVERZOOM_MAX_ZOOM;
 
 /** Regional source-layers that must stay visible through public max zoom. */
@@ -79,24 +81,26 @@ export const OVERVIEW_TILE_MAX_ZOOM = 8;
 /** Overview admin0 outer border + neighbor lines hidden at z7+ for regional handoff. */
 export const OVERVIEW_BOUNDARY_MAX_ZOOM = 7;
 
-/** Neighbor/coastline only — internal admin1 has a separate lifecycle. */
+/** Neighbor/coastline only — internal state/region has a separate lifecycle. */
 const OVERVIEW_BOUNDARY_LAYER_IDS = new Set([
   'neighbor-country-boundary-line',
   'overview-coastline',
 ]);
 
-/** Admin0 zoom-tier casing/line layers — min/max zoom set in style; do not patch. */
-const OVERVIEW_ADMIN0_BOUNDARY_LAYER_IDS = new Set([
-  'myanmar-admin0-boundary-casing-z02',
-  'myanmar-admin0-boundary-line-z02',
-  'myanmar-admin0-boundary-casing-z34',
-  'myanmar-admin0-boundary-line-z34',
-  'myanmar-admin0-boundary-casing-z56',
-  'myanmar-admin0-boundary-line-z56',
+/**
+ * Myanmar country fill + outline — keep style maxzoom (temporary z9/z10 hide).
+ * Do not force the neighbor handoff maxzoom (z7) onto these layers.
+ */
+const OVERVIEW_PERSISTENT_COUNTRY_LAYER_IDS = new Set([
+  'myanmar-country-fill',
+  'myanmar-country-outline',
 ]);
 
-/** Overview admin1 fill — hide with boundaries so regional admin is not doubled. */
-const OVERVIEW_ADMIN_FILL_LAYER_IDS = new Set(['overview-mmr-admin1-fill', 'overview-countries-fill']);
+/** @deprecated legacy ids — keep ignored by patch if present */
+const OVERVIEW_ADMIN_COUNTRY_BOUNDARY_LAYER_IDS = OVERVIEW_PERSISTENT_COUNTRY_LAYER_IDS;
+
+/** Neighbor country fills may fade at regional handoff; never Myanmar country fill. */
+const OVERVIEW_ADMIN_FILL_LAYER_IDS = new Set(['overview-countries-fill']);
 
 /**
  * Regional layer ids from `base-map.json` — raise minzoom so nothing draws below z7.
@@ -111,7 +115,7 @@ const REGIONAL_LAYER_MIN_ZOOM_FLOOR: Readonly<Record<string, number>> = {
 
 const OVERVIEW_LABEL_LAYER_IDS = new Set([
   'overview-country-labels',
-  'overview-mmr-admin1-labels',
+  'overview-admin-state-region-labels',
   'overview-populated-places',
 ]);
 
@@ -130,7 +134,7 @@ const OVERVIEW_PLACES_LABEL_OPACITY: ExpressionSpecification = [
   0,
 ];
 
-/** Neighbor country labels — fade out before admin1 labels dominate (z6+). */
+/** Neighbor country labels — fade out before state/region labels dominate (z6+). */
 const OVERVIEW_COUNTRY_LABEL_OPACITY: ExpressionSpecification = [
   'interpolate',
   ['linear'],
@@ -147,21 +151,19 @@ const OVERVIEW_COUNTRY_LABEL_OPACITY: ExpressionSpecification = [
   0,
 ];
 
-/** Myanmar admin1 labels — z4+ reference opacity; fade by z10 for regional handoff. */
-const OVERVIEW_MMR_ADMIN1_LABEL_OPACITY: ExpressionSpecification = [
+/** Myanmar state/region labels — short overview names; fade by z9–z10. */
+const OVERVIEW_ADMIN_STATE_REGION_LABEL_OPACITY: ExpressionSpecification = [
   'interpolate',
   ['linear'],
   ['zoom'],
   4,
-  0.55,
+  0.72,
   5,
-  0.75,
-  6,
   0.85,
-  7,
-  0.8,
+  6,
+  0.9,
   8,
-  0.75,
+  0.85,
   9,
   0.35,
   OVERVIEW_LABELS_END_ZOOM,
@@ -194,7 +196,7 @@ function applyRegionalOverzoomMax(layer: LayerSpecification): LayerSpecification
   if (currentMax !== undefined && currentMax >= REGIONAL_LAYER_OVERZOOM_MIN_MAX_ZOOM) {
     return layer;
   }
-  // Never cap basemap geometry below public max zoom (z20).
+  // Never cap basemap geometry below public camera max zoom (z20 overzoom).
   if (currentMax === undefined) {
     return layer;
   }
@@ -240,7 +242,7 @@ function patchRegionalLayer(layer: LayerSpecification): LayerSpecification {
 }
 
 function patchOverviewLayerVisibility(layer: LayerSpecification): LayerSpecification {
-  if (OVERVIEW_ADMIN0_BOUNDARY_LAYER_IDS.has(layer.id)) {
+  if (OVERVIEW_ADMIN_COUNTRY_BOUNDARY_LAYER_IDS.has(layer.id)) {
     return layer;
   }
 
@@ -248,8 +250,8 @@ function patchOverviewLayerVisibility(layer: LayerSpecification): LayerSpecifica
     return { ...layer, maxzoom: OVERVIEW_BOUNDARY_MAX_ZOOM };
   }
 
-  if (layer.id === OVERVIEW_MMR_INTERNAL_ADMIN_BOUNDARY_LAYER_ID) {
-    return { ...layer, maxzoom: OVERVIEW_MMR_ADMIN1_BOUNDARY_MAX_ZOOM };
+  if (layer.id === OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_LAYER_ID) {
+    return { ...layer, maxzoom: OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_MAX_ZOOM };
   }
 
   if (OVERVIEW_ADMIN_FILL_LAYER_IDS.has(layer.id) && layer.type === 'fill') {
@@ -295,13 +297,13 @@ function patchOverviewLayerVisibility(layer: LayerSpecification): LayerSpecifica
     };
   }
 
-  if (layer.id === 'overview-mmr-admin1-labels') {
+  if (layer.id === 'overview-admin-state-region-labels') {
     return {
       ...layer,
       maxzoom: OVERVIEW_LABELS_END_ZOOM,
       paint: {
         ...layer.paint,
-        'text-opacity': OVERVIEW_MMR_ADMIN1_LABEL_OPACITY,
+        'text-opacity': OVERVIEW_ADMIN_STATE_REGION_LABEL_OPACITY,
       },
     };
   }
@@ -323,7 +325,7 @@ function patchOverviewLayerVisibility(layer: LayerSpecification): LayerSpecifica
 /** Human-readable rules for docs/tests. */
 export const BASEMAP_ZOOM_VISIBILITY_RULES = {
   overviewOnly: `z${PUBLIC_MAP_OVERVIEW_MIN_ZOOM}–z${OVERVIEW_ONLY_MAX_ZOOM}`,
-  overviewBoundaries: `Myanmar admin0 + neighbor lines maxzoom ${OVERVIEW_BOUNDARY_MAX_ZOOM}; internal admin1 through z${OVERVIEW_MMR_ADMIN1_BOUNDARY_MAX_ZOOM}`,
+  overviewBoundaries: `Neighbor/NE coastline maxzoom ${OVERVIEW_BOUNDARY_MAX_ZOOM}; Myanmar country fill maxzoom 9 / outline maxzoom 10 (temporary imprecise-geom hide); internal state/region through z${OVERVIEW_ADMIN_STATE_REGION_BOUNDARY_MAX_ZOOM}`,
   regionalBase: `z${REGIONAL_BASE_APPEAR_ZOOM}+ (OSM water + admin_boundaries state_region; country outer border hidden)`,
   overviewLabels: `visible z${PUBLIC_MAP_OVERVIEW_MIN_ZOOM}–z${OVERVIEW_LABELS_END_ZOOM - 0.1}, faded/hidden z${OVERVIEW_LABELS_END_ZOOM}+`,
   regionalDominant: `z${OVERVIEW_LABELS_END_ZOOM}+ (warm road stack: major z8+, medium z10+, local z12.5+, minor z15+ per base-map.json)`,

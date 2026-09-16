@@ -4,21 +4,151 @@ Static vector basemap archives and per-region `current.json` pointers. Paths mir
 
 ---
 
+## Hybrid architecture (final)
+
+```text
+Supabase Core (managed features)
+        │
+        │  tiles:sync (transactional snapshot)
+        ▼
+Windows PostgreSQL  coremap_tiles
+  tile_source.*_base      permanent bulk baseline
+  tile_source.*_archive   demoted previously-managed features
+  tile_source.*_core      refreshable Core caches
+  tile_source.*_suppressed  DELETE tombstones (buildings/land only)
+  tile_source.*_v         Suppression > Core > Archive > Base
+        │
+        │  tiles:export / tiles:rebuild (local DB only)
+        ▼
+PMTiles  = rendering artifacts only (never source of truth)
+        │
+        │  tiles:upload  (explicit; never from promote/demote/delete)
+        ▼
+Cloudflare R2 + current.json / manifest
+```
+
+### Source ownership
+
+| Location | Role |
+|----------|------|
+| **Supabase Core** | Important actively managed CoreMap features |
+| `tile_source.buildings_base` / `land_areas_base` | Permanent bulk baseline (never deleted by promote/demote) |
+| `tile_source.buildings_archive` / `land_areas_archive` | Demoted previously-managed copies |
+| `tile_source.buildings_core` / `land_areas_core` | Refreshable Supabase caches |
+| `buildings_v` / `land_areas_v` | Resolved render identity: **Suppression → Core → Archive → Base** |
+| Other static layers (streets, water, admin, …) | Supabase → Windows snapshot → PMTiles |
+| **PMTiles** | Generated rendering artifacts only |
+
+Promote / Demote / Delete change **source state only**. They never rebuild PMTiles, never upload to R2, and never modify the published `current` release.
+
+---
+
+## Building / land lifecycle
+
+**Meanings**
+
+| Action | Effect |
+|--------|--------|
+| **Promote** | Local Base or Archive → Supabase Core (prefer Archive over Base); then refresh local `*_core` cache |
+| **Demote** | Preflight → write Archive locally → remove Core → sync cache. Not a DELETE. |
+| **Delete** | Write render suppression + remove Core. Base/Archive stay on disk but do not resolve in `*_v`. Requires `--confirm-delete`. |
+
+**Commands** (buildings and land only — no streets lifecycle)
+
+```bash
+npm run tiles:promote-building -- osm:way:<id>
+npm run tiles:demote-building -- osm:way:<id>
+npm run tiles:delete-building -- --confirm-delete osm:way:<id>
+
+npm run tiles:promote-land -- osm:way:<id>
+npm run tiles:demote-land -- osm:way:<id>
+npm run tiles:delete-land -- --confirm-delete osm:way:<id>
+```
+
+Optional local admin UI (DEV only): dashboard `/dashboard/local-basemap` when `ENABLE_LOCAL_BASEMAP_ADMIN` + `NEXT_PUBLIC_ENABLE_LOCAL_BASEMAP_ADMIN` are set. Browser never talks to PostgreSQL.
+
+### Invariants (verified)
+
+1. Base rows are not deleted by promote/demote.  
+2. Promote prefers Archive over Base.  
+3. Promote is idempotent by canonical OSM identity (`osm:way|relation:<id>`).  
+4. Demote archives before Core removal.  
+5. Unsafe dependencies block Demote (HTTP 409).  
+6. Demote never writes a suppression tombstone.  
+7. Delete suppresses Base and Archive in `*_v`.  
+8. Failed `tiles:sync` keeps the previous good local snapshot (staging replace).  
+9. Local PMTiles builds read only Windows `LOCAL_TILE_DATABASE_URL` after sync.  
+10. Production package defs stay version-controlled (`config/packages.yaml`).  
+11. Region splits follow package config / corrected PMTiles size practice, not ad-hoc geography.  
+12. Local visual QA (`tiles:qa:web`) is DEV-only.  
+13. Generated PMTiles, MBTiles, GeoJSON exports, dumps, and QA artifacts are Git-ignored.  
+14–15. Env/sync/promote paths log **host:port only**, not full connection strings or tokens (`load-root-env.sh` / sync `log_host`).
+
+### Partial-safe recovery
+
+| State | What happened | Recovery |
+|-------|---------------|----------|
+| Archive OK, Core removal failed | Demote exit ≠ 0; message includes **Core still wins**; Archive kept | Fix blocker; re-run `tiles:demote-*` (Archive may update again) |
+| Core write OK, local sync failed | Promote/delete exit `3`; Core (or suppression) is valid in Supabase | Re-run `npm run tiles:sync -- buildings_core` (or `land_areas_core` / `*_suppressed`) |
+| Delete blocked by dependencies | No suppression written | Clear links/reports; retry with `--confirm-delete` |
+| Promote blocked by suppression | No Core write | Clear suppression (API/CLI clear) then promote |
+
+---
+
+## Normal PMTiles release flow
+
+Promotion/demotion/delete do **not** trigger this. Run only when you intentionally ship tiles:
+
+```bash
+# 1. Update code
+git pull   # or your usual update
+
+# 2–4. Tools + local snapshot + validate
+npm run tiles:check-tools
+npm run tiles:sync
+npm run tiles:validate-source
+
+# 5. Build required packages (local Windows DB only)
+npm run tiles:rebuild -- yangon v2          # or tiles:export then tiles:build
+# npm run tiles:validate-packages
+
+# 6. Structural check
+pmtiles show infrastructure/tiles/pmtiles/regions/yangon/yangon-v2.pmtiles
+
+# 7. Local production-style visual QA (DEV only)
+npm run tiles:serve          # terminal 1
+npm run tiles:qa:web         # terminal 2
+
+# 8–9. Explicit R2 upload + verify (never automatic from lifecycle)
+npm run tiles:upload -- yangon v2
+bash infrastructure/tiles/pmtiles/scripts/check-pmtiles-url.sh \
+  "https://<public-r2>/basemaps/yangon/v2/basemap.pmtiles" \
+  "http://localhost:5173"
+# Confirm Range / CORS / current.json or app env pointers as needed
+```
+
+Do **not** overwrite a live R2 object key in place; publish a new version path, then cut over `current.json` / env URLs.
+
+---
+
 ## Build vs rebuild — which command to use
 
 The pipeline has two phases. **Do not confuse them:**
 
 ```text
-export   PostGIS (tiles.*_v views)  →  exports/<region>/*.geojson
+Supabase → tiles:sync → Windows coremap_tiles → export → Tippecanoe → PMTiles
+
+export   local tile_source.* (LOCAL_TILE_DATABASE_URL)  →  exports/<region>/*.geojson
 build    exports/<region>/*.geojson  →  regions/<region>/<region>-<version>.pmtiles
 ```
 
-| Command | Phases | Needs `DATABASE_URL`? |
-|---------|--------|------------------------|
-| `npm run tiles:export -- <region> <version>` | export only | Yes |
+| Command | Phases | Needs `LOCAL_TILE_DATABASE_URL`? |
+|---------|--------|----------------------------------|
+| `npm run tiles:export -- <region> <version>` | export only | Yes (local coremap_tiles only) |
 | `npm run tiles:build -- <region> <version>` | build only | No |
 | `npm run tiles:rebuild -- <region> <version>` | export + build | Yes |
-| `npm run tiles:upload -- <region> <version>` | upload built `.pmtiles` to R2 | No (needs Wrangler) |
+| `npm run tiles:sync -- …` | Supabase → local snapshots | Yes + `SUPABASE_DATABASE_URL` |
+| `npm run tiles:upload -- <region> <version>` | upload built `.pmtiles` to R2 | No (needs Wrangler; not part of export) |
 
 ### Decision rule
 
@@ -172,13 +302,13 @@ npm run tiles:rebuild -- yangon v2
 
 Stages: **export 0–25%** → **build 25–100%**.
 
-Requires `DATABASE_URL` in repo root `.env`.
+Requires `LOCAL_TILE_DATABASE_URL` pointing at local `coremap_tiles` (not Supabase). Run `tiles:sync` separately before export when local snapshots need refresh.
 
 ---
 
 ## Regional clipping (export)
 
-Each regional export is **spatially filtered** to one Myanmar state/region polygon from `core.core_admin_areas` (`admin_level_code = state_region`), plus a buffer around the border.
+Each regional export is **spatially filtered** to one Myanmar state/region polygon from local `tile_source.admin_areas` (`admin_level_code = state_region`), plus a buffer around the border.
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
@@ -263,11 +393,11 @@ Before tippecanoe, the build prints size + feature count for:
 
 Three tippecanoe passes + `tile-join` (stable layer names unchanged):
 
-1. **Light** — admin, water, landuse, buildings, village_labels
+1. **Light** — admin, water, landuse, buildings, settlements, coastlines, protected_areas
 2. **Roads** — `streets` only (class-based minzoom hints + coalesce; all clipped features kept through z20)
-3. **Labels** — `road_labels` only (z12+; real names from `tiles_road_labels_v`)
+3. **Labels** — `road_labels` only (z12+; named streets from local `tile_source.streets`)
 
-`prepare-tippecanoe-input.py` adds per-feature `tippecanoe.minzoom` / `maxzoom` hints (no SQL changes). Every street feature is retained through z20; only **visibility** at low/mid zoom is reduced.
+`prepare-tippecanoe-input.py` adds per-feature `tippecanoe.minzoom` / `maxzoom` hints (no SQL changes). Street minzoom prefers DB `min_zoom`, else road-class fallback. Native detail caps around z14–z16; MapLibre camera may overzoom to z20.
 
 ### Street class zoom hints
 
@@ -289,7 +419,8 @@ Yangon clipped (~77k streets): counts scale down proportionally; class-based min
 
 ### Streets tippecanoe tuning
 
-- `--coalesce-densest-as-needed` + `--coalesce-smallest-as-needed` (merge, don’t drop at z16–z20)
+- `--coalesce-densest-as-needed` (merge under tile-size pressure; do **not** use `--coalesce-smallest-as-needed` on streets — it sparsified networks)
+- `--maximum-tile-bytes` default `2000000` for streets (`PMTILES_STREETS_MAX_TILE_BYTES`)
 - `--simplify-only-low-zooms` (geometry detail preserved at high zoom)
 - `--no-feature-limit` (no feature-count drops at max zoom)
 - Per-feature minzoom reduces tile-size fitting at z8–z13
@@ -351,7 +482,7 @@ bash infrastructure/tiles/pmtiles/scripts/check-pmtiles-url.sh \
   "http://localhost:5173"
 ```
 
-Release checklist: `docs/tiles/pmtiles/pmtiles-release-workflow.md`
+Release checklist: this README (**Normal PMTiles release flow** above). Older notes: `docs/archive/old-docs/tiles/pmtiles/pmtiles-release-workflow.md`.
 
 ---
 
@@ -360,7 +491,7 @@ Release checklist: `docs/tiles/pmtiles/pmtiles-release-workflow.md`
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `PMTILES_MIN_ZOOM` | `8` | Global tile minzoom |
-| `PMTILES_MAX_ZOOM` | `20` | Native regional tile maxzoom (matches public map camera max z20) |
+| `PMTILES_MAX_ZOOM` | `16` | Native regional tile maxzoom (MapLibre can overzoom to z20) |
 | `PMTILES_REGION_BUFFER_METERS` | `10000` | Regional export boundary buffer (overlap at state borders) |
 | `PMTILES_REGION_SUBDIVIDE_SEGMENTS` | `512` | `ST_Subdivide` segments for fast `ST_Intersects` during export |
 | `PMTILES_DEBUG` | `0` | `1` = full tippecanoe stderr + commands (disables quiet tippecanoe during ticker) |
@@ -376,7 +507,7 @@ Release checklist: `docs/tiles/pmtiles/pmtiles-release-workflow.md`
 brew install gdal tippecanoe pmtiles
 ```
 
-Also: Node/npm (for `npm run`), Python 3, `DATABASE_URL` for export.
+Also: Node/npm (for `npm run`), Python 3, `LOCAL_TILE_DATABASE_URL` for export (local `coremap_tiles` only).
 
 ---
 
@@ -392,7 +523,9 @@ It does **not** delete `exports/` or published `regions/<region>/*.pmtiles`. `cu
 
 ## Layer names (stable — match `base-map.json`)
 
-`streets`, `road_labels`, `admin_areas`, `admin_boundaries`, `admin_area_label_points`, `buildings`, `landuse`, `water_lines`, `water_polygons`, `village_labels`
+`streets`, `road_labels`, `admin_areas`, `admin_boundaries`, `admin_area_label_points`, `buildings`, `landuse`, `water_lines`, `water_polygons`, `settlements`, `coastlines`, `protected_areas`
+
+(`road_labels` and admin layer names are kept for MapLibre. `village_labels` was replaced by `settlements`.)
 
 Road lines = `streets`. Road text = `road_labels` only. Admin text = `admin_area_label_points` only (not `admin_areas` polygons). No fake `road-*` labels in PMTiles.
 

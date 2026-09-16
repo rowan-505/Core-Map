@@ -413,7 +413,12 @@ const splitStreetBodyOpenApi = {
 const streetUuidParam = {
     type: "object",
     required: ["id"],
-    properties: { id: { type: "string", format: "uuid" } },
+    properties: {
+        id: {
+            oneOf: [{ type: "string", format: "uuid" }, { type: "string", pattern: "^\\d+$" }],
+            description: "Street public_id (UUID) or internal core id (digits)",
+        },
+    },
     additionalProperties: false,
 } as const;
 

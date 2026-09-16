@@ -12,6 +12,8 @@ import {
     ScanSearch,
     Search,
     Users,
+    Map,
+    MapPinned,
     type LucideIcon,
 } from "lucide-react";
 
@@ -21,6 +23,8 @@ import {
     accountPath,
     coreReviewPath,
     importReviewPath,
+    localBasemapPath,
+    devMapPath,
     pointManagementPath,
     referencesPath,
     reportsPath,
@@ -37,7 +41,9 @@ export {
     ACCOUNT_PATH,
     CORE_REVIEW_PATH,
     DASHBOARD_PATH,
+    DEV_MAP_PATH,
     IMPORT_REVIEW_PATH,
+    LOCAL_BASEMAP_PATH,
     POINT_MANAGEMENT_PATH,
     REFERENCES_PATH,
     REPORTS_PATH,
@@ -50,6 +56,8 @@ export {
     accountPath,
     coreReviewPath,
     importReviewPath,
+    localBasemapPath,
+    devMapPath,
     pointManagementPath,
     referencesPath,
     reportsPath,
@@ -66,6 +74,8 @@ export type DashboardSidebarModuleKey =
     | "import-review"
     | "references"
     | "routing"
+    | "local-basemap"
+    | "dev-map"
     | "stats"
     | "transport"
     | "search"
@@ -112,6 +122,8 @@ export function sidebarModuleFromPathname(pathname: string): DashboardSidebarMod
         key === "import-review" ||
         key === "references" ||
         key === "routing" ||
+        key === "local-basemap" ||
+        key === "dev-map" ||
         key === "stats" ||
         key === "transport" ||
         key === "search" ||
@@ -151,6 +163,18 @@ export const dashboardSidebarItems: readonly DashboardSidebarItem[] = [
         href: routingAdminPath(),
         label: "Routing",
         Icon: Route,
+    },
+    {
+        moduleKey: "local-basemap",
+        href: localBasemapPath(),
+        label: "Local Basemap",
+        Icon: Map,
+    },
+    {
+        moduleKey: "dev-map",
+        href: devMapPath(),
+        label: "Dev Map",
+        Icon: MapPinned,
     },
     {
         moduleKey: "stats",

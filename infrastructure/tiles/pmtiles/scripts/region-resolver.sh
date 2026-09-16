@@ -1,35 +1,21 @@
 # shellcheck shell=bash
-# Stable PMTiles region key → core.core_admin_areas state_region polygon resolver.
+# PMTiles package key → local tile_source.admin_areas boundary resolver.
 # Sourced by export-region.sh, rebuild-all-regions.sh, and build-all-regions.sh.
 #
-# Each supported region key maps to exactly one state/region row (admin_level_code
-# = state_region). OSM relation slugs are preferred; Yangon uses its canonical slug.
+# Requires LOCAL_TILE_DATABASE_URL (Windows coremap_tiles). No Supabase at export time.
+# Package definitions live in config/packages.yaml (one or more admin members per package).
 
-PMTILES_SUPPORTED_REGIONS=(
-  yangon
-  bago
-  ayeyarwady
-  mandalay
-  magway
-  sagaing
-  tanintharyi
-  naypyitaw
-  kachin
-  kayah
-  kayin
-  chin
-  mon
-  rakhine
-  shan
+_PMTILES_RESOLVER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+PMTILES_PACKAGE_CONFIG_PY="${_PMTILES_RESOLVER_DIR}/package-config.py"
+
+# Populate supported package keys from packages.yaml (compatible name kept).
+mapfile -t PMTILES_SUPPORTED_REGIONS < <(
+  python3 "$PMTILES_PACKAGE_CONFIG_PY" list | tr ' ' '\n' | sed '/^$/d'
 )
 
 pmtiles_region_is_supported() {
   local key="$1"
-  local r
-  for r in "${PMTILES_SUPPORTED_REGIONS[@]}"; do
-    [[ "$r" == "$key" ]] && return 0
-  done
-  return 1
+  python3 "$PMTILES_PACKAGE_CONFIG_PY" exists "$key" >/dev/null
 }
 
 pmtiles_region_list_supported() {
@@ -42,173 +28,91 @@ pmtiles_sql_quote() {
   printf "%s" "$1" | sed "s/'/''/g"
 }
 
-# OSM relation slug for region (empty string = canonical-name matcher, e.g. Yangon).
-pmtiles_region_osm_slug() {
-  case "$1" in
-    bago) echo "osm:R:5996474" ;;
-    ayeyarwady) echo "osm:R:5996473" ;;
-    mandalay) echo "osm:R:5996480" ;;
-    magway) echo "osm:R:5996479" ;;
-    sagaing) echo "osm:R:5996484" ;;
-    tanintharyi) echo "osm:R:5996486" ;;
-    naypyitaw) echo "osm:R:5996482" ;;
-    kachin) echo "osm:R:5996476" ;;
-    kayah) echo "osm:R:5996477" ;;
-    kayin) echo "osm:R:5996478" ;;
-    chin) echo "osm:R:5996475" ;;
-    mon) echo "osm:R:5996481" ;;
-    rakhine) echo "osm:R:5996483" ;;
-    shan) echo "osm:R:5996485" ;;
-    *) echo "" ;;
-  esac
-}
+# Resolve one package member to exactly one admin row; prints "core_id|name|area_km2".
+pmtiles_resolve_package_member() {
+  local admin_level="$1"
+  local name_en="${2:-}"
+  local name_mm="${3:-}"
+  local core_id="${4:-}"
+  local level_q name_en_q name_mm_q
+  local where_parts=()
 
-pmtiles_region_name_en() {
-  case "$1" in
-    yangon) echo "Yangon Region" ;;
-    bago) echo "Bago Region" ;;
-    ayeyarwady) echo "Ayeyarwady Region" ;;
-    mandalay) echo "Mandalay Region" ;;
-    magway) echo "Magway Region" ;;
-    sagaing) echo "Sagaing Region" ;;
-    tanintharyi) echo "Tanintharyi Region" ;;
-    naypyitaw) echo "Naypyitaw Union Territory" ;;
-    kachin) echo "Kachin State" ;;
-    kayah) echo "Kayah State" ;;
-    kayin) echo "Kayin State" ;;
-    chin) echo "Chin State" ;;
-    mon) echo "Mon State" ;;
-    rakhine) echo "Rakhine State" ;;
-    shan) echo "Shan State" ;;
-    *) echo "" ;;
-  esac
-}
-
-pmtiles_region_name_mm() {
-  case "$1" in
-    yangon) echo "ရန်ကုန်တိုင်းဒေသကြီး" ;;
-    bago) echo "ပဲခူးတိုင်းဒေသကြီး" ;;
-    ayeyarwady) echo "ဧရာဝတီတိုင်း" ;;
-    mandalay) echo "မန္တလေးတိုင်း" ;;
-    magway) echo "မကွေးတိုင်းဒေသကြီး" ;;
-    sagaing) echo "စစ်ကိုင်းတိုင်းဒေသကြီး" ;;
-    tanintharyi) echo "တနင်္သာရီတိုင်း" ;;
-    naypyitaw) echo "နေပြည်တော် ပြည်ထောင်စုနယ်မြေ" ;;
-    kachin) echo "ကချင်ပြည်နယ်" ;;
-    kayah) echo "ကယားပြည်နယ်" ;;
-    kayin) echo "ကရင်ပြည်နယ်" ;;
-    chin) echo "ချင်းပြည်နယ်" ;;
-    mon) echo "မွန်ပြည်နယ်" ;;
-    rakhine) echo "ရခိုင်ပြည်နယ်" ;;
-    shan) echo "ရှမ်းပြည်နယ်" ;;
-    *) echo "" ;;
-  esac
-}
-
-# Build SQL predicate that matches exactly one state_region row for $region_key.
-pmtiles_region_match_sql() {
-  local region_key="$1"
-  local osm_slug name_mm name_en
-  osm_slug="$(pmtiles_region_osm_slug "$region_key")"
-  name_mm="$(pmtiles_sql_quote "$(pmtiles_region_name_mm "$region_key")")"
-  name_en="$(pmtiles_sql_quote "$(pmtiles_region_name_en "$region_key")")"
-
-  if [[ -n "$osm_slug" ]]; then
-    local slug_quoted
-    slug_quoted="$(pmtiles_sql_quote "$osm_slug")"
-    cat <<SQL
-(
-  a.slug = '${slug_quoted}'
-  OR a.canonical_name = '${name_mm}'
-  OR EXISTS (
-    SELECT 1
-    FROM core.core_admin_area_names AS n
-    WHERE n.admin_area_id = a.id
-      AND (
-        lower(trim(n.name)) = lower('${name_en}')
-        OR trim(n.name) = '${name_mm}'
-      )
-  )
-)
-SQL
-    return 0
-  fi
-
-  # Yangon: no osm:R slug — match canonical slug/name only (avoids island noise rows).
-  cat <<SQL
-(
-  a.slug = '${name_mm}'
-  OR a.canonical_name = '${name_mm}'
-  OR EXISTS (
-    SELECT 1
-    FROM core.core_admin_area_names AS n
-    WHERE n.admin_area_id = a.id
-      AND (
-        lower(trim(n.name)) = lower('${name_en}')
-        OR trim(n.name) = '${name_mm}'
-      )
-  )
-)
-SQL
-}
-
-# Resolve region to admin_area id; prints "id|canonical_name|area_km2" on success.
-pmtiles_resolve_region_boundary() {
-  local region_key="$1"
-  local match_sql osm_slug name_mm
-
-  if ! pmtiles_region_is_supported "$region_key"; then
-    echo "error: unsupported region key '${region_key}'. Supported: $(pmtiles_region_list_supported)" >&2
+  if [[ -z "${LOCAL_TILE_DATABASE_URL:-}" ]]; then
+    echo "error: LOCAL_TILE_DATABASE_URL is not set (local coremap_tiles required for export)." >&2
     return 1
   fi
 
-  if [[ -z "${DATABASE_URL:-}" ]]; then
-    echo "error: DATABASE_URL is not set." >&2
-    return 1
+  level_q="$(pmtiles_sql_quote "$admin_level")"
+  where_parts+=("a.admin_level_code = '${level_q}'")
+  where_parts+=("a.is_active IS TRUE")
+  where_parts+=("a.deleted_at IS NULL")
+  where_parts+=("a.geom IS NOT NULL")
+  where_parts+=("NOT st_isempty(a.geom)")
+  where_parts+=("st_isvalid(a.geom)")
+
+  if [[ -n "$core_id" ]]; then
+    where_parts+=("a.core_id = ${core_id}")
   fi
 
-  match_sql="$(pmtiles_region_match_sql "$region_key")"
-  osm_slug="$(pmtiles_region_osm_slug "$region_key")"
-  name_mm="$(pmtiles_region_name_mm "$region_key")"
+  local name_preds=()
+  if [[ -n "$name_en" ]]; then
+    name_en_q="$(pmtiles_sql_quote "$name_en")"
+    name_preds+=("lower(trim(coalesce(a.name_en, ''))) = lower('${name_en_q}')")
+    name_preds+=("lower(trim(coalesce(a.name, ''))) = lower('${name_en_q}')")
+  fi
+  if [[ -n "$name_mm" ]]; then
+    name_mm_q="$(pmtiles_sql_quote "$name_mm")"
+    # Strip zero-width space (U+200B) seen in some synced Myanmar names.
+    name_preds+=("replace(trim(coalesce(a.name_mm, '')), chr(8203), '') = '${name_mm_q}'")
+    name_preds+=("replace(trim(coalesce(a.name, '')), chr(8203), '') = '${name_mm_q}'")
+  fi
+  if [[ ${#name_preds[@]} -gt 0 ]]; then
+    local joined=""
+    local j
+    for j in "${!name_preds[@]}"; do
+      if [[ "$j" -gt 0 ]]; then
+        joined+=" OR "
+      fi
+      joined+="${name_preds[$j]}"
+    done
+    where_parts+=("(${joined})")
+  fi
+
+  local where_sql=""
+  local i
+  for i in "${!where_parts[@]}"; do
+    if [[ "$i" -gt 0 ]]; then
+      where_sql+=" AND "
+    fi
+    where_sql+="${where_parts[$i]}"
+  done
 
   local result
   result="$(
-    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -t -A -F '|' -c "
+    psql "$LOCAL_TILE_DATABASE_URL" -v ON_ERROR_STOP=1 -t -A -F '|' -c "
 SELECT
-  a.id::text,
-  a.canonical_name,
+  a.core_id::text,
+  coalesce(nullif(btrim(a.name_en), ''), nullif(btrim(a.name_mm), ''), nullif(btrim(a.name), ''), a.core_id::text),
   round((st_area(a.geom::geography) / 1e6)::numeric, 1)::text
-FROM core.core_admin_areas AS a
-INNER JOIN ref.ref_admin_levels AS al
-  ON al.id = a.admin_level_id
-WHERE al.code = 'state_region'
-  AND a.is_active IS TRUE
-  AND a.deleted_at IS NULL
-  AND a.geom IS NOT NULL
-  AND NOT st_isempty(a.geom)
-  AND st_isvalid(a.geom)
-  AND (${match_sql})
+FROM tile_source.admin_areas AS a
+WHERE ${where_sql}
 ORDER BY st_area(a.geom::geography) DESC
 LIMIT 2;
 "
   )"
 
   if [[ -z "$result" ]]; then
-    echo "error: region boundary not found for '${region_key}' (state_region in core.core_admin_areas)." >&2
-    if [[ -n "$osm_slug" ]]; then
-      echo "error: expected slug '${osm_slug}' or name '${name_mm}'." >&2
-    else
-      echo "error: expected canonical slug/name '${name_mm}'." >&2
-    fi
+    echo "error: admin member not found (level=${admin_level} name_en='${name_en}' name_mm='${name_mm}' core_id='${core_id}')." >&2
+    echo "error: run tiles:sync for admin_areas, and use exact names (no fuzzy Wa/extra state_region matches)." >&2
     return 1
   fi
 
   local row_count
   row_count="$(printf '%s\n' "$result" | sed '/^$/d' | wc -l | tr -d ' ')"
   if [[ "$row_count" -gt 1 ]]; then
-    echo "error: region '${region_key}' matched ${row_count} state_region rows (expected exactly 1):" >&2
+    echo "error: admin member matched ${row_count} rows (expected exactly 1):" >&2
     printf '%s\n' "$result" | while IFS='|' read -r id name area; do
-      echo "  - id=${id} name=${name} area_km2=${area}" >&2
+      echo "  - core_id=${id} name=${name} area_km2=${area}" >&2
     done
     return 1
   fi
@@ -216,24 +120,79 @@ LIMIT 2;
   printf '%s' "$result" | head -n 1
 }
 
-# region_boundary + subdivided parts CTEs (resolved admin area id).
-# ST_Subdivide keeps ST_Intersects fast on large line/polygon layers via GIST && prefilter per part.
+# Resolve package key to combined boundary; prints "core_ids_csv|label|area_km2|member_count".
+pmtiles_resolve_region_boundary() {
+  local package_key="$1"
+  local label members_json
+  local -a core_ids=()
+  local -a member_names=()
+
+  if ! pmtiles_region_is_supported "$package_key"; then
+    echo "error: unsupported package key '${package_key}'. Supported: $(pmtiles_region_list_supported)" >&2
+    return 1
+  fi
+
+  if [[ -z "${LOCAL_TILE_DATABASE_URL:-}" ]]; then
+    echo "error: LOCAL_TILE_DATABASE_URL is not set (local coremap_tiles required for export)." >&2
+    return 1
+  fi
+
+  label="$(python3 "$PMTILES_PACKAGE_CONFIG_PY" label "$package_key")"
+  members_json="$(python3 "$PMTILES_PACKAGE_CONFIG_PY" members-json "$package_key")"
+
+  while IFS= read -r member; do
+    [[ -z "$member" ]] && continue
+    local admin_level name_en name_mm core_id row
+    admin_level="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("admin_level") or "")' "$member")"
+    name_en="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("name_en") or "")' "$member")"
+    name_mm="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("name_mm") or "")' "$member")"
+    core_id="$(python3 -c 'import json,sys; v=json.loads(sys.argv[1]).get("core_id"); print("" if v is None else v)' "$member")"
+    row="$(pmtiles_resolve_package_member "$admin_level" "$name_en" "$name_mm" "$core_id")" || return 1
+    IFS='|' read -r mid mname _area <<<"$row"
+    core_ids+=("$mid")
+    member_names+=("$mname")
+  done < <(python3 -c 'import json,sys; [print(json.dumps(m, ensure_ascii=False)) for m in json.loads(sys.argv[1])]' "$members_json")
+
+  if [[ ${#core_ids[@]} -eq 0 ]]; then
+    echo "error: package '${package_key}' resolved zero admin members" >&2
+    return 1
+  fi
+
+  local ids_csv names_joined area_km2
+  ids_csv="$(IFS=','; echo "${core_ids[*]}")"
+  names_joined="$(IFS='+'; echo "${member_names[*]}")"
+  area_km2="$(
+    psql "$LOCAL_TILE_DATABASE_URL" -v ON_ERROR_STOP=1 -t -A -c "
+SELECT round((st_area(st_unaryunion(st_collect(st_makevalid(a.geom)))::geography) / 1e6)::numeric, 1)::text
+FROM tile_source.admin_areas AS a
+WHERE a.core_id IN (${ids_csv});
+"
+  )"
+
+  printf '%s|%s|%s|%s' "$ids_csv" "${label:-$names_joined}" "$area_km2" "${#core_ids[@]}"
+}
+
+# Combined package boundary + subdivided parts CTEs (one or many admin core_ids).
 pmtiles_region_boundary_ctes_sql() {
-  local admin_area_id="$1"
+  local admin_area_ids_csv="$1"
   local buffer_meters="$2"
   local subdivide_segments="${3:-512}"
   cat <<SQL
+region_members AS (
+  SELECT st_makevalid(a.geom) AS geom
+  FROM tile_source.admin_areas AS a
+  WHERE a.core_id IN (${admin_area_ids_csv})
+),
 region_boundary AS (
   SELECT
     st_setsrid(
       st_buffer(
-        st_makevalid(a.geom)::geography,
+        st_unaryunion(st_collect(rm.geom))::geography,
         ${buffer_meters}::double precision
       )::geometry,
       4326
     ) AS geom
-  FROM core.core_admin_areas AS a
-  WHERE a.id = ${admin_area_id}
+  FROM region_members AS rm
 ),
 region_parts AS (
   SELECT
@@ -243,44 +202,65 @@ region_parts AS (
 SQL
 }
 
-# Clipped SELECT for a tiles.* view (all columns preserved).
-pmtiles_clipped_layer_sql() {
-  local view_name="$1"
-  local admin_area_id="$2"
-  local buffer_meters="$3"
-  local subdivide_segments="${4:-512}"
+# Clipped SELECT for a local relation (schema.table or subquery alias).
+# distinct_key: feature_key | core_id | id
+# admin_area_id may be a single id or comma-separated ids.
+pmtiles_clipped_relation_sql() {
+  local relation="$1"
+  local distinct_key="$2"
+  local admin_area_ids_csv="$3"
+  local buffer_meters="$4"
+  local subdivide_segments="${5:-512}"
   local boundary_ctes
-  boundary_ctes="$(pmtiles_region_boundary_ctes_sql "$admin_area_id" "$buffer_meters" "$subdivide_segments")"
+  boundary_ctes="$(pmtiles_region_boundary_ctes_sql "$admin_area_ids_csv" "$buffer_meters" "$subdivide_segments")"
   cat <<SQL
 WITH ${boundary_ctes}
-SELECT DISTINCT ON (layer.id) layer.*
-FROM tiles.${view_name} AS layer
+SELECT DISTINCT ON (layer.${distinct_key}) layer.*
+FROM ${relation} AS layer
 INNER JOIN region_parts AS rp
   ON layer.geom && rp.part_geom
  AND st_intersects(layer.geom, rp.part_geom)
 WHERE layer.geom IS NOT NULL
   AND NOT st_isempty(layer.geom)
-ORDER BY layer.id
+ORDER BY layer.${distinct_key}
 SQL
 }
 
-# Count features that would be exported for a layer (pre-export sanity check).
-pmtiles_clipped_layer_count() {
+# Backward-compatible wrapper (legacy tiles.* view name + id column).
+pmtiles_clipped_layer_sql() {
   local view_name="$1"
   local admin_area_id="$2"
   local buffer_meters="$3"
   local subdivide_segments="${4:-512}"
+  pmtiles_clipped_relation_sql "tiles.${view_name}" "id" "$admin_area_id" "$buffer_meters" "$subdivide_segments"
+}
+
+# Count features that would be exported for a local relation.
+pmtiles_clipped_relation_count() {
+  local relation="$1"
+  local distinct_key="$2"
+  local admin_area_ids_csv="$3"
+  local buffer_meters="$4"
+  local subdivide_segments="${5:-512}"
   local boundary_ctes
-  boundary_ctes="$(pmtiles_region_boundary_ctes_sql "$admin_area_id" "$buffer_meters" "$subdivide_segments")"
-  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -t -A -c "
+  boundary_ctes="$(pmtiles_region_boundary_ctes_sql "$admin_area_ids_csv" "$buffer_meters" "$subdivide_segments")"
+  psql "$LOCAL_TILE_DATABASE_URL" -v ON_ERROR_STOP=1 -t -A -c "
 SET statement_timeout TO '3600000';
 WITH ${boundary_ctes}
-SELECT count(DISTINCT layer.id)::bigint
-FROM tiles.${view_name} AS layer
+SELECT count(DISTINCT layer.${distinct_key})::bigint
+FROM ${relation} AS layer
 INNER JOIN region_parts AS rp
   ON layer.geom && rp.part_geom
  AND st_intersects(layer.geom, rp.part_geom)
 WHERE layer.geom IS NOT NULL
   AND NOT st_isempty(layer.geom);
 "
+}
+
+pmtiles_clipped_layer_count() {
+  local view_name="$1"
+  local admin_area_id="$2"
+  local buffer_meters="$3"
+  local subdivide_segments="${4:-512}"
+  pmtiles_clipped_relation_count "tiles.${view_name}" "id" "$admin_area_id" "$buffer_meters" "$subdivide_segments"
 }

@@ -15,6 +15,10 @@ import {
 } from './overviewBasemapStyle';
 import { getOverviewWebMapStyleFromManifest } from './manifestBasemapStyle';
 import { getWebBasemapCurrentJsonUrl } from './webBasemapCurrentJsonUrl';
+import {
+  getActiveLocalRegionPmtilesQaStyle,
+  isLoadAllLocalRegionPmtilesQaEnabled,
+} from '../lib/maplibre/localRegionPmtilesQa';
 
 /** Single fontstack for every symbol layer — must match `apps/web/public/fonts/<name>/`. */
 export const MAP_SYMBOL_TEXT_FONT = ['NotoSansMyanmar-Regular'] as const;
@@ -91,6 +95,10 @@ export async function getActiveBasemapStyle(): Promise<StyleSpecification> {
 /**
  * Public web map style.
  *
+ * DEV-only local QA: when `VITE_LOAD_ALL_LOCAL_REGION_PMTILES` is set in Vite DEV,
+ * load localhost overview + viewport-relevant local regions (production parity).
+ * Stress (`?qaPackage=all`): paint every package from `qa/local-packages.json`.
+ *
  * Preferred path: overview PMTiles from the basemap manifest (`VITE_BASEMAP_MANIFEST_URL`,
  * default `/basemaps/manifest.json`); regional PMTiles are then loaded dynamically by viewport.
  *
@@ -101,6 +109,13 @@ export async function getActiveBasemapStyle(): Promise<StyleSpecification> {
  * (`VITE_OVERVIEW_PMTILES_URL`) for local testing.
  */
 export async function getActiveWebMapStyle(): Promise<StyleSpecification> {
+  if (isLoadAllLocalRegionPmtilesQaEnabled()) {
+    if (import.meta.env.DEV) {
+      console.info('[map] LOCAL PMTILES QA mode — loading packages from localhost:8080');
+    }
+    return getActiveLocalRegionPmtilesQaStyle();
+  }
+
   if (isOverviewBasemapEnabled()) {
     return getActiveOverviewBasemapStyle();
   }

@@ -13,6 +13,10 @@ import {
     getCoreReviewListSchema,
     getCoreReviewStreetsCountSchema,
     postCoreReviewEntitySchema,
+    postCoreReviewLandAreaPromoteSchema,
+    postCoreReviewLandAreaDemoteSchema,
+    postCoreReviewLandAreaDeleteSchema,
+    postCoreReviewLandAreaClearSuppressionSchema,
     patchCoreReviewEntitySchema,
     patchCoreReviewSoftDeleteSchema,
     patchCoreReviewRestoreSchema,
@@ -24,10 +28,18 @@ import {
     normalizeWriteBodyAliases,
 } from "./core-review-write.schema.js";
 import {
+    CoreReviewDemoteBlockedError,
     CoreReviewLifecycleNotSupportedError,
     CoreReviewNotFoundError,
+    CoreReviewSuppressedError,
     CoreReviewValidationError,
 } from "./core-review-write.errors.js";
+import {
+    clearLandAreaRenderSuppressionBodySchema,
+    deleteOsmLandAreaBodySchema,
+    demoteOsmLandAreaBodySchema,
+    promoteOsmLandAreaBodySchema,
+} from "./entities/land-areas-promote.schema.js";
 import { mapDatabaseWriteError, sanitizeDevWriteErrorMessage } from "./core-review-write.helpers.js";
 import { CORE_REVIEW_VERIFICATION_SUMMARY_CONFIGS } from "./core-review-verification-summary.config.js";
 import { buildVerificationSummary } from "../../lib/verification-summary/verification-summary.repo.js";
@@ -370,6 +382,216 @@ const coreReviewRoutes: FastifyPluginAsync = async (app) => {
                 });
             }
         }
+    );
+
+    app.post(
+        "/land-areas/promote-from-source",
+        {
+            preHandler: [app.authenticate, app.requireDashboardWrite],
+            schema: postCoreReviewLandAreaPromoteSchema,
+        },
+        async (request, reply) => {
+            const parsed = promoteOsmLandAreaBodySchema.safeParse(request.body);
+            if (!parsed.success) {
+                return reply.code(400).send({
+                    message: "Invalid land area promote payload",
+                    issues: parsed.error.flatten(),
+                });
+            }
+
+            try {
+                const promoted = await service.promoteLandAreaFromSource(parsed.data);
+                const status = promoted.operation === "created" ? 201 : 200;
+                return reply.code(status).send(promoted);
+            } catch (error) {
+                if (error instanceof CoreReviewValidationError) {
+                    request.log.info(
+                        { entity: "land-areas", operation: "promote-from-source", validationIssues: error.issues },
+                        "core-review land-areas promote rejected",
+                    );
+                    return replyCoreReviewValidationError(reply, error);
+                }
+                if (error instanceof CoreReviewSuppressedError) {
+                    return reply.code(409).send({ message: error.message });
+                }
+                return replyCoreReviewWriteError(
+                    request,
+                    reply,
+                    error,
+                    "core-review land-areas promote-from-source failed",
+                    { entity: "land-areas", operation: "promote-from-source" },
+                );
+            }
+        },
+    );
+
+    app.post(
+        "/land-areas/demote-preflight",
+        {
+            preHandler: [app.authenticate, app.requireDashboardWrite],
+            schema: postCoreReviewLandAreaDemoteSchema,
+        },
+        async (request, reply) => {
+            const parsed = demoteOsmLandAreaBodySchema.safeParse(request.body);
+            if (!parsed.success) {
+                return reply.code(400).send({
+                    message: "Invalid land area demote payload",
+                    issues: parsed.error.flatten(),
+                });
+            }
+
+            try {
+                const prepared = await service.preflightDemoteLandAreaFromCore(parsed.data);
+                return reply.send({
+                    allowed: true,
+                    feature_key: prepared.feature_key,
+                    core_id: prepared.core_id,
+                    public_id: prepared.public_id,
+                    class_code: prepared.class_code,
+                    name: prepared.name,
+                    name_mm: prepared.name_mm,
+                    name_en: prepared.name_en,
+                    geometry: prepared.geometry,
+                    core_snapshot: prepared.core_snapshot,
+                });
+            } catch (error) {
+                if (error instanceof CoreReviewValidationError) {
+                    return replyCoreReviewValidationError(reply, error);
+                }
+                if (error instanceof CoreReviewNotFoundError) {
+                    return reply.code(404).send({ message: error.message });
+                }
+                if (error instanceof CoreReviewDemoteBlockedError) {
+                    return reply.code(409).send({
+                        allowed: false,
+                        message: error.message,
+                        dependencies: error.dependencies,
+                    });
+                }
+                return replyCoreReviewWriteError(
+                    request,
+                    reply,
+                    error,
+                    "core-review land-areas demote-preflight failed",
+                    { entity: "land-areas", operation: "demote-preflight" },
+                );
+            }
+        },
+    );
+
+    app.post(
+        "/land-areas/demote-from-core",
+        {
+            preHandler: [app.authenticate, app.requireDashboardWrite],
+            schema: postCoreReviewLandAreaDemoteSchema,
+        },
+        async (request, reply) => {
+            const parsed = demoteOsmLandAreaBodySchema.safeParse(request.body);
+            if (!parsed.success) {
+                return reply.code(400).send({
+                    message: "Invalid land area demote payload",
+                    issues: parsed.error.flatten(),
+                });
+            }
+
+            try {
+                const removed = await service.removeDemotedLandAreaFromCore(parsed.data, request.user);
+                return reply.send(removed);
+            } catch (error) {
+                if (error instanceof CoreReviewValidationError) {
+                    return replyCoreReviewValidationError(reply, error);
+                }
+                if (error instanceof CoreReviewNotFoundError) {
+                    return reply.code(404).send({ message: error.message });
+                }
+                if (error instanceof CoreReviewDemoteBlockedError) {
+                    return reply.code(409).send({
+                        allowed: false,
+                        message: error.message,
+                        dependencies: error.dependencies,
+                    });
+                }
+                return replyCoreReviewWriteError(
+                    request,
+                    reply,
+                    error,
+                    "core-review land-areas demote-from-core failed",
+                    { entity: "land-areas", operation: "demote-from-core" },
+                );
+            }
+        },
+    );
+
+    app.post(
+        "/land-areas/delete-from-source",
+        {
+            preHandler: [app.authenticate, app.requireDashboardWrite],
+            schema: postCoreReviewLandAreaDeleteSchema,
+        },
+        async (request, reply) => {
+            const parsed = deleteOsmLandAreaBodySchema.safeParse(request.body);
+            if (!parsed.success) {
+                return reply.code(400).send({
+                    message: "Invalid land area delete payload. confirm must be DELETE.",
+                    issues: parsed.error.flatten(),
+                });
+            }
+
+            try {
+                const result = await service.deleteLandAreaFromSource(parsed.data, request.user);
+                return reply.send(result);
+            } catch (error) {
+                if (error instanceof CoreReviewValidationError) {
+                    return replyCoreReviewValidationError(reply, error);
+                }
+                if (error instanceof CoreReviewDemoteBlockedError) {
+                    return reply.code(409).send({
+                        allowed: false,
+                        message: error.message,
+                        dependencies: error.dependencies,
+                    });
+                }
+                return replyCoreReviewWriteError(
+                    request,
+                    reply,
+                    error,
+                    "core-review land-areas delete-from-source failed",
+                    { entity: "land-areas", operation: "delete-from-source" },
+                );
+            }
+        },
+    );
+
+    app.post(
+        "/land-areas/clear-render-suppression",
+        {
+            preHandler: [app.authenticate, app.requireDashboardWrite],
+            schema: postCoreReviewLandAreaClearSuppressionSchema,
+        },
+        async (request, reply) => {
+            const parsed = clearLandAreaRenderSuppressionBodySchema.safeParse(request.body);
+            if (!parsed.success) {
+                return reply.code(400).send({
+                    message: "Invalid clear-suppression payload. confirm must be CLEAR_SUPPRESSION.",
+                    issues: parsed.error.flatten(),
+                });
+            }
+
+            try {
+                return reply.send(await service.clearLandAreaRenderSuppression(parsed.data));
+            } catch (error) {
+                if (error instanceof CoreReviewValidationError) {
+                    return replyCoreReviewValidationError(reply, error);
+                }
+                return replyCoreReviewWriteError(
+                    request,
+                    reply,
+                    error,
+                    "core-review land-areas clear-render-suppression failed",
+                    { entity: "land-areas", operation: "clear-render-suppression" },
+                );
+            }
+        },
     );
 
     app.post(

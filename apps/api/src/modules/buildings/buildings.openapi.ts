@@ -164,6 +164,20 @@ const buildingRowSchema = {
     additionalProperties: false,
 } as const;
 
+const promoteOsmBuildingResponseSchema = {
+    type: "object",
+    required: ["feature_key", "local_source", "operation", "core_id", "public_id", "building"],
+    properties: {
+        feature_key: { type: "string" },
+        local_source: { type: "string", enum: ["archive", "base"] },
+        operation: { type: "string", enum: ["created", "existing", "updated"] },
+        core_id: { type: "string" },
+        public_id: { type: "string", format: "uuid" },
+        building: buildingRowSchema,
+    },
+    additionalProperties: false,
+} as const;
+
 const validationIssueSchema = {
     type: "object",
     required: ["path", "message"],
@@ -346,6 +360,117 @@ export const postBuildingsSchema = {
     body: createBuildingBodyOpenApi,
     response: {
         201: buildingRowSchema,
+        400: {
+            oneOf: [badRequestSchema, buildingValidationErrorSchema],
+        },
+        401: messageSchema,
+        403: forbiddenSchema,
+        500: serverErrorMessageSchema,
+    },
+} satisfies FastifySchema;
+
+export const postBuildingsPromoteOsmSchema = {
+    tags: [Tags.Buildings],
+    summary: "Promote an OSM building from local tile_source into Core",
+    description:
+        "Identity-aware create or idempotent reuse/update. Does not stamp dashboard source. Matches osm:way:123, osm:W:123, and typed source_feature_type/source_feature_id.",
+    security: [...bearerAuth],
+    body: {
+        type: "object",
+        additionalProperties: false,
+        required: ["feature_key", "local_source", "geometry"],
+        properties: {
+            feature_key: { type: "string" },
+            local_source: { type: "string", enum: ["archive", "base"] },
+            geometry: buildingGeometrySchema,
+            class_code: { type: "string" },
+            name: { type: "string", nullable: true },
+            name_mm: { type: "string", nullable: true },
+            name_en: { type: "string", nullable: true },
+        },
+    },
+    response: {
+        200: promoteOsmBuildingResponseSchema,
+        201: promoteOsmBuildingResponseSchema,
+        400: {
+            oneOf: [badRequestSchema, buildingValidationErrorSchema],
+        },
+        401: messageSchema,
+        403: forbiddenSchema,
+        409: messageSchema,
+        500: serverErrorMessageSchema,
+    },
+} satisfies FastifySchema;
+
+export const postBuildingsDemoteOsmSchema = {
+    tags: [Tags.Buildings],
+    summary: "Preflight or hard-remove a Core OSM building for local demotion",
+    description:
+        "Does not soft-delete. Removal is a hard delete used only after local Archive is written.",
+    security: [...bearerAuth],
+    body: {
+        type: "object",
+        additionalProperties: false,
+        required: ["feature_key"],
+        properties: {
+            feature_key: { type: "string" },
+        },
+    },
+    response: {
+        200: { type: "object", additionalProperties: true },
+        400: {
+            oneOf: [badRequestSchema, buildingValidationErrorSchema],
+        },
+        401: messageSchema,
+        403: forbiddenSchema,
+        404: notFoundSchema,
+        409: { type: "object", additionalProperties: true },
+        500: serverErrorMessageSchema,
+    },
+} satisfies FastifySchema;
+
+export const postBuildingsDeleteOsmSchema = {
+    tags: [Tags.Buildings],
+    summary: "DELETE a building from public rendering (identity suppression)",
+    description:
+        "Writes a tiny render-suppression row and removes Core when safe. Base and Archive must not render. Requires confirm=DELETE.",
+    security: [...bearerAuth],
+    body: {
+        type: "object",
+        additionalProperties: false,
+        required: ["feature_key", "confirm"],
+        properties: {
+            feature_key: { type: "string" },
+            confirm: { type: "string", enum: ["DELETE"] },
+        },
+    },
+    response: {
+        200: { type: "object", additionalProperties: true },
+        400: {
+            oneOf: [badRequestSchema, buildingValidationErrorSchema],
+        },
+        401: messageSchema,
+        403: forbiddenSchema,
+        409: { type: "object", additionalProperties: true },
+        500: serverErrorMessageSchema,
+    },
+} satisfies FastifySchema;
+
+export const postBuildingsClearRenderSuppressionSchema = {
+    tags: [Tags.Buildings],
+    summary: "Clear a building render suppression so promote can run again",
+    security: [...bearerAuth],
+    body: {
+        type: "object",
+        additionalProperties: false,
+        required: ["feature_key", "confirm"],
+        properties: {
+            feature_key: { type: "string" },
+            confirm: { type: "string", enum: ["CLEAR_SUPPRESSION"] },
+        },
+    },
+    response: {
+        200: { type: "object", additionalProperties: true },
         400: {
             oneOf: [badRequestSchema, buildingValidationErrorSchema],
         },

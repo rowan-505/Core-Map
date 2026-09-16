@@ -29,12 +29,26 @@ import {
     type BuildingDetailRow,
     type BuildingGeometryAnalysisRow,
     type BuildingPersistSnapshot,
+    type BuildingDemoteDependency,
+    type BuildingDemoteSnapshotRow,
 } from "./buildings.repo.js";
 import { resolveBuildingAdminAreaForUpdate } from "../../lib/core-review/building-admin-area-write.js";
-import { createBuildingBodySchema, updateBuildingBodySchema } from "./buildings.schema.js";
+import {
+    createBuildingBodySchema,
+    demoteOsmBuildingBodySchema,
+    deleteOsmBuildingBodySchema,
+    clearBuildingRenderSuppressionBodySchema,
+    promoteOsmBuildingBodySchema,
+    updateBuildingBodySchema,
+} from "./buildings.schema.js";
+import { parseBuildingOsmFeatureKey } from "../../lib/osm/building-osm-feature-key.js";
 
 type CreateBuildingBody = z.infer<typeof createBuildingBodySchema>;
 type UpdateBuildingBody = z.infer<typeof updateBuildingBodySchema>;
+type PromoteOsmBuildingBody = z.infer<typeof promoteOsmBuildingBodySchema>;
+type DemoteOsmBuildingBody = z.infer<typeof demoteOsmBuildingBodySchema>;
+type DeleteOsmBuildingBody = z.infer<typeof deleteOsmBuildingBodySchema>;
+type ClearBuildingRenderSuppressionBody = z.infer<typeof clearBuildingRenderSuppressionBodySchema>;
 
 const AREA_MIN_EXCLUSIVE = 3;
 const AREA_MAX_EXCLUSIVE = 200_000;
@@ -113,6 +127,23 @@ export class BuildingNotFoundError extends Error {
     }
 }
 
+export class BuildingSuppressedError extends Error {
+    constructor(message = "Building is deleted or suppressed in Core") {
+        super(message);
+        this.name = "BuildingSuppressedError";
+    }
+}
+
+export class BuildingDemoteBlockedError extends Error {
+    readonly dependencies: BuildingDemoteDependency[];
+
+    constructor(message: string, dependencies: BuildingDemoteDependency[]) {
+        super(message);
+        this.name = "BuildingDemoteBlockedError";
+        this.dependencies = dependencies;
+    }
+}
+
 export class BuildingValidationError extends Error {
     readonly issues: BuildingValidationIssue[];
 
@@ -169,6 +200,149 @@ export class BuildingsService {
         }
 
         return this.serializeBuilding(created);
+    }
+
+    async promoteOsmBuilding(body: PromoteOsmBuildingBody, user: JwtUser) {
+        const identity = parseBuildingOsmFeatureKey(body.feature_key);
+        if (!identity) {
+            throw new BuildingValidationError("Invalid building feature_key", [
+                {
+                    path: "feature_key",
+                    message:
+                        "feature_key must be a canonical building OSM identity (osm:way:<id> or osm:relation:<id>).",
+                },
+            ]);
+        }
+
+        const renderSuppression = await this.buildingsRepo.findBuildingRenderSuppression(identity.featureKey);
+        if (renderSuppression) {
+            throw new BuildingSuppressedError(
+                "This building is render-suppressed (DELETE). Clear the suppression before promoting."
+            );
+        }
+
+        const geojsonText = JSON.stringify(body.geometry);
+        await this.validateGeoJsonForOsmPromote(geojsonText);
+
+        const existing = await this.buildingsRepo.findOsmBuildingByIdentity({
+            sourceFeatureType: identity.sourceFeatureType,
+            sourceFeatureId: identity.sourceFeatureId,
+            featureKey: identity.featureKey,
+        });
+
+        if (existing?.deleted_at || existing?.is_active === false) {
+            throw new BuildingSuppressedError(
+                "This building already exists in Core but is deleted or inactive. Restore it instead of promoting again."
+            );
+        }
+
+        const snapshot = await this.buildPersistSnapshotFromPromote(body, user);
+        const editorId = editorIdFromJwt(user);
+        const sourceRefs = {
+            source: "osm_myanmar",
+            osm_feature_type: identity.sourceFeatureType,
+            osm_id: identity.sourceFeatureId.toString(),
+            promotion: {
+                feature_key: identity.featureKey,
+                local_source: body.local_source,
+            },
+        };
+
+        if (existing) {
+            if (body.local_source === "base") {
+                const row = await this.buildingsRepo.getActiveBuildingByPublicId(existing.public_id);
+                if (!row) {
+                    throw new BuildingNotFoundError();
+                }
+                return {
+                    feature_key: identity.featureKey,
+                    local_source: body.local_source,
+                    operation: "existing" as const,
+                    core_id: row.id,
+                    public_id: row.public_id,
+                    building: this.serializeBuilding(row),
+                };
+            }
+
+            const updated = await this.buildingsRepo.updatePromotedOsmBuilding(
+                existing.public_id,
+                geojsonText,
+                snapshot,
+                {
+                    featureKey: identity.featureKey,
+                    sourceFeatureType: identity.sourceFeatureType,
+                    sourceFeatureId: identity.sourceFeatureId,
+                    sourceRefs,
+                    editorId,
+                }
+            );
+
+            if (!updated) {
+                throw new BuildingValidationError("Building geometry update failed validation", [
+                    {
+                        path: "geometry",
+                        message: "Geometry must be a valid non-empty Polygon or MultiPolygon in EPSG:4326.",
+                    },
+                ]);
+            }
+
+            return {
+                feature_key: identity.featureKey,
+                local_source: body.local_source,
+                operation: "updated" as const,
+                core_id: updated.id,
+                public_id: updated.public_id,
+                building: this.serializeBuilding(updated),
+            };
+        }
+
+        try {
+            const created = await this.buildingsRepo.createPromotedOsmBuilding(geojsonText, snapshot, {
+                featureKey: identity.featureKey,
+                sourceFeatureType: identity.sourceFeatureType,
+                sourceFeatureId: identity.sourceFeatureId,
+                sourceRefs,
+                editorId,
+            });
+
+            if (!created) {
+                throw new BuildingValidationError("Building could not be saved", [
+                    {
+                        path: "geometry",
+                        message: "Geometry must be a valid non-empty Polygon or MultiPolygon in EPSG:4326.",
+                    },
+                ]);
+            }
+
+            return {
+                feature_key: identity.featureKey,
+                local_source: body.local_source,
+                operation: "created" as const,
+                core_id: created.id,
+                public_id: created.public_id,
+                building: this.serializeBuilding(created),
+            };
+        } catch (error) {
+            const raced = await this.buildingsRepo.findOsmBuildingByIdentity({
+                sourceFeatureType: identity.sourceFeatureType,
+                sourceFeatureId: identity.sourceFeatureId,
+                featureKey: identity.featureKey,
+            });
+            if (raced && !raced.deleted_at && raced.is_active !== false) {
+                const row = await this.buildingsRepo.getActiveBuildingByPublicId(raced.public_id);
+                if (row) {
+                    return {
+                        feature_key: identity.featureKey,
+                        local_source: body.local_source,
+                        operation: "existing" as const,
+                        core_id: row.id,
+                        public_id: row.public_id,
+                        building: this.serializeBuilding(row),
+                    };
+                }
+            }
+            throw error;
+        }
     }
 
     async updateBuilding(publicId: string, body: UpdateBuildingBody, user: JwtUser) {
@@ -280,6 +454,315 @@ export class BuildingsService {
         }
 
         return { public_id: deleted.public_id };
+    }
+
+    async deleteOsmBuildingFromTiles(body: DeleteOsmBuildingBody, user: JwtUser) {
+        const identity = parseBuildingOsmFeatureKey(body.feature_key);
+        if (!identity) {
+            throw new BuildingValidationError("Invalid building feature_key", [
+                {
+                    path: "feature_key",
+                    message:
+                        "feature_key must be a canonical building OSM identity (osm:way:<id> or osm:relation:<id>).",
+                },
+            ]);
+        }
+
+        const existing = await this.buildingsRepo.findOsmBuildingByIdentity({
+            sourceFeatureType: identity.sourceFeatureType,
+            sourceFeatureId: identity.sourceFeatureId,
+            featureKey: identity.featureKey,
+        });
+
+        if (existing) {
+            const row = await this.buildingsRepo.getBuildingDemoteSnapshot(existing.public_id);
+            const dependencies = await this.collectDeleteDependencies(existing.id, existing.public_id);
+            if (dependencies.length > 0) {
+                throw new BuildingDemoteBlockedError(
+                    "Delete is blocked because removing this Core building would break protected relationships.",
+                    dependencies,
+                );
+            }
+            const suppression = await this.buildingsRepo.upsertBuildingRenderSuppression({
+                featureKey: identity.featureKey,
+                actorUserId: editorIdFromJwt(user),
+            });
+            let coreRemoved = false;
+            try {
+                const removed = await this.buildingsRepo.removeBuildingForDelete({
+                    publicId: existing.public_id,
+                    actorUserId: editorIdFromJwt(user),
+                    before: {
+                        feature_key: identity.featureKey,
+                        public_id: existing.public_id,
+                        class_code: row?.class_code ?? null,
+                    },
+                });
+                coreRemoved = Boolean(removed);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                if (/23503|foreign key/i.test(message)) {
+                    throw new BuildingDemoteBlockedError(
+                        "Core building could not be removed because a database relationship still references it. Suppression was written.",
+                        [
+                            {
+                                code: "foreign_key",
+                                count: 1,
+                                message: "A protected foreign key still points at this Core building.",
+                            },
+                        ],
+                    );
+                }
+                throw error;
+            }
+            return {
+                feature_key: identity.featureKey,
+                suppressed: true,
+                created: suppression.created,
+                core_removed: coreRemoved,
+            };
+        }
+
+        const suppression = await this.buildingsRepo.upsertBuildingRenderSuppression({
+            featureKey: identity.featureKey,
+            actorUserId: editorIdFromJwt(user),
+        });
+        return {
+            feature_key: identity.featureKey,
+            suppressed: true,
+            created: suppression.created,
+            core_removed: false,
+        };
+    }
+
+    async clearBuildingRenderSuppression(body: ClearBuildingRenderSuppressionBody) {
+        const identity = parseBuildingOsmFeatureKey(body.feature_key);
+        if (!identity) {
+            throw new BuildingValidationError("Invalid building feature_key", [
+                {
+                    path: "feature_key",
+                    message:
+                        "feature_key must be a canonical building OSM identity (osm:way:<id> or osm:relation:<id>).",
+                },
+            ]);
+        }
+        const cleared = await this.buildingsRepo.clearBuildingRenderSuppression(identity.featureKey);
+        return { feature_key: identity.featureKey, cleared };
+    }
+
+    private async collectDeleteDependencies(
+        buildingIdText: string,
+        publicId: string,
+    ): Promise<BuildingDemoteDependency[]> {
+        const dependencies: BuildingDemoteDependency[] = [];
+        const buildingId = BigInt(buildingIdText);
+        const placeLinks = await this.buildingsRepo.countPlaceBuildingLinks(buildingId);
+        if (placeLinks > 0) {
+            dependencies.push({
+                code: "place_building_links",
+                count: placeLinks,
+                message: `${placeLinks} place–building link(s) would be removed by cascade.`,
+            });
+        }
+        const addressMatches = await this.buildingsRepo.countMatchedAddressCandidates(buildingId);
+        if (addressMatches > 0) {
+            dependencies.push({
+                code: "address_candidate_matches",
+                count: addressMatches,
+                message: `${addressMatches} import-review address candidate(s) still reference this building.`,
+            });
+        }
+        const openReports = await this.buildingsRepo.countOpenBuildingReports(buildingId, publicId);
+        if (openReports > 0) {
+            dependencies.push({
+                code: "open_reports",
+                count: openReports,
+                message: `${openReports} open report(s) still target this building.`,
+            });
+        }
+        return dependencies;
+    }
+
+    async preflightDemoteOsmBuilding(body: DemoteOsmBuildingBody) {
+        return this.prepareDemotePayload(body.feature_key);
+    }
+
+    async removeDemotedOsmBuilding(body: DemoteOsmBuildingBody, user: JwtUser) {
+        const prepared = await this.prepareDemotePayload(body.feature_key);
+        try {
+            const removed = await this.buildingsRepo.removeActiveBuildingForDemote({
+                publicId: prepared.public_id,
+                actorUserId: editorIdFromJwt(user),
+                before: prepared.core_snapshot,
+            });
+            if (!removed) {
+                throw new BuildingNotFoundError("No active Core building for this feature_key");
+            }
+            return {
+                feature_key: prepared.feature_key,
+                core_id: removed.id,
+                public_id: removed.public_id,
+                removed: true,
+            };
+        } catch (error) {
+            if (error instanceof BuildingNotFoundError || error instanceof BuildingDemoteBlockedError) {
+                throw error;
+            }
+            const message = error instanceof Error ? error.message : String(error);
+            if (/23503|foreign key/i.test(message)) {
+                throw new BuildingDemoteBlockedError(
+                    "Core building could not be removed because a database relationship still references it.",
+                    [
+                        {
+                            code: "foreign_key",
+                            count: 1,
+                            message: "A protected foreign key still points at this Core building.",
+                        },
+                    ]
+                );
+            }
+            throw error;
+        }
+    }
+
+    private async prepareDemotePayload(rawFeatureKey: string) {
+        const identity = parseBuildingOsmFeatureKey(rawFeatureKey);
+        if (!identity) {
+            throw new BuildingValidationError("Invalid building feature_key", [
+                {
+                    path: "feature_key",
+                    message:
+                        "feature_key must be a canonical building OSM identity (osm:way:<id> or osm:relation:<id>).",
+                },
+            ]);
+        }
+
+        const existing = await this.buildingsRepo.findOsmBuildingByIdentity({
+            sourceFeatureType: identity.sourceFeatureType,
+            sourceFeatureId: identity.sourceFeatureId,
+            featureKey: identity.featureKey,
+        });
+
+        if (!existing || existing.deleted_at || existing.is_active === false) {
+            throw new BuildingNotFoundError("No active Core building for this feature_key");
+        }
+
+        const row = await this.buildingsRepo.getBuildingDemoteSnapshot(existing.public_id);
+        if (!row) {
+            throw new BuildingNotFoundError("No active Core building for this feature_key");
+        }
+
+        const dependencies = await this.collectDemoteDependencies(row);
+        if (dependencies.length > 0) {
+            throw new BuildingDemoteBlockedError(
+                "Demotion is blocked because removing this Core building would break protected relationships.",
+                dependencies
+            );
+        }
+
+        const names = await this.buildingsRepo.listBuildingNamesForDemote(BigInt(row.id));
+        const nameMm =
+            names.find((n) => n.language_code === "my" || n.language_code === "mm")?.name ?? null;
+        const nameEn = names.find((n) => n.language_code === "en")?.name ?? null;
+        const nameUnd = names.find((n) => n.language_code === "und")?.name ?? row.name;
+
+        return {
+            feature_key: identity.featureKey,
+            core_id: row.id,
+            public_id: row.public_id,
+            class_code: row.class_code,
+            name: nameUnd,
+            name_mm: nameMm,
+            name_en: nameEn,
+            geometry: row.geometry,
+            core_snapshot: this.buildDemoteCoreSnapshot(row, names, identity.featureKey),
+        };
+    }
+
+    private async collectDemoteDependencies(row: BuildingDemoteSnapshotRow): Promise<BuildingDemoteDependency[]> {
+        const dependencies: BuildingDemoteDependency[] = [];
+        const geom = row.geometry;
+        if (!geom || (geom.type !== "Polygon" && geom.type !== "MultiPolygon")) {
+            dependencies.push({
+                code: "invalid_geometry",
+                count: 1,
+                message: "Core geometry is missing or is not a polygon.",
+            });
+        }
+
+        const buildingId = BigInt(row.id);
+        const placeLinks = await this.buildingsRepo.countPlaceBuildingLinks(buildingId);
+        if (placeLinks > 0) {
+            dependencies.push({
+                code: "place_building_links",
+                count: placeLinks,
+                message: `${placeLinks} place–building link(s) would be removed by cascade.`,
+            });
+        }
+
+        const addressMatches = await this.buildingsRepo.countMatchedAddressCandidates(buildingId);
+        if (addressMatches > 0) {
+            dependencies.push({
+                code: "address_candidate_matches",
+                count: addressMatches,
+                message: `${addressMatches} import-review address candidate(s) still reference this building.`,
+            });
+        }
+
+        const openReports = await this.buildingsRepo.countOpenBuildingReports(buildingId, row.public_id);
+        if (openReports > 0) {
+            dependencies.push({
+                code: "open_reports",
+                count: openReports,
+                message: `${openReports} open report(s) still target this building.`,
+            });
+        }
+
+        return dependencies;
+    }
+
+    private buildDemoteCoreSnapshot(
+        row: BuildingDemoteSnapshotRow,
+        names: Awaited<ReturnType<BuildingsRepository["listBuildingNamesForDemote"]>>,
+        featureKey: string
+    ) {
+        return {
+            feature_key: featureKey,
+            id: row.id,
+            public_id: row.public_id,
+            external_id: row.external_id,
+            name: row.name,
+            names,
+            class_code: row.class_code,
+            building_type_id: row.building_type_id,
+            admin_area_id: row.admin_area_id,
+            region_code: row.region_code,
+            levels: row.levels,
+            height_m: row.height_m,
+            area_m2: row.area_m2,
+            centroid: row.centroid,
+            geometry: row.geometry,
+            confidence_score: row.confidence_score,
+            verification_status: row.verification_status,
+            is_verified: row.is_verified,
+            verified_at: row.verified_at,
+            verified_by: row.verified_by,
+            verification_note: row.verification_note,
+            is_active: row.is_active,
+            deleted_at: row.deleted_at,
+            is_geometry_manually_edited: row.is_geometry_manually_edited,
+            is_attributes_manually_edited: row.is_attributes_manually_edited,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            created_by: row.created_by,
+            updated_by: row.updated_by,
+            source_registry_id: row.source_registry_id,
+            source_snapshot_id: row.source_snapshot_id,
+            source_feature_type: row.source_feature_type,
+            source_feature_id: row.source_feature_id,
+            source_refs: row.source_refs,
+            normalized_data: row.normalized_data,
+        };
     }
 
     async listRefBuildingTypes() {
@@ -582,6 +1065,54 @@ export class BuildingsService {
         }
     }
 
+    private async buildPersistSnapshotFromPromote(
+        body: PromoteOsmBuildingBody,
+        user: JwtUser
+    ): Promise<BuildingPersistSnapshot> {
+        const classified = classifyBuildingTypeCode(body.class_code);
+        const matched = await this.buildingsRepo.findBuildingTypeByCode(classified.code);
+        if (!matched) {
+            throw new BuildingValidationError("Invalid building type", [
+                {
+                    path: "class_code",
+                    message: BUILDING_TYPE_ID_VALIDATION_MESSAGE,
+                },
+            ]);
+        }
+
+        const { admin_area_id, admin_area_resolve_spatial } = await this.resolveBuildingAdminAssignment(
+            body.geometry,
+            undefined,
+            user
+        );
+
+        return {
+            name: body.name ?? null,
+            name_mm: body.name_mm,
+            name_en: body.name_en,
+            class_code: matched.code,
+            building_type_column: matched.code,
+            building_type_id: matched.id,
+            admin_area_resolve_spatial,
+            admin_area_id,
+            normalized_data: {
+                class_code: body.class_code ?? matched.code,
+                building_type: matched.code,
+                building_type_id: String(matched.id),
+                ...buildingTypeClassificationNormalizedPatch(classified),
+                promotion: {
+                    feature_key: body.feature_key,
+                    local_source: body.local_source,
+                },
+            },
+            levels: null,
+            height_m: null,
+            confidence_score: 80,
+            verification_status: "unverified",
+            is_verified: false,
+        };
+    }
+
     private async validateGeoJsonPipeline(geojsonText: string) {
         let analysis: BuildingGeometryAnalysisRow | null;
 
@@ -598,6 +1129,46 @@ export class BuildingsService {
         }
 
         this.validateAnalysisOrThrow(analysis);
+    }
+
+    private async validateGeoJsonForOsmPromote(geojsonText: string) {
+        let analysis: BuildingGeometryAnalysisRow | null;
+
+        try {
+            analysis = await this.buildingsRepo.analyzeBuildingGeometry(geojsonText);
+        } catch {
+            throw new BuildingValidationError("Geometry could not be parsed", [
+                {
+                    path: "geometry",
+                    message:
+                        "Invalid GeoJSON payload or incompatible geometry type for PostGIS ST_GeomFromGeoJSON.",
+                },
+            ]);
+        }
+
+        const issues: BuildingValidationIssue[] = [];
+        if (!analysis?.allowed_type) {
+            issues.push({
+                path: "geometry",
+                message: "Geometry must be a Polygon or MultiPolygon with coordinates in EPSG:4326.",
+            });
+        } else if (!analysis.is_valid) {
+            issues.push({
+                path: "geometry",
+                message: analysis.invalid_reason?.trim()
+                    ? `Invalid geometry: ${analysis.invalid_reason}`
+                    : "Geometry failed validity checks (ST_IsValid).",
+            });
+        } else if (analysis.area_m2 === null || !(analysis.area_m2 > 0)) {
+            issues.push({
+                path: "geometry",
+                message: "Geometry must have a non-empty area.",
+            });
+        }
+
+        if (issues.length > 0) {
+            throw new BuildingValidationError("Building geometry validation failed", issues);
+        }
     }
 
     private validateAnalysisOrThrow(analysis: BuildingGeometryAnalysisRow | null) {

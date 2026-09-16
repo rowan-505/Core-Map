@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "purpose": "Pinned tool versions for the permanent CoreMap PMTiles build machine (Windows/WSL Ubuntu).",
+  "pinned_at": "2026-09-07",
+  "tools": {
+    "ubuntu": {
+      "id": "ubuntu",
+      "version": "24.04",
+      "pretty_name": "Ubuntu 24.04.4 LTS",
+      "essential": true
+    },
+    "postgresql": {
+      "command": "psql",
+      "version": "17.11",
+      "essential": true
+    },
+    "postgis": {
+      "package": "postgresql-17-postgis-3",
+      "version": "3.6.4",
+      "essential": true
+    },
+    "gdal": {
+      "command": "ogr2ogr",
+      "also_require": ["ogrinfo"],
+      "version": "3.13.2",
+      "essential": true
+    },
+    "python": {
+      "command": "python3",
+      "version": "3.12.3",
+      "essential": true
+    },
+    "tippecanoe": {
+      "command": "tippecanoe",
+      "version": "2.79.0",
+      "essential": true,
+      "install_hint": "Build tippecanoe 2.79.0 from https://github.com/felt/tippecanoe and install to ~/.local/bin"
+    },
+    "tile-join": {
+      "command": "tile-join",
+      "version": "2.79.0",
+      "essential": true,
+      "note": "Ships with the tippecanoe package; version should match tippecanoe.",
+      "install_hint": "Build tippecanoe 2.79.0 from https://github.com/felt/tippecanoe and install to ~/.local/bin"
+    },
+    "pmtiles": {
+      "command": "pmtiles",
+      "version": "1.31.2",
+      "essential": true,
+      "source": "protomaps/go-pmtiles",
+      "install_hint": "Install go-pmtiles v1.31.2 Linux x86_64 binary as `pmtiles` on PATH (e.g. /usr/local/bin/pmtiles)."
+    }
+  }
+}

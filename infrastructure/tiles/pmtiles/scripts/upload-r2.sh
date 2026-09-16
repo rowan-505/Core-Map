@@ -14,7 +14,8 @@
 #     v2
 #
 # Object key:
-#   coremap-tiles-prod/basemaps/<region>/<version>/basemap.pmtiles
+#   regional: basemaps/<region>/<version>/basemap.pmtiles
+#   overview: basemaps/overview/<version>/myanmar-overview-<version>.pmtiles
 #
 # Environment overrides:
 #   R2_REMOTE            rclone remote name        (default: r2)
@@ -26,7 +27,8 @@ set -euo pipefail
 usage() {
   echo "usage: bash infrastructure/tiles/pmtiles/scripts/upload-r2.sh <local_pmtiles_file> <region> <version>" >&2
   echo "example: bash infrastructure/tiles/pmtiles/scripts/upload-r2.sh \\" >&2
-  echo "  infrastructure/tiles/pmtiles/output/yangon-v2.pmtiles yangon v2" >&2
+  echo "  infrastructure/tiles/pmtiles/regions/yangon/yangon-v2.pmtiles yangon v2" >&2
+  echo "overview: bash …/upload-r2.sh …/myanmar-overview-v2.pmtiles overview v2" >&2
 }
 
 if [[ $# -ne 3 ]]; then
@@ -43,7 +45,11 @@ R2_BUCKET="${R2_BUCKET:-coremap-tiles-prod}"
 R2_PUBLIC_BASE_URL="${R2_PUBLIC_BASE_URL:-https://tiles.coremapmm.com}"
 OVERWRITE="${OVERWRITE:-false}"
 
-OBJECT_KEY="basemaps/${REGION}/${VERSION}/basemap.pmtiles"
+if [[ "$REGION" == "overview" ]]; then
+  OBJECT_KEY="basemaps/overview/${VERSION}/myanmar-overview-${VERSION}.pmtiles"
+else
+  OBJECT_KEY="basemaps/${REGION}/${VERSION}/basemap.pmtiles"
+fi
 REMOTE_PATH="${R2_REMOTE}:${R2_BUCKET}/${OBJECT_KEY}"
 PUBLIC_URL="${R2_PUBLIC_BASE_URL%/}/${OBJECT_KEY}"
 

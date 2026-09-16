@@ -2,11 +2,13 @@
   "version": 8,
   "name": "CoreMap Myanmar Overview",
   "metadata": {
-    "local-map:purpose": "CoreMap Myanmar overview, z0–z8.",
-    "local-map:zoom-range": "0-8",
-    "local-map:visibility": "z0-4: ocean, land, boundaries, Myanmar outline | z4-6: neighbor country labels (no Myanmar) | z5.5-8: mmr_admin1 state labels | z7-8: major cities | z6-8: major lakes/rivers",
-    "local-map:glyphs": "Self-hosted NotoSansMyanmar-Regular at /fonts/{fontstack}/{range}.pbf",
-    "local-map:pmtiles-url": "Template only — pmtiles://__OVERVIEW_PMTILES_URL__. Web injects VITE_OVERVIEW_PMTILES_URL at runtime; use createOverviewStyle(httpUrl) elsewhere."
+    "local-map:purpose": "CoreMap Myanmar overview — Core country geom + Natural Earth world context. No MIMU.",
+    "local-map:native-maxzoom": 8,
+    "local-map:country-fill-maxzoom": 9,
+    "local-map:country-outline-maxzoom": 10,
+    "local-map:country-hide-note": "Temporary: imprecise country geom fades out by z9/z10; relax after QGIS replace.",
+    "local-map:source-layers": "land,ocean,coastline,countries,country_boundaries,populated_places,lakes,rivers,myanmar_country,myanmar_state_region,myanmar_state_labels",
+    "local-map:pmtiles-url": "Template only — pmtiles://__OVERVIEW_PMTILES_URL__."
   },
   "glyphs": "/fonts/{fontstack}/{range}.pbf",
   "sources": {
@@ -41,6 +43,40 @@
       }
     },
     {
+      "id": "myanmar-country-fill",
+      "type": "fill",
+      "source": "overview",
+      "source-layer": "myanmar_country",
+      "minzoom": 0,
+      "maxzoom": 9,
+      "metadata": {
+        "local-map:role": "myanmar-country-fill",
+        "local-map:note": "Core country geom tint. Temporary: fade out by z9 while geom is imprecise (style-only hide)."
+      },
+      "paint": {
+        "fill-color": "#dfe8d6",
+        "fill-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          2,
+          0.14,
+          4,
+          0.11,
+          7,
+          0.08,
+          8.5,
+          0.03,
+          9,
+          0
+        ]
+      }
+    },
+    {
       "id": "overview-lakes",
       "type": "fill",
       "source": "overview",
@@ -48,19 +84,24 @@
       "minzoom": 6,
       "maxzoom": 9,
       "filter": [
-        "all",
-        ["<=", ["coalesce", ["get", "min_zoom"], 0], ["zoom"]],
-        ["<=", ["coalesce", ["get", "scalerank"], 99], 6]
+        "all"
       ],
       "paint": {
-        "fill-color": "#c5dde8",
+        "fill-color": "#b9e2f4",
         "fill-opacity": [
           "interpolate",
-          ["linear"],
-          ["zoom"],
-          6, 0.45,
-          7, 0.62,
-          8, 0.72
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          0.45,
+          7,
+          0.62,
+          8,
+          0.72
         ]
       }
     },
@@ -72,31 +113,42 @@
       "minzoom": 6,
       "maxzoom": 9,
       "filter": [
-        "all",
-        ["<=", ["coalesce", ["get", "min_zoom"], 0], ["zoom"]],
-        ["<=", ["coalesce", ["get", "scalerank"], 99], 6]
+        "all"
       ],
       "layout": {
         "line-cap": "round",
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#9cc6d8",
+        "line-color": "#8fd3ec",
         "line-opacity": [
           "interpolate",
-          ["linear"],
-          ["zoom"],
-          6, 0.4,
-          7, 0.58,
-          8, 0.7
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          0.4,
+          7,
+          0.58,
+          8,
+          0.7
         ],
         "line-width": [
           "interpolate",
-          ["exponential", 1.2],
-          ["zoom"],
-          6, 0.4,
-          7, 0.65,
-          8, 0.95
+          [
+            "exponential",
+            1.2
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          0.4,
+          8,
+          0.9
         ]
       }
     },
@@ -105,43 +157,38 @@
       "type": "fill",
       "source": "overview",
       "source-layer": "countries",
-      "maxzoom": 9,
+      "maxzoom": 7,
+      "filter": [
+        "!=",
+        [
+          "upcase",
+          [
+            "coalesce",
+            [
+              "get",
+              "ADM0_A3"
+            ],
+            ""
+          ]
+        ],
+        "MMR"
+      ],
       "paint": {
         "fill-color": "#e4e2dc",
         "fill-opacity": [
           "interpolate",
-          ["linear"],
-          ["zoom"],
-          0, 0.16,
-          4, 0.2,
-          8, 0.26
-        ]
-      }
-    },
-    {
-      "id": "overview-mmr-admin1-fill",
-      "type": "fill",
-      "source": "overview",
-      "source-layer": "mmr_admin1",
-      "minzoom": 4,
-      "maxzoom": 9,
-      "paint": {
-        "fill-color": [
-          "interpolate",
-          ["linear"],
-          ["%", ["to-number", ["coalesce", ["get", "PCode_V"], 0]], 16],
-          0, "#e8e8f0",
-          8, "#dfe8e4",
-          15, "#ece6ea"
-        ],
-        "fill-opacity": [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          4, 0.26,
-          5, 0.34,
-          7, 0.4,
-          8, 0.42
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          0,
+          0.16,
+          4,
+          0.2,
+          8,
+          0.26
         ]
       }
     },
@@ -150,29 +197,43 @@
       "type": "line",
       "source": "overview",
       "source-layer": "coastline",
-      "minzoom": 5,
-      "maxzoom": 9,
+      "minzoom": 0,
+      "maxzoom": 7,
       "layout": {
         "line-cap": "round",
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#8fb8c8",
-        "line-opacity": [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          5, 0.5,
-          7, 0.75,
-          8, 0.85
-        ],
+        "line-color": "#9bb8c4",
         "line-width": [
           "interpolate",
-          ["linear"],
-          ["zoom"],
-          5, 0.35,
-          7, 0.6,
-          8, 0.85
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          2,
+          0.2,
+          5,
+          0.3,
+          8,
+          0.25
+        ],
+        "line-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          2,
+          0.35,
+          6,
+          0.45,
+          8,
+          0.35
         ]
       }
     },
@@ -181,162 +242,284 @@
       "type": "line",
       "source": "overview",
       "source-layer": "country_boundaries",
-      "metadata": {
-        "local-map:role": "neighbor-country-boundaries",
-        "local-map:note": "Natural Earth neighbor land boundaries only. Myanmar segments excluded; mmr_admin0_z* tiers draw Myanmar admin0 through z6."
-      },
-      "maxzoom": 9,
+      "minzoom": 0,
+      "maxzoom": 7,
       "filter": [
         "!",
         [
           "any",
-          ["==", ["upcase", ["coalesce", ["get", "ADM0_A3_L"], ""]], "MMR"],
-          ["==", ["upcase", ["coalesce", ["get", "ADM0_A3_R"], ""]], "MMR"],
-          ["==", ["upcase", ["coalesce", ["get", "SOV_A3_L"], ""]], "MMR"],
-          ["==", ["upcase", ["coalesce", ["get", "SOV_A3_R"], ""]], "MMR"],
-          ["==", ["upcase", ["coalesce", ["get", "BRK_A3_L"], ""]], "MMR"],
-          ["==", ["upcase", ["coalesce", ["get", "BRK_A3_R"], ""]], "MMR"],
-          ["==", ["upcase", ["coalesce", ["get", "ADM0_LEFT"], ""]], "MYANMAR"],
-          ["==", ["upcase", ["coalesce", ["get", "ADM0_RIGHT"], ""]], "MYANMAR"]
+          [
+            "==",
+            [
+              "upcase",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "ADM0_A3_L"
+                ],
+                ""
+              ]
+            ],
+            "MMR"
+          ],
+          [
+            "==",
+            [
+              "upcase",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "ADM0_A3_R"
+                ],
+                ""
+              ]
+            ],
+            "MMR"
+          ],
+          [
+            "==",
+            [
+              "upcase",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "SOV_A3_L"
+                ],
+                ""
+              ]
+            ],
+            "MMR"
+          ],
+          [
+            "==",
+            [
+              "upcase",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "SOV_A3_R"
+                ],
+                ""
+              ]
+            ],
+            "MMR"
+          ],
+          [
+            "==",
+            [
+              "upcase",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "BRK_A3_L"
+                ],
+                ""
+              ]
+            ],
+            "MMR"
+          ],
+          [
+            "==",
+            [
+              "upcase",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "BRK_A3_R"
+                ],
+                ""
+              ]
+            ],
+            "MMR"
+          ],
+          [
+            "==",
+            [
+              "upcase",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "ADM0_LEFT"
+                ],
+                ""
+              ]
+            ],
+            "MYANMAR"
+          ],
+          [
+            "==",
+            [
+              "upcase",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "ADM0_RIGHT"
+                ],
+                ""
+              ]
+            ],
+            "MYANMAR"
+          ]
         ]
       ],
       "layout": {
         "line-cap": "round",
         "line-join": "round"
       },
+      "metadata": {
+        "local-map:role": "neighbor-country-boundaries",
+        "local-map:note": "NE neighbors only; Myanmar national edge is myanmar-country-outline."
+      },
       "paint": {
         "line-color": "#b8b4c7",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.28, 3, 0.4, 6, 0.52],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.45, 3, 0.65, 6, 0.85]
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          0,
+          0.45,
+          3,
+          0.65,
+          6,
+          0.85
+        ],
+        "line-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          0,
+          0.28,
+          3,
+          0.4,
+          6,
+          0.52
+        ]
       }
     },
     {
       "id": "myanmar-internal-admin-boundary-line",
       "type": "line",
       "source": "overview",
-      "source-layer": "mmr_admin1",
+      "source-layer": "myanmar_state_region",
+      "minzoom": 4,
+      "maxzoom": 14,
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
       "metadata": {
         "local-map:role": "myanmar-internal-admin-boundaries",
-        "local-map:note": "MIMU state/region internal boundaries. minzoom 3; subtler than myanmar-admin0-boundary-line."
+        "local-map:note": "Secondary to myanmar-country-outline; fades by z14."
       },
-      "minzoom": 3,
+      "paint": {
+        "line-color": "#8a9099",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          0.35,
+          6,
+          0.5,
+          10,
+          0.6,
+          14,
+          0.45
+        ],
+        "line-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          0.25,
+          6,
+          0.35,
+          10,
+          0.3,
+          14,
+          0.15
+        ]
+      }
+    },
+    {
+      "id": "myanmar-country-outline",
+      "type": "line",
+      "source": "overview",
+      "source-layer": "myanmar_country",
+      "minzoom": 2,
       "maxzoom": 10,
       "layout": {
         "line-cap": "round",
         "line-join": "round"
       },
-      "paint": {
-        "line-color": "#aaa4bd",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 3, 0.35, 5, 0.48, 6, 0.55],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.45, 5, 0.65, 6, 0.8]
-      }
-    },
-    {
-      "id": "myanmar-admin0-boundary-casing-z02",
-      "type": "line",
-      "source": "overview",
-      "source-layer": "mmr_admin0_z0_2",
       "metadata": {
-        "local-map:role": "myanmar-admin0-boundary-casing",
-        "local-map:note": "Subtle land-tone halo z0–z2 tier."
+        "local-map:role": "myanmar-country-outline",
+        "local-map:note": "National boundary from Core country geom. Temporary: fade out by z10 while geom is imprecise. Above internal state lines."
       },
-      "minzoom": 0,
-      "maxzoom": 3,
-      "layout": { "line-cap": "round", "line-join": "round" },
       "paint": {
-        "line-color": "#f6f5ee",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.35, 3, 0.45, 6, 0.55],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 0, 1.4, 3, 1.8, 6, 2.2]
-      }
-    },
-    {
-      "id": "myanmar-admin0-boundary-line-z02",
-      "type": "line",
-      "source": "overview",
-      "source-layer": "mmr_admin0_z0_2",
-      "metadata": {
-        "local-map:role": "myanmar-admin0-boundary-line",
-        "local-map:note": "Myanmar admin0 z0–z2. source-layer mmr_admin0_z0_2."
-      },
-      "minzoom": 0,
-      "maxzoom": 3,
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": {
-        "line-color": "#5f5478",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.72, 3, 0.82, 6, 0.88],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.9, 3, 1.25, 6, 1.65]
-      }
-    },
-    {
-      "id": "myanmar-admin0-boundary-casing-z34",
-      "type": "line",
-      "source": "overview",
-      "source-layer": "mmr_admin0_z3_4",
-      "metadata": {
-        "local-map:role": "myanmar-admin0-boundary-casing",
-        "local-map:note": "Subtle land-tone halo z3–z4 tier."
-      },
-      "minzoom": 3,
-      "maxzoom": 5,
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": {
-        "line-color": "#f6f5ee",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.35, 3, 0.45, 6, 0.55],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 0, 1.4, 3, 1.8, 6, 2.2]
-      }
-    },
-    {
-      "id": "myanmar-admin0-boundary-line-z34",
-      "type": "line",
-      "source": "overview",
-      "source-layer": "mmr_admin0_z3_4",
-      "metadata": {
-        "local-map:role": "myanmar-admin0-boundary-line",
-        "local-map:note": "Myanmar admin0 z3–z4. source-layer mmr_admin0_z3_4."
-      },
-      "minzoom": 3,
-      "maxzoom": 5,
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": {
-        "line-color": "#5f5478",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.72, 3, 0.82, 6, 0.88],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.9, 3, 1.25, 6, 1.65]
-      }
-    },
-    {
-      "id": "myanmar-admin0-boundary-casing-z56",
-      "type": "line",
-      "source": "overview",
-      "source-layer": "mmr_admin0_z5_6",
-      "metadata": {
-        "local-map:role": "myanmar-admin0-boundary-casing",
-        "local-map:note": "Subtle land-tone halo z5–z6 tier. Hidden z7+."
-      },
-      "minzoom": 5,
-      "maxzoom": 7,
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": {
-        "line-color": "#f6f5ee",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.35, 3, 0.45, 6, 0.55],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 0, 1.4, 3, 1.8, 6, 2.2]
-      }
-    },
-    {
-      "id": "myanmar-admin0-boundary-line-z56",
-      "type": "line",
-      "source": "overview",
-      "source-layer": "mmr_admin0_z5_6",
-      "metadata": {
-        "local-map:role": "myanmar-admin0-boundary-line",
-        "local-map:note": "Myanmar admin0 z5–z6. source-layer mmr_admin0_z5_6. Hidden z7+."
-      },
-      "minzoom": 5,
-      "maxzoom": 7,
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": {
-        "line-color": "#5f5478",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.72, 3, 0.82, 6, 0.88],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.9, 3, 1.25, 6, 1.65]
+        "line-color": "#4a5568",
+        "line-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          3,
+          0.8,
+          6,
+          0.75,
+          8.5,
+          0.7,
+          9.5,
+          0.35,
+          10,
+          0
+        ],
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          2,
+          0.8,
+          4,
+          1.05,
+          6,
+          1.3,
+          8,
+          1.5,
+          10,
+          1.55
+        ]
       }
     },
     {
@@ -348,61 +531,129 @@
       "maxzoom": 6.5,
       "filter": [
         "all",
-        ["!=", ["coalesce", ["get", "TINY"], 0], 1],
         [
-          "<=",
-          ["coalesce", ["get", "LABELRANK"], 10],
-          ["step", ["zoom"], 4, 5.5, 5, 6, 6]
+          "!=",
+          [
+            "coalesce",
+            [
+              "get",
+              "TINY"
+            ],
+            0
+          ],
+          1
         ],
         [
-          "!",
+          "<=",
           [
-            "any",
-            ["==", ["upcase", ["coalesce", ["get", "ISO_A3"], ["get", "iso_a3"], ""]], "MMR"],
-            ["==", ["upcase", ["coalesce", ["get", "ADMIN"], ""]], "MYANMAR"],
-            ["==", ["upcase", ["coalesce", ["get", "BRK_A3"], ""]], "MMR"]
-          ]
+            "coalesce",
+            [
+              "get",
+              "LABELRANK"
+            ],
+            10
+          ],
+          5
+        ],
+        [
+          "!=",
+          [
+            "upcase",
+            [
+              "coalesce",
+              [
+                "get",
+                "ADM0_A3"
+              ],
+              ""
+            ]
+          ],
+          "MMR"
         ]
       ],
       "layout": {
         "symbol-placement": "point",
         "text-field": [
           "coalesce",
-          ["get", "NAME"],
-          ["get", "ADMIN"],
-          ["get", "NAME_EN"],
-          ["get", "NAME_LONG"]
+          [
+            "get",
+            "NAME"
+          ],
+          [
+            "get",
+            "ADMIN"
+          ],
+          [
+            "get",
+            "NAME_EN"
+          ],
+          [
+            "get",
+            "NAME_LONG"
+          ]
         ],
-        "text-font": ["NotoSansMyanmar-Regular"],
-        "text-size": ["interpolate", ["linear"], ["zoom"], 3, 10.5, 5, 12],
+        "text-font": [
+          "NotoSansMyanmar-Regular"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          3,
+          11,
+          5,
+          13,
+          6.5,
+          12
+        ],
         "text-max-width": 7,
         "text-padding": 52,
         "text-allow-overlap": false,
-        "text-ignore-placement": false,
         "text-optional": true,
-        "symbol-sort-key": ["-", ["coalesce", ["get", "LABELRANK"], 10]]
+        "symbol-sort-key": [
+          "-",
+          [
+            "coalesce",
+            [
+              "get",
+              "LABELRANK"
+            ],
+            10
+          ]
+        ]
       },
       "paint": {
-        "text-color": "#6f7488",
+        "text-color": "#5a5f66",
         "text-halo-color": "#f4f3ec",
-        "text-halo-width": 0.9,
-        "text-halo-blur": 0.25,
+        "text-halo-width": 1.2,
         "text-opacity": [
           "interpolate",
-          ["linear"],
-          ["zoom"],
-          4, 0.72,
-          5, 0.88,
-          6, 0.8,
-          6.5, 0.2
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          0.72,
+          5,
+          0.88,
+          6,
+          0.8,
+          6.5,
+          0.2
         ]
       }
     },
     {
-      "id": "overview-mmr-admin1-labels",
+      "id": "overview-admin-state-region-labels",
       "type": "symbol",
       "source": "overview",
-      "source-layer": "mmr_admin1",
+      "source-layer": "myanmar_state_labels",
       "minzoom": 4,
       "maxzoom": 9,
       "filter": [
@@ -411,10 +662,26 @@
           "!=",
           [
             "coalesce",
-            ["get", "ST_MMR"],
-            ["get", "ST"],
-            ["get", "SR_MMR"],
-            ["get", "SR"],
+            [
+              "get",
+              "label_name_mm"
+            ],
+            [
+              "get",
+              "name_mm"
+            ],
+            [
+              "get",
+              "label_name_en"
+            ],
+            [
+              "get",
+              "name_en"
+            ],
+            [
+              "get",
+              "name"
+            ],
             ""
           ],
           ""
@@ -424,28 +691,183 @@
         "symbol-placement": "point",
         "text-field": [
           "coalesce",
-          ["get", "ST"],
-          ["get", "ST_MMR"],
-          ["get", "SR"],
-          ["get", "SR_MMR"],
-          ["get", "NAME"],
-          ["get", "name"]
+          [
+            "get",
+            "label_name_mm"
+          ],
+          [
+            "match",
+            [
+              "to-number",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "core_id"
+                ],
+                0
+              ]
+            ],
+            13,
+            "ရန်ကုန်",
+            5089,
+            "မွန်",
+            5879,
+            "ကရင်",
+            6007,
+            "ကယား",
+            6031,
+            "နေပြည်တော်",
+            6329,
+            "ရှမ်း",
+            6667,
+            "ကချင်",
+            6703,
+            "စစ်ကိုင်း",
+            6722,
+            "ရခိုင်",
+            6744,
+            "ချင်း",
+            6832,
+            "မန္တလေး",
+            7027,
+            "မကွေး",
+            7169,
+            "ပဲခူး",
+            7279,
+            "ဧရာဝတီ",
+            7449,
+            "တနင်္သာရီ",
+            [
+              "coalesce",
+              [
+                "get",
+                "name_mm"
+              ],
+              ""
+            ]
+          ],
+          [
+            "get",
+            "label_name_en"
+          ],
+          [
+            "get",
+            "name_en"
+          ],
+          [
+            "get",
+            "name"
+          ]
         ],
-        "text-font": ["NotoSansMyanmar-Regular"],
-        "text-size": ["interpolate", ["linear"], ["zoom"], 4, 10.5, 5, 11.5, 6, 12.5],
-        "text-max-width": 9,
-        "text-padding": 56,
+        "text-font": [
+          "NotoSansMyanmar-Regular"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          10,
+          6,
+          11,
+          8,
+          11.5
+        ],
+        "text-max-width": 6,
+        "text-padding": 3,
         "text-allow-overlap": false,
         "text-ignore-placement": false,
         "text-optional": true,
-        "symbol-sort-key": ["coalesce", ["to-number", ["get", "PCode_V"]], 99]
+        "symbol-sort-key": [
+          "coalesce",
+          [
+            "to-number",
+            [
+              "get",
+              "sort_rank"
+            ]
+          ],
+          [
+            "match",
+            [
+              "to-number",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "core_id"
+                ],
+                0
+              ]
+            ],
+            13,
+            1,
+            7169,
+            2,
+            7279,
+            3,
+            6832,
+            4,
+            7027,
+            5,
+            6703,
+            6,
+            7449,
+            7,
+            6031,
+            8,
+            6667,
+            9,
+            6007,
+            10,
+            5879,
+            11,
+            6744,
+            12,
+            5089,
+            13,
+            6722,
+            14,
+            6329,
+            15,
+            50
+          ]
+        ]
+      },
+      "metadata": {
+        "local-map:role": "myanmar-state-labels",
+        "local-map:note": "Overview short aliases (label_name_mm); 15 official states; higher priority than populated places."
       },
       "paint": {
-        "text-color": "#74708b",
+        "text-color": "#6a6f78",
         "text-halo-color": "#f4f3ec",
-        "text-halo-width": 0.8,
-        "text-halo-blur": 0.2,
-        "text-opacity": ["interpolate", ["linear"], ["zoom"], 4, 0.55, 5, 0.75, 6, 0.85]
+        "text-halo-width": 1.05,
+        "text-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          0.72,
+          5,
+          0.85,
+          6,
+          0.9,
+          8,
+          0.85,
+          9,
+          0.35,
+          10,
+          0
+        ]
       }
     },
     {
@@ -457,57 +879,110 @@
       "maxzoom": 9,
       "filter": [
         "any",
-        ["<=", ["to-number", ["coalesce", ["get", "SCALERANK"], ["get", "scalerank"], 99]], 4],
-        ["==", ["to-number", ["coalesce", ["get", "ADM0CAP"], ["get", "adm0cap"], 0]], 1]
+        [
+          "==",
+          [
+            "coalesce",
+            [
+              "get",
+              "ADM0CAP"
+            ],
+            0
+          ],
+          1
+        ],
+        [
+          "<=",
+          [
+            "coalesce",
+            [
+              "get",
+              "SCALERANK"
+            ],
+            10
+          ],
+          4
+        ]
       ],
       "layout": {
         "symbol-placement": "point",
         "text-field": [
           "coalesce",
-          ["get", "NAME"],
-          ["get", "NAMEASCII"],
-          ["get", "name"],
-          ["get", "nameascii"]
+          [
+            "get",
+            "NAME"
+          ],
+          [
+            "get",
+            "NAMEASCII"
+          ],
+          [
+            "get",
+            "name"
+          ],
+          [
+            "get",
+            "nameascii"
+          ]
         ],
-        "text-font": ["NotoSansMyanmar-Regular"],
+        "text-font": [
+          "NotoSansMyanmar-Regular"
+        ],
         "text-size": [
           "interpolate",
-          ["linear"],
-          ["zoom"],
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
           7,
           [
             "case",
-            ["==", ["coalesce", ["get", "ADM0CAP"], 0], 1],
+            [
+              "==",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "ADM0CAP"
+                ],
+                0
+              ],
+              1
+            ],
             10.5,
             9.5
           ],
           8,
           [
             "case",
-            ["==", ["coalesce", ["get", "ADM0CAP"], 0], 1],
+            [
+              "==",
+              [
+                "coalesce",
+                [
+                  "get",
+                  "ADM0CAP"
+                ],
+                0
+              ],
+              1
+            ],
             12,
             10.5
           ]
         ],
-        "text-max-width": 7,
-        "text-padding": 48,
+        "text-padding": 28,
         "text-allow-overlap": false,
         "text-ignore-placement": false,
         "text-optional": true,
-        "symbol-sort-key": ["coalesce", ["to-number", ["get", "SCALERANK"], ["get", "scalerank"]], 99]
+        "symbol-sort-key": 200
       },
       "paint": {
-        "text-color": "#3d4a5c",
+        "text-color": "#4a4f56",
         "text-halo-color": "#f7f8f6",
-        "text-halo-width": 1.6,
-        "text-halo-blur": 0.35,
-        "text-opacity": [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          7, 0.62,
-          8, 0.88
-        ]
+        "text-halo-width": 1.1
       }
     }
   ]

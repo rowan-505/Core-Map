@@ -12,7 +12,7 @@ import {
 } from './overviewBasemap.js';
 import {
   OVERVIEW_COUNTRY_LABEL_TEXT_FIELD,
-  OVERVIEW_MMR_ADMIN1_LABEL_TEXT_FIELD,
+  OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_FIELD,
   OVERVIEW_POPULATED_PLACES_TEXT_FIELD,
 } from './overviewLabelTextFields.js';
 import {
@@ -29,6 +29,7 @@ const FORBIDDEN_SOURCE_LAYER_PATTERNS = [
   'bus',
   'rail',
   'transit',
+  'mmr_admin',
 ] as const;
 
 describe('OVERVIEW_SOURCE_ID', () => {
@@ -67,7 +68,7 @@ describe('overview layer sources', () => {
     assert.equal(used.size, EXPECTED_OVERVIEW_SOURCE_LAYERS.length);
   });
 
-  it('does not reference regional OSM source-layers (roads, buildings, POI, bus, rail)', () => {
+  it('does not reference regional OSM or MIMU source-layers', () => {
     for (const layer of layers) {
       const sl = String(('source-layer' in layer && layer['source-layer']) || '').toLowerCase();
       for (const pattern of FORBIDDEN_SOURCE_LAYER_PATTERNS) {
@@ -85,87 +86,101 @@ describe('overview label text-field', () => {
 
   it('matches shared overview expressions used by localization', () => {
     const country = layers.find((l) => l.id === 'overview-country-labels');
-    const admin1 = layers.find((l) => l.id === 'overview-mmr-admin1-labels');
+    const admin1 = layers.find((l) => l.id === 'overview-admin-state-region-labels');
     const places = layers.find((l) => l.id === 'overview-populated-places');
     assert.deepEqual(country?.layout?.['text-field'], OVERVIEW_COUNTRY_LABEL_TEXT_FIELD);
-    assert.deepEqual(admin1?.layout?.['text-field'], OVERVIEW_MMR_ADMIN1_LABEL_TEXT_FIELD);
+    assert.deepEqual(admin1?.layout?.['text-field'], OVERVIEW_ADMIN_STATE_REGION_LABEL_TEXT_FIELD);
     assert.deepEqual(places?.layout?.['text-field'], OVERVIEW_POPULATED_PLACES_TEXT_FIELD);
   });
 
   it('boundary line-opacity uses top-level interpolate or constant (no nested zoom)', () => {
-    for (const id of ['overview-coastline', 'myanmar-internal-admin-boundary-line'] as const) {
+    for (const id of [
+      'overview-coastline',
+      'myanmar-internal-admin-boundary-line',
+      'myanmar-country-outline',
+    ] as const) {
       const opacity = layers.find((l) => l.id === id)?.paint?.['line-opacity'];
-      assert.ok(Array.isArray(opacity) && opacity[0] === 'interpolate');
+      assert.ok(Array.isArray(opacity) && opacity[0] === 'interpolate', id);
       assert.equal(JSON.stringify(opacity).includes('"*"'), false);
     }
     const neighbor = layers.find((l) => l.id === 'neighbor-country-boundary-line');
     assert.equal((neighbor?.paint?.['line-opacity'] as unknown[])?.[0], 'interpolate');
-    const admin0 = layers.find((l) => l.id === 'myanmar-admin0-boundary-line-z56');
-    assert.equal((admin0?.paint?.['line-opacity'] as unknown[])?.[0], 'interpolate');
-    const casing = layers.find((l) => l.id === 'myanmar-admin0-boundary-casing-z56');
-    assert.equal((casing?.paint?.['line-opacity'] as unknown[])?.[0], 'interpolate');
-    const casingWidth = casing?.paint?.['line-width'];
-    assert.ok(Array.isArray(casingWidth) && casingWidth[0] === 'interpolate');
-    assert.equal(JSON.stringify(casingWidth).includes('"+"'), false);
   });
 
-  it('paints Myanmar admin0 above neighbor and internal boundaries', () => {
+  it('paints Myanmar country outline above neighbor and internal boundaries', () => {
     const ids = layers.map((l) => l.id);
     assert.ok(
-      ids.indexOf('neighbor-country-boundary-line') < ids.indexOf('myanmar-admin0-boundary-casing-z02'),
-      'neighbor boundaries below Myanmar admin0 casing',
+      ids.indexOf('neighbor-country-boundary-line') < ids.indexOf('myanmar-country-outline'),
+      'neighbor boundaries below Myanmar country outline',
     );
     assert.ok(
-      ids.indexOf('myanmar-internal-admin-boundary-line') < ids.indexOf('myanmar-admin0-boundary-line-z56'),
-      'internal admin boundaries below Myanmar admin0 line',
+      ids.indexOf('myanmar-internal-admin-boundary-line') < ids.indexOf('myanmar-country-outline'),
+      'internal admin boundaries below Myanmar country outline',
     );
     assert.ok(
-      ids.indexOf('myanmar-admin0-boundary-casing-z56') < ids.indexOf('myanmar-admin0-boundary-line-z56'),
-      'casing below main Myanmar admin0 line',
-    );
-    assert.ok(
-      ids.indexOf('myanmar-admin0-boundary-line-z56') < ids.indexOf('overview-country-labels'),
-      'Myanmar admin0 line below labels',
+      ids.indexOf('myanmar-country-outline') < ids.indexOf('overview-country-labels'),
+      'Myanmar country outline below labels',
     );
   });
 
-  it('Myanmar admin0 uses zoom-tier source-layers and hides at z7', () => {
-    const tiers = [
-      { line: 'myanmar-admin0-boundary-line-z02', casing: 'myanmar-admin0-boundary-casing-z02', sl: 'mmr_admin0_z0_2', min: 0, max: 3 },
-      { line: 'myanmar-admin0-boundary-line-z34', casing: 'myanmar-admin0-boundary-casing-z34', sl: 'mmr_admin0_z3_4', min: 3, max: 5 },
-      { line: 'myanmar-admin0-boundary-line-z56', casing: 'myanmar-admin0-boundary-casing-z56', sl: 'mmr_admin0_z5_6', min: 5, max: 7 },
-    ] as const;
-    for (const tier of tiers) {
-      const line = layers.find((l) => l.id === tier.line);
-      const casing = layers.find((l) => l.id === tier.casing);
-      assert.equal(line?.['source-layer'], tier.sl);
-      assert.equal(casing?.['source-layer'], tier.sl);
-      assert.equal(line?.minzoom, tier.min);
-      assert.equal(line?.maxzoom, tier.max);
-      assert.equal(casing?.maxzoom, tier.max);
-    }
-    const admin0 = JSON.stringify(
-      layers.find((l) => l.id === 'myanmar-admin0-boundary-line-z56')?.paint?.['line-width'],
-    );
-    const casingWidth = JSON.stringify(
-      layers.find((l) => l.id === 'myanmar-admin0-boundary-casing-z56')?.paint?.['line-width'],
-    );
-    assert.ok(admin0.includes('0,0.9') && admin0.includes('6,1.65'));
-    assert.ok(casingWidth.includes('0,1.4') && casingWidth.includes('6,2.2'));
+  it('Myanmar country fill/outline use myanmar_country and temporarily hide by z9/z10', () => {
+    const fill = layers.find((l) => l.id === 'myanmar-country-fill');
+    const outline = layers.find((l) => l.id === 'myanmar-country-outline');
+    assert.equal(fill?.['source-layer'], 'myanmar_country');
+    assert.equal(outline?.['source-layer'], 'myanmar_country');
+    assert.equal(fill?.maxzoom, 9);
+    assert.equal(outline?.maxzoom, 10);
+    assert.equal(outline?.minzoom, 2);
+    assert.equal(outline?.paint?.['line-color'], '#4a5568');
+    const fillOpacity = JSON.stringify(fill?.paint?.['fill-opacity']);
+    assert.ok(fillOpacity.includes('8.5'));
+    assert.ok(fillOpacity.includes(',0]'));
+    const outlineOpacity = JSON.stringify(outline?.paint?.['line-opacity']);
+    assert.ok(outlineOpacity.includes('9.5'));
+    assert.ok(outlineOpacity.includes(',0]'));
+    const internal = layers.find((l) => l.id === 'myanmar-internal-admin-boundary-line');
+    assert.equal(internal?.minzoom, 4);
+    assert.equal(internal?.maxzoom, 14);
+    assert.equal(internal?.['source-layer'], 'myanmar_state_region');
     assert.equal(
-      layers.find((l) => l.id === 'myanmar-admin0-boundary-line-z56')?.paint?.['line-color'],
-      '#5f5478',
+      layers.find((l) => l.id === 'overview-admin-state-region-labels')?.['source-layer'],
+      'myanmar_state_labels',
     );
-    assert.equal(layers.find((l) => l.id === 'myanmar-internal-admin-boundary-line')?.minzoom, 3);
-    assert.equal(layers.find((l) => l.id === 'myanmar-internal-admin-boundary-line')?.maxzoom, 10);
+    assert.equal(
+      layers.find((l) => l.id === 'overview-admin-state-region-fill'),
+      undefined,
+      'overview must not color-fill state polygons',
+    );
+    assert.equal(layers.find((l) => l.id === 'myanmar-coastline-line'), undefined);
+    assert.equal(layers.find((l) => l.id === 'myanmar-major-islands-fill'), undefined);
+    assert.equal(layers.find((l) => l.id === 'myanmar-admin-country-boundary-line'), undefined);
   });
 
-  it('country and place labels do not use regional-only name_mm/name_en fields', () => {
+  it('NE country and place labels do not use Core name_mm/name_en fields', () => {
     for (const id of ['overview-country-labels', 'overview-populated-places'] as const) {
       const json = JSON.stringify(layers.find((l) => l.id === id)?.layout?.['text-field']);
       assert.equal(json.includes('"name_mm"'), false);
       assert.equal(json.includes('"name_en"'), false);
     }
+  });
+
+  it('state/region labels use overview short aliases then Core names; no MIMU fields', () => {
+    const json = JSON.stringify(
+      layers.find((l) => l.id === 'overview-admin-state-region-labels')?.layout?.['text-field'],
+    );
+    assert.ok(json.includes('"label_name_mm"'));
+    assert.ok(json.includes('"name_mm"'));
+    assert.ok(json.includes('"name_en"'));
+    assert.ok(json.includes('"name"'));
+    assert.equal(json.includes('ST_MMR'), false);
+    assert.equal(json.includes('PCode_V'), false);
+    const state = layers.find((l) => l.id === 'overview-admin-state-region-labels');
+    assert.equal(state?.layout?.['text-padding'], 3);
+    assert.equal(state?.layout?.['text-allow-overlap'], false);
+    assert.equal(state?.layout?.['text-ignore-placement'], false);
+    assert.equal(state?.maxzoom, 9);
+    const places = layers.find((l) => l.id === 'overview-populated-places');
+    assert.equal(places?.layout?.['symbol-sort-key'], 200);
   });
 });
 
@@ -193,14 +208,8 @@ describe('overview layer expressions', () => {
     }
   });
 
-  it('uses hex or interpolate fill-color on mmr_admin1 fill', () => {
-    const admin1 = layers.find((l) => l.id === 'overview-mmr-admin1-fill');
-    assert.ok(admin1 && admin1.type === 'fill');
-    const color = admin1.paint?.['fill-color'];
-    assert.ok(
-      typeof color === 'string' || (Array.isArray(color) && color[0] === 'interpolate'),
-      'fill-color must be string or interpolate expression',
-    );
+  it('does not color-fill state polygons', () => {
+    assert.equal(layers.find((l) => l.id === 'overview-admin-state-region-fill'), undefined);
   });
 });
 
@@ -249,16 +258,19 @@ describe('overview layer ids', () => {
 });
 
 describe('createOverviewSource', () => {
-  it('uses source id overview and pmtiles scheme URL', () => {
-    const src = createOverviewSource('https://cdn.example/basemaps/overview/v1/basemap.pmtiles');
+  it('uses source id overview and pmtiles scheme URL with native maxzoom 8', () => {
+    const src = createOverviewSource('https://cdn.example/basemaps/overview/v2/basemap.pmtiles');
     assert.equal(src.type, 'vector');
-    assert.equal((src as { url: string }).url, 'pmtiles://https://cdn.example/basemaps/overview/v1/basemap.pmtiles');
+    assert.equal(
+      (src as { url: string }).url,
+      'pmtiles://https://cdn.example/basemaps/overview/v2/basemap.pmtiles',
+    );
     assert.equal((src as { maxzoom: number }).maxzoom, 8);
   });
 
   it('builds runtime URL from VITE_OVERVIEW_PMTILES_URL shape without localhost', () => {
     const envUrl =
-      'https://pub-1f8b4bea1a884f51966c7916c5e618ce.r2.dev/basemaps/overview/v1/myanmar-overview-v1.pmtiles';
+      'https://pub-1f8b4bea1a884f51966c7916c5e618ce.r2.dev/basemaps/overview/v2/myanmar-overview-v2.pmtiles';
     const src = createOverviewSource(envUrl);
     assert.equal((src as { url: string }).url, `pmtiles://${envUrl}`);
     assert.equal((src as { url: string }).url.includes('localhost'), false);

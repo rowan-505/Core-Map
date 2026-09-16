@@ -49,5 +49,11 @@ declare namespace NodeJS {
      * ⚠ Compiled into browser bundle via NEXT_PUBLIC_ — prototyping only.
      */
     NEXT_PUBLIC_IMPORT_REVIEW_ADMIN_TOKEN?: string;
+    /**
+     * DEV ONLY flag ("true"/"1"). Enables Local Basemap admin UI (Windows/WSL hybrid
+     * building/land lifecycle). Ignored in production builds. Requires matching API
+     * ENABLE_LOCAL_BASEMAP_ADMIN + LOCAL_TILE_DATABASE_URL.
+     */
+    NEXT_PUBLIC_ENABLE_LOCAL_BASEMAP_ADMIN?: string;
   }
 }

@@ -6,6 +6,7 @@
  * The overview source is never touched. No caching beyond a Set of currently-loaded ids.
  */
 import type { Map as MaplibreMap } from 'maplibre-gl';
+import { clampRegionalVectorSourceMaxZoom } from '../../../../../packages/map-style/regionalZoomPolicy.js';
 import { loadBasemapManifest, type BasemapManifest } from './manifest';
 import { bboxOverlapArea, mapBoundsToBbox } from './bbox';
 import { addRegionLayers, removeRegionLayers } from './regionLayers';
@@ -45,7 +46,16 @@ export type RegionLoaderMap = Pick<
 
 export interface RegionalPmtilesLoaderHandle {
   destroy(): void;
+  /** Currently loaded region ids (after the last successful sync). */
+  getLoadedRegionIds(): readonly string[];
 }
+
+export type StartRegionalPmtilesLoaderOptions = {
+  /** Inject a manifest (local QA). When omitted, loads the production web manifest. */
+  manifest?: BasemapManifest;
+  /** Called after each sync with the set of loaded region ids. */
+  onLoadedChange?: (loadedRegionIds: readonly string[]) => void;
+};
 
 /** Source id for a region's PMTiles vector source. */
 export function regionSourceId(regionId: string): string {
@@ -78,6 +88,7 @@ function syncRegions(
   manifest: BasemapManifest,
   loaded: Set<string>,
   onAfterSync?: () => void,
+  onLoadedChange?: (loadedRegionIds: readonly string[]) => void,
 ): void {
   const zoom = map.getZoom();
   const visibleIds = getVisibleRegionIds(map, manifest);
@@ -93,7 +104,26 @@ function syncRegions(
     if (!visible.has(region.id) || loaded.has(region.id)) continue;
     const sourceId = regionSourceId(region.id);
     if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, { type: 'vector', url: `pmtiles://${region.url}` });
+      const sourceSpec: {
+        type: 'vector';
+        url: string;
+        minzoom?: number;
+        maxzoom?: number;
+      } = {
+        type: 'vector',
+        url: `pmtiles://${region.url}`,
+      };
+      if (typeof region.minZoom === 'number' && Number.isFinite(region.minZoom)) {
+        sourceSpec.minzoom = region.minZoom;
+      }
+      // Source maxzoom must be the native archive ceiling (z16). Using camera z20 here
+      // would make MapLibre request nonexistent z17–z20 PMTiles coordinates.
+      sourceSpec.maxzoom = clampRegionalVectorSourceMaxZoom(
+        typeof region.maxZoom === 'number' && Number.isFinite(region.maxZoom)
+          ? region.maxZoom
+          : undefined,
+      );
+      map.addSource(sourceId, sourceSpec);
     }
     addRegionLayers(map, region.id, sourceId);
     loaded.add(region.id);
@@ -124,6 +154,7 @@ function syncRegions(
       (removed.length ? ` removed=[${removed.join(',')}]` : ''),
   );
 
+  onLoadedChange?.([...loaded]);
   if (added.length || removed.length) onAfterSync?.();
 }
 
@@ -137,8 +168,9 @@ function syncRegions(
 export async function startRegionalPmtilesLoader(
   map: RegionLoaderMap,
   onAfterSync?: () => void,
+  options?: StartRegionalPmtilesLoaderOptions,
 ): Promise<RegionalPmtilesLoaderHandle> {
-  const manifest = await loadBasemapManifest();
+  const manifest = options?.manifest ?? (await loadBasemapManifest());
   const loaded = new Set<string>();
   let throttleTimer: ReturnType<typeof setTimeout> | null = null;
   let destroyed = false;
@@ -146,7 +178,7 @@ export async function startRegionalPmtilesLoader(
   const runSync = () => {
     if (destroyed) return;
     try {
-      syncRegions(map, manifest, loaded, onAfterSync);
+      syncRegions(map, manifest, loaded, onAfterSync, options?.onLoadedChange);
     } catch (err) {
       console.warn('[regions] sync failed:', err);
     }
@@ -179,6 +211,9 @@ export async function startRegionalPmtilesLoader(
       }
       map.off('moveend', scheduleSync);
       map.off('zoomend', scheduleSync);
+    },
+    getLoadedRegionIds() {
+      return [...loaded];
     },
   };
 }

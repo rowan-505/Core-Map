@@ -10,6 +10,7 @@ import type { MapEngine } from '../mapEngineTypes';
 import { registerPmtilesProtocol } from './registerPmtilesProtocol';
 import { logBasemapDebugSnapshot } from './basemapDebug';
 import { logGlyphServingHealthInDev } from './glyphDevCheck';
+import { getLocalPmtilesQaMapLibreInitOverrides } from './localRegionPmtilesQa';
 
 type BoundsLike = maplibregl.LngLatBoundsLike;
 
@@ -38,15 +39,19 @@ export async function createMaplibreMap(container: HTMLDivElement): Promise<MapE
   const style = await getActiveWebMapStyle();
 
   const viewport = getPublicMapMapLibreInitOptions();
+  const qaViewport = getLocalPmtilesQaMapLibreInitOverrides();
+  const minZoom = qaViewport?.minZoom ?? viewport.minZoom;
+  const maxZoom = qaViewport?.maxZoom ?? viewport.maxZoom;
+  const zoom = Math.min(maxZoom, Math.max(minZoom, viewport.zoom));
 
   const map = new maplibregl.Map({
     container,
     style,
     transformRequest: maplibreComplexTextTransformRequest,
     center: viewport.center,
-    zoom: viewport.zoom,
-    minZoom: viewport.minZoom,
-    maxZoom: viewport.maxZoom,
+    zoom,
+    minZoom,
+    maxZoom,
     ...(viewport.maxBounds !== undefined
       ? { maxBounds: viewport.maxBounds as BoundsLike }
       : {}),

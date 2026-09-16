@@ -60,7 +60,7 @@ describe('webBasemapMode layer lists', () => {
       'road-labels-major',
       'admin-labels-township',
       'overview-country-labels',
-      'overview-mmr-admin1-labels',
+      'overview-admin-state-region-labels',
     ]) {
       assert.ok(WEB_TOGGLE_VECTOR_LAYERS.includes(id as (typeof WEB_TOGGLE_VECTOR_LAYERS)[number]));
       assert.equal(WEB_HYBRID_ON_LAYERS.has(id), true);

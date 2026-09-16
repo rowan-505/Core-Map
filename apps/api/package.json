@@ -12,6 +12,13 @@
     "test:auth": "node --import tsx --test 'src/modules/auth/**/*.test.ts' 'src/plugins/auth.viewer-role.test.ts' 'src/config/env.test.ts'",
     "test:transport-review-regression": "node --import tsx --test src/modules/transport/regression/*.test.ts src/modules/transport/transport.merge-preview.repo.test.ts src/modules/transport/transport.merge-execution.repo.test.ts src/modules/transport/transport.merge-execution.diagnostics.test.ts src/modules/transport/stopMergePreview.test.ts src/modules/transport/stopMergeSameVariant.test.ts src/modules/transport/transport.remove-route-stop.repo.test.ts src/modules/transport/transport.archive-stop.repo.test.ts src/modules/transport/transport.permanent-delete-stop.repo.test.ts",
     "test:entity-names": "node --import tsx --test src/lib/entity-names/entity-names.test.ts",
+    "test:buildings-promote-osm": "node --import tsx --test src/modules/buildings/buildings.promote-osm.test.ts src/lib/osm/building-osm-feature-key.test.ts",
+    "test:buildings-demote-osm": "node --import tsx --test src/modules/buildings/buildings.demote-osm.test.ts",
+    "test:buildings-delete-osm": "node --import tsx --test src/modules/buildings/buildings.delete-osm.test.ts",
+    "test:land-areas-promote-osm": "node --import tsx --test src/modules/core-review/entities/land-areas-promote.test.ts",
+    "test:land-areas-demote-osm": "node --import tsx --test src/modules/core-review/entities/land-areas-demote.test.ts",
+    "test:land-areas-delete-osm": "node --import tsx --test src/modules/core-review/entities/land-areas-delete.test.ts",
+    "test:local-basemap": "node --import tsx --test src/modules/local-basemap/local-basemap.test.ts src/modules/local-basemap/local-basemap.mvt.test.ts",
     "test:address-composer": "node --import tsx --test src/modules/addresses/address-composer.test.ts",
     "test:plus-code": "node --import tsx --test src/lib/geo/plus-code.test.ts",
     "test:unified-search": "node --import tsx --test src/modules/public-map/unified-search.test.ts",
@@ -79,6 +86,7 @@
     "fastify": "^5.8.5",
     "fastify-plugin": "^5.1.0",
     "jose": "^6.2.12",
+    "pg": "^8.23.0",
     "pluscodes": "^3.0.1",
     "prisma": "^6.15.0",
     "resend": "^6.14.0",
@@ -87,6 +95,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "@types/pg": "^8.23.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }

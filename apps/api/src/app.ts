@@ -37,6 +37,7 @@ import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import importReviewRoutes from "./modules/import-review/import-review.routes.js";
 import coreVerificationCompatRoutes from "./modules/core-verification-compat/core-verification-compat.routes.js";
 import coreReviewRoutes from "./modules/core-review/core-review.routes.js";
+import localBasemapRoutes from "./modules/local-basemap/local-basemap.routes.js";
 import routingRoutes from "./modules/routing/routing.routes.js";
 import routingAdminRoutes from "./modules/routing/routing-admin.routes.js";
 import transportRoutes from "./modules/transport/transport.routes.js";
@@ -50,6 +51,7 @@ import { buildApiErrorResponse } from "./lib/api-error-response.js";
 import { apiFastifyOptions, REQUEST_ID_HEADER } from "./lib/http-server.js";
 import { healthGetSchema } from "./lib/openapi/health.openapi.js";
 import { publicErrorCode } from "./lib/public-error-code.js";
+import { isLocalBasemapAdminEnabled } from "./modules/local-basemap/local-basemap.enabled.js";
 
 const LOCAL_DASHBOARD_ORIGIN = "http://localhost:3000";
 const LOCAL_WEB_ORIGIN = "http://localhost:5173";
@@ -105,6 +107,9 @@ export async function buildApp() {
         origin: corsOrigins,
         credentials: true,
         methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        // Cache preflight so Dev Map detail/tile OPTIONS are not re-sent every click
+        // while lifecycle MVT is saturating browser connections to the API host.
+        maxAge: 86_400,
         allowedHeaders: [
             "Content-Type",
             "Authorization",
@@ -211,6 +216,9 @@ export async function buildApp() {
     await app.register(mediaAdminRoutes, { prefix: "/admin/media" });
     await app.register(refRoutes, { prefix: "/admin/ref" });
     await app.register(coreReviewRoutes, { prefix: "/core-review" });
+    if (isLocalBasemapAdminEnabled()) {
+        await app.register(localBasemapRoutes, { prefix: "/local-basemap" });
+    }
 
     await app.register(swaggerUiPlugin);
 
