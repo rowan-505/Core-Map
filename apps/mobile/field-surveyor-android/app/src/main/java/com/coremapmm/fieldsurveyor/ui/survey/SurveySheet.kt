@@ -43,6 +43,7 @@ enum class SurveySheetStage(val visibleFraction: Float) {
 }
 
 internal object SurveySheetLayout {
+    /** Minimum drag hit target; sticky summary banner may grow taller (wrap content). */
     const val HEADER_DRAG_HEIGHT_DP = 48f
 
     fun heightPx(stage: SurveySheetStage, maxHeightPx: Float): Float =
@@ -170,7 +171,6 @@ fun FourStageSurveySheet(
                     Modifier
                         .fillMaxWidth()
                         .heightIn(min = SurveySheetLayout.HEADER_DRAG_HEIGHT_DP.dp)
-                        .height(SurveySheetLayout.HEADER_DRAG_HEIGHT_DP.dp)
                         .testTag("survey_sheet_drag_header")
                         .draggable(
                             state = dragState,

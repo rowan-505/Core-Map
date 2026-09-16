@@ -88,7 +88,7 @@ class DashboardReportSyncSmokeTest {
         val note = "Dashboard smoke ${System.currentTimeMillis()}"
         val submitted = graph.survey.submitReport(AnomalyKind.DATA, note = note)
         assertTrue(
-            "submitReport failed: ${graph.survey.state.first().message}",
+            "submitReport failed: ${graph.survey.state.first().notice?.message ?: graph.survey.state.first().message}",
             submitted,
         )
         val reportId = graph.reports.listAll().first { it.payloadJson.contains(note) }.clientPublicId

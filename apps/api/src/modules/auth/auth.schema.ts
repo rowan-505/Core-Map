@@ -1,13 +1,28 @@
 import { z } from "zod";
 
+import { assertPasswordPolicy } from "./password-policy.js";
+
+const passwordField = (privileged = false) =>
+    z
+        .string()
+        .min(8)
+        .max(200)
+        .superRefine((value, ctx) => {
+            try {
+                assertPasswordPolicy(value, { privileged });
+            } catch (error) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: error instanceof Error ? error.message : "Invalid password",
+                });
+            }
+        });
+
 export const registerBodySchema = z.object({
     email: z.string().trim().email(),
     displayName: z.string().trim().min(2).max(120),
-    password: z.string().min(8).max(200),
-    // Optional UI preference; column already exists with a DB default of "my".
+    password: passwordField(false),
     preferredLanguage: z.enum(["my", "en"]).optional(),
-    // Optional home region from the public region picker; validated against
-    // core.core_admin_areas before persistence. TODO: phone on registration.
     primaryRegionId: z.number().int().positive().optional(),
 });
 
@@ -15,7 +30,7 @@ export const loginBodySchema = z
     .object({
         email: z.string().trim().email().optional(),
         username: z.string().trim().min(3).optional(),
-        password: z.string().min(6),
+        password: z.string().min(1).max(200),
     })
     .superRefine((value, ctx) => {
         if (!value.email && !value.username) {
@@ -25,7 +40,6 @@ export const loginBodySchema = z
                 path: ["email"],
             });
         }
-
         if (value.email && value.username) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -36,25 +50,23 @@ export const loginBodySchema = z
     });
 
 export const refreshBodySchema = z.object({
-    refreshToken: z.string().min(1),
+    refreshToken: z.string().min(1).optional(),
 });
 
 export const logoutBodySchema = z.object({
-    refreshToken: z.string().min(1),
+    refreshToken: z.string().min(1).optional(),
 });
 
-/** Minimal user shape for login/refresh responses. */
 export const authUserSchema = z.object({
-    id: z.string(),
     public_id: z.string().uuid(),
     email: z.string().email(),
     display_name: z.string(),
     roles: z.array(z.string()),
+    // Native clients historically required `id`. It is the public UUID, never the internal bigint.
+    id: z.string().uuid().optional(),
 });
 
-/** Full profile for /auth/me and registration. Never includes secrets. */
 export const authProfileSchema = z.object({
-    id: z.string(),
     public_id: z.string().uuid(),
     email: z.string().email(),
     display_name: z.string(),
@@ -67,10 +79,6 @@ export const authProfileSchema = z.object({
     total_points: z.number().int(),
 });
 
-/**
- * Self-service profile edit. All fields optional; only provided keys change.
- * phone/primaryRegionId accept null to clear. At least one field is required.
- */
 export const updateProfileBodySchema = z
     .object({
         displayName: z.string().trim().min(2).max(120).optional(),
@@ -84,9 +92,11 @@ export const updateProfileBodySchema = z
 
 export const sessionResponseSchema = z.object({
     accessToken: z.string(),
-    refreshToken: z.string(),
+    refreshToken: z.string().optional(),
     expiresIn: z.string(),
     user: authUserSchema,
+    mfaRequired: z.boolean().optional(),
+    mfaToken: z.string().optional(),
 });
 
 export const registerResponseSchema = z.object({
@@ -107,4 +117,113 @@ export const verifyEmailOtpBodySchema = z.object({
 
 export const emailOtpStatusResponseSchema = z.object({
     status: z.enum(["sent", "verified", "already_verified"]),
+});
+
+export const forgotPasswordBodySchema = z.object({
+    email: z.string().trim().email(),
+});
+
+export const resetPasswordBodySchema = z.object({
+    token: z.string().min(20).max(200),
+    password: passwordField(false),
+});
+
+export const changePasswordBodySchema = z.object({
+    currentPassword: z.string().min(1, "Current password is required").max(200),
+    // Full length/whitespace policy is enforced in the service (privileged roles need 12+).
+    newPassword: z.string().min(1, "New password is required").max(200),
+});
+
+export const verifyMfaBodySchema = z.object({
+    mfaToken: z.string().min(1),
+    code: z.string().trim().min(6).max(20),
+});
+
+export const enrollMfaVerifyBodySchema = z.object({
+    code: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Code must be 6 digits"),
+});
+
+export const mfaEnrollmentTokenBodySchema = z.object({
+    enrollmentToken: z.string().min(1),
+});
+
+export const mfaEnrollmentCompleteBodySchema = z.object({
+    enrollmentToken: z.string().min(1),
+    code: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Code must be 6 digits"),
+});
+
+export const changeEmailBodySchema = z.object({
+    password: z.string().min(1).max(200),
+    newEmail: z
+        .string()
+        .trim()
+        .min(3)
+        .max(254)
+        .email("Enter a valid email address")
+        .refine((value) => !/^\d+$/.test(value), {
+            message: "Enter a valid email address",
+        }),
+});
+
+export const confirmEmailChangeBodySchema = z.object({
+    code: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Code must be 6 digits"),
+});
+
+export const deleteAccountBodySchema = z.object({
+    password: z.string().min(1).max(200),
+    confirm: z.literal("DELETE"),
+});
+
+export const completeProfileSendOtpBodySchema = z.object({
+    flowToken: z.string().trim().min(20).max(200),
+    email: z
+        .string()
+        .trim()
+        .min(3)
+        .max(254)
+        .email("Enter a valid email address")
+        .refine((value) => !/^\d+$/.test(value), {
+            message: "Enter a valid email address",
+        }),
+});
+
+export const completeProfileVerifyBodySchema = z.object({
+    flowToken: z.string().trim().min(20).max(200),
+    email: z
+        .string()
+        .trim()
+        .min(3)
+        .max(254)
+        .email("Enter a valid email address"),
+    code: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Code must be 6 digits"),
+});
+
+export const sessionListItemSchema = z.object({
+    public_id: z.string().uuid(),
+    current: z.boolean(),
+    created_at: z.string(),
+    last_used_at: z.string().nullable(),
+    user_agent: z.string().nullable(),
+    device_label: z.string(),
+    client_type: z.enum(["web", "dashboard", "android", "ios"]).default("web"),
+});
+
+export const securityEventItemSchema = z.object({
+    event_type: z.string(),
+    success: z.boolean(),
+    provider: z.string().nullable(),
+    created_at: z.string(),
+    ip_address: z.string().nullable(),
 });

@@ -1,19 +1,23 @@
 package com.coremapmm.fieldsurveyor.ui.survey
 
-import android.content.res.Configuration
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow
-import com.coremapmm.fieldsurveyor.survey.StopContext
-import com.coremapmm.fieldsurveyor.survey.StopSequenceDisplay
 import com.coremapmm.fieldsurveyor.ui.settings.FieldLanguage
 import com.coremapmm.fieldsurveyor.ui.settings.LocalFieldLanguage
 import org.junit.Assert.assertEquals
@@ -24,102 +28,120 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class SurveyStopWindowTest {
-    @get:Rule val compose = createComposeRule()
+    @get:Rule
+    val compose = createComposeRule()
 
     @Test
-    fun threeBoxesShowSequenceAndNameWithoutIconsOrHashZero() {
+    fun stripShowsAllOrderedStopsWithSequenceAndName() {
         val stops = listOf(
             OrderedStopRow(1, "a", "S1", null, "Sule", 16.80, 96.15, "d0"),
             OrderedStopRow(2, "b", "S2", null, "Hledan", 16.81, 96.16, "d0"),
             OrderedStopRow(3, "c", "S3", null, "Insein", 16.82, 96.17, "d0"),
         )
-        val window = StopContext.window(stops, "b")
         compose.setContent {
             CompositionLocalProvider(LocalFieldLanguage provides FieldLanguage.ENGLISH) {
                 MaterialTheme {
-                    StopWindowRow(window, stops.map { it.stopSequence }, onSelect = {})
+                    SurveyStopStrip(
+                        stops = stops,
+                        selectedStopPublicId = "b",
+                        reportedStopIds = setOf("c"),
+                        onSelect = {},
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
         }
-        compose.onNodeWithText("Previous").assertIsDisplayed()
-        compose.onNodeWithText("Current").assertIsDisplayed()
-        compose.onNodeWithText("Next").assertIsDisplayed()
+        compose.onNodeWithTag("survey_stop_strip").assertIsDisplayed()
+        compose.onAllNodesWithTag("survey_stop_card_0", useUnmergedTree = true).assertCountEquals(1)
         compose.onNodeWithText("#1").assertIsDisplayed()
         compose.onNodeWithText("#2").assertIsDisplayed()
         compose.onNodeWithText("#3").assertIsDisplayed()
         compose.onNodeWithText("Sule").assertIsDisplayed()
         compose.onNodeWithText("Hledan").assertIsDisplayed()
         compose.onNodeWithText("Insein").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Previous, #1, Sule").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Current, #2, Hledan").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Next, #3, Insein").assertIsDisplayed()
+        compose.onNodeWithContentDescription("#2, Hledan, selected").assertIsDisplayed()
         compose.onNodeWithText("#0").assertDoesNotExist()
+        compose.onNodeWithText("Previous").assertDoesNotExist()
+        compose.onNodeWithText("Current").assertDoesNotExist()
+        compose.onNodeWithText("Next").assertDoesNotExist()
     }
 
     @Test
-    fun firstStopEmptyPreviousShowsSingleDash() {
+    fun tapSelectsStopWithoutMarkingCorrect() {
+        var selected: String? = "a"
         val stops = listOf(
-            OrderedStopRow(1, "a", "S1", null, "Sule", 16.80, 96.15, "d0"),
-            OrderedStopRow(2, "b", "S2", null, "Hledan", 16.81, 96.16, "d0"),
+            OrderedStopRow(1, "a", null, null, "One", 16.80, 96.15, "d0"),
+            OrderedStopRow(2, "b", null, null, "Two", 16.81, 96.16, "d0"),
         )
         compose.setContent {
             CompositionLocalProvider(LocalFieldLanguage provides FieldLanguage.ENGLISH) {
                 MaterialTheme {
-                    StopWindowRow(StopContext.window(stops, "a"), stops.map { it.stopSequence }, onSelect = {})
+                    var current by remember { mutableStateOf(selected) }
+                    SurveyStopStrip(
+                        stops = stops,
+                        selectedStopPublicId = current,
+                        reportedStopIds = emptySet(),
+                        onSelect = {
+                            selected = it
+                            current = it
+                        },
+                    )
                 }
             }
         }
-        compose.onNodeWithContentDescription("Previous, empty").assertIsDisplayed()
-        compose.onAllNodesWithText("—").assertCountEquals(1)
-        compose.onNodeWithText("#1").assertIsDisplayed()
-        compose.onNodeWithText("#0").assertDoesNotExist()
+        compose.onNodeWithText("Two").performClick()
+        compose.waitForIdle()
+        assertEquals("b", selected)
+        compose.onNodeWithContentDescription("#2, Two, selected").assertIsDisplayed()
     }
 
     @Test
-    fun finalStopEmptyNextShowsDash() {
+    fun missingNamesShowUnnamedStopWithoutTechnicalIds() {
         val stops = listOf(
-            OrderedStopRow(10, "a", null, null, "Alpha", 16.80, 96.15, "d0"),
-            OrderedStopRow(20, "b", null, null, "Beta", 16.81, 96.16, "d0"),
+            OrderedStopRow(1, "uuid-hidden", "CODE-1", null, null, 16.80, 96.15, "d0"),
         )
         compose.setContent {
             CompositionLocalProvider(LocalFieldLanguage provides FieldLanguage.ENGLISH) {
                 MaterialTheme {
-                    StopWindowRow(StopContext.window(stops, "b"), stops.map { it.stopSequence }, onSelect = {})
+                    SurveyStopStrip(
+                        stops = stops,
+                        selectedStopPublicId = "uuid-hidden",
+                        reportedStopIds = emptySet(),
+                        onSelect = {},
+                    )
                 }
             }
         }
-        compose.onNodeWithContentDescription("Next, empty").assertIsDisplayed()
-        compose.onNodeWithText("#20").assertIsDisplayed()
-        compose.onNodeWithText("#0").assertDoesNotExist()
+        compose.onNodeWithText("Unnamed stop").assertIsDisplayed()
+        compose.onNodeWithText("uuid-hidden").assertDoesNotExist()
+        compose.onNodeWithText("CODE-1").assertDoesNotExist()
     }
 
     @Test
-    fun sparseNonContiguousSequencesKeepStoredValuesAndNeverShowHashZero() {
-        val stops = listOf(
-            OrderedStopRow(2, "a", null, null, "Two", 16.80, 96.15, "d0"),
-            OrderedStopRow(7, "b", null, null, "Seven", 16.81, 96.16, "d0"),
-            OrderedStopRow(15, "c", null, null, "Fifteen", 16.82, 96.17, "d0"),
-        )
-        val sequences = stops.map { it.stopSequence }
-        assertEquals("#2", StopSequenceDisplay.uiLabel(2, sequences))
-        assertEquals("#7", StopSequenceDisplay.uiLabel(7, sequences))
-        assertEquals("#15", StopSequenceDisplay.uiLabel(15, sequences))
-        assertEquals(2, stops[0].stopSequence)
+    fun longRouteRendersLazyCardsForSelectedVariantOnly() {
+        val d0 = (1..30).map {
+            OrderedStopRow(it, "d0-$it", null, null, "D0 $it", 16.8, 96.1, "d0")
+        }
         compose.setContent {
             CompositionLocalProvider(LocalFieldLanguage provides FieldLanguage.ENGLISH) {
                 MaterialTheme {
-                    StopWindowRow(StopContext.window(stops, "b"), sequences, onSelect = {})
+                    SurveyStopStrip(
+                        stops = d0,
+                        selectedStopPublicId = "d0-15",
+                        reportedStopIds = emptySet(),
+                        onSelect = {},
+                    )
                 }
             }
         }
-        compose.onNodeWithText("#2").assertIsDisplayed()
-        compose.onNodeWithText("#7").assertIsDisplayed()
-        compose.onNodeWithText("#15").assertIsDisplayed()
-        compose.onNodeWithText("#0").assertDoesNotExist()
+        compose.onNodeWithTag("survey_stop_strip").assertIsDisplayed()
+        compose.onNodeWithText("D0 15").assertIsDisplayed()
+        compose.onNodeWithText("D1 1").assertDoesNotExist()
+        assertFalse(d0.any { it.variantPublicId != "d0" })
     }
 
     @Test
-    fun directionIsolationShowsOnlySelectedVariantWindow() {
+    fun d1IsolationDoesNotShowD0Names() {
         val d1 = listOf(
             OrderedStopRow(1, "d1-a", null, null, "D1 First", 16.80, 96.15, "d1"),
             OrderedStopRow(2, "d1-b", null, null, "D1 Second", 16.81, 96.16, "d1"),
@@ -127,58 +149,16 @@ class SurveyStopWindowTest {
         compose.setContent {
             CompositionLocalProvider(LocalFieldLanguage provides FieldLanguage.ENGLISH) {
                 MaterialTheme {
-                    StopWindowRow(StopContext.window(d1, "d1-a"), d1.map { it.stopSequence }, onSelect = {})
+                    SurveyStopStrip(
+                        stops = d1,
+                        selectedStopPublicId = "d1-a",
+                        reportedStopIds = emptySet(),
+                        onSelect = {},
+                    )
                 }
             }
         }
         compose.onNodeWithText("D1 First").assertIsDisplayed()
-        compose.onNodeWithText("D1 Second").assertIsDisplayed()
         compose.onNodeWithText("D0 First").assertDoesNotExist()
-    }
-
-    @Test
-    fun longBurmeseNamesRemainVisibleWithoutHashZero() {
-        val longName = "ဗိုလ်တထောင်ဘူတာရုံအနီးရှိအဓိကလမ်းထောင့်မှတ်တိုင်ကြီး"
-        val stops = listOf(
-            OrderedStopRow(1, "a", null, longName, null, 16.80, 96.15, "d0"),
-            OrderedStopRow(2, "b", null, "လက်ရှိမှတ်တိုင်", null, 16.81, 96.16, "d0"),
-            OrderedStopRow(3, "c", null, "နောက်မှတ်တိုင်", null, 16.82, 96.17, "d0"),
-        )
-        compose.setContent {
-            CompositionLocalProvider(LocalFieldLanguage provides FieldLanguage.MYANMAR) {
-                MaterialTheme {
-                    StopWindowRow(StopContext.window(stops, "b"), stops.map { it.stopSequence }, onSelect = {})
-                }
-            }
-        }
-        compose.onNodeWithText("လက်ရှိမှတ်တိုင်").assertIsDisplayed()
-        compose.onNodeWithText("#0").assertDoesNotExist()
-        assertFalse(StopWindowDisplay.sequenceLabel(stops[0], stops.map { it.stopSequence }) == "#0")
-    }
-
-    @Test
-    fun largeFontScaleStillShowsTitlesAndSequences() {
-        val stops = listOf(
-            OrderedStopRow(1, "a", null, null, "One", 16.80, 96.15, "d0"),
-            OrderedStopRow(2, "b", null, null, "Two", 16.81, 96.16, "d0"),
-            OrderedStopRow(3, "c", null, null, "Three", 16.82, 96.17, "d0"),
-        )
-        compose.setContent {
-            val base = LocalConfiguration.current
-            val scaled = Configuration(base).apply { fontScale = 1.6f }
-            CompositionLocalProvider(
-                LocalFieldLanguage provides FieldLanguage.ENGLISH,
-                LocalConfiguration provides scaled,
-            ) {
-                MaterialTheme {
-                    StopWindowRow(StopContext.window(stops, "b"), stops.map { it.stopSequence }, onSelect = {})
-                }
-            }
-        }
-        compose.onNodeWithText("Previous").assertIsDisplayed()
-        compose.onNodeWithText("Current").assertIsDisplayed()
-        compose.onNodeWithText("Next").assertIsDisplayed()
-        compose.onNodeWithText("#2").assertIsDisplayed()
-        compose.onNodeWithText("#0").assertDoesNotExist()
     }
 }

@@ -53,4 +53,6 @@ export type ObjectStore = {
         sourceObjectKey: string;
         destinationObjectKey: string;
     }): Promise<void>;
+    /** Deletes one exact object key. Missing keys are treated as success (idempotent). */
+    deleteObject(input: { bucket: string; objectKey: string }): Promise<void>;
 };

@@ -12,13 +12,13 @@ import {
 
 const authUserSchema = {
     type: "object",
-    required: ["id", "public_id", "email", "display_name", "roles"],
+    required: ["public_id", "email", "display_name", "roles"],
     properties: {
-        id: { type: "string" },
         public_id: { type: "string", format: "uuid" },
         email: { type: "string", format: "email" },
         display_name: { type: "string" },
         roles: { type: "array", items: { type: "string" } },
+        id: { type: "string", format: "uuid" },
     },
     additionalProperties: false,
 } as const;
@@ -26,7 +26,6 @@ const authUserSchema = {
 const authProfileSchema = {
     type: "object",
     required: [
-        "id",
         "public_id",
         "email",
         "display_name",
@@ -39,7 +38,6 @@ const authProfileSchema = {
         "total_points",
     ],
     properties: {
-        id: { type: "string" },
         public_id: { type: "string", format: "uuid" },
         email: { type: "string", format: "email" },
         display_name: { type: "string" },
@@ -56,12 +54,14 @@ const authProfileSchema = {
 
 const sessionResponseSchema = {
     type: "object",
-    required: ["accessToken", "refreshToken", "expiresIn", "user"],
+    required: ["expiresIn"],
     properties: {
         accessToken: { type: "string" },
         refreshToken: { type: "string" },
         expiresIn: { type: "string" },
         user: authUserSchema,
+        mfaRequired: { type: "boolean" },
+        mfaToken: { type: "string" },
     },
     additionalProperties: false,
 } as const;
@@ -110,7 +110,7 @@ export const postAuthLoginSchema = {
         properties: {
             email: { type: "string", format: "email" },
             username: { type: "string", minLength: 3 },
-            password: { type: "string", minLength: 6 },
+            password: { type: "string", minLength: 1, maxLength: 200 },
         },
         additionalProperties: false,
     },
@@ -126,10 +126,9 @@ export const postAuthRefreshSchema = {
     tags: [Tags.Auth],
     summary: "Refresh session",
     description:
-        "Exchanges a valid refresh token for a new access token and a rotated refresh token. The old refresh token is invalidated.",
+        "Exchanges a valid refresh cookie or native body token for a new access token. Browsers rotate via HttpOnly cookie; native clients may send `refreshToken` in the JSON body.",
     body: {
         type: "object",
-        required: ["refreshToken"],
         properties: {
             refreshToken: { type: "string", minLength: 1 },
         },
@@ -146,10 +145,9 @@ export const postAuthRefreshSchema = {
 export const postAuthLogoutSchema = {
     tags: [Tags.Auth],
     summary: "Log out",
-    description: "Revokes the supplied refresh session. Idempotent.",
+    description: "Revokes the current refresh session from cookie or body. Idempotent.",
     body: {
         type: "object",
-        required: ["refreshToken"],
         properties: {
             refreshToken: { type: "string", minLength: 1 },
         },

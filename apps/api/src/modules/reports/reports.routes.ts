@@ -1,8 +1,10 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 
 import { DEV_AUTH_BYPASS_USER, isAuthBypassActive, type JwtUser } from "../../plugins/auth.js";
+import { getOptionalR2MediaEnv } from "../../config/env.js";
 import { FieldRepository } from "../field/field.repo.js";
 import { MediaRepository } from "../media/media.repo.js";
+import { R2ObjectStore, createR2S3Client } from "../media/r2-s3.adapter.js";
 import { TransportRepository } from "../transport/transport.repo.js";
 import { ReportsRepository, type AuditContext } from "./reports.repo.js";
 import { ReportsError, ReportsService, type ReportViewer } from "./reports.service.js";
@@ -20,6 +22,7 @@ import {
     rewardPointsBodySchema,
 } from "./reports.schema.js";
 import {
+    deleteAdminReportSchema,
     getAdminReportSchema,
     getAdminReportsSchema,
     getMyReportsSchema,
@@ -77,12 +80,19 @@ async function optionalJwtUser(request: FastifyRequest): Promise<JwtUser | null>
 
 const reportsRoutes: FastifyPluginAsync = async (app) => {
     const reportsRepo = new ReportsRepository(app.prisma);
+    const r2 = getOptionalR2MediaEnv();
+    const objectStore = r2 ? new R2ObjectStore(createR2S3Client(r2)) : null;
+    const mediaBuckets = r2
+        ? { privateBucket: r2.privateBucket, publicBucket: r2.publicBucket }
+        : null;
     const reportsService = new ReportsService(
         reportsRepo,
         new MediaRepository(app.prisma),
         new FieldRepository(app.prisma),
         app.prisma,
-        new TransportRepository(app.prisma)
+        new TransportRepository(app.prisma),
+        objectStore,
+        mediaBuckets
     );
     const requireAdmin = app.requireRole("admin", "super_admin");
     const adminGuard = { preHandler: [app.authenticate, requireAdmin] };
@@ -237,6 +247,23 @@ const reportsRoutes: FastifyPluginAsync = async (app) => {
             return handleReportsError(error, reply);
         }
     });
+
+    app.delete(
+        "/admin/reports/:id",
+        { ...adminGuard, schema: deleteAdminReportSchema },
+        async (request, reply) => {
+            const params = adminReportIdParamSchema.safeParse(request.params);
+            if (!params.success) {
+                return reply.code(400).send({ message: "Invalid report id", issues: params.error.flatten() });
+            }
+            try {
+                const audit = await adminAudit(request);
+                return reply.send(await reportsService.adminPermanentDelete(params.data.id, audit));
+            } catch (error) {
+                return handleReportsError(error, reply);
+            }
+        }
+    );
 
     app.post(
         "/admin/reports/:id/apply",

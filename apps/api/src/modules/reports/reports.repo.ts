@@ -1134,7 +1134,160 @@ export class ReportsRepository {
             return { report: await selectById(tx, input.reportId), summary: summaryRows[0]! };
         });
     }
+
+    /**
+     * Permanently delete a rejected report and only its owned child rows.
+     * Does not touch reporters, survey sessions, canonical stops/routes, or other reports.
+     * Returns exact storage object keys whose DB asset rows were removed (for post-commit cleanup).
+     */
+    async permanentDeleteRejected(
+        publicId: string,
+        audit: AuditContext
+    ): Promise<ReportPermanentDeleteResult | null> {
+        return this.prisma.$transaction(async (tx) => {
+            const locked = await tx.$queryRaw<
+                {
+                    id: bigint;
+                    public_id: string;
+                    status_code: string;
+                    report_type_code: string;
+                    created_by: bigint | null;
+                    survey_session_id: bigint | null;
+                    target_entity_type: string | null;
+                    target_public_id: string | null;
+                    created_at: Date;
+                }[]
+            >`
+                SELECT
+                    id,
+                    public_id::text AS public_id,
+                    status_code,
+                    report_type_code,
+                    created_by,
+                    survey_session_id,
+                    target_entity_type,
+                    target_public_id::text AS target_public_id,
+                    created_at
+                FROM feedback.user_reports
+                WHERE public_id = ${publicId}::uuid
+                FOR UPDATE
+            `;
+            const report = locked[0];
+            if (!report) {
+                return null;
+            }
+            if (report.status_code !== "rejected") {
+                throw new ReportDeleteNotRejectedError(report.status_code);
+            }
+
+            const linkedAssets = await tx.$queryRaw<
+                { asset_id: bigint; object_key: string; storage_scope: string }[]
+            >`
+                SELECT a.id AS asset_id, a.object_key, a.storage_scope
+                FROM feedback.report_media rm
+                INNER JOIN media.assets a ON a.id = rm.asset_id
+                WHERE rm.report_id = ${report.id}
+            `;
+
+            // Explicit owned-child deletes (do not rely on broad cascading for safety review).
+            await tx.$executeRaw`
+                UPDATE transport.stop_media
+                SET source_report_media_id = NULL
+                WHERE source_report_media_id IN (
+                    SELECT id FROM feedback.report_media WHERE report_id = ${report.id}
+                )
+            `;
+            await tx.$executeRaw`
+                DELETE FROM feedback.report_followups WHERE report_id = ${report.id}
+            `;
+            await tx.$executeRaw`
+                DELETE FROM feedback.report_status_events WHERE report_id = ${report.id}
+            `;
+            await tx.$executeRaw`
+                DELETE FROM feedback.report_media WHERE report_id = ${report.id}
+            `;
+
+            const storageObjects: ReportStorageObjectRef[] = [];
+            if (linkedAssets.length > 0) {
+                const assetIds = linkedAssets.map((row) => row.asset_id);
+                const deletedAssets = await tx.$queryRaw<
+                    { object_key: string; storage_scope: string }[]
+                >`
+                    DELETE FROM media.assets a
+                    WHERE a.id IN (${Prisma.join(assetIds)})
+                      AND NOT EXISTS (
+                          SELECT 1 FROM feedback.report_media rm WHERE rm.asset_id = a.id
+                      )
+                      AND NOT EXISTS (
+                          SELECT 1 FROM transport.stop_media sm WHERE sm.asset_id = a.id
+                      )
+                      AND NOT EXISTS (
+                          SELECT 1 FROM media.assets child WHERE child.source_asset_id = a.id
+                      )
+                    RETURNING a.object_key, a.storage_scope
+                `;
+                for (const row of deletedAssets) {
+                    storageObjects.push({
+                        objectKey: row.object_key,
+                        storageScope: row.storage_scope,
+                    });
+                }
+            }
+
+            await insertReportAudit(tx, {
+                actionType: "report_permanently_deleted",
+                reportId: report.id,
+                before: {
+                    public_id: report.public_id,
+                    status_code: report.status_code,
+                    report_type_code: report.report_type_code,
+                    created_by: report.created_by?.toString() ?? null,
+                    survey_session_id: report.survey_session_id?.toString() ?? null,
+                    target_entity_type: report.target_entity_type,
+                    target_public_id: report.target_public_id,
+                    created_at: report.created_at.toISOString(),
+                    media_asset_count: linkedAssets.length,
+                    storage_objects_removed: storageObjects.length,
+                },
+                after: { deleted: true, permanent: true },
+                audit,
+            });
+
+            await tx.$executeRaw`
+                DELETE FROM feedback.user_reports WHERE id = ${report.id}
+            `;
+
+            return {
+                publicId: report.public_id,
+                reportTypeCode: report.report_type_code,
+                storageObjects,
+            };
+        });
+    }
 }
+
+/** Thrown when permanent delete is attempted on a report that is not currently rejected. */
+export class ReportDeleteNotRejectedError extends Error {
+    readonly code = "REPORT_NOT_REJECTED" as const;
+
+    constructor(readonly currentStatus: string) {
+        super(
+            `Report cannot be permanently deleted unless its status is rejected (current: '${currentStatus}')`
+        );
+        this.name = "ReportDeleteNotRejectedError";
+    }
+}
+
+export type ReportStorageObjectRef = {
+    objectKey: string;
+    storageScope: string;
+};
+
+export type ReportPermanentDeleteResult = {
+    publicId: string;
+    reportTypeCode: string;
+    storageObjects: ReportStorageObjectRef[];
+};
 
 type TxClient = Prisma.TransactionClient;
 

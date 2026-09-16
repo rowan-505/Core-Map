@@ -23,6 +23,12 @@ const SOURCE_LAYER_TO_KIND: Readonly<Record<string, TransportFeatureKind>> = {
   transport_terminals_v: 'terminal',
   transport_route_paths_v: 'route',
   transport_infrastructure_lines_v: 'infrastructure',
+  transport_bus_stops: 'stop',
+  transport_train_stations: 'stop',
+  transport_express_terminals: 'terminal',
+  transport_bus_route_overview: 'route',
+  transport_train_routes: 'route',
+  transport_express_route_corridors: 'route',
 };
 
 const LAYER_ID_TO_KIND: Readonly<Record<string, TransportFeatureKind>> = {

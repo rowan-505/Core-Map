@@ -58,7 +58,7 @@ class YangonBasemapStore(
     }
 
     suspend fun ensure(
-        allowMetered: Boolean = false,
+        allowMetered: Boolean = true,
         onProgress: (downloaded: Long, total: Long) -> Unit,
     ) {
         withContext(Dispatchers.IO) {

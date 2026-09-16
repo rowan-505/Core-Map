@@ -4,6 +4,18 @@ import type { MapMode } from '@/features/map/config';
 import { persistMapMode, readPersistedMapMode } from '@/features/map/config/mapModeStorage';
 
 export type MapUtilityAction = 'zoomIn' | 'zoomOut' | 'centerKyauktan';
+export type TransportBrowseMode = 'bus' | 'train' | 'express';
+
+export type TransportVisibility = {
+  readonly points: boolean;
+  readonly paths: boolean;
+};
+
+export const TRANSPORT_MODE_DEFAULTS: Readonly<Record<TransportBrowseMode, TransportVisibility>> = {
+  bus: { points: true, paths: true },
+  train: { points: true, paths: true },
+  express: { points: true, paths: true },
+};
 
 type MapUtilityCommand = {
   readonly id: number;
@@ -15,13 +27,17 @@ type MapUiState = {
   readonly mapMode: MapMode;
   readonly basemapModeError: string | null;
   readonly utilityCommand: MapUtilityCommand | null;
-  readonly transportOverlayVisible: boolean;
+  readonly transportMode: TransportBrowseMode | null;
+  readonly transportPointsVisible: boolean;
+  readonly transportPathsVisible: boolean;
+  readonly transportVisibilityByMode: Readonly<Record<TransportBrowseMode, TransportVisibility>>;
   setLanguageMode: (mode: PlaceLanguageMode) => void;
   setMapMode: (mode: MapMode) => void;
   setBasemapModeError: (message: string | null) => void;
   dispatchUtilityAction: (action: MapUtilityAction) => void;
-  setTransportOverlayVisible: (visible: boolean) => void;
-  toggleTransportOverlay: () => void;
+  setTransportMode: (mode: TransportBrowseMode | null) => void;
+  setTransportPointsVisible: (visible: boolean) => void;
+  setTransportPathsVisible: (visible: boolean) => void;
 };
 
 const initialMapMode = readPersistedMapMode() ?? 'normal';
@@ -32,7 +48,10 @@ export const useMapUiStore = create<MapUiState>((set) => ({
   mapMode: initialMapMode,
   basemapModeError: null,
   utilityCommand: null,
-  transportOverlayVisible: false,
+  transportMode: null,
+  transportPointsVisible: false,
+  transportPathsVisible: false,
+  transportVisibilityByMode: TRANSPORT_MODE_DEFAULTS,
   setLanguageMode: (mode) => set({ languageMode: mode }),
   setMapMode: (mode) => {
     persistMapMode(mode);
@@ -46,7 +65,40 @@ export const useMapUiStore = create<MapUiState>((set) => ({
         action,
       },
     })),
-  setTransportOverlayVisible: (visible) => set({ transportOverlayVisible: visible }),
-  toggleTransportOverlay: () =>
-    set((state) => ({ transportOverlayVisible: !state.transportOverlayVisible })),
+  setTransportMode: (mode) =>
+    set((state) =>
+      mode === null
+        ? { transportMode: null, transportPointsVisible: false, transportPathsVisible: false }
+        : {
+            transportMode: mode,
+            transportPointsVisible: state.transportVisibilityByMode[mode].points,
+            transportPathsVisible: state.transportVisibilityByMode[mode].paths,
+          },
+    ),
+  setTransportPointsVisible: (visible) =>
+    set((state) => ({
+      transportPointsVisible: visible,
+      transportVisibilityByMode: state.transportMode
+        ? {
+            ...state.transportVisibilityByMode,
+            [state.transportMode]: {
+              ...state.transportVisibilityByMode[state.transportMode],
+              points: visible,
+            },
+          }
+        : state.transportVisibilityByMode,
+    })),
+  setTransportPathsVisible: (visible) =>
+    set((state) => ({
+      transportPathsVisible: visible,
+      transportVisibilityByMode: state.transportMode
+        ? {
+            ...state.transportVisibilityByMode,
+            [state.transportMode]: {
+              ...state.transportVisibilityByMode[state.transportMode],
+              paths: visible,
+            },
+          }
+        : state.transportVisibilityByMode,
+    })),
 }));

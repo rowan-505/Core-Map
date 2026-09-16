@@ -41,11 +41,12 @@ describe("removeTransportRouteStop request body", () => {
     const calls: FetchCall[] = [];
     let originalFetch: typeof globalThis.fetch | undefined;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         storage.clear();
         calls.length = 0;
         installWindowStub();
-        storage.set("accessToken", "test-access-token");
+        const { __setAccessTokenForTests } = await import("../../lib/authTokenStorage");
+        __setAccessTokenForTests("test-access-token");
         originalFetch = globalThis.fetch;
         globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
             calls.push({ url, init });

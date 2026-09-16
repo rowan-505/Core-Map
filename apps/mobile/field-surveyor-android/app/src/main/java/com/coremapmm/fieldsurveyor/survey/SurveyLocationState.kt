@@ -137,7 +137,7 @@ object SurveyLocationLabels {
     const val CHIP_ACQUIRING = "Finding location…"
     const val CHIP_LIVE_PREFIX = "GPS ±"
     const val CHIP_WEAK_PREFIX = "Weak GPS · ±"
-    const val CHIP_STALE = "Using last location"
+    const val CHIP_STALE = "Last location"
     const val CHIP_OFF = "Turn on location"
     const val CHIP_PERMISSION = "Location permission required"
     /** Kept for message filtering only; UI uses a single chip, never a second GPS banner. */

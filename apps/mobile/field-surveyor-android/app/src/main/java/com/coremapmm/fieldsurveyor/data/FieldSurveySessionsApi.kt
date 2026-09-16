@@ -29,6 +29,7 @@ class FieldSurveySessionsApi(private val baseUrl: String, private val client: Ok
             .put("routeVariantPublicId", row.variantPublicId)
             .put("snapshotRevision", row.snapshotRevision)
             .put("startedAt", Instant.ofEpochMilli(row.startedAtEpochMs).toString())
+            .put("totalStopCount", row.totalStopCount)
             .toString(),
     )
 
@@ -37,7 +38,54 @@ class FieldSurveySessionsApi(private val baseUrl: String, private val client: Ok
         return request(
             token,
             "/field/survey-sessions/${row.clientSessionId}/$action",
-            JSONObject().put("endedAt", Instant.ofEpochMilli(row.endedAtEpochMs!!).toString()).toString(),
+            JSONObject()
+                .put("endedAt", Instant.ofEpochMilli(row.endedAtEpochMs!!).toString())
+                .put("accumulatedActiveSeconds", row.accumulatedActiveSeconds)
+                .toString(),
+            patch = true,
+        )
+    }
+
+    fun summary(token: String, row: LocalSurveySessionEntity): SurveySessionHttpResult {
+        val body = JSONObject()
+            .put("accumulatedActiveSeconds", row.accumulatedActiveSeconds)
+            .put(
+                "lastActivityAt",
+                Instant.ofEpochMilli(row.lastActivityAtEpochMs ?: row.updatedAtEpochMs).toString(),
+            )
+            .put("checkedStopCount", row.checkedStopCount)
+            .put("totalStopCount", row.totalStopCount)
+            .put("pendingSyncCount", row.pendingSyncCount)
+            .put("clientSyncState", row.syncState)
+        if (row.lastCheckedStopSequence != null) {
+            body.put("lastCheckedStopSequence", row.lastCheckedStopSequence)
+        } else {
+            body.put("lastCheckedStopSequence", JSONObject.NULL)
+        }
+        if (row.lastGpsAccuracyM != null) body.put("lastGpsAccuracyM", row.lastGpsAccuracyM.toDouble())
+        if (row.lastLat != null) body.put("lastLat", row.lastLat)
+        if (row.lastLng != null) body.put("lastLng", row.lastLng)
+        if (row.lastGpsAtEpochMs != null) {
+            body.put("lastGpsAt", Instant.ofEpochMilli(row.lastGpsAtEpochMs).toString())
+        }
+        return request(token, "/field/survey-sessions/${row.clientSessionId}/summary", body.toString(), patch = true)
+    }
+
+    fun finish(token: String, row: LocalSurveySessionEntity): SurveySessionHttpResult {
+        val finishedAt = row.finishedAtEpochMs ?: row.updatedAtEpochMs
+        val body = JSONObject()
+            .put("finishedAt", Instant.ofEpochMilli(finishedAt).toString())
+            .put("accumulatedActiveSeconds", row.accumulatedActiveSeconds)
+        row.endedAtEpochMs?.let { body.put("stoppedAt", Instant.ofEpochMilli(it).toString()) }
+        return request(token, "/field/survey-sessions/${row.clientSessionId}/finish", body.toString(), patch = true)
+    }
+
+    fun reopen(token: String, row: LocalSurveySessionEntity): SurveySessionHttpResult {
+        val reopenedAt = row.reopenedAtEpochMs ?: row.updatedAtEpochMs
+        return request(
+            token,
+            "/field/survey-sessions/${row.clientSessionId}/reopen",
+            JSONObject().put("reopenedAt", Instant.ofEpochMilli(reopenedAt).toString()).toString(),
             patch = true,
         )
     }

@@ -1,5 +1,6 @@
 package com.coremapmm.fieldsurveyor.ui.survey
 
+import android.graphics.RectF
 import android.os.SystemClock
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +66,8 @@ fun SurveyMap(
     stops: List<OrderedStopRow>,
     selectedStopPublicId: String?,
     nearbyStopPublicIds: Set<String>,
+    reportedStopIds: Set<String> = emptySet(),
+    preferMyanmarLabels: Boolean = true,
     gps: GpsFix?,
     cameraFollowEnabled: Boolean,
     centerOncePending: Boolean,
@@ -79,6 +83,8 @@ fun SurveyMap(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val currentStops by rememberUpdatedState(stops)
+    val currentOnStopClick by rememberUpdatedState(onStopClick)
     var mapRef by remember { mutableStateOf<MapLibreMap?>(null) }
     var styleRef by remember { mutableStateOf<Style?>(null) }
     var fittedVariant by remember { mutableStateOf<String?>(null) }
@@ -201,16 +207,29 @@ fun SurveyMap(
                             true
                         } else {
                             val screen = map.projection.toScreenLocation(latLng)
-                            val hits = map.queryRenderedFeatures(
-                                screen,
-                                SurveyMapOverlays.LAYER_STOPS,
-                                SurveyMapOverlays.LAYER_NEARBY,
-                                SurveyMapOverlays.LAYER_SELECTED,
+                            val radius = SurveyMapOverlays.stopTapRadiusPx(
+                                context.resources.displayMetrics.density,
                             )
-                            val id = hits.firstOrNull()?.getStringProperty(SurveyMapOverlays.PROP_STOP_ID)
+                            val hits = map.queryRenderedFeatures(
+                                RectF(
+                                    screen.x - radius,
+                                    screen.y - radius,
+                                    screen.x + radius,
+                                    screen.y + radius,
+                                ),
+                                *SurveyMapOverlays.STOP_HIT_LAYERS,
+                            )
+                            val id = hits.firstOrNull()?.let(SurveyMapOverlays::stopIdFromFeature)
                             if (id != null) {
+                                val stop = currentStops.firstOrNull { it.stopPublicId == id }
+                                followGps.value = false
+                                focusOnUser.value = false
                                 stopFocusSeq.intValue += 1
-                                onStopClick(id)
+                                currentOnStopClick(id)
+                                if (stop != null) {
+                                    val zoom = GpsCameraFollow.stopFocusZoom(map.cameraPosition.zoom)
+                                    SurveyMapOverlays.focusStop(map, stop.lat, stop.lng, zoom)
+                                }
                                 true
                             } else {
                                 false
@@ -302,10 +321,17 @@ fun SurveyMap(
         }
     }
 
-    LaunchedEffect(styleRef, variantPublicId, pathCoordinates, stops) {
+    LaunchedEffect(styleRef, variantPublicId, pathCoordinates, stops, preferMyanmarLabels) {
         val style = styleRef ?: return@LaunchedEffect
         SurveyMapOverlays.setPath(style, pathCoordinates)
-        SurveyMapOverlays.setStops(style, stops, selectedStopPublicId, nearbyStopPublicIds)
+        SurveyMapOverlays.setStops(
+            style = style,
+            stops = stops,
+            selectedStopPublicId = selectedStopPublicId,
+            nearbyStopPublicIds = nearbyStopPublicIds,
+            reportedStopIds = reportedStopIds,
+            preferMyanmar = preferMyanmarLabels,
+        )
         val map = mapRef ?: return@LaunchedEffect
         if (variantPublicId != null && variantPublicId != fittedVariant) {
             if (SurveyMapOverlays.fitRoute(map, pathCoordinates, stops)) {
@@ -319,12 +345,21 @@ fun SurveyMap(
         stops,
         selectedStopPublicId,
         nearbyStopPublicIds,
+        reportedStopIds,
+        preferMyanmarLabels,
         stopFocusSeq.intValue,
         sheetVisibleFraction,
     ) {
         val style = styleRef ?: return@LaunchedEffect
         val map = mapRef ?: return@LaunchedEffect
-        SurveyMapOverlays.setStops(style, stops, selectedStopPublicId, nearbyStopPublicIds)
+        SurveyMapOverlays.setStops(
+            style = style,
+            stops = stops,
+            selectedStopPublicId = selectedStopPublicId,
+            nearbyStopPublicIds = nearbyStopPublicIds,
+            reportedStopIds = reportedStopIds,
+            preferMyanmar = preferMyanmarLabels,
+        )
         val stop = stops.firstOrNull { it.stopPublicId == selectedStopPublicId } ?: return@LaunchedEffect
         followGps.value = false
         val zoom = GpsCameraFollow.stopFocusZoom(map.cameraPosition.zoom)

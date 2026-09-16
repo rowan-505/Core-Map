@@ -7,6 +7,7 @@ import StatsCard from "@/src/components/dashboard/StatsCard";
 import { isAbortError } from "@/src/lib/api";
 import { searchPath } from "@/src/lib/dashboardNavigation";
 import { useDashboardRoleAccess } from "@/src/hooks/useDashboardRoleAccess";
+import { getAccessToken } from "@/src/lib/authTokenStorage";
 import { rolesFromJwtAccessToken } from "@/src/lib/jwtRoles";
 
 import {
@@ -46,7 +47,7 @@ function canMaintainSearchIndex(): boolean {
     if (typeof window === "undefined") {
         return false;
     }
-    const roles = rolesFromJwtAccessToken(window.localStorage.getItem("accessToken"));
+    const roles = rolesFromJwtAccessToken(getAccessToken());
     return roles.includes("super_admin");
 }
 

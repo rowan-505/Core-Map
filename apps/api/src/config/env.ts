@@ -7,6 +7,51 @@ const routingEngineSchema = z.enum(["valhalla", "otp", "external"]);
 
 /** Local web (Vite) dev origin — used only as a non-production fallback. */
 const LOCAL_WEB_APP_URL = "http://localhost:5173";
+const LOCAL_API_URL = "http://localhost:3001";
+const LOCAL_DASHBOARD_URL = "http://localhost:3000";
+const DEFAULT_JWT_AUD = "coremap";
+const MIN_PRODUCTION_JWT_SECRET_LENGTH = 32;
+/** Prefer ≥32 random bytes (e.g. 64 hex chars). Reject short passphrases in production. */
+const MIN_PRODUCTION_MFA_KEY_LENGTH = 32;
+const EXPECTED_GOOGLE_CALLBACK_PATH = "/auth/oauth/google/callback";
+
+function isSecureProductionOAuthRedirect(
+    redirectUri: string,
+    apiPublicUrl: string | null
+): { ok: true } | { ok: false; reason: string } {
+    let parsed: URL;
+    try {
+        parsed = new URL(redirectUri);
+    } catch {
+        return { ok: false, reason: "GOOGLE_OAUTH_REDIRECT_URI must be a valid URL." };
+    }
+    if (parsed.protocol !== "https:") {
+        return { ok: false, reason: "GOOGLE_OAUTH_REDIRECT_URI must use https in production." };
+    }
+    if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") {
+        return { ok: false, reason: "GOOGLE_OAUTH_REDIRECT_URI must not use localhost in production." };
+    }
+    if (parsed.pathname !== EXPECTED_GOOGLE_CALLBACK_PATH) {
+        return {
+            ok: false,
+            reason: `GOOGLE_OAUTH_REDIRECT_URI path must be ${EXPECTED_GOOGLE_CALLBACK_PATH}.`,
+        };
+    }
+    if (apiPublicUrl) {
+        try {
+            const apiHost = new URL(apiPublicUrl).hostname;
+            if (parsed.hostname !== apiHost) {
+                return {
+                    ok: false,
+                    reason: "GOOGLE_OAUTH_REDIRECT_URI host must match API_PUBLIC_URL.",
+                };
+            }
+        } catch {
+            // API_PUBLIC_URL validated separately.
+        }
+    }
+    return { ok: true };
+}
 
 const envBoolean = (defaultValue: boolean) =>
     z.preprocess(
@@ -56,6 +101,23 @@ const apiEnvSchema = z
         // Optional in non-production (falls back to the local web dev origin);
         // required in production (enforced below — never falls back to localhost).
         PUBLIC_APP_URL: z.string().url().optional(),
+        WEB_APP_URL: z.string().url().optional(),
+        DASHBOARD_APP_URL: z.string().url().optional(),
+        API_PUBLIC_URL: z.string().url().optional(),
+        AUTH_JWT_SECRET: optionalTrimmedString,
+        JWT_SECRET: optionalTrimmedString,
+        AUTH_JWT_ISS: optionalTrimmedString,
+        AUTH_JWT_AUD: optionalTrimmedString,
+        AUTH_MFA_ENCRYPTION_KEY: optionalTrimmedString,
+        GOOGLE_OAUTH_CLIENT_ID: optionalTrimmedString,
+        GOOGLE_OAUTH_CLIENT_SECRET: optionalTrimmedString,
+        GOOGLE_OAUTH_REDIRECT_URI: optionalTrimmedString,
+        // Explicit flag. Unset defaults to false so API starts without Facebook secrets.
+        // Set true only when testing/enabling Facebook OAuth.
+        FACEBOOK_OAUTH_ENABLED: envBoolean(false),
+        FACEBOOK_OAUTH_APP_ID: optionalTrimmedString,
+        FACEBOOK_OAUTH_APP_SECRET: optionalTrimmedString,
+        FACEBOOK_OAUTH_REDIRECT_URI: optionalTrimmedString,
         PORT: z.coerce.number().int().min(1).max(65535).default(3001),
         ROUTING_ENABLED: envBoolean(false),
         ROUTING_DEFAULT_ENGINE: routingEngineSchema.default("valhalla"),
@@ -121,17 +183,48 @@ const apiEnvSchema = z
         // origin; in production we leave it null so the refine below fails fast
         // rather than ever serving a localhost URL.
         const isProduction = raw.NODE_ENV === "production";
-        const explicitPublicAppUrl = raw.PUBLIC_APP_URL?.replace(/\/+$/, "");
+        const explicitWebAppUrl = (raw.WEB_APP_URL ?? raw.PUBLIC_APP_URL)?.replace(/\/+$/, "");
         const publicAppUrl =
-            explicitPublicAppUrl && explicitPublicAppUrl.length > 0
-                ? explicitPublicAppUrl
+            explicitWebAppUrl && explicitWebAppUrl.length > 0
+                ? explicitWebAppUrl
                 : isProduction
                   ? null
                   : LOCAL_WEB_APP_URL;
+        const apiPublicUrl =
+            raw.API_PUBLIC_URL?.replace(/\/+$/, "") || (isProduction ? null : LOCAL_API_URL);
+        const dashboardAppUrl =
+            raw.DASHBOARD_APP_URL?.replace(/\/+$/, "") || (isProduction ? null : LOCAL_DASHBOARD_URL);
+        const jwtSecret = raw.AUTH_JWT_SECRET ?? raw.JWT_SECRET ?? "";
+        const jwtIss = raw.AUTH_JWT_ISS?.replace(/\/+$/, "") || apiPublicUrl || LOCAL_API_URL;
+        const jwtAud = raw.AUTH_JWT_AUD ?? DEFAULT_JWT_AUD;
 
         return {
             port: raw.PORT,
             publicAppUrl,
+            auth: {
+                jwtSecret,
+                jwtIss,
+                jwtAud,
+                jwtAlg: "HS256" as const,
+                apiPublicUrl,
+                webAppUrl: publicAppUrl,
+                dashboardAppUrl,
+                mfaEncryptionKey: raw.AUTH_MFA_ENCRYPTION_KEY ?? null,
+                google: parseOAuthProviderEnv({
+                    clientId: raw.GOOGLE_OAUTH_CLIENT_ID,
+                    clientSecret: raw.GOOGLE_OAUTH_CLIENT_SECRET,
+                    redirectUri: raw.GOOGLE_OAUTH_REDIRECT_URI,
+                }),
+                // When disabled, ignore Facebook secrets so production can omit them.
+                facebookEnabled: raw.FACEBOOK_OAUTH_ENABLED,
+                facebook: raw.FACEBOOK_OAUTH_ENABLED
+                    ? parseOAuthProviderEnv({
+                          clientId: raw.FACEBOOK_OAUTH_APP_ID,
+                          clientSecret: raw.FACEBOOK_OAUTH_APP_SECRET,
+                          redirectUri: raw.FACEBOOK_OAUTH_REDIRECT_URI,
+                      })
+                    : null,
+            },
             routing: {
                 enabled: raw.ROUTING_ENABLED,
                 defaultEngine: raw.ROUTING_DEFAULT_ENGINE,
@@ -151,7 +244,12 @@ const apiEnvSchema = z
                 login: raw.AUTH_RATE_LIMIT_MAX,
                 register: 5,
                 sendOtp: 3,
+                verifyOtp: 10,
                 refresh: 30,
+                forgotPassword: 5,
+                resetPassword: 10,
+                oauthStart: 20,
+                sensitiveAccount: 10,
             },
             r2: parseR2MediaEnv(raw),
         };
@@ -161,9 +259,84 @@ const apiEnvSchema = z
             ctx.addIssue({
                 code: "custom",
                 message:
-                    "PUBLIC_APP_URL is required in production (e.g. https://coremapmm.com). " +
+                    "WEB_APP_URL or PUBLIC_APP_URL is required in production (e.g. https://map.coremapmm.com). " +
                     "It has no localhost fallback outside development.",
-                path: ["PUBLIC_APP_URL"],
+                path: ["WEB_APP_URL"],
+            });
+        }
+
+        const isProduction = process.env.NODE_ENV === "production";
+        if (isProduction) {
+            if (!config.auth.jwtSecret || config.auth.jwtSecret.length < MIN_PRODUCTION_JWT_SECRET_LENGTH) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: `AUTH_JWT_SECRET (or JWT_SECRET) must be at least ${MIN_PRODUCTION_JWT_SECRET_LENGTH} characters in production.`,
+                    path: ["AUTH_JWT_SECRET"],
+                });
+            }
+            if (!config.auth.apiPublicUrl) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "API_PUBLIC_URL is required in production (e.g. https://api.coremapmm.com).",
+                    path: ["API_PUBLIC_URL"],
+                });
+            }
+            if (!config.auth.dashboardAppUrl) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "DASHBOARD_APP_URL is required in production (e.g. https://admin.coremapmm.com).",
+                    path: ["DASHBOARD_APP_URL"],
+                });
+            }
+            if (!config.email.otpSecret || config.email.otpSecret.trim().length < 16) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "EMAIL_OTP_SECRET is required in production (random secret, at least 16 characters).",
+                    path: ["EMAIL_OTP_SECRET"],
+                });
+            }
+            if (
+                !config.auth.mfaEncryptionKey ||
+                config.auth.mfaEncryptionKey.length < MIN_PRODUCTION_MFA_KEY_LENGTH
+            ) {
+                ctx.addIssue({
+                    code: "custom",
+                    message:
+                        `AUTH_MFA_ENCRYPTION_KEY is required in production (≥${MIN_PRODUCTION_MFA_KEY_LENGTH} chars). ` +
+                        "Use a cryptographically random secret (≥32 random bytes, e.g. openssl rand -hex 32). " +
+                        "Do not derive it from AUTH_JWT_SECRET, passwords, or the app name. " +
+                        "scrypt with a fixed app salt remains acceptable because the input key must already be high-entropy.",
+                    path: ["AUTH_MFA_ENCRYPTION_KEY"],
+                });
+            }
+            if (!config.auth.google) {
+                ctx.addIssue({
+                    code: "custom",
+                    message:
+                        "GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and GOOGLE_OAUTH_REDIRECT_URI are required in production.",
+                    path: ["GOOGLE_OAUTH_CLIENT_ID"],
+                });
+            } else {
+                const redirectCheck = isSecureProductionOAuthRedirect(
+                    config.auth.google.redirectUri,
+                    config.auth.apiPublicUrl
+                );
+                if (!redirectCheck.ok) {
+                    ctx.addIssue({
+                        code: "custom",
+                        message: redirectCheck.reason,
+                        path: ["GOOGLE_OAUTH_REDIRECT_URI"],
+                    });
+                }
+            }
+        }
+
+        if (config.auth.facebookEnabled && !config.auth.facebook) {
+            ctx.addIssue({
+                code: "custom",
+                message:
+                    "FACEBOOK_OAUTH_APP_ID, FACEBOOK_OAUTH_APP_SECRET, and FACEBOOK_OAUTH_REDIRECT_URI are required when FACEBOOK_OAUTH_ENABLED=true.",
+                path: ["FACEBOOK_OAUTH_APP_ID"],
             });
         }
 
@@ -183,6 +356,12 @@ export type ApiEnv = z.infer<typeof apiEnvSchema>;
 export type RoutingEnvConfig = ApiEnv["routing"];
 export type EmailEnvConfig = ApiEnv["email"];
 export type AuthRateLimitConfig = ApiEnv["authRateLimit"];
+export type AuthEnvConfig = ApiEnv["auth"];
+export type OAuthProviderEnv = {
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+};
 export type R2MediaEnvConfig = {
     accountId: string;
     accessKeyId: string;
@@ -204,6 +383,30 @@ type R2RawEnv = {
     R2_MEDIA_PUBLIC_BUCKET?: string;
     R2_MEDIA_PUBLIC_BASE_URL?: string;
 };
+
+function parseOAuthProviderEnv(input: {
+    clientId?: string;
+    clientSecret?: string;
+    redirectUri?: string;
+}): OAuthProviderEnv | null {
+    const clientId = input.clientId?.trim() || "";
+    const clientSecret = input.clientSecret?.trim() || "";
+    const redirectUri = input.redirectUri?.trim() || "";
+    if (!clientId && !clientSecret && !redirectUri) {
+        return null;
+    }
+    if (!clientId || !clientSecret || !redirectUri) {
+        throw new Error(
+            "Incomplete OAuth provider configuration. Set client id, secret, and redirect URI together, or leave all empty to disable the provider."
+        );
+    }
+    try {
+        new URL(redirectUri);
+    } catch {
+        throw new Error("OAuth redirect URI must be a valid URL.");
+    }
+    return { clientId, clientSecret, redirectUri };
+}
 
 function parseR2MediaEnv(raw: R2RawEnv): R2MediaEnvConfig | null {
     const present = R2_REQUIRED_KEYS.filter((key) => Boolean(raw[key]));
@@ -284,6 +487,23 @@ export function getRoutingEnv(): RoutingEnvConfig {
 
 export function getEmailEnv(): EmailEnvConfig {
     return getApiEnv().email;
+}
+
+export function getAuthEnv(): AuthEnvConfig {
+    return getApiEnv().auth;
+}
+
+/** Public OAuth capability flags for web/dashboard UI. API is the source of truth. */
+export function getOAuthProviderCapabilities(): { google: boolean; facebook: boolean } {
+    const auth = getAuthEnv();
+    return {
+        google: Boolean(auth.google),
+        facebook: Boolean(auth.facebookEnabled && auth.facebook),
+    };
+}
+
+export function isFacebookOAuthEnabled(): boolean {
+    return getAuthEnv().facebookEnabled;
 }
 
 export function getAuthRateLimitEnv(): AuthRateLimitConfig {

@@ -117,7 +117,7 @@ class NewStopReportFlowTest {
     @Test
     fun successBannersDependOnLocalNetworkNotUpload() {
         assertEquals("Report saved", NewStopReportFlow.successBanner(true))
-        assertEquals("Saved offline", NewStopReportFlow.successBanner(false))
+        assertEquals("Saved offline — sync pending", NewStopReportFlow.successBanner(false))
     }
 
     @Test

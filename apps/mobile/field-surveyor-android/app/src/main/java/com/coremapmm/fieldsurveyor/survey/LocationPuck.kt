@@ -1,37 +1,29 @@
 package com.coremapmm.fieldsurveyor.survey
 
-/**
- * Screen-space CoreMap location puck (Naver-like shape, original drawing).
- * Glow, circle and arrow use fixed dp sizes — never geographic metres.
- */
+/** Fixed screen-space metrics for the compact self-location puck. */
 object LocationPuck {
-    const val COREMAP_BLUE = "#1565C0"
-    const val GLOW_BLUE = "#64B5F6"
-    const val CENTRE_WHITE = "#FFFFFF"
-    const val ARROW_OUTLINE_WHITE = "#FFFFFF"
+    const val COREMAP_BLUE = "#1A73E8"
+    const val HALO_BLUE = "#64B5F6"
+    const val BORDER_WHITE = "#FFFFFF"
 
-    /** Total puck footprint target (~40 dp). */
-    const val TOTAL_SIZE_DP = 40f
-    const val CIRCLE_DIAMETER_DP = 22f
-    const val CIRCLE_BORDER_DP = 3.5f
-    const val GLOW_DIAMETER_DP = 40f
-    const val ARROW_WIDTH_DP = 11f
-    const val ARROW_HEIGHT_DP = 12f
+    /** Dot + arrow footprint, excluding the accuracy halo. */
+    const val TOTAL_SIZE_DP = 30f
+    const val DOT_DIAMETER_DP = 14f
+    const val DOT_BORDER_DP = 2.5f
+    const val HALO_DIAMETER_DP = 46f
+    const val ARROW_WIDTH_DP = 9f
+    const val ARROW_HEIGHT_DP = 9f
     const val ARROW_GAP_DP = 1f
-    const val ARROW_OUTLINE_DP = 1.5f
+    const val ARROW_OUTLINE_DP = 1.25f
+    const val HALO_OPACITY = 0.22f
 
-    const val GLOW_OPACITY = 0.28f
     const val IMAGE_ARROW = "survey-location-puck-arrow"
     const val PROP_BEARING = "bearing"
 
-    /** Readable survey zoom band; size does not change with zoom. */
-    val READABLE_ZOOM_MIN = 5.0
-    val READABLE_ZOOM_MAX = 20.0
-
     data class ScreenMetrics(
-        val circleRadiusDp: Float,
-        val circleBorderDp: Float,
-        val glowRadiusDp: Float,
+        val dotRadiusDp: Float,
+        val dotBorderDp: Float,
+        val haloRadiusDp: Float,
         val arrowWidthDp: Float,
         val arrowHeightDp: Float,
         val arrowGapDp: Float,
@@ -39,68 +31,34 @@ object LocationPuck {
     )
 
     fun screenMetrics(): ScreenMetrics = ScreenMetrics(
-        circleRadiusDp = CIRCLE_DIAMETER_DP / 2f,
-        circleBorderDp = CIRCLE_BORDER_DP,
-        glowRadiusDp = GLOW_DIAMETER_DP / 2f,
+        dotRadiusDp = DOT_DIAMETER_DP / 2f,
+        dotBorderDp = DOT_BORDER_DP,
+        haloRadiusDp = HALO_DIAMETER_DP / 2f,
         arrowWidthDp = ARROW_WIDTH_DP,
         arrowHeightDp = ARROW_HEIGHT_DP,
         arrowGapDp = ARROW_GAP_DP,
         totalSizeDp = TOTAL_SIZE_DP,
     )
 
-    /** Same metrics at every zoom — proves screen-space sizing. */
+    /** Screen-space metrics intentionally do not vary by map zoom. */
     fun screenMetricsAtZoom(zoom: Double): ScreenMetrics {
         require(zoom.isFinite()) { "zoom must be finite" }
         return screenMetrics()
     }
 
-    fun isReadableAtZoom(zoom: Double): Boolean =
-        zoom in READABLE_ZOOM_MIN..READABLE_ZOOM_MAX
-
     fun showArrow(headingDeg: Double?): Boolean = headingDeg != null && headingDeg.isFinite()
 
-    /**
-     * Icon rotate for [Property.ICON_ROTATION_ALIGNMENT_MAP].
-     * MapLibre keeps the arrow aligned to geographic heading when the camera bearing changes.
-     */
-    fun mapAlignedIconRotateDeg(headingDeg: Double): Double =
-        SurveyHeading.normalize(headingDeg)
+    fun mapAlignedIconRotateDeg(headingDeg: Double): Double = SurveyHeading.normalize(headingDeg)
 
-    /**
-     * Apparent screen angle of the arrow when the map camera is rotated.
-     * heading 0° + camera bearing 90° → arrow points left on screen (toward geographic north).
-     */
-    fun screenHeadingDeg(headingDeg: Double, cameraBearingDeg: Double): Double =
-        SurveyHeading.normalize(headingDeg - cameraBearingDeg)
+    /** Negative Y places the arrow immediately above the dot before rotation. */
+    fun arrowIconOffsetDp(): FloatArray = floatArrayOf(
+        0f,
+        -(DOT_DIAMETER_DP / 2f + ARROW_GAP_DP),
+    )
 
-    /** Viewport-aligned rotate if a caller prefers explicit camera compensation. */
-    fun viewportAlignedIconRotateDeg(headingDeg: Double, cameraBearingDeg: Double): Double =
-        screenHeadingDeg(headingDeg, cameraBearingDeg)
-
-    /**
-     * Offset from circle centre to arrow base, along heading ("up" in the icon).
-     * Negative Y is toward the tip before rotation.
-     */
-    fun arrowIconOffsetDp(): FloatArray {
-        val metrics = screenMetrics()
-        val along = metrics.circleRadiusDp + metrics.arrowGapDp
-        return floatArrayOf(0f, -along)
-    }
-
-    /** Render order above accuracy / route / stops; pick stays higher for edit taps. */
-    fun layerOrderAboveAccuracy(): List<String> = listOf(
+    fun layerOrder(): List<String> = listOf(
         SurveyMapOverlays.LAYER_GPS_ACCURACY,
-        SurveyMapOverlays.LAYER_GPS_GLOW,
         SurveyMapOverlays.LAYER_GPS,
         SurveyMapOverlays.LAYER_GPS_HEADING,
     )
-
-    fun usesGeographicArrowMeters(): Boolean = false
-
-    fun hidesWithMinZoomOrOpacityRules(): Boolean = false
-
-    fun ignoresLabelCollision(): Boolean = true
-
-    /** Manual pan stops camera follow only; puck data keeps updating. */
-    fun continuesUpdatingAfterManualPan(): Boolean = true
 }

@@ -9,6 +9,7 @@ import {
 } from "./field-report-evidence.js";
 import {
     ReportsRepository,
+    ReportDeleteNotRejectedError,
     type AuditContext,
     type FollowupRow,
     type PointSummaryRow,
@@ -23,6 +24,7 @@ import { toReportReview, labelReviewMapStops, type ReportReview, type ReportRevi
 import { ReportsApplyError, ReportsApplyRepository } from "./reports-apply.repo.js";
 import type { AdminApplyBody, AdminReportsQuery, ReportCreateBody } from "./reports.schema.js";
 import type { TransportRepository } from "../transport/transport.repo.js";
+import type { ObjectStore } from "../media/object-store.js";
 
 export type ReportRegionCountResponse = {
     region_id: string | null;
@@ -191,6 +193,12 @@ export type RewardResult = {
     summary: PointSummaryResponse;
 };
 
+export type AdminPermanentDeleteResult = {
+    deleted: true;
+    public_id: string;
+    media_cleanup_warning: string | null;
+};
+
 export type ReportViewer = {
     /** JWT subject (public_id uuid) when authenticated, else null. */
     jwtSub: string | null;
@@ -222,7 +230,9 @@ export class ReportsService {
             | "applyRemoveStopFromVariantInTx"
             | "applyCreateAndInsertStopInTx"
             | "applyUpdateStopDetailsInTx"
-        >
+        >,
+        private readonly objectStore: Pick<ObjectStore, "deleteObject"> | null = null,
+        private readonly mediaBuckets: { privateBucket: string; publicBucket: string } | null = null
     ) {
         this.applyRepo = new ReportsApplyRepository(prisma, reportsRepo, fieldRepo, transportRepo);
     }
@@ -689,6 +699,73 @@ export class ReportsService {
             audit,
         });
         return { report: toAdminReportResponse(updated), summary: toPointSummaryResponse(summary) };
+    }
+
+    /**
+     * Permanently delete a rejected report. DB commit first; exact storage keys cleaned after.
+     * Storage failures return a warning without rolling back the report delete.
+     */
+    async adminPermanentDelete(
+        publicId: string,
+        audit: AuditContext
+    ): Promise<AdminPermanentDeleteResult> {
+        let deleted;
+        try {
+            deleted = await this.reportsRepo.permanentDeleteRejected(publicId, audit);
+        } catch (error) {
+            if (error instanceof ReportDeleteNotRejectedError) {
+                throw new ReportsError(error.message, 409);
+            }
+            throw error;
+        }
+        if (!deleted) {
+            throw new ReportsError("Report not found", 404);
+        }
+
+        const media_cleanup_warning = await this.cleanupDeletedReportStorage(deleted.storageObjects);
+        return {
+            deleted: true,
+            public_id: deleted.publicId,
+            media_cleanup_warning,
+        };
+    }
+
+    private async cleanupDeletedReportStorage(
+        storageObjects: Array<{ objectKey: string; storageScope: string }>
+    ): Promise<string | null> {
+        if (storageObjects.length === 0) {
+            return null;
+        }
+        if (!this.objectStore || !this.mediaBuckets) {
+            const message = `Report deleted, but media storage is not configured; ${storageObjects.length} object(s) were not removed from storage.`;
+            console.error(`[reports] ${message}`);
+            return message;
+        }
+
+        const failures: string[] = [];
+        for (const object of storageObjects) {
+            const bucket =
+                object.storageScope === "public"
+                    ? this.mediaBuckets.publicBucket
+                    : this.mediaBuckets.privateBucket;
+            try {
+                await this.objectStore.deleteObject({
+                    bucket,
+                    objectKey: object.objectKey,
+                });
+            } catch (error) {
+                const detail = error instanceof Error ? error.message : String(error);
+                failures.push(object.objectKey);
+                console.error(
+                    `[reports] media cleanup failed for exact key ${object.objectKey} in ${bucket}: ${detail}`
+                );
+            }
+        }
+
+        if (failures.length === 0) {
+            return null;
+        }
+        return `Report deleted, but ${failures.length} media object(s) could not be removed from storage. Database rows were cleaned; retry storage cleanup for the exact keys only.`;
     }
 
     private async assertViewerCanRead(report: ReportRow, viewer: ReportViewer): Promise<void> {

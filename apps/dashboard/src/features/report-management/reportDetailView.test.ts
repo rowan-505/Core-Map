@@ -10,10 +10,10 @@ import {
     ReportDetailFieldActionPanel,
     ReportDetailKeyFactsCard,
     ReportDetailLoadingState,
+    ReportDetailSurveyorNoteCard,
 } from "./ReportDetailPanels.js";
 import {
     NO_DIRECT_ACTION_MESSAGE,
-    STALE_SNAPSHOT_WARNING,
     buildReportDetailActionModel,
     buildReportDetailComparison,
     buildReportDetailKeyFacts,
@@ -254,15 +254,17 @@ describe("report detail action model by type", () => {
         assert.equal(model.noDirectActionMessage, NO_DIRECT_ACTION_MESSAGE);
     });
 
-    it("stale snapshot disables apply primary and keeps warning text", () => {
+    it("stale snapshot keeps apply enabled but requires acknowledgment", () => {
         const model = buildReportDetailActionModel(
             report({
                 field: { ...report().field!, snapshot_stale: true },
             })
         );
         assert.equal(model.stale, true);
-        assert.equal(model.primary?.enabled, false);
-        assert.equal(model.primary?.disabledReason, STALE_SNAPSHOT_WARNING);
+        assert.equal(model.requiresStaleAck, true);
+        assert.equal(model.primary?.enabled, true);
+        assert.equal(model.primary?.disabledReason, null);
+        assert.equal(model.manualEditor?.label, "Open stop editor");
     });
 });
 
@@ -328,6 +330,16 @@ describe("report detail panel components", () => {
         assert.match(markup, /Key facts/);
     });
 
+    it("surveyor note card shows note or empty state", () => {
+        const withNote = renderToStaticMarkup(
+            createElement(ReportDetailSurveyorNoteCard, { note: "8မိုင်" })
+        );
+        assert.match(withNote, /Surveyor note/);
+        assert.match(withNote, /8မိုင်/);
+        const empty = renderToStaticMarkup(createElement(ReportDetailSurveyorNoteCard, { note: "  " }));
+        assert.match(empty, /No note was sent/);
+    });
+
     it("comparison card renders before and after", () => {
         const markup = renderToStaticMarkup(
             createElement(ReportDetailComparisonCard, {
@@ -356,8 +368,9 @@ describe("report detail panel components", () => {
         assert.match(markup, /Resolve without change/);
         assert.match(markup, /Reject/);
         assert.match(markup, /Closes the report without changing map data/);
+        assert.match(markup, /Open stop editor/);
+        assert.match(markup, /target="_blank"/);
         assert.doesNotMatch(markup, /Open transport editor/);
-        assert.doesNotMatch(markup, /Open stop editor/);
     });
 
     it("action panel shows stale warning copy", () => {
@@ -374,6 +387,8 @@ describe("report detail panel components", () => {
             })
         );
         assert.match(markup, /Map data changed after this survey/);
+        assert.match(markup, /I reviewed the current map and still want to apply/);
+        assert.match(markup, /Check the warning box above to enable apply/);
     });
 
     it("action panel shows manual editing message when no primary", () => {
@@ -397,5 +412,29 @@ describe("report detail panel components", () => {
         );
         assert.match(markup, /This report needs manual editing/);
         assert.doesNotMatch(markup, /Apply stop move/);
+    });
+
+    it("result panel keeps open editor after resolve", () => {
+        const model = buildReportDetailActionModel(report());
+        const markup = renderToStaticMarkup(
+            createElement(ReportDetailFieldActionPanel, {
+                model,
+                busy: false,
+                result: {
+                    action: "MOVE_STOP",
+                    actionLabel: "Apply stop move",
+                    statusLabel: "Resolved",
+                    detail: "Apply stop move · 12 variant(s) affected",
+                    toastMessage: "",
+                },
+                onPrimary() {},
+                onResolve() {},
+                onReject() {},
+            })
+        );
+        assert.match(markup, /Resolved/);
+        assert.match(markup, /Open stop editor/);
+        assert.doesNotMatch(markup, /aria-label="Apply stop move"/);
+        assert.doesNotMatch(markup, />Reject</);
     });
 });

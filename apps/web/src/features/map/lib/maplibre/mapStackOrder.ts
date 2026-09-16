@@ -8,9 +8,11 @@
 import { moveUserLocationLayersToTop } from '@/features/location/userLocationMapLayers';
 import type { MapEngine } from '../mapEngineTypes';
 import { applyMapLayerStackBottomToTop } from './mapLayerStack';
+import { isMapStyleUsable } from './isMapStyleUsable';
 import { PUBLIC_MAP_OVERLAY_STACK_BOTTOM_TO_TOP } from './publicMapMarkerStackOrder';
 
 export function applyMapOverlayStackOrder(map: MapEngine): void {
+  if (!isMapStyleUsable(map)) return;
   applyMapLayerStackBottomToTop(map, PUBLIC_MAP_OVERLAY_STACK_BOTTOM_TO_TOP);
   moveUserLocationLayersToTop(map);
 }

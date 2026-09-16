@@ -9,6 +9,7 @@
  */
 import type { GeoJSONSource } from 'maplibre-gl';
 import type { MapEngine } from '@/features/map/lib/mapEngineTypes';
+import { isMapStyleUsable } from '@/features/map/lib/maplibre/isMapStyleUsable';
 import {
   createAccuracyCircleFeature,
   createUserLocationPointFeature,
@@ -125,6 +126,7 @@ export function updateUserLocationLayers(
  * regional PMTiles layers never bury the blue dot.
  */
 export function moveUserLocationLayersToTop(map: MapEngine): void {
+  if (!isMapStyleUsable(map)) return;
   for (const layerId of [
     USER_LOCATION_ACCURACY_FILL_LAYER_ID,
     USER_LOCATION_ACCURACY_OUTLINE_LAYER_ID,
@@ -136,6 +138,7 @@ export function moveUserLocationLayersToTop(map: MapEngine): void {
 
 /** Remove all user-location layers and sources (safe if absent). */
 export function removeUserLocationLayers(map: MapEngine): void {
+  if (!isMapStyleUsable(map)) return;
   for (const layerId of [
     USER_LOCATION_DOT_LAYER_ID,
     USER_LOCATION_ACCURACY_OUTLINE_LAYER_ID,

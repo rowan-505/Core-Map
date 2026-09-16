@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, startTransition } from "react";
 import dynamic from "next/dynamic";
 
 import { reportsPath } from "@/src/lib/dashboardPaths";
@@ -25,7 +25,7 @@ import {
     statusLabel,
     targetTypeLabel,
 } from "./constants";
-import { fieldRouteEditorHref } from "./fieldReportLinks";
+import { fieldRouteEditorHref, openFieldEditorInNewTab } from "./fieldReportLinks";
 import { sessionFinalizationLabel } from "./fieldEvidenceView";
 import {
     isNewStopReport,
@@ -50,6 +50,7 @@ import {
     ReportDetailFieldActionPanel,
     ReportDetailKeyFactsCard,
     ReportDetailLoadingState,
+    ReportDetailSurveyorNoteCard,
     SECONDARY_BTN,
     SELECT_CLASS,
 } from "./ReportDetailPanels";
@@ -75,7 +76,12 @@ import {
     openApplyConfirmation,
     type ApplyFlowState,
 } from "./reportApplyFlow";
-import type { ReportReviewActionCode, ReportStatusCode, RewardReasonCode } from "./types";
+import type {
+    AdminReportDetail,
+    ReportReviewActionCode,
+    ReportStatusCode,
+    RewardReasonCode,
+} from "./types";
 
 const ReportLocationCompareMap = dynamic(() => import("./ReportLocationCompareMap"), {
     ssr: false,
@@ -128,6 +134,7 @@ function ConfirmationDialog({ value, busy, onClose }: { value: Confirmation; bus
 }
 
 export default function ReportDetailPage({ id }: { id: string }) {
+    const queryClient = useQueryClient();
     const [actionLoading, setActionLoading] = useState(false);
     const [actionError, setActionError] = useState("");
     const [actionMsg, setActionMsg] = useState("");
@@ -292,7 +299,30 @@ export default function ReportDetailPage({ id }: { id: string }) {
                 reportId,
                 buildApplyRequestBody(action, revision)
             );
-            await reportQuery.refetch();
+            // Instant UI from apply response (keeps media/events; no blocking detail refetch).
+            queryClient.setQueryData(
+                ["reports", "detail", reportId],
+                (prev: AdminReportDetail | undefined) => {
+                    if (!prev) {
+                        return {
+                            ...applyResponse.report,
+                            status_events: [],
+                            followups: [],
+                            media: [],
+                        } satisfies AdminReportDetail;
+                    }
+                    return {
+                        ...prev,
+                        ...applyResponse.report,
+                        status_events: prev.status_events,
+                        followups: prev.followups,
+                        media: prev.media,
+                    };
+                }
+            );
+            startTransition(() => {
+                void queryClient.invalidateQueries({ queryKey: ["reports", "list"] });
+            });
             const summary = buildApplyResultSummary(action, applyResponse);
             setApplyFlow((prev) => completeApplySuccess(prev, summary));
         } catch (err) {
@@ -319,7 +349,7 @@ export default function ReportDetailPage({ id }: { id: string }) {
                 setActionError("Route is missing from report evidence.");
                 return;
             }
-            window.location.assign(fieldRouteEditorHref(routeId));
+            openFieldEditorInNewTab(fieldRouteEditorHref(routeId));
             return;
         }
         requestApplyConfirm(primary.action);
@@ -390,6 +420,8 @@ export default function ReportDetailPage({ id }: { id: string }) {
                     <div className="space-y-5 lg:col-span-2">
                         {isField ? <ReportDetailKeyFactsCard facts={keyFacts} /> : null}
 
+                        {isField ? <ReportDetailSurveyorNoteCard note={report.description} /> : null}
+
                         {!isField ? (
                             <Card title="Report">
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -416,7 +448,7 @@ export default function ReportDetailPage({ id }: { id: string }) {
                         {isField ? (
                             <Card title="Evidence map">
                                 <ReportLocationCompareMap
-                                    key={`${report.public_id}:${report.review?.field_snapshot_revision ?? ""}:${report.review?.current_canonical_revision ?? ""}`}
+                                    key={report.public_id}
                                     model={evidenceMapModel}
                                 />
                             </Card>

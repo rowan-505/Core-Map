@@ -99,14 +99,14 @@ class CaptureAndPayloadTest {
     }
 
     @Test
-    fun correctStopHasNoAnomalyKindAndWritesNoPayload() {
+    fun noCorrectStopAnomalyOrPayloadExists() {
         assertFalse(AnomalyKind.entries.any { it.name == "CORRECT" })
         val stops = listOf(
             OrderedStopRow(1, "a", null, null, null, 16.8, 96.15),
             OrderedStopRow(2, "b", null, null, null, 16.81, 96.16),
         )
-        assertEquals("b", CorrectStopAction.nextStopPublicId(stops, "a"))
-        assertNull(CorrectStopAction.nextStopPublicId(stops, "b"))
+        assertEquals("b", StopSelectionAdvance.nextStopPublicId(stops, "a"))
+        assertNull(StopSelectionAdvance.nextStopPublicId(stops, "b"))
     }
 
     @Test

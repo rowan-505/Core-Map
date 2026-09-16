@@ -546,6 +546,36 @@ export const getAdminReportSchema = {
     },
 } satisfies FastifySchema;
 
+export const deleteAdminReportSchema = {
+    tags: [Tags.Reports],
+    summary: "Permanently delete a rejected report (admin)",
+    description:
+        "Hard-deletes one report whose status is exactly `rejected`. Locks the row, verifies status, " +
+        "and in one transaction deletes only owned child rows (follow-ups, status events, report_media) " +
+        "plus orphaned media.assets rows that are not referenced by stop_media or other reports. " +
+        "Never modifies reporters, survey sessions, canonical stops/routes, or other reports. " +
+        "Exact storage object keys are cleaned after commit; storage failures return a warning.",
+    security: [...bearerAuth],
+    params: adminIdParam,
+    response: {
+        200: {
+            type: "object",
+            required: ["deleted", "public_id", "media_cleanup_warning"],
+            properties: {
+                deleted: { type: "boolean", const: true },
+                public_id: { type: "string", format: "uuid" },
+                media_cleanup_warning: { type: "string", nullable: true },
+            },
+            additionalProperties: false,
+        },
+        400: badRequestSchema,
+        401: messageSchema,
+        403: messageSchema,
+        404: notFoundSchema,
+        409: conflictSchema,
+    },
+} satisfies FastifySchema;
+
 export const postAdminReportApplySchema = {
     tags: [Tags.Reports],
     summary: "Apply a typed review action (admin)",

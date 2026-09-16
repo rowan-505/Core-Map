@@ -3,6 +3,7 @@ package com.coremapmm.fieldsurveyor.offline
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 class OfflineStyleTest {
     @Test
@@ -77,6 +78,55 @@ class OfflineStyleTest {
         assertTrue(json.contains(OfflineStyle.FONT_FACES_FRAGMENT))
         assertTrue(json.contains("asset://fonts/NotoSansMyanmar-Regular.ttf"))
         assertTrue(!json.contains("[\"get\", \"name:en\"]"))
+    }
+
+    @Test
+    fun keepsOverviewGeographyVisibleAtHighZoom() {
+        val template = """{
+          "glyphs": "/fonts/{fontstack}/{range}.pbf",
+          "sources": {"overview": {"type": "vector", "url": "pmtiles://__OVERVIEW_PMTILES_URL__", "maxzoom": 8}},
+          "layers": [
+            {"id": "overview-ocean", "type": "fill", "source": "overview", "maxzoom": 9},
+            {"id": "overview-land", "type": "fill", "source": "overview", "maxzoom": 9},
+            {"id": "overview-lakes", "type": "fill", "source": "overview", "maxzoom": 9},
+            {"id": "overview-rivers", "type": "line", "source": "overview", "maxzoom": 9}
+          ]
+        }"""
+
+        val json = OfflineStyle.rewrite(template, "/data/overview.pmtiles")
+
+        assertEquals(4, Regex(""""maxzoom"\s*:\s*22""").findAll(json).count())
+        assertTrue(json.contains("\"maxzoom\": 8"))
+    }
+
+    @Test
+    fun usesArchiveMaxZoomSoMapLibreOverzoomsExistingTiles() {
+        val template = """{
+          "glyphs": "/fonts/{fontstack}/{range}.pbf",
+          "sources": {"local-basemap": {"type": "vector", "url": "pmtiles://__OVERVIEW_PMTILES_URL__", "maxzoom": 20}},
+          "layers": [{"id": "background", "type": "background"}]
+        }"""
+
+        val json = OfflineStyle.rewrite(template, "/data/yangon.pmtiles", archiveMaxZoom = 16)
+
+        assertTrue(json.contains("\"maxzoom\": 16"))
+        assertTrue(!json.contains("\"maxzoom\": 20"))
+    }
+
+    @Test
+    fun readsMaxZoomFromPmtilesV3Header() {
+        val archive = File.createTempFile("offline-style", ".pmtiles")
+        try {
+            val header = ByteArray(127)
+            "PMTiles".encodeToByteArray().copyInto(header)
+            header[7] = 3
+            header[101] = 16
+            archive.writeBytes(header)
+
+            assertEquals(16, OfflineBasemap.pmtilesMaxZoom(archive))
+        } finally {
+            archive.delete()
+        }
     }
 
     @Test

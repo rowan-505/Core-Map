@@ -177,18 +177,13 @@ class YangonBasemapStoreTest {
     }
 
     @Test
-    fun mobileDataIsBlockedWithoutOverride() = runBlocking {
+    fun mobileDataDownloadsWithoutOverride() = runBlocking {
         val sha = MediaChecksum.sha256Hex(writeTemp(payloadV2))
         val fixture = startTiles(payloadV2, "v2", sha)
         val store = store(fixture.url, metered = true)
-        try {
-            store.ensure(allowMetered = false) { _, _ -> }
-            throw AssertionError("expected metered block")
-        } catch (error: IOException) {
-            assertEquals(OfflineMapPolicy.METERED_MESSAGE, error.message)
-        }
-        assertFalse(store.localFile().exists())
-        assertEquals(0, fixture.tileGets)
+        store.ensure(allowMetered = false) { _, _ -> }
+        assertTrue(store.isReady())
+        assertTrue(fixture.tileGets >= 1)
     }
 
     @Test

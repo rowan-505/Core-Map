@@ -1,8 +1,15 @@
 import { forwardRef, useEffect, useRef, useState, type ReactNode } from 'react';
-import { isMapModeAvailable, type MapMode } from '@/features/map/config';
+import {
+  isMapModeAvailable,
+  resolveMartinTileUrl,
+  type MapMode,
+} from '@/features/map/config';
 import { useMapUiText } from '@/features/map/i18n/mapUiText';
 import type { PlaceLanguageMode } from '@/features/poi/api/publicMapApi';
-import { useMapUiStore } from '@/features/map/state/mapUiStore';
+import {
+  useMapUiStore,
+  type TransportBrowseMode,
+} from '@/features/map/state/mapUiStore';
 import type { BottomSheetState } from './MapSidebar';
 
 type MapFloatingControlsProps = {
@@ -14,7 +21,7 @@ type MapFloatingControlsProps = {
   readonly locationSlot?: ReactNode;
 };
 
-type OpenControlsPanel = 'map' | 'language' | null;
+type OpenControlsPanel = 'map' | 'language' | 'transport' | null;
 
 const LANGUAGE_OPTIONS: readonly {
   readonly mode: PlaceLanguageMode;
@@ -95,8 +102,12 @@ export function MapFloatingControls({
   const dispatchUtilityAction = useMapUiStore((s) => s.dispatchUtilityAction);
   const mapMode = useMapUiStore((s) => s.mapMode);
   const setMapMode = useMapUiStore((s) => s.setMapMode);
-  const transportOverlayVisible = useMapUiStore((s) => s.transportOverlayVisible);
-  const toggleTransportOverlay = useMapUiStore((s) => s.toggleTransportOverlay);
+  const transportMode = useMapUiStore((s) => s.transportMode);
+  const transportPointsVisible = useMapUiStore((s) => s.transportPointsVisible);
+  const transportPathsVisible = useMapUiStore((s) => s.transportPathsVisible);
+  const setTransportMode = useMapUiStore((s) => s.setTransportMode);
+  const setTransportPointsVisible = useMapUiStore((s) => s.setTransportPointsVisible);
+  const setTransportPathsVisible = useMapUiStore((s) => s.setTransportPathsVisible);
   useEffect(() => {
     if (openPanel === null) return;
 
@@ -122,6 +133,8 @@ export function MapFloatingControls({
   const selectedLanguageOption =
     LANGUAGE_OPTIONS.find((option) => option.mode === selectedLanguageMode) ??
     LANGUAGE_OPTIONS[0];
+  const martinConfiguration = resolveMartinTileUrl();
+  const transportConfigured = martinConfiguration.status === 'configured';
 
   return (
     <div className="pointer-events-none absolute right-3 top-3 z-20 flex origin-top-right flex-col items-end gap-1.5 lg:right-4 lg:top-4">
@@ -146,9 +159,16 @@ export function MapFloatingControls({
             setOpenPanel(null);
           }}
         />
-        <TransportToggle
-          active={transportOverlayVisible}
-          onToggle={toggleTransportOverlay}
+        <TransportLayerControl
+          mode={transportMode}
+          pointsVisible={transportPointsVisible}
+          pathsVisible={transportPathsVisible}
+          available={transportConfigured}
+          isOpen={openPanel === 'transport'}
+          onOpenChange={(nextOpen) => setOpenPanel(nextOpen ? 'transport' : null)}
+          onSelectMode={setTransportMode}
+          onPointsVisibleChange={setTransportPointsVisible}
+          onPathsVisibleChange={setTransportPathsVisible}
         />
         <ZoomControls
           onZoomIn={() => dispatchUtilityAction('zoomIn')}
@@ -320,32 +340,146 @@ function CompactControlSelect({
   );
 }
 
-function TransportToggle({
-  active,
-  onToggle,
+function TransportLayerControl({
+  mode,
+  pointsVisible,
+  pathsVisible,
+  available,
+  isOpen,
+  onOpenChange,
+  onSelectMode,
+  onPointsVisibleChange,
+  onPathsVisibleChange,
 }: {
-  readonly active: boolean;
-  readonly onToggle: () => void;
+  readonly mode: TransportBrowseMode | null;
+  readonly pointsVisible: boolean;
+  readonly pathsVisible: boolean;
+  readonly available: boolean;
+  readonly isOpen: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onSelectMode: (mode: TransportBrowseMode | null) => void;
+  readonly onPointsVisibleChange: (visible: boolean) => void;
+  readonly onPathsVisibleChange: (visible: boolean) => void;
 }) {
   const t = useMapUiText();
+  const pointLabel =
+    mode === 'train'
+      ? t('ဘူတာများ', 'Stations')
+      : mode === 'express'
+        ? t('ဂိတ်များ', 'Terminals')
+        : t('မှတ်တိုင်များ', 'Stops');
 
+  const modes: readonly { id: TransportBrowseMode; my: string; en: string }[] = [
+    { id: 'bus', my: 'ဘတ်စ်', en: 'Bus' },
+    { id: 'train', my: 'ရထား', en: 'Train' },
+    { id: 'express', my: 'အဝေးပြေး', en: 'Express' },
+  ];
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className={`relative flex h-11 w-11 items-center justify-center gap-1.5 rounded-2xl border text-sm font-semibold shadow-map-control backdrop-blur-xl transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 lg:h-10 lg:w-auto lg:min-w-20 lg:px-3 ${
+          isOpen || mode !== null
+            ? 'border-violet-600 bg-violet-600 text-white shadow-map-control'
+            : 'border-white/90 bg-white/94 text-map-ink hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700'
+        } ${available ? '' : 'opacity-75'}`}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        title={t('အများသုံးယာဉ်အလွှာများ', 'Transit layers')}
+        onClick={() => onOpenChange(!isOpen)}
+      >
+        <span className="grid h-4.5 w-4.5 shrink-0 place-items-center lg:h-4 lg:w-4">
+          <TransportIcon />
+        </span>
+        <span className="hidden min-w-0 truncate text-sm lg:block">
+          {t('ယာဉ်လိုင်း', 'Transit')}
+        </span>
+        {mode !== null ? (
+          <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
+        ) : null}
+      </button>
+
+      {isOpen ? (
+        <div
+          className="absolute right-full top-0 z-10 mr-2 w-60 rounded-xl border border-map-border bg-white/98 p-2 shadow-map-control backdrop-blur-xl"
+          role="dialog"
+          aria-label={t('အများသုံးယာဉ်အလွှာများ', 'Transit layers')}
+        >
+          <div className="grid grid-cols-3 gap-1" role="group" aria-label={t('ယာဉ်အမျိုးအစား', 'Transport type')}>
+            {modes.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                disabled={!available}
+                aria-pressed={mode === option.id}
+                className={`min-h-10 rounded-lg px-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
+                  mode === option.id
+                    ? 'bg-violet-600 text-white'
+                    : 'text-map-muted hover:bg-violet-50 hover:text-violet-700'
+                }`}
+                onClick={() => onSelectMode(mode === option.id ? null : option.id)}
+              >
+                {t(option.my, option.en)}
+              </button>
+            ))}
+          </div>
+
+          {mode ? (
+            <div className="mt-2 border-t border-map-border pt-2">
+              <TransportVisibilityToggle
+                label={pointLabel}
+                checked={pointsVisible}
+                onChange={onPointsVisibleChange}
+              />
+              <TransportVisibilityToggle
+                label={t('လမ်းကြောင်းများ', 'Route paths')}
+                checked={pathsVisible}
+                onChange={onPathsVisibleChange}
+              />
+              <p className="px-2 pb-1 pt-1 text-[11px] leading-4 text-map-muted">
+                {mode === 'bus' && !pathsVisible
+                  ? t(
+                      'လမ်းကြောင်းကြည့်ရန် လမ်းကြောင်းများကို ဖွင့်ပါ။',
+                      'Turn on Route paths to display bus lines.',
+                    )
+                  : t(
+                      'အသုံးပြုနေသော လမ်းကြောင်းအားလုံးကို မြေပုံချဲ့နှုန်းအလိုက် ပြသသည်။',
+                      'All active routes are shown, with detail increasing as you zoom in.',
+                    )}
+              </p>
+            </div>
+          ) : !available ? (
+            <p className="px-2 py-2 text-xs leading-5 text-map-muted">
+              {t('ယာဉ်မြေပုံ မရရှိနိုင်သေးပါ။', 'Transit tiles are unavailable.')}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TransportVisibilityToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  readonly label: string;
+  readonly checked: boolean;
+  readonly onChange: (checked: boolean) => void;
+}) {
   return (
     <button
       type="button"
-      className={`flex h-11 w-11 items-center justify-center gap-1.5 rounded-2xl border text-sm font-semibold shadow-map-control backdrop-blur-xl transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 lg:h-10 lg:w-auto lg:min-w-20 lg:px-3 ${
-        active
-          ? 'border-map-primary bg-map-primary text-white shadow-map-control'
-          : 'border-white/90 bg-white/94 text-map-ink hover:border-map-primary/25 hover:bg-map-primary-soft hover:text-map-primary'
-      }`}
-      aria-pressed={active}
-      title={t('အများသုံးယာဉ်လမ်းကြောင်းများ', 'Transport overlay')}
-      onClick={onToggle}
+      role="switch"
+      aria-checked={checked}
+      className="flex min-h-10 w-full items-center justify-between rounded-lg px-2 text-left text-sm text-map-ink hover:bg-map-bg"
+      onClick={() => onChange(!checked)}
     >
-      <span className="grid h-4.5 w-4.5 shrink-0 place-items-center lg:h-4 lg:w-4">
-        <TransportIcon />
-      </span>
-      <span className="hidden min-w-0 truncate text-sm lg:block">
-        {t('အများသုံးယာဉ်', 'Transport')}
+      <span>{label}</span>
+      <span className={`relative h-5 w-9 rounded-full ${checked ? 'bg-violet-600' : 'bg-slate-300'}`}>
+        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
       </span>
     </button>
   );

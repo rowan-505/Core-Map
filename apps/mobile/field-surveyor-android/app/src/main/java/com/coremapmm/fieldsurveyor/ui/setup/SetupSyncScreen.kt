@@ -120,7 +120,7 @@ fun SetupSyncScreen(
                 mapVersion != null &&
                 mapVersion != remoteMapVersion
             mapStatus = when {
-                yangonReady && mapNeedsUpdate -> "A newer Yangon map is available. Download on Wi-Fi."
+                yangonReady && mapNeedsUpdate -> "A newer Yangon map is available. Download anytime (uses data)."
                 yangonReady -> "Yangon streets map is on this device."
                 else -> "Yangon download finished but the file is incomplete."
             }
@@ -166,18 +166,18 @@ fun SetupSyncScreen(
                 totalBytes = manifest.byteSize
             }
             mapStatus = when {
-                mapNeedsUpdate -> "A newer Yangon map is available. Download on Wi-Fi."
+                mapNeedsUpdate -> "A newer Yangon map is available. Download anytime (uses data)."
                 yangonReady -> "Yangon streets map is on this device."
-                else -> "Street zoom needs the Yangon map (~120 MB). Use Wi-Fi."
+                else -> "Street zoom needs the Yangon map (~120 MB). Works on mobile data."
             }
         } catch (_: Exception) {
             expectedBytes = YangonMapManifestParser.FALLBACK_BYTES
             remoteMapVersion = "v2"
             mapNeedsUpdate = yangonReady && mapVersion != null && mapVersion != remoteMapVersion
             mapStatus = when {
-                mapNeedsUpdate -> "A newer Yangon map is available. Download on Wi-Fi."
+                mapNeedsUpdate -> "A newer Yangon map is available. Download anytime (uses data)."
                 yangonReady -> "Yangon streets map is on this device."
-                else -> "Street zoom needs the Yangon map (~120 MB). Use Wi-Fi."
+                else -> "Street zoom needs the Yangon map (~120 MB). Works on mobile data."
             }
         }
         runRefresh()
@@ -241,7 +241,7 @@ fun SetupSyncScreen(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
             OutlinedButton(
-                onClick = { scope.launch { runYangonDownload(allowMetered = false) } },
+                onClick = { scope.launch { runYangonDownload(allowMetered = true) } },
                 enabled = !mapBusy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             ) {
@@ -249,19 +249,12 @@ fun SetupSyncScreen(
                     tr(
                         when {
                             mapBusy -> "Downloading map…"
-                            mapNeedsUpdate -> "Update Yangon map on Wi-Fi"
+                            mapNeedsUpdate -> "Update Yangon map"
                             yangonReady -> "Verify offline map"
-                            else -> "Download Yangon map on Wi-Fi"
+                            else -> "Download Yangon map"
                         },
                     ),
                 )
-            }
-            OutlinedButton(
-                onClick = { scope.launch { runYangonDownload(allowMetered = true) } },
-                enabled = !mapBusy,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            ) {
-                Text(tr("Download map using mobile data"))
             }
             if (mapBusy) {
                 OutlinedButton(

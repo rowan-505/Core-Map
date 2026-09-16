@@ -25,14 +25,39 @@ interface LocalSurveySessionDao {
     )
     suspend fun lastSurveyByVariant(): List<VariantLastSurveyRow>
 
+    @Query(
+        """
+        SELECT variantPublicId AS variantPublicId,
+               completionStatus AS completionStatus,
+               MAX(finishedAtEpochMs) AS finishedAtEpochMs
+        FROM local_survey_sessions
+        WHERE completionStatus = 'finished'
+        GROUP BY variantPublicId, completionStatus
+        """,
+    )
+    suspend fun finishedVariants(): List<VariantCompletionRow>
+
+    @Query(
+        """
+        SELECT * FROM local_survey_sessions
+        WHERE variantPublicId = :variantPublicId
+        ORDER BY startedAtEpochMs DESC
+        LIMIT 1
+        """,
+    )
+    suspend fun latestForVariant(variantPublicId: String): LocalSurveySessionEntity?
+
     @Query("SELECT * FROM local_survey_sessions WHERE status = 'ACTIVE' ORDER BY startedAtEpochMs DESC LIMIT 1")
     suspend fun findActive(): LocalSurveySessionEntity?
 
     @Query(
         """
-        SELECT s.clientSessionId, s.routeCode, s.variantCode, s.originName, s.destinationName,
+        SELECT s.clientSessionId, s.routeCode, s.variantCode, s.variantPublicId, s.originName, s.destinationName,
                s.startedAtEpochMs, s.endedAtEpochMs, s.status, s.syncState,
-               (SELECT COUNT(*) FROM local_reports r WHERE r.sessionClientSessionId = s.clientSessionId AND r.status <> 'CANCELLED') AS reportCount
+               (SELECT COUNT(*) FROM local_reports r WHERE r.sessionClientSessionId = s.clientSessionId AND r.status <> 'CANCELLED') AS reportCount,
+               s.completionStatus, s.trackingState,
+               s.accumulatedActiveSeconds, s.checkedStopCount, s.totalStopCount,
+               s.finishedAtEpochMs, s.reopenedAtEpochMs
         FROM local_survey_sessions s
         ORDER BY s.startedAtEpochMs DESC
         """,
@@ -41,9 +66,12 @@ interface LocalSurveySessionDao {
 
     @Query(
         """
-        SELECT s.clientSessionId, s.routeCode, s.variantCode, s.originName, s.destinationName,
+        SELECT s.clientSessionId, s.routeCode, s.variantCode, s.variantPublicId, s.originName, s.destinationName,
                s.startedAtEpochMs, s.endedAtEpochMs, s.status, s.syncState,
-               (SELECT COUNT(*) FROM local_reports r WHERE r.sessionClientSessionId = s.clientSessionId AND r.status <> 'CANCELLED') AS reportCount
+               (SELECT COUNT(*) FROM local_reports r WHERE r.sessionClientSessionId = s.clientSessionId AND r.status <> 'CANCELLED') AS reportCount,
+               s.completionStatus, s.trackingState,
+               s.accumulatedActiveSeconds, s.checkedStopCount, s.totalStopCount,
+               s.finishedAtEpochMs, s.reopenedAtEpochMs
         FROM local_survey_sessions s
         ORDER BY s.startedAtEpochMs DESC
         LIMIT :limit
@@ -53,9 +81,12 @@ interface LocalSurveySessionDao {
 
     @Query(
         """
-        SELECT s.clientSessionId, s.routeCode, s.variantCode, s.originName, s.destinationName,
+        SELECT s.clientSessionId, s.routeCode, s.variantCode, s.variantPublicId, s.originName, s.destinationName,
                s.startedAtEpochMs, s.endedAtEpochMs, s.status, s.syncState,
-               (SELECT COUNT(*) FROM local_reports r WHERE r.sessionClientSessionId = s.clientSessionId AND r.status <> 'CANCELLED') AS reportCount
+               (SELECT COUNT(*) FROM local_reports r WHERE r.sessionClientSessionId = s.clientSessionId AND r.status <> 'CANCELLED') AS reportCount,
+               s.completionStatus, s.trackingState,
+               s.accumulatedActiveSeconds, s.checkedStopCount, s.totalStopCount,
+               s.finishedAtEpochMs, s.reopenedAtEpochMs
         FROM local_survey_sessions s
         WHERE s.clientSessionId = :id
         LIMIT 1
@@ -83,20 +114,34 @@ interface LocalSurveySessionDao {
 
     @Query(
         """
-        UPDATE local_survey_sessions SET status = :status, endedAtEpochMs = :endedAt,
-            syncState = 'LOCAL', lastError = NULL, updatedAtEpochMs = :endedAt
+        UPDATE local_survey_sessions SET
+            status = :status,
+            trackingState = 'idle',
+            endedAtEpochMs = :endedAt,
+            accumulatedActiveSeconds = :accumulatedActiveSeconds,
+            activeSegmentStartedAtEpochMs = NULL,
+            lastActivityAtEpochMs = :endedAt,
+            syncState = 'LOCAL',
+            lastError = NULL,
+            updatedAtEpochMs = :endedAt
         WHERE clientSessionId = :id AND status = 'ACTIVE'
         """,
     )
-    suspend fun markEnded(id: String, status: String, endedAt: Long): Int
+    suspend fun markEnded(
+        id: String,
+        status: String,
+        endedAt: Long,
+        accumulatedActiveSeconds: Int,
+    ): Int
 
     @Transaction
     suspend fun completeActiveAndStart(
         activeId: String,
         next: LocalSurveySessionEntity,
         now: Long,
+        accumulatedActiveSeconds: Int,
     ): LocalSurveySessionEntity? {
-        if (markEnded(activeId, LocalSurveySessionEntity.STATUS_COMPLETED, now) != 1) {
+        if (markEnded(activeId, LocalSurveySessionEntity.STATUS_COMPLETED, now, accumulatedActiveSeconds) != 1) {
             return null
         }
         insert(next)
@@ -106,7 +151,9 @@ interface LocalSurveySessionDao {
     @Query(
         """
         UPDATE local_survey_sessions SET serverPublicId = COALESCE(serverPublicId, :serverPublicId),
-            syncState = :syncState, lastError = :lastError, updatedAtEpochMs = :now
+            syncState = :syncState, lastError = :lastError, updatedAtEpochMs = :now,
+            pendingFinishSync = CASE WHEN :syncState = 'SYNCED' THEN 0 ELSE pendingFinishSync END,
+            pendingReopenSync = CASE WHEN :syncState = 'SYNCED' THEN 0 ELSE pendingReopenSync END
         WHERE clientSessionId = :id
         """,
     )
@@ -115,6 +162,60 @@ interface LocalSurveySessionDao {
         serverPublicId: String?,
         syncState: String,
         lastError: String?,
+        now: Long,
+    )
+
+    @Query(
+        """
+        UPDATE local_survey_sessions SET
+            trackingState = :trackingState,
+            completionStatus = :completionStatus,
+            accumulatedActiveSeconds = :accumulatedActiveSeconds,
+            finishedAtEpochMs = :finishedAtEpochMs,
+            reopenedAtEpochMs = :reopenedAtEpochMs,
+            lastActivityAtEpochMs = :lastActivityAtEpochMs,
+            lastCheckedStopSequence = :lastCheckedStopSequence,
+            checkedStopCount = :checkedStopCount,
+            totalStopCount = :totalStopCount,
+            pendingSyncCount = :pendingSyncCount,
+            lastGpsAccuracyM = :lastGpsAccuracyM,
+            lastLat = :lastLat,
+            lastLng = :lastLng,
+            lastGpsAtEpochMs = :lastGpsAtEpochMs,
+            activeSegmentStartedAtEpochMs = :activeSegmentStartedAtEpochMs,
+            lastHeartbeatAtEpochMs = :lastHeartbeatAtEpochMs,
+            pendingFinishSync = :pendingFinishSync,
+            pendingReopenSync = :pendingReopenSync,
+            status = :status,
+            endedAtEpochMs = :endedAtEpochMs,
+            syncState = 'LOCAL',
+            lastError = NULL,
+            updatedAtEpochMs = :now
+        WHERE clientSessionId = :id
+        """,
+    )
+    suspend fun upsertOperational(
+        id: String,
+        trackingState: String,
+        completionStatus: String,
+        accumulatedActiveSeconds: Int,
+        finishedAtEpochMs: Long?,
+        reopenedAtEpochMs: Long?,
+        lastActivityAtEpochMs: Long?,
+        lastCheckedStopSequence: Int?,
+        checkedStopCount: Int,
+        totalStopCount: Int,
+        pendingSyncCount: Int,
+        lastGpsAccuracyM: Float?,
+        lastLat: Double?,
+        lastLng: Double?,
+        lastGpsAtEpochMs: Long?,
+        activeSegmentStartedAtEpochMs: Long?,
+        lastHeartbeatAtEpochMs: Long?,
+        pendingFinishSync: Boolean,
+        pendingReopenSync: Boolean,
+        status: String,
+        endedAtEpochMs: Long?,
         now: Long,
     )
 

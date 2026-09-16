@@ -1,6 +1,7 @@
 import { apiFetch } from "@/src/lib/api";
 import { privateMediaAccessPath } from "./fieldEvidenceView";
 import { getReportPath, listReportsPath, reportStatusChangeRequest } from "./reportAdminQueries";
+import type { ReportPermanentDeleteResult } from "./reportPermanentDelete";
 import type {
     AdminReport,
     AdminReportDetail,
@@ -30,6 +31,13 @@ export function listReports(filters: ReportsListFilters = {}, init?: Signal) {
 export function getReport(id: string, init?: Signal) {
     return apiFetch<AdminReportDetail>(getReportPath(id), {
         method: "GET",
+        ...init,
+    });
+}
+
+export function permanentDeleteRejectedReport(id: string, init?: Signal) {
+    return apiFetch<ReportPermanentDeleteResult>(`/admin/reports/${encodeURIComponent(id)}`, {
+        method: "DELETE",
         ...init,
     });
 }

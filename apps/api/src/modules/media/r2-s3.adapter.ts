@@ -1,5 +1,6 @@
 import {
     CopyObjectCommand,
+    DeleteObjectCommand,
     GetObjectCommand,
     HeadObjectCommand,
     PutObjectCommand,
@@ -183,5 +184,21 @@ export class R2ObjectStore implements ObjectStore {
                 CopySource: `${input.bucket}/${input.sourceObjectKey}`,
             })
         );
+    }
+
+    async deleteObject(input: { bucket: string; objectKey: string }): Promise<void> {
+        try {
+            await this.client.send(
+                new DeleteObjectCommand({
+                    Bucket: input.bucket,
+                    Key: input.objectKey,
+                })
+            );
+        } catch (error) {
+            if (isNotFound(error)) {
+                return;
+            }
+            throw error;
+        }
     }
 }

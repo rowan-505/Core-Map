@@ -190,6 +190,7 @@ fun FieldNavHost(graph: AppGraph, display: FieldPreferences) {
             composable(FieldRoutes.History) {
                 SurveyHistoryScreen(
                     repository = graph.sessions,
+                    completions = graph.completionDao,
                     onBack = { navController.popBackStack() },
                     onOpen = { navController.navigate(FieldRoutes.historyDetail(it)) },
                 )
@@ -227,7 +228,7 @@ fun FieldNavHost(graph: AppGraph, display: FieldPreferences) {
                 )
             }
             composable(FieldRoutes.Infra) {
-                SettingsPage(title = tr("Infra"), onBack = { navController.popBackStack() }) {
+                SettingsPage(title = tr("Offline data & sync"), onBack = { navController.popBackStack() }) {
                     SetupSyncScreen(
                         bootstrap = graph.bootstrap,
                         yangon = graph.yangon,

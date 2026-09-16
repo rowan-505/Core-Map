@@ -137,6 +137,16 @@ describe("apply confirmation for every allowed action", () => {
         assert.match(summary!.proposedValue, /16\.80100/);
         assert.match(summary!.changeDetail ?? "", /Distance/);
         assert.equal(summary!.affectedVariantsLabel, "2");
+        assert.equal(summary!.staleWarning, null);
+    });
+
+    it("MOVE_STOP includes stale warning when snapshot is stale", () => {
+        const summary = buildApplyConfirmation(
+            report({ field: { ...report().field!, snapshot_stale: true } }),
+            "MOVE_STOP"
+        );
+        assert.ok(summary);
+        assert.match(summary!.staleWarning ?? "", /Map data changed after this survey/);
     });
 
     it("REMOVE_FROM_ROUTE", () => {
@@ -366,6 +376,7 @@ describe("apply confirmation dialog and result UI", () => {
         );
         assert.match(panel, /Resolved/);
         assert.match(panel, /Result/);
+        assert.match(panel, /Open stop editor/);
         assert.doesNotMatch(panel, /Resolve without change/);
         assert.doesNotMatch(panel, /aria-label="Apply stop move"/);
         const toast = renderToStaticMarkup(

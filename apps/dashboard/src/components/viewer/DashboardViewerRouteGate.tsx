@@ -16,10 +16,7 @@ export default function DashboardViewerRouteGate({ children }: { children: React
     const router = useRouter();
     const moduleKey = sidebarModuleFromPathname(pathname);
     const sensitiveModule = moduleKey !== null && !viewerDashboardModules.has(moduleKey);
-    const blocked =
-        access.ready &&
-        access.isViewer &&
-        sensitiveModule;
+    const blocked = access.ready && access.isViewer && sensitiveModule;
 
     useEffect(() => {
         if (blocked) {
@@ -27,7 +24,9 @@ export default function DashboardViewerRouteGate({ children }: { children: React
         }
     }, [blocked, router]);
 
-    if ((!access.ready && sensitiveModule) || blocked) {
+    // Writers can see sensitive modules once roles are known.
+    // While roles load, only gate sensitive modules (avoid flashing restricted UI to viewers).
+    if (blocked || (!access.ready && sensitiveModule)) {
         return (
             <main className="p-6">
                 <div className="mx-auto max-w-7xl rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600">

@@ -55,7 +55,12 @@ class SurveyHistoryNavigationInstrumentedTest {
             CompositionLocalProvider(LocalFieldLanguage provides FieldLanguage.ENGLISH) {
                 MaterialTheme {
                     if (historyVisible) {
-                        SurveyHistoryScreen(repository, onBack = { historyVisible = false }, onOpen = {})
+                        SurveyHistoryScreen(
+                            repository,
+                            completions = db.localSurveyVariantCompletionDao(),
+                            onBack = { historyVisible = false },
+                            onOpen = {},
+                        )
                     } else {
                         SettingsHomeScreen(
                             language = FieldLanguage.ENGLISH,

@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,8 +59,11 @@ import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecommendation
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecommender
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteRecompute
 import com.coremapmm.fieldsurveyor.survey.NearbyRouteState
+import com.coremapmm.fieldsurveyor.survey.SurveyAssignmentMapping
 import com.coremapmm.fieldsurveyor.survey.SurveyController
+import com.coremapmm.fieldsurveyor.survey.SurveyVariantCompletionMapping
 import com.coremapmm.fieldsurveyor.ui.settings.tr
+import com.coremapmm.fieldsurveyor.ui.components.StatusPill
 import kotlinx.coroutines.launch
 
 @Composable
@@ -72,6 +78,8 @@ fun RoutesScreen(
     val scope = rememberCoroutineScope()
     val surveyState by survey.state.collectAsStateWithLifecycle()
     var allRows by remember { mutableStateOf<List<RouteSelectionRow>>(emptyList()) }
+    var completionByVariant by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
+    var assignmentByVariant by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var query by remember { mutableStateOf("") }
     var recommendState by remember { mutableStateOf<NearbyRouteState>(NearbyRouteState.Idle) }
     var lastRecommendFix by remember { mutableStateOf<GpsFix?>(null) }
@@ -137,6 +145,8 @@ fun RoutesScreen(
         if (hasLocationPermission()) {
             refreshRecommendations(force = true)
         }
+        completionByVariant = survey.variantCompletionStatuses()
+        assignmentByVariant = survey.assignmentWorkStatuses()
     }
 
     val locationPermission = rememberLauncherForActivityResult(
@@ -156,6 +166,8 @@ fun RoutesScreen(
         val count = bootstrap.variantCount()
         val revision = bootstrap.snapshotRevision()
         allRows = bootstrap.listSelections()
+        completionByVariant = survey.variantCompletionStatuses()
+        assignmentByVariant = survey.assignmentWorkStatuses()
         val restored = RouteSyncUi.restore(syncName, syncCount.takeIf { it > 0 } ?: count, syncRevision ?: revision, online)
         persistSync(
             if (restored is RouteSyncUiState.Downloading || restored is RouteSyncUiState.Importing) {
@@ -169,9 +181,11 @@ fun RoutesScreen(
         }
     }
 
-    LaunchedEffect(surveyState.snapshotRevision) {
+    LaunchedEffect(surveyState.snapshotRevision, surveyState.variantFinished) {
         val rows = bootstrap.listSelections()
         allRows = rows
+        completionByVariant = survey.variantCompletionStatuses()
+        assignmentByVariant = survey.assignmentWorkStatuses()
         if (hasLocationPermission()) {
             refreshRecommendations(force = false)
         }
@@ -188,8 +202,11 @@ fun RoutesScreen(
         }
     }
 
-    val visible = remember(allRows, query) {
-        RouteSelectionFilter.byRouteCode(allRows, query)
+    val visible = remember(allRows, query, assignmentByVariant) {
+        SurveyAssignmentMapping.sortRoutes(
+            RouteSelectionFilter.byRouteCode(allRows, query),
+            assignmentByVariant,
+        )
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -249,7 +266,12 @@ fun RoutesScreen(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items(visible, key = { it.variantPublicId }) { row ->
-                RouteSelectionItem(row, onClick = { onSelectVariant(row) })
+                RouteSelectionItem(
+                    row = row,
+                    workStatus = assignmentByVariant[row.variantPublicId],
+                    finished = completionByVariant[row.variantPublicId],
+                    onClick = { onSelectVariant(row) },
+                )
             }
         }
     }
@@ -327,22 +349,56 @@ private fun NearbyRecommendRow(row: NearbyRouteRecommendation, onClick: () -> Un
 }
 
 @Composable
-private fun RouteSelectionItem(row: RouteSelectionRow, onClick: () -> Unit) {
+private fun RouteSelectionItem(
+    row: RouteSelectionRow,
+    workStatus: String?,
+    finished: Boolean?,
+    onClick: () -> Unit,
+) {
     val origin = row.originName ?: "—"
     val destination = row.destinationName ?: "—"
+    val badge = SurveyAssignmentMapping.badge(workStatus)
+        ?: SurveyVariantCompletionMapping.badge(finished)
+    val badgePositive = workStatus == com.coremapmm.fieldsurveyor.data.LocalSurveyVariantAssignmentEntity.WORK_FINISHED ||
+        (workStatus == null && finished == true)
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text(
-                "${row.routeCode} · ${row.variantCode}",
-                style = MaterialTheme.typography.titleSmall,
-            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Text(
+                        row.routeCode,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    )
+                }
+                Text(
+                    row.variantCode,
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                if (badge != null) {
+                    StatusPill(
+                        label = tr(badge),
+                        positive = badgePositive,
+                        warning = !badgePositive,
+                    )
+                }
+            }
             Text(
                 "$origin → $destination",
                 style = MaterialTheme.typography.bodySmall,

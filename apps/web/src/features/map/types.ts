@@ -60,6 +60,8 @@ export type MapViewProps = {
   /** Selected transport stop/station from the Martin overlay (drives highlight + detail panel). */
   readonly selectedTransportSelection?: TransportMapSelection | null;
   readonly onSelectTransportStop?: (selection: TransportMapSelection) => void;
+  /** Route tile selection; parent reuses the existing cached search-preview detail flow. */
+  readonly onSelectTransportRoute?: (result: PublicSearchResult) => void;
   readonly onEmptyMapClick?: (location: MapClickedLocation) => void;
   readonly onViewportChange?: (viewport: MapViewportState) => void;
   readonly className?: string;

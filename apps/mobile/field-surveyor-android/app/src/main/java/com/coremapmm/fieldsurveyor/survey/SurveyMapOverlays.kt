@@ -35,6 +35,12 @@ object SurveyMapOverlays {
     const val MIN_ZOOM = 3.0
     const val MAX_ZOOM = 20.0
     const val GPS_ZOOM = 16.0
+    /** All selected-route stop labels appear from this zoom. */
+    const val STOP_LABEL_ZOOM = 15.0
+    /** Selected stop label stays readable below the dense-label zoom. */
+    const val SELECTED_STOP_LABEL_ZOOM = 12.0
+    /** Forgiving finger target around a rendered stop marker or label. */
+    const val STOP_TAP_RADIUS_DP = 24f
     const val SRC_PATH = "survey-path-src"
     const val SRC_STOPS = "survey-stops-src"
     const val SRC_SELECTED = "survey-selected-stop-src"
@@ -47,14 +53,33 @@ object SurveyMapOverlays {
     const val SRC_ANOMALIES = "survey-anomalies-src"
     const val LAYER_PATH = "survey-path"
     const val LAYER_STOPS = "survey-stops"
+    const val LAYER_STOP_LABELS = "survey-stop-labels"
     const val LAYER_SELECTED = "survey-selected-stop"
+    const val LAYER_SELECTED_STOP_LABEL = "survey-selected-stop-label"
     const val LAYER_NEARBY = "survey-nearby-stops"
-    const val LAYER_GPS_GLOW = "survey-gps-glow"
     const val LAYER_GPS = "survey-gps"
     const val LAYER_GPS_ACCURACY = "survey-gps-accuracy"
     const val LAYER_GPS_HEADING = "survey-gps-heading"
     const val LAYER_ANOMALIES = "survey-anomalies"
-    const val PROP_STOP_ID = "stopPublicId"
+    /** Legacy click property; keep in sync with [PROP_STOP_ID]. */
+    const val PROP_STOP_PUBLIC_ID = "stopPublicId"
+    const val PROP_STOP_ID = "stop_id"
+    const val PROP_STOP_SEQUENCE = "stop_sequence"
+    const val PROP_DISPLAY_NAME = "display_name"
+    const val PROP_LABEL = "label"
+    const val PROP_SELECTED = "selected"
+    const val PROP_REPORTED = "reported"
+    val STOP_LABEL_FONT = arrayOf("NotoSansMyanmar-Regular")
+    /** Layers that can receive a stop-select tap (points + labels). */
+    val STOP_HIT_LAYERS = arrayOf(
+        LAYER_SELECTED_STOP_LABEL,
+        LAYER_SELECTED,
+        LAYER_STOP_LABELS,
+        LAYER_NEARBY,
+        LAYER_STOPS,
+    )
+
+    fun stopTapRadiusPx(density: Float): Float = STOP_TAP_RADIUS_DP * density.coerceAtLeast(1f)
 
     fun install(style: Style, density: Float = 1f) {
         if (!styleFullyLoaded(style)) return
@@ -65,6 +90,7 @@ object SurveyMapOverlays {
         }
         if (existing != null) {
             ensureLocationPuck(style, density)
+            ensureStopLabelLayers(style)
             return
         }
         style.addSource(GeoJsonSource(SRC_PATH, emptyCollection()))
@@ -107,6 +133,7 @@ object SurveyMapOverlays {
                 PropertyFactory.circleStrokeWidth(2f),
             ),
         )
+        addStopLabelLayers(style)
         style.addLayer(
             CircleLayer(LAYER_ANOMALIES, SRC_ANOMALIES).withProperties( // markers only; no photo thumbnails
                 PropertyFactory.circleColor(Color.parseColor("#FF6D00")),
@@ -115,14 +142,7 @@ object SurveyMapOverlays {
                 PropertyFactory.circleStrokeWidth(1f),
             ),
         )
-        // Location puck: accuracy (geo) → glow → circle → arrow (all screen-space except accuracy).
-        style.addLayer(
-            FillLayer(LAYER_GPS_ACCURACY, SRC_GPS_ACCURACY).withProperties(
-                PropertyFactory.fillColor(Color.parseColor("#64B5F6")),
-                PropertyFactory.fillOpacity(0.16f),
-                PropertyFactory.fillOutlineColor(Color.parseColor(LocationPuck.COREMAP_BLUE)),
-            ),
-        )
+        // Fixed screen-space puck: bounded halo → blue dot → optional heading arrow.
         addLocationPuckLayers(style, density)
         style.addLayer(
             CircleLayer(LAYER_PICK, SRC_PICK).withProperties(
@@ -137,12 +157,12 @@ object SurveyMapOverlays {
     private fun addLocationPuckLayers(style: Style, density: Float) {
         val metrics = LocationPuck.screenMetrics()
         ensureArrowImage(style, density)
-        if (style.getLayer(LAYER_GPS_GLOW) == null) {
+        if (style.getLayer(LAYER_GPS_ACCURACY) == null) {
             style.addLayer(
-                CircleLayer(LAYER_GPS_GLOW, SRC_GPS).withProperties(
-                    PropertyFactory.circleColor(Color.parseColor(LocationPuck.GLOW_BLUE)),
-                    PropertyFactory.circleRadius(metrics.glowRadiusDp),
-                    PropertyFactory.circleOpacity(LocationPuck.GLOW_OPACITY),
+                CircleLayer(LAYER_GPS_ACCURACY, SRC_GPS).withProperties(
+                    PropertyFactory.circleColor(Color.parseColor(LocationPuck.HALO_BLUE)),
+                    PropertyFactory.circleRadius(metrics.haloRadiusDp),
+                    PropertyFactory.circleOpacity(LocationPuck.HALO_OPACITY),
                     PropertyFactory.circlePitchAlignment(Property.CIRCLE_PITCH_ALIGNMENT_VIEWPORT),
                 ),
             )
@@ -150,10 +170,10 @@ object SurveyMapOverlays {
         if (style.getLayer(LAYER_GPS) == null) {
             style.addLayer(
                 CircleLayer(LAYER_GPS, SRC_GPS).withProperties(
-                    PropertyFactory.circleColor(Color.parseColor(LocationPuck.CENTRE_WHITE)),
-                    PropertyFactory.circleRadius(metrics.circleRadiusDp),
-                    PropertyFactory.circleStrokeColor(Color.parseColor(LocationPuck.COREMAP_BLUE)),
-                    PropertyFactory.circleStrokeWidth(metrics.circleBorderDp),
+                    PropertyFactory.circleColor(Color.parseColor(LocationPuck.COREMAP_BLUE)),
+                    PropertyFactory.circleRadius(metrics.dotRadiusDp),
+                    PropertyFactory.circleStrokeColor(Color.parseColor(LocationPuck.BORDER_WHITE)),
+                    PropertyFactory.circleStrokeWidth(metrics.dotBorderDp),
                     PropertyFactory.circlePitchAlignment(Property.CIRCLE_PITCH_ALIGNMENT_VIEWPORT),
                 ),
             )
@@ -166,7 +186,6 @@ object SurveyMapOverlays {
                     PropertyFactory.iconAllowOverlap(true),
                     PropertyFactory.iconIgnorePlacement(true),
                     PropertyFactory.iconOptional(false),
-                    // Map-aligned rotate: camera bearing is applied by the renderer.
                     PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
                     PropertyFactory.iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_VIEWPORT),
                     PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
@@ -186,11 +205,12 @@ object SurveyMapOverlays {
             if (geoJsonSource(style, SRC_GPS_HEADING) == null) {
                 style.addSource(GeoJsonSource(SRC_GPS_HEADING, emptyCollection()))
             }
-            // Drop legacy geographic heading fill if an older install left it behind.
+            // Remove any geographic regression layers before installing the fixed puck.
+            style.getLayer(LAYER_GPS_ACCURACY)?.let { layer ->
+                if (layer !is CircleLayer) style.removeLayer(LAYER_GPS_ACCURACY)
+            }
             style.getLayer(LAYER_GPS_HEADING)?.let { layer ->
-                if (layer !is SymbolLayer) {
-                    style.removeLayer(LAYER_GPS_HEADING)
-                }
+                if (layer !is SymbolLayer) style.removeLayer(LAYER_GPS_HEADING)
             }
             addLocationPuckLayers(style, density)
         } catch (_: Exception) {
@@ -200,37 +220,36 @@ object SurveyMapOverlays {
     fun ensureArrowImage(style: Style, density: Float) {
         if (!styleFullyLoaded(style)) return
         try {
-            if (style.getImage(LocationPuck.IMAGE_ARROW) != null) return
-            style.addImage(LocationPuck.IMAGE_ARROW, createArrowBitmap(density), false)
+            if (style.getImage(LocationPuck.IMAGE_ARROW) == null) {
+                style.addImage(LocationPuck.IMAGE_ARROW, createArrowBitmap(density), false)
+            }
         } catch (_: Exception) {
         }
     }
 
-    /** Blue triangle with thin white outline; tip points up (map-north before rotate). */
+    /** Small original blue chevron with a white edge; the tip initially points north. */
     fun createArrowBitmap(density: Float): Bitmap {
         val d = density.coerceAtLeast(0.5f)
         val metrics = LocationPuck.screenMetrics()
         val outline = LocationPuck.ARROW_OUTLINE_DP * d
-        val widthPx = ceil((metrics.arrowWidthDp + LocationPuck.ARROW_OUTLINE_DP * 2f) * d).toInt().coerceAtLeast(8)
-        val heightPx = ceil((metrics.arrowHeightDp + LocationPuck.ARROW_OUTLINE_DP * 2f) * d).toInt().coerceAtLeast(8)
+        val widthPx = ceil((metrics.arrowWidthDp + LocationPuck.ARROW_OUTLINE_DP * 2f) * d)
+            .toInt().coerceAtLeast(8)
+        val heightPx = ceil((metrics.arrowHeightDp + LocationPuck.ARROW_OUTLINE_DP * 2f) * d)
+            .toInt().coerceAtLeast(8)
         val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        val cx = widthPx / 2f
-        val tipY = outline
-        val baseY = heightPx - outline
-        val halfBase = metrics.arrowWidthDp * d / 2f
         val path = Path().apply {
-            moveTo(cx, tipY)
-            lineTo(cx + halfBase, baseY)
-            lineTo(cx - halfBase, baseY)
+            moveTo(widthPx / 2f, outline)
+            lineTo(widthPx - outline, heightPx - outline)
+            lineTo(widthPx / 2f, heightPx - outline * 2.2f)
+            lineTo(outline, heightPx - outline)
             close()
         }
         val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
-            color = Color.parseColor(LocationPuck.ARROW_OUTLINE_WHITE)
+            color = Color.parseColor(LocationPuck.BORDER_WHITE)
             strokeWidth = outline.coerceAtLeast(1f)
             strokeJoin = Paint.Join.ROUND
-            strokeCap = Paint.Cap.ROUND
         }
         val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
@@ -239,6 +258,93 @@ object SurveyMapOverlays {
         canvas.drawPath(path, stroke)
         canvas.drawPath(path, fill)
         return bitmap
+    }
+
+    private fun addStopLabelLayers(style: Style) {
+        if (style.getLayer(LAYER_STOP_LABELS) == null) {
+            val normalLabels = SymbolLayer(LAYER_STOP_LABELS, SRC_STOPS).withProperties(
+                PropertyFactory.textField(Expression.get(PROP_LABEL)),
+                PropertyFactory.textFont(STOP_LABEL_FONT),
+                PropertyFactory.textSize(11f),
+                PropertyFactory.textColor(Color.parseColor("#37474F")),
+                PropertyFactory.textHaloColor(Color.WHITE),
+                PropertyFactory.textHaloWidth(1.4f),
+                PropertyFactory.textHaloBlur(0.2f),
+                PropertyFactory.textOffset(arrayOf(0f, 1.15f)),
+                PropertyFactory.textAnchor(Property.TEXT_ANCHOR_TOP),
+                PropertyFactory.textMaxWidth(7f),
+                PropertyFactory.textJustify(Property.TEXT_JUSTIFY_CENTER),
+                PropertyFactory.textAllowOverlap(false),
+                PropertyFactory.textIgnorePlacement(false),
+                PropertyFactory.textOptional(true),
+                PropertyFactory.textPadding(2f),
+                PropertyFactory.symbolSortKey(Expression.get(PROP_STOP_SEQUENCE)),
+            ).withFilter(
+                Expression.neq(Expression.get(PROP_SELECTED), Expression.literal(1)),
+            )
+            normalLabels.minZoom = STOP_LABEL_ZOOM.toFloat()
+            style.addLayer(normalLabels)
+        }
+        if (style.getLayer(LAYER_SELECTED_STOP_LABEL) == null) {
+            // Above normal labels so the selected stop wins collisions and stays readable.
+            val selectedLabel = SymbolLayer(LAYER_SELECTED_STOP_LABEL, SRC_SELECTED).withProperties(
+                PropertyFactory.textField(Expression.get(PROP_LABEL)),
+                PropertyFactory.textFont(STOP_LABEL_FONT),
+                PropertyFactory.textSize(12.5f),
+                PropertyFactory.textColor(Color.parseColor("#1B5E20")),
+                PropertyFactory.textHaloColor(Color.WHITE),
+                PropertyFactory.textHaloWidth(1.8f),
+                PropertyFactory.textHaloBlur(0.25f),
+                PropertyFactory.textOffset(arrayOf(0f, 1.2f)),
+                PropertyFactory.textAnchor(Property.TEXT_ANCHOR_TOP),
+                PropertyFactory.textMaxWidth(8f),
+                PropertyFactory.textJustify(Property.TEXT_JUSTIFY_CENTER),
+                PropertyFactory.textAllowOverlap(true),
+                PropertyFactory.textIgnorePlacement(true),
+                PropertyFactory.textOptional(false),
+            )
+            selectedLabel.minZoom = SELECTED_STOP_LABEL_ZOOM.toFloat()
+            style.addLayer(selectedLabel)
+        }
+    }
+
+    fun ensureStopLabelLayers(style: Style) {
+        if (!styleFullyLoaded(style)) return
+        try {
+            addStopLabelLayers(style)
+        } catch (_: Exception) {
+        }
+    }
+
+    /** Pure label copy: `#sequence Display name`. */
+    fun stopLabelText(sequenceLabel: String, displayName: String): String =
+        "$sequenceLabel $displayName".trim()
+
+    fun stopFeature(
+        stop: OrderedStopRow,
+        sequences: List<Int>,
+        selectedStopPublicId: String?,
+        reportedStopIds: Set<String>,
+        preferMyanmar: Boolean,
+    ): Feature {
+        val sequenceLabel = StopSequenceDisplay.uiLabel(stop.stopSequence, sequences)
+        val displayName = SurveyStopStripModel.displayName(stop.nameMy, stop.nameEn, preferMyanmar)
+        val selected = stop.stopPublicId == selectedStopPublicId
+        val feature = Feature.fromGeometry(Point.fromLngLat(stop.lng, stop.lat))
+        feature.addStringProperty(PROP_STOP_ID, stop.stopPublicId)
+        feature.addStringProperty(PROP_STOP_PUBLIC_ID, stop.stopPublicId)
+        feature.addNumberProperty(PROP_STOP_SEQUENCE, stop.stopSequence)
+        feature.addStringProperty(PROP_DISPLAY_NAME, displayName)
+        feature.addStringProperty(PROP_LABEL, stopLabelText(sequenceLabel, displayName))
+        feature.addNumberProperty(PROP_SELECTED, if (selected) 1 else 0)
+        feature.addNumberProperty(PROP_REPORTED, if (stop.stopPublicId in reportedStopIds) 1 else 0)
+        return feature
+    }
+
+    fun stopIdFromFeature(feature: Feature): String? {
+        return feature.getStringProperty(PROP_STOP_ID)
+            ?.takeIf { it.isNotBlank() }
+            ?: feature.getStringProperty(PROP_STOP_PUBLIC_ID)?.takeIf { it.isNotBlank() }
     }
 
     fun setPath(style: Style, coordinates: List<Pair<Double, Double>>) {
@@ -256,36 +362,54 @@ object SurveyMapOverlays {
         stops: List<OrderedStopRow>,
         selectedStopPublicId: String?,
         nearbyStopPublicIds: Set<String> = emptySet(),
+        reportedStopIds: Set<String> = emptySet(),
+        preferMyanmar: Boolean = true,
     ) {
+        ensureStopLabelLayers(style)
         val stopSource = geoJsonSource(style, SRC_STOPS) ?: return
         val selectedSource = geoJsonSource(style, SRC_SELECTED) ?: return
         val nearbySource = geoJsonSource(style, SRC_NEARBY) ?: return
-        val features = stops.map { stop ->
-            val feature = Feature.fromGeometry(Point.fromLngLat(stop.lng, stop.lat))
-            feature.addStringProperty(PROP_STOP_ID, stop.stopPublicId)
-            feature
+        val ordered = StopContext.ordered(stops)
+        val sequences = ordered.map { it.stopSequence }
+        val features = ordered.map { stop ->
+            stopFeature(
+                stop = stop,
+                sequences = sequences,
+                selectedStopPublicId = selectedStopPublicId,
+                reportedStopIds = reportedStopIds,
+                preferMyanmar = preferMyanmar,
+            )
         }
         stopSource.setGeoJson(FeatureCollection.fromFeatures(features))
-        val nearbyFeatures = stops.filter { it.stopPublicId in nearbyStopPublicIds }.map { stop ->
-            val feature = Feature.fromGeometry(Point.fromLngLat(stop.lng, stop.lat))
-            feature.addStringProperty(PROP_STOP_ID, stop.stopPublicId)
-            feature
+        val nearbyFeatures = ordered.filter { it.stopPublicId in nearbyStopPublicIds }.map { stop ->
+            stopFeature(
+                stop = stop,
+                sequences = sequences,
+                selectedStopPublicId = selectedStopPublicId,
+                reportedStopIds = reportedStopIds,
+                preferMyanmar = preferMyanmar,
+            )
         }
         nearbySource.setGeoJson(FeatureCollection.fromFeatures(nearbyFeatures))
-        val selected = stops.firstOrNull { it.stopPublicId == selectedStopPublicId }
+        val selected = ordered.firstOrNull { it.stopPublicId == selectedStopPublicId }
         if (selected == null) {
             selectedSource.setGeoJson(emptyCollection())
         } else {
-            val feature = Feature.fromGeometry(Point.fromLngLat(selected.lng, selected.lat))
-            feature.addStringProperty(PROP_STOP_ID, selected.stopPublicId)
-            selectedSource.setGeoJson(FeatureCollection.fromFeature(feature))
+            selectedSource.setGeoJson(
+                FeatureCollection.fromFeature(
+                    stopFeature(
+                        stop = selected,
+                        sequences = sequences,
+                        selectedStopPublicId = selectedStopPublicId,
+                        reportedStopIds = reportedStopIds,
+                        preferMyanmar = preferMyanmar,
+                    ),
+                ),
+            )
         }
     }
 
-    /**
-     * Updates the location puck. Circle + glow stay when [headingDeg] is null;
-     * only the screen-space arrow SymbolLayer is cleared.
-     */
+    /** Updates the fixed screen-space puck; GPS accuracy remains numeric in the survey chip. */
     fun setGps(style: Style, gps: GpsFix?, headingDeg: Double? = null) {
         ensureLocationPuck(style)
         val source = geoJsonSource(style, SRC_GPS) ?: return
@@ -302,38 +426,40 @@ object SurveyMapOverlays {
                 Feature.fromGeometry(Point.fromLngLat(gps.lng, gps.lat)),
             ),
         )
-        val ring = accuracyRing(gps)
-        if (ring.isEmpty()) {
-            accuracySource.setGeoJson(emptyCollection())
-        } else {
-            val polygon = Polygon.fromLngLats(
-                listOf(ring.map { (lng, lat) -> Point.fromLngLat(lng, lat) }),
-            )
-            accuracySource.setGeoJson(FeatureCollection.fromFeature(Feature.fromGeometry(polygon)))
-        }
+        // The former geographic accuracy polygon could cover the map on weak fixes.
+        accuracySource.setGeoJson(emptyCollection())
         if (headingSource == null) {
             return
         }
         if (!LocationPuck.showArrow(headingDeg)) {
             headingSource.setGeoJson(emptyCollection())
         } else {
-            val feature = Feature.fromGeometry(Point.fromLngLat(gps.lng, gps.lat))
-            feature.addNumberProperty(
-                LocationPuck.PROP_BEARING,
-                LocationPuck.mapAlignedIconRotateDeg(headingDeg!!),
+            headingSource.setGeoJson(
+                FeatureCollection.fromFeature(headingArrowFeature(gps, headingDeg!!)),
             )
-            headingSource.setGeoJson(FeatureCollection.fromFeature(feature))
         }
     }
 
-    /** GeoJSON point + bearing for the arrow SymbolLayer (tests / callers). */
-    fun headingArrowFeature(gps: GpsFix, headingDeg: Double): Feature {
-        val feature = Feature.fromGeometry(Point.fromLngLat(gps.lng, gps.lat))
-        feature.addNumberProperty(
-            LocationPuck.PROP_BEARING,
-            LocationPuck.mapAlignedIconRotateDeg(headingDeg),
-        )
-        return feature
+    fun headingArrowFeature(gps: GpsFix, headingDeg: Double): Feature =
+        Feature.fromGeometry(Point.fromLngLat(gps.lng, gps.lat)).apply {
+            addNumberProperty(
+                LocationPuck.PROP_BEARING,
+                LocationPuck.mapAlignedIconRotateDeg(headingDeg),
+            )
+        }
+
+    /** Closed triangle pointing along [headingDeg], as (longitude, latitude) pairs. */
+    fun headingChevron(
+        gps: GpsFix,
+        headingDeg: Double,
+        tipMeters: Double = 16.0,
+        halfWidthMeters: Double = 7.5,
+    ): List<Pair<Double, Double>> {
+        val heading = SurveyHeading.normalize(headingDeg)
+        val tip = destination(gps.lat, gps.lng, heading, tipMeters)
+        val left = destination(gps.lat, gps.lng, heading + 150.0, halfWidthMeters)
+        val right = destination(gps.lat, gps.lng, heading - 150.0, halfWidthMeters)
+        return listOf(tip, left, right, tip)
     }
 
     /** Returns a geodesic accuracy ring as (longitude, latitude) pairs. */

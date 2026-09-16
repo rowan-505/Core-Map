@@ -1,6 +1,7 @@
 "use client";
 
 import { isImportReviewDevAdminHeaderConfigured } from "@/src/lib/importReviewDevAdminHeader";
+import { getAccessToken } from "@/src/lib/authTokenStorage";
 import { canDashboardWrite, rolesFromJwtAccessToken } from "@/src/lib/jwtRoles";
 
 /**
@@ -16,9 +17,6 @@ export function deriveImportReviewEditorUxCanMutate(): boolean {
     if (isImportReviewDevAdminHeaderConfigured()) {
         return true;
     }
-    const roles = rolesFromJwtAccessToken(window.localStorage.getItem("accessToken"));
-    if (roles.length === 0) {
-        return false;
-    }
+    const roles = rolesFromJwtAccessToken(getAccessToken());
     return canDashboardWrite(roles);
 }

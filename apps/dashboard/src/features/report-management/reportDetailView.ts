@@ -1,3 +1,4 @@
+import { fieldRouteEditorHref, fieldStopEditorHref } from "./fieldReportLinks";
 import type {
     AdminReportDetail,
     ReportReview,
@@ -8,6 +9,10 @@ import type {
 /** Copy shown when the field snapshot no longer matches live map data. */
 export const STALE_SNAPSHOT_WARNING =
     "Map data changed after this survey. Review the current stop before applying this report.";
+
+/** Checkbox label required before applying a stale report. */
+export const STALE_APPLY_ACK_LABEL =
+    "I reviewed the current map and still want to apply this report.";
 
 /** Shown when no structured apply action is available. */
 export const NO_DIRECT_ACTION_MESSAGE = "This report needs manual editing.";
@@ -43,15 +48,22 @@ export type ReportDetailPrimaryAction = {
     mode: "apply" | "navigate";
 };
 
+export type ReportDetailManualEditor = {
+    href: string;
+    label: string;
+};
+
 export type ReportDetailActionModel = {
     primary: ReportDetailPrimaryAction | null;
     resolve: ReportReviewAllowedAction | null;
     reject: ReportReviewAllowedAction | null;
     stale: boolean;
+    /** Stale apply stays enabled, but UI must collect this acknowledgment first. */
+    requiresStaleAck: boolean;
+    manualEditor: ReportDetailManualEditor | null;
     noDirectActionMessage: string | null;
     expectedCanonicalRevision: string | null;
 };
-
 function findAction(
     actions: ReportReviewAllowedAction[],
     code: ReportReviewActionCode
@@ -71,6 +83,28 @@ function isUnsupportedStructuredChange(
         return !preferredState?.enabled;
     }
     return false;
+}
+
+function buildManualEditorLink(
+    field: AdminReportDetail["field"],
+    primary: ReportDetailPrimaryAction | null
+): ReportDetailManualEditor | null {
+    if (field?.stop_public_id) {
+        return {
+            href: fieldStopEditorHref(field.stop_public_id),
+            label: "Open stop editor",
+        };
+    }
+    if (field?.route_public_id) {
+        if (primary?.mode === "navigate" && primary.action === "OPEN_ROUTE_EDITOR") {
+            return null;
+        }
+        return {
+            href: fieldRouteEditorHref(field.route_public_id),
+            label: "Open route editor",
+        };
+    }
+    return null;
 }
 
 /**
@@ -95,6 +129,8 @@ export function buildReportDetailActionModel(
             resolve: null,
             reject: null,
             stale,
+            requiresStaleAck: false,
+            manualEditor: buildManualEditorLink(field, null),
             noDirectActionMessage: null,
             expectedCanonicalRevision,
         };
@@ -124,36 +160,35 @@ export function buildReportDetailActionModel(
             primary = {
                 action: "OPEN_ROUTE_EDITOR",
                 label: PRIMARY_ACTION_LABELS.OPEN_ROUTE_EDITOR,
-                enabled: !stale || Boolean(field?.route_public_id),
+                enabled: Boolean(field?.route_public_id),
                 disabledReason: null,
                 mode: "navigate",
             };
         }
     } else if (preferredCode && preferredState) {
-        const applyEnabled = preferredState.enabled && !stale;
+        // Stale reports stay clickable; the panel requires an acknowledgment checkbox.
         primary = {
             action: preferredCode,
             label: PRIMARY_ACTION_LABELS[preferredCode],
-            enabled: applyEnabled,
-            disabledReason: !preferredState.enabled
-                ? preferredState.disabledReason
-                : stale
-                  ? STALE_SNAPSHOT_WARNING
-                  : null,
+            enabled: preferredState.enabled,
+            disabledReason: preferredState.enabled ? null : preferredState.disabledReason,
             mode: preferredCode === "OPEN_ROUTE_EDITOR" ? "navigate" : "apply",
         };
     }
+
+    const requiresStaleAck = Boolean(stale && primary?.mode === "apply" && primary.enabled);
 
     return {
         primary,
         resolve,
         reject,
         stale,
+        requiresStaleAck,
+        manualEditor: buildManualEditorLink(field, primary),
         noDirectActionMessage: primary == null ? NO_DIRECT_ACTION_MESSAGE : null,
         expectedCanonicalRevision,
     };
 }
-
 export type ReportDetailKeyFacts = {
     routeVariant: string;
     targetStop: string;

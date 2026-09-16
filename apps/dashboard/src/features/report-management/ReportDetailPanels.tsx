@@ -7,6 +7,7 @@ import { useState } from "react";
 import {
     NO_DIRECT_ACTION_MESSAGE,
     RESOLVE_WITHOUT_CHANGE_HINT,
+    STALE_APPLY_ACK_LABEL,
     STALE_SNAPSHOT_WARNING,
     type ComparisonSide,
     type ReportDetailActionModel,
@@ -14,6 +15,7 @@ import {
 } from "./reportDetailView";
 import type { ApplyConfirmationSummary, ApplyResultSummary } from "./reportApplyFlow";
 import { MAP_DATA_CHANGED_MESSAGE } from "./reportApplyFlow";
+import { FIELD_EDITOR_LINK_PROPS } from "./fieldReportLinks";
 
 export const PRIMARY_BTN =
     "rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 disabled:cursor-not-allowed disabled:opacity-50";
@@ -171,6 +173,20 @@ export function ReportDetailKeyFactsCard({ facts }: { facts: ReportDetailKeyFact
     );
 }
 
+/** Surveyor free-text note from the field app (API `description`). */
+export function ReportDetailSurveyorNoteCard({ note }: { note: string | null | undefined }) {
+    const trimmed = note?.trim() ?? "";
+    return (
+        <Card title="Surveyor note">
+            {trimmed ? (
+                <p className="whitespace-pre-wrap text-sm text-gray-900">{trimmed}</p>
+            ) : (
+                <p className="text-sm text-gray-500">No note was sent with this report.</p>
+            )}
+        </Card>
+    );
+}
+
 export function ReportDetailComparisonCard({
     before,
     after,
@@ -218,16 +234,38 @@ export function ReportDetailFieldActionPanel({
     onResolve: () => void;
     onReject: () => void;
 }) {
+    const [staleAck, setStaleAck] = useState(false);
+
     if (result) {
         return (
             <Card title="Result">
-                <div className="space-y-2">
-                    <p className="text-sm font-medium text-emerald-800">{result.statusLabel}</p>
-                    <p className="text-sm text-gray-700">{result.detail}</p>
+                <div className="space-y-3">
+                    <div className="space-y-2">
+                        <p className="text-sm font-medium text-emerald-800">{result.statusLabel}</p>
+                        <p className="text-sm text-gray-700">{result.detail}</p>
+                    </div>
+                    {model.manualEditor ? (
+                        <div className="space-y-1">
+                            <Link
+                                href={model.manualEditor.href}
+                                {...FIELD_EDITOR_LINK_PROPS}
+                                className={`inline-flex w-full items-center justify-center ${SECONDARY_BTN}`}
+                                aria-label={model.manualEditor.label}
+                            >
+                                {model.manualEditor.label}
+                            </Link>
+                            <p className="text-xs text-gray-500">
+                                Optional: open the live stop or route editor in a new tab.
+                            </p>
+                        </div>
+                    ) : null}
                 </div>
             </Card>
         );
     }
+
+    const primaryBlockedByAck = model.requiresStaleAck && !staleAck;
+    const primaryDisabled = busy || !model.primary?.enabled || primaryBlockedByAck;
 
     return (
         <Card title="Actions">
@@ -239,9 +277,21 @@ export function ReportDetailFieldActionPanel({
                 ) : null}
 
                 {model.stale && !conflictNotice ? (
-                    <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900" role="status">
-                        {STALE_SNAPSHOT_WARNING}
-                    </p>
+                    <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-2" role="status">
+                        <p className="text-xs text-amber-900">{STALE_SNAPSHOT_WARNING}</p>
+                        {model.requiresStaleAck ? (
+                            <label className="flex items-start gap-2 text-xs text-amber-950">
+                                <input
+                                    type="checkbox"
+                                    className="mt-0.5 rounded border-amber-400"
+                                    checked={staleAck}
+                                    disabled={busy}
+                                    onChange={(event) => setStaleAck(event.target.checked)}
+                                />
+                                <span>{STALE_APPLY_ACK_LABEL}</span>
+                            </label>
+                        ) : null}
+                    </div>
                 ) : null}
 
                 {model.noDirectActionMessage ? (
@@ -252,17 +302,40 @@ export function ReportDetailFieldActionPanel({
                     <div className="space-y-1">
                         <button
                             type="button"
-                            disabled={busy || !model.primary.enabled}
+                            disabled={primaryDisabled}
                             onClick={onPrimary}
                             className={`w-full ${PRIMARY_BTN}`}
                             aria-label={model.primary.label}
-                            title={model.primary.disabledReason ?? undefined}
+                            title={
+                                primaryBlockedByAck
+                                    ? STALE_APPLY_ACK_LABEL
+                                    : (model.primary.disabledReason ?? undefined)
+                            }
                         >
                             {model.primary.label}
                         </button>
                         {!model.primary.enabled && model.primary.disabledReason ? (
                             <p className="text-xs text-gray-500">{model.primary.disabledReason}</p>
                         ) : null}
+                        {primaryBlockedByAck ? (
+                            <p className="text-xs text-gray-500">Check the warning box above to enable apply.</p>
+                        ) : null}
+                    </div>
+                ) : null}
+
+                {model.manualEditor ? (
+                    <div className="space-y-1">
+                        <Link
+                            href={model.manualEditor.href}
+                            {...FIELD_EDITOR_LINK_PROPS}
+                            className={`inline-flex w-full items-center justify-center ${SECONDARY_BTN}`}
+                            aria-label={model.manualEditor.label}
+                        >
+                            {model.manualEditor.label}
+                        </Link>
+                        <p className="text-xs text-gray-500">
+                            Optional: edit the live stop or route manually (opens in a new tab).
+                        </p>
                     </div>
                 ) : null}
 
@@ -335,6 +408,11 @@ export function ApplyConfirmationDialog({
                 <h2 id="apply-confirm-title" className="text-lg font-semibold text-gray-900">
                     Confirm {summary.actionLabel.toLowerCase()}?
                 </h2>
+                {summary.staleWarning ? (
+                    <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-950">
+                        {summary.staleWarning}
+                    </p>
+                ) : null}
                 <dl className="mt-3 space-y-2 text-sm">
                     <div className="flex justify-between gap-3">
                         <dt className="text-gray-500">Action</dt>

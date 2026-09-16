@@ -2,6 +2,7 @@ package com.coremapmm.fieldsurveyor.offline
 
 import android.content.Context
 import java.io.File
+import java.io.RandomAccessFile
 
 object OfflineBasemap {
     const val ASSET_OVERVIEW = "basemap/overview.pmtiles"
@@ -41,11 +42,31 @@ object OfflineBasemap {
 
     private fun rewriteAsset(context: Context, assetStyle: String, archive: File): String {
         val template = context.assets.open(assetStyle).bufferedReader().use { it.readText() }
-        val json = OfflineStyle.rewrite(template, archive.absolutePath)
+        val json = OfflineStyle.rewrite(
+            templateJson = template,
+            pmtilesAbsolutePath = archive.absolutePath,
+            archiveMaxZoom = pmtilesMaxZoom(archive),
+        )
         val http = OfflineStyle.httpBasemapUrls(json)
         require(http.isEmpty()) {
             "Style still contains HTTP URLs: $http"
         }
         return json
     }
+
+    /** PMTiles v3 header byte 101 stores max zoom. */
+    internal fun pmtilesMaxZoom(archive: File): Int? = runCatching {
+        RandomAccessFile(archive, "r").use { input ->
+            if (input.length() < PMTILES_HEADER_BYTES) return@runCatching null
+            val magic = ByteArray(PMTILES_MAGIC.length)
+            input.readFully(magic)
+            if (magic.decodeToString() != PMTILES_MAGIC) return@runCatching null
+            input.seek(PMTILES_MAX_ZOOM_OFFSET)
+            input.readUnsignedByte().takeIf { it in 0..30 }
+        }
+    }.getOrNull()
+
+    private const val PMTILES_MAGIC = "PMTiles"
+    private const val PMTILES_HEADER_BYTES = 127L
+    private const val PMTILES_MAX_ZOOM_OFFSET = 101L
 }

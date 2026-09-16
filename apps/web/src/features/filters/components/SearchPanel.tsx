@@ -16,6 +16,7 @@ import { Chip, ChipRow, ResultRow, SidebarSectionTitle } from '@/components/ui/s
 import { resultTitleClass, sidebarCard } from '@/components/ui/sidebarTokens';
 import type { Poi, PoiCategory, PoiCategoryCode } from '@/types';
 import { getLocalizedName } from '@local-map/localized-name';
+import { usePublicTransportRoute } from '@/features/transport/api/usePublicTransportRoute';
 
 type SearchResultType =
   | PublicSearchResult['type']
@@ -432,6 +433,14 @@ function SelectedResultCard({
   // Reverse admin line (township · district · region) for pin-type results.
   const reverseLine = reverseAdminLine(result);
   const canViewDetails = entityType === 'place' && typeof onViewDetails === 'function';
+  const isTransportRoute =
+    entityType === 'transport_route' ||
+    entityType === 'transport_route_variant' ||
+    entityType === 'bus_route' ||
+    entityType === 'bus_route_variant';
+  const routeDetail = usePublicTransportRoute(isTransportRoute ? result.routeCode : null);
+  const routeStopCount =
+    routeDetail.data?.variants.reduce((sum, variant) => sum + variant.stops.length, 0) ?? 0;
 
   return (
     <div className="rounded-map-card border border-map-primary/20 bg-map-primary-soft p-3">
@@ -447,6 +456,43 @@ function SelectedResultCard({
             <span className="block truncate text-xs text-map-muted">{reverseLine}</span>
           ) : null}
           <SearchResultBadges result={result} entityType={entityType} />
+          {routeDetail.data ? (
+            <span className="mt-1 block text-xs leading-5 text-map-muted">
+              <span className="block">
+                {[
+                  routeDetail.data.operator?.name,
+                  routeDetail.data.variants.length > 0
+                    ? t(
+                        `${routeDetail.data.variants.length} မျိုးကွဲ`,
+                        `${routeDetail.data.variants.length} variant${routeDetail.data.variants.length === 1 ? '' : 's'}`,
+                      )
+                    : null,
+                  routeStopCount > 0 ? t(`${routeStopCount} မှတ်တိုင်`, `${routeStopCount} stops`) : null,
+                ].filter(Boolean).join(' · ')}
+              </span>
+              {routeDetail.data.variants[0]?.direction_name ? (
+                <span className="block truncate">
+                  {t('ဦးတည်ရာ', 'Direction')}: {routeDetail.data.variants[0].direction_name}
+                </span>
+              ) : null}
+              {routeDetail.data.variants[0]?.stops.length ? (
+                <span className="mt-1 block border-l-2 border-map-primary/20 pl-2">
+                  {routeDetail.data.variants[0].stops.slice(0, 5).map((stop) => (
+                    <span key={`${stop.public_id}:${stop.stop_sequence}`} className="block truncate">
+                      {stop.stop_sequence}. {stop.name_my ?? stop.name_en ?? t('မှတ်တိုင်', 'Stop')}
+                    </span>
+                  ))}
+                  {routeDetail.data.variants[0].stops.length > 5 ? (
+                    <span className="block">+{routeDetail.data.variants[0].stops.length - 5}</span>
+                  ) : null}
+                </span>
+              ) : null}
+            </span>
+          ) : routeDetail.isError ? (
+            <span className="mt-1 block text-xs text-amber-700">
+              {t('လမ်းကြောင်းအသေးစိတ် မရရှိနိုင်ပါ။', 'Route details unavailable.')}
+            </span>
+          ) : null}
           {loading ? (
             <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-map-primary">
               <span className="h-3 w-3 animate-spin rounded-full border-2 border-map-primary/20 border-t-map-primary" />

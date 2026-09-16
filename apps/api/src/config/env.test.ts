@@ -11,6 +11,17 @@ const ENV_KEYS = [
     "ROUTING_PUBLIC_PROFILES",
     "NODE_ENV",
     "PUBLIC_APP_URL",
+    "WEB_APP_URL",
+    "DASHBOARD_APP_URL",
+    "API_PUBLIC_URL",
+    "AUTH_JWT_SECRET",
+    "JWT_SECRET",
+    "EMAIL_OTP_SECRET",
+    "AUTH_MFA_ENCRYPTION_KEY",
+    "GOOGLE_OAUTH_CLIENT_ID",
+    "GOOGLE_OAUTH_CLIENT_SECRET",
+    "GOOGLE_OAUTH_REDIRECT_URI",
+    "FACEBOOK_OAUTH_ENABLED",
     "R2_ACCOUNT_ID",
     "R2_ACCESS_KEY_ID",
     "R2_SECRET_ACCESS_KEY",
@@ -97,18 +108,41 @@ describe("loadApiEnv public app url", () => {
     it("uses the configured value and trims trailing slashes", () => {
         resetApiEnvCacheForTests();
         process.env.NODE_ENV = "production";
-        process.env.PUBLIC_APP_URL = "https://coremapmm.com/";
+        process.env.PUBLIC_APP_URL = "https://map.coremapmm.com/";
+        process.env.API_PUBLIC_URL = "https://api.coremapmm.com";
+        process.env.DASHBOARD_APP_URL = "https://admin.coremapmm.com";
+        process.env.AUTH_JWT_SECRET = "production-jwt-secret-at-least-32-chars!";
+        process.env.EMAIL_OTP_SECRET = "otp-secret-at-least-16";
+        process.env.AUTH_MFA_ENCRYPTION_KEY = "m".repeat(32);
+        process.env.GOOGLE_OAUTH_CLIENT_ID = "google-id";
+        process.env.GOOGLE_OAUTH_CLIENT_SECRET = "google-secret";
+        process.env.GOOGLE_OAUTH_REDIRECT_URI =
+            "https://api.coremapmm.com/auth/oauth/google/callback";
 
         loadApiEnv();
-        assert.equal(getPublicAppUrl(), "https://coremapmm.com");
+        assert.equal(getPublicAppUrl(), "https://map.coremapmm.com");
     });
 
     it("requires PUBLIC_APP_URL in production (no localhost fallback)", () => {
         resetApiEnvCacheForTests();
         process.env.NODE_ENV = "production";
         delete process.env.PUBLIC_APP_URL;
+        delete process.env.WEB_APP_URL;
+        process.env.API_PUBLIC_URL = "https://api.coremapmm.com";
+        process.env.DASHBOARD_APP_URL = "https://admin.coremapmm.com";
+        process.env.AUTH_JWT_SECRET = "production-jwt-secret-at-least-32-chars!";
 
-        assert.throws(() => loadApiEnv(), /PUBLIC_APP_URL is required in production/);
+        assert.throws(() => loadApiEnv(), /WEB_APP_URL or PUBLIC_APP_URL is required in production/);
+    });
+
+    it("rejects a short JWT secret in production", () => {
+        resetApiEnvCacheForTests();
+        process.env.NODE_ENV = "production";
+        process.env.PUBLIC_APP_URL = "https://map.coremapmm.com";
+        process.env.API_PUBLIC_URL = "https://api.coremapmm.com";
+        process.env.DASHBOARD_APP_URL = "https://admin.coremapmm.com";
+        process.env.AUTH_JWT_SECRET = "short";
+        assert.throws(() => loadApiEnv(), /AUTH_JWT_SECRET/);
     });
 });
 

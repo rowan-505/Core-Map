@@ -12,12 +12,19 @@ import {
 } from "@/src/lib/importReviewDevAccess";
 import { hasDashboardAccess, rolesFromJwtAccessToken } from "@/src/lib/jwtRoles";
 import { accountPath } from "@/src/lib/dashboardPaths";
+import { getAccessToken, setAccessToken, tryRestoreDashboardSession } from "@/src/lib/api";
 
 type LoginResponse = {
-    accessToken: string;
+    accessToken?: string;
     refreshToken?: string;
+    mfaRequired?: boolean;
+    mfaToken?: string;
+    mfaEnrollmentRequired?: boolean;
+    enrollmentToken?: string;
+    recoveryCodes?: string[];
+    secret?: string;
+    otpauthUrl?: string;
     user?: {
-        id: string;
         public_id: string;
         email: string;
         display_name: string;
@@ -33,6 +40,8 @@ type LoginApiPayload = {
         error?: unknown;
     };
 };
+
+type OAuthProviders = { google: boolean; facebook: boolean };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
 
@@ -109,11 +118,56 @@ export default function LoginPageClient() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [authChecked, setAuthChecked] = useState(false);
+    const [mfaToken, setMfaToken] = useState<string | null>(null);
+    const [mfaCode, setMfaCode] = useState("");
+    const [enrollmentToken, setEnrollmentToken] = useState<string | null>(null);
+    const [enrollmentSecret, setEnrollmentSecret] = useState<string | null>(null);
+    const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+    const [oauthProviders, setOauthProviders] = useState<OAuthProviders>({
+        google: true,
+        facebook: false,
+    });
+
+    useEffect(() => {
+        if (!API_BASE_URL) return;
+        void fetch(`${API_BASE_URL}/auth/providers`, { credentials: "include" })
+            .then(async (response) => {
+                if (!response.ok) return;
+                const body = (await response.json()) as { providers?: OAuthProviders };
+                if (!body.providers) return;
+                setOauthProviders({
+                    google: Boolean(body.providers.google),
+                    facebook: Boolean(body.providers.facebook),
+                });
+            })
+            .catch(() => undefined);
+    }, []);
 
     useEffect(() => {
         const pathname = window.location.pathname;
         const state = readImportReviewAuthDebugState(pathname, true);
         const postLoginPath = resolvePostLoginPath(searchParams.get("next"));
+        const queryError = searchParams.get("error");
+        if (queryError === "dashboard_forbidden") {
+            setError("This account does not have dashboard access.");
+        } else if (queryError === "mfa_enrollment_required") {
+            setError("Administrator MFA setup required. Sign in with email and password to enroll.");
+        } else if (queryError) {
+            setError("Sign-in with that provider did not complete.");
+        }
+
+        // OAuth MFA challenge lands here as `#mfa_token=...` (hash avoids Referer/log leakage).
+        const hash = window.location.hash.startsWith("#")
+            ? window.location.hash.slice(1)
+            : window.location.hash;
+        const hashParams = new URLSearchParams(hash);
+        const oauthMfaToken = hashParams.get("mfa_token")?.trim();
+        if (oauthMfaToken) {
+            setMfaToken(oauthMfaToken);
+            window.history.replaceState(null, "", `${pathname}${window.location.search}`);
+            setAuthChecked(true);
+            return;
+        }
 
         if (consumeImportReviewApiAuthFailed()) {
             logImportReviewAuthDecision(
@@ -125,30 +179,37 @@ export default function LoginPageClient() {
             return;
         }
 
-        const accessToken = window.localStorage.getItem("accessToken")?.trim();
+        const finishWithToken = (accessToken: string) => {
+            if (!hasDashboardAccess(rolesFromJwtAccessToken(accessToken))) {
+                setError("This account does not have dashboard access.");
+                setAuthChecked(true);
+                return;
+            }
+            logImportReviewAuthDecision("LoginPageClient", "redirect-after-login", {
+                ...readImportReviewAuthDebugState(pathname, false),
+                hasAccessToken: true,
+            });
+            router.replace(postLoginPath);
+        };
 
-        if (!accessToken) {
+        const memoryToken = getAccessToken()?.trim();
+        if (memoryToken) {
+            finishWithToken(memoryToken);
+            return;
+        }
+
+        void tryRestoreDashboardSession().then((ok) => {
+            const restored = getAccessToken()?.trim();
+            if (ok && restored) {
+                finishWithToken(restored);
+                return;
+            }
             logImportReviewAuthDecision("LoginPageClient", "show-login-form", {
                 ...state,
                 authLoading: false,
             });
             setAuthChecked(true);
-            return;
-        }
-
-        if (!hasDashboardAccess(rolesFromJwtAccessToken(accessToken))) {
-            window.localStorage.removeItem("accessToken");
-            window.localStorage.removeItem("refreshToken");
-            setError("This account does not have dashboard access.");
-            setAuthChecked(true);
-            return;
-        }
-
-        logImportReviewAuthDecision("LoginPageClient", "redirect-after-login", {
-            ...readImportReviewAuthDebugState(pathname, false),
-            hasAccessToken: true,
         });
-        router.replace(postLoginPath);
     }, [router, searchParams]);
 
     if (!authChecked) {
@@ -159,9 +220,38 @@ export default function LoginPageClient() {
         );
     }
 
+    function persistAccess(accessToken: string, roles: string[]) {
+        if (!hasDashboardAccess(roles)) {
+            throw new Error("This account does not have dashboard access.");
+        }
+        setAccessToken(accessToken);
+        router.replace(resolvePostLoginPath(searchParams.get("next")));
+    }
+
+    async function startEnrollment(token: string) {
+        if (!API_BASE_URL) {
+            throw new Error("Cannot connect to server");
+        }
+        const response = await fetch(`${API_BASE_URL}/auth/mfa/enroll/bootstrap`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ enrollmentToken: token }),
+        });
+        const responseData = parseJsonSafely(await response.text()) as LoginResponse | null;
+        if (!response.ok || !responseData?.secret) {
+            throw new Error(getLoginErrorMessage(response.status, responseData));
+        }
+        setEnrollmentToken(token);
+        setEnrollmentSecret(responseData.secret);
+        setMfaCode("");
+    }
+
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         setError(null);
         setLoading(true);
 
@@ -170,61 +260,103 @@ export default function LoginPageClient() {
                 throw new Error("Cannot connect to server");
             }
 
-            const requestBody = {
-                email: email.trim(),
-                password,
-            };
+            if (enrollmentToken) {
+                const response = await fetch(`${API_BASE_URL}/auth/mfa/enroll/bootstrap/verify`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ enrollmentToken, code: mfaCode }),
+                });
+                const responseData = parseJsonSafely(await response.text()) as LoginResponse | null;
+                if (!response.ok || !responseData?.accessToken) {
+                    throw new Error(getLoginErrorMessage(response.status, responseData));
+                }
+                if (responseData.recoveryCodes?.length) {
+                    setRecoveryCodes(responseData.recoveryCodes);
+                }
+                persistAccess(
+                    responseData.accessToken,
+                    responseData.user?.roles ?? rolesFromJwtAccessToken(responseData.accessToken)
+                );
+                return;
+            }
+
+            if (mfaToken) {
+                const response = await fetch(`${API_BASE_URL}/auth/mfa/verify`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ mfaToken, code: mfaCode }),
+                });
+                const responseData = parseJsonSafely(await response.text()) as LoginResponse | null;
+                if (!response.ok || !responseData?.accessToken) {
+                    throw new Error(getLoginErrorMessage(response.status, responseData));
+                }
+                persistAccess(
+                    responseData.accessToken,
+                    responseData.user?.roles ?? rolesFromJwtAccessToken(responseData.accessToken)
+                );
+                return;
+            }
 
             const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(requestBody),
+                body: JSON.stringify({
+                    email: email.trim(),
+                    password,
+                }),
             });
 
-            const responseText = await response.text();
-            const responseData = parseJsonSafely(responseText);
-
+            const responseData = parseJsonSafely(await response.text()) as LoginResponse | null;
             if (!response.ok) {
                 throw new Error(getLoginErrorMessage(response.status, responseData));
             }
-
-            const data = responseData as LoginResponse | null;
-
-            if (!data?.accessToken) {
+            if (responseData?.mfaRequired && responseData.mfaToken) {
+                setMfaToken(responseData.mfaToken);
+                return;
+            }
+            if (responseData?.mfaEnrollmentRequired && responseData.enrollmentToken) {
+                await startEnrollment(responseData.enrollmentToken);
+                return;
+            }
+            if (!responseData?.accessToken) {
                 throw new Error("Login failed");
             }
-
-            const roles = data.user?.roles ?? rolesFromJwtAccessToken(data.accessToken);
-            if (!hasDashboardAccess(roles)) {
-                throw new Error("This account does not have dashboard access.");
-            }
-
-            window.localStorage.removeItem("token");
-            window.localStorage.removeItem("authToken");
-            window.localStorage.removeItem("jwt");
-            window.localStorage.setItem("accessToken", data.accessToken);
-            // Persist the refresh token so apiFetch can silently refresh the
-            // short-lived access token instead of logging the admin out.
-            if (data.refreshToken) {
-                window.localStorage.setItem("refreshToken", data.refreshToken);
-            } else {
-                window.localStorage.removeItem("refreshToken");
-            }
-            router.replace(resolvePostLoginPath(searchParams.get("next")));
+            persistAccess(
+                responseData.accessToken,
+                responseData.user?.roles ?? rolesFromJwtAccessToken(responseData.accessToken)
+            );
         } catch (err) {
             if (err instanceof TypeError) {
                 setError("Cannot connect to server");
                 return;
             }
-
             setError(err instanceof Error ? err.message : "Login failed");
         } finally {
             setLoading(false);
         }
     }
+
+    const oauthStart = (provider: "google" | "facebook") => {
+        if (!API_BASE_URL) return;
+        const next = resolvePostLoginPath(searchParams.get("next"));
+        const returnTo = `${window.location.origin}/login`;
+        window.location.href = `${API_BASE_URL}/auth/oauth/${provider}/start?client=dashboard&return_to=${encodeURIComponent(returnTo)}`;
+        void next;
+    };
+
+    const challengeMode = Boolean(mfaToken || enrollmentToken);
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
@@ -235,34 +367,88 @@ export default function LoginPageClient() {
             >
                 <h1 className="mb-4 text-2xl font-semibold text-gray-900">Dashboard Login</h1>
 
-                <label className="mb-4 block">
-                    <span className="mb-1 block text-sm text-gray-700">Email</span>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900"
-                        required
-                    />
-                </label>
+                {enrollmentSecret ? (
+                    <div className="mb-4 space-y-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                        <p className="font-medium">Administrator MFA setup required</p>
+                        <p>Add this secret in your authenticator app, then enter a 6-digit code.</p>
+                        <code className="block break-all rounded bg-white px-2 py-1 text-[11px]">
+                            {enrollmentSecret}
+                        </code>
+                        {recoveryCodes?.length ? (
+                            <p>Save recovery codes shown after verification.</p>
+                        ) : null}
+                    </div>
+                ) : null}
 
-                <label className="mb-4 block">
-                    <span className="mb-1 block text-sm text-gray-700">Password</span>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900"
-                        required
-                    />
-                </label>
+                {challengeMode ? (
+                    <label className="mb-4 block">
+                        <span className="mb-1 block text-sm text-gray-700">Authenticator code</span>
+                        <input
+                            value={mfaCode}
+                            onChange={(event) => setMfaCode(event.target.value)}
+                            className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            required
+                        />
+                    </label>
+                ) : (
+                    <>
+                        <div className="mb-4 space-y-2">
+                            {oauthProviders.google ? (
+                                <button
+                                    type="button"
+                                    onClick={() => oauthStart("google")}
+                                    className="w-full rounded border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800"
+                                >
+                                    Continue with Google
+                                </button>
+                            ) : null}
+                            {oauthProviders.facebook ? (
+                                <button
+                                    type="button"
+                                    onClick={() => oauthStart("facebook")}
+                                    className="w-full rounded border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800"
+                                >
+                                    Continue with Facebook
+                                </button>
+                            ) : null}
+                        </div>
+                        <label className="mb-4 block">
+                            <span className="mb-1 block text-sm text-gray-700">Email</span>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(event) => setEmail(event.target.value)}
+                                className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900"
+                                required
+                            />
+                        </label>
+                        <label className="mb-4 block">
+                            <span className="mb-1 block text-sm text-gray-700">Password</span>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(event) => setPassword(event.target.value)}
+                                className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900"
+                                required
+                            />
+                        </label>
+                    </>
+                )}
 
                 <button
                     type="submit"
                     disabled={loading}
                     className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
                 >
-                    {loading ? "Signing in..." : "Sign in"}
+                    {loading
+                        ? "Signing in..."
+                        : enrollmentToken
+                          ? "Verify and enable MFA"
+                          : mfaToken
+                            ? "Verify"
+                            : "Sign in"}
                 </button>
 
                 {error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}

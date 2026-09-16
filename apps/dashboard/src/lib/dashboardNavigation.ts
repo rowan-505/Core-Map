@@ -1,4 +1,5 @@
 import {
+    Activity,
     BarChart3,
     Bus,
     CircleUser,
@@ -23,6 +24,7 @@ import {
     pointManagementPath,
     referencesPath,
     reportsPath,
+    fieldSurveyPath,
     routingAdminPath,
     searchPath,
     statsPath,
@@ -39,6 +41,7 @@ export {
     POINT_MANAGEMENT_PATH,
     REFERENCES_PATH,
     REPORTS_PATH,
+    FIELD_SURVEY_PATH,
     SEARCH_PATH,
     STATS_PATH,
     TRANSPORT_PATH,
@@ -50,6 +53,7 @@ export {
     pointManagementPath,
     referencesPath,
     reportsPath,
+    fieldSurveyPath,
     searchPath,
     statsPath,
     transportPath,
@@ -66,6 +70,7 @@ export type DashboardSidebarModuleKey =
     | "transport"
     | "search"
     | "reports"
+    | "field-survey"
     | "users"
     | "user-analytics"
     | "point-management"
@@ -111,6 +116,7 @@ export function sidebarModuleFromPathname(pathname: string): DashboardSidebarMod
         key === "transport" ||
         key === "search" ||
         key === "reports" ||
+        key === "field-survey" ||
         key === "users" ||
         key === "user-analytics" ||
         key === "point-management" ||
@@ -169,6 +175,12 @@ export const dashboardSidebarItems: readonly DashboardSidebarItem[] = [
         href: reportsPath(),
         label: "Reports",
         Icon: Flag,
+    },
+    {
+        moduleKey: "field-survey",
+        href: fieldSurveyPath(),
+        label: "Field Survey",
+        Icon: Activity,
     },
 ];
 

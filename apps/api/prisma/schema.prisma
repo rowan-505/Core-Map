@@ -12,7 +12,7 @@ model AuthUser {
   id                BigInt    @id @default(autoincrement())
   publicId          String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
   email             String    @unique @db.Text
-  passwordHash      String    @map("password_hash") @db.Text
+  passwordHash      String?   @map("password_hash") @db.Text
   displayName       String    @map("display_name") @db.Text
   isActive          Boolean   @default(true) @map("is_active")
   lastLoginAt       DateTime? @map("last_login_at") @db.Timestamptz(6)
@@ -29,7 +29,11 @@ model AuthUser {
 
   userRoles             AuthUserRole[]
   sessions              AuthSession[]
+  identities            AuthIdentity[]
   emailVerificationOtps EmailVerificationOtp[]
+  passwordResetTokens   PasswordResetToken[]
+  securityEvents        AuthSecurityEvent[]
+  mfaMethods            AuthMfaMethod[]
   savedPlaces           UserSavedPlace[]
   pointLedgerEntries    PointLedger[]          @relation("PointLedgerUser")
   pointLedgerCreated    PointLedger[]          @relation("PointLedgerCreatedBy")
@@ -69,19 +73,145 @@ model AuthUserRole {
 }
 
 model AuthSession {
-  id               BigInt    @id @default(autoincrement())
-  publicId         String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
-  userId           BigInt    @map("user_id")
-  refreshTokenHash String    @map("refresh_token_hash") @db.Text
-  userAgent        String?   @map("user_agent") @db.Text
-  ipAddress        String?   @map("ip_address") @db.Text
-  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
-  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastUsedAt       DateTime? @map("last_used_at") @db.Timestamptz(6)
-  user             AuthUser  @relation(fields: [userId], references: [id])
+  id                       BigInt    @id @default(autoincrement())
+  publicId                 String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  userId                   BigInt    @map("user_id")
+  refreshTokenHash         String    @unique @map("refresh_token_hash") @db.Text
+  previousRefreshTokenHash String?   @map("previous_refresh_token_hash") @db.Text
+  tokenFamilyId            String    @default(dbgenerated("gen_random_uuid()")) @map("token_family_id") @db.Uuid
+  userAgent                String?   @map("user_agent") @db.Text
+  ipAddress                String?   @map("ip_address") @db.Text
+  expiresAt                DateTime  @map("expires_at") @db.Timestamptz(6)
+  idleExpiresAt            DateTime? @map("idle_expires_at") @db.Timestamptz(6)
+  absoluteExpiresAt        DateTime? @map("absolute_expires_at") @db.Timestamptz(6)
+  revokedAt                DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokeReason             String?   @map("revoke_reason") @db.Text
+  clientType               String    @default("web") @map("client_type") @db.Text
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUsedAt               DateTime? @map("last_used_at") @db.Timestamptz(6)
+  user                     AuthUser  @relation(fields: [userId], references: [id])
+  securityEvents           AuthSecurityEvent[]
 
   @@map("auth_sessions")
+  @@schema("app_auth")
+}
+
+model AuthIdentity {
+  id                    BigInt    @id @default(autoincrement())
+  publicId              String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  userId                BigInt    @map("user_id")
+  provider              String    @db.Text
+  providerSubject       String    @map("provider_subject") @db.Text
+  providerEmail         String?   @map("provider_email") @db.Text
+  providerEmailVerified Boolean   @default(false) @map("provider_email_verified")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  lastLoginAt           DateTime? @map("last_login_at") @db.Timestamptz(6)
+  user                  AuthUser  @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerSubject], map: "auth_identities_provider_subject_key")
+  @@map("auth_identities")
+  @@schema("app_auth")
+}
+
+model PasswordResetToken {
+  id        BigInt    @id @default(autoincrement())
+  userId    BigInt    @map("user_id")
+  tokenHash String    @unique @map("token_hash") @db.Text
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      AuthUser  @relation(fields: [userId], references: [id])
+
+  @@map("password_reset_tokens")
+  @@schema("app_auth")
+}
+
+model AuthSecurityEvent {
+  id        BigInt       @id @default(autoincrement())
+  userId    BigInt?      @map("user_id")
+  sessionId BigInt?      @map("session_id")
+  eventType String       @map("event_type") @db.Text
+  provider  String?      @db.Text
+  success   Boolean      @default(true)
+  ipAddress String?      @map("ip_address") @db.Text
+  userAgent String?      @map("user_agent") @db.Text
+  metadata  Json?        @db.JsonB
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      AuthUser?    @relation(fields: [userId], references: [id])
+  session   AuthSession? @relation(fields: [sessionId], references: [id])
+
+  @@map("auth_security_events")
+  @@schema("app_auth")
+}
+
+model OAuthState {
+  id                   BigInt    @id @default(autoincrement())
+  stateHash            String    @unique @map("state_hash") @db.Text
+  codeVerifierHash     String?   @map("code_verifier_hash") @db.Text
+  nonceHash            String?   @map("nonce_hash") @db.Text
+  client               String    @default("web") @db.Text
+  returnTo             String?   @map("return_to") @db.Text
+  purpose              String    @default("login") @db.Text
+  linkUserId           BigInt?   @map("link_user_id")
+  linkSessionPublicId  String?   @map("link_session_public_id") @db.Uuid
+  expiresAt            DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt           DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("oauth_states")
+  @@schema("app_auth")
+}
+
+model OAuthPendingRegistration {
+  id                    BigInt    @id @default(autoincrement())
+  publicId              String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  tokenHash             String    @unique @map("token_hash") @db.Text
+  provider              String    @db.Text
+  providerSubject       String    @map("provider_subject") @db.Text
+  providerName          String?   @map("provider_name") @db.Text
+  providerEmail         String?   @map("provider_email") @db.Text
+  providerEmailVerified Boolean   @default(false) @map("provider_email_verified")
+  client                String    @default("web") @db.Text
+  returnTo              String?   @map("return_to") @db.Text
+  emailPending          String?   @map("email_pending") @db.Text
+  otpHash               String?   @map("otp_hash") @db.Text
+  otpExpiresAt          DateTime? @map("otp_expires_at") @db.Timestamptz(6)
+  otpAttemptsCount      Int       @default(0) @map("otp_attempts_count")
+  otpMaxAttempts        Int       @default(5) @map("otp_max_attempts")
+  expiresAt             DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt            DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("oauth_pending_registrations")
+  @@schema("app_auth")
+}
+
+model AuthMfaMethod {
+  id               BigInt                 @id @default(autoincrement())
+  publicId         String                 @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  userId           BigInt                 @map("user_id")
+  method           String                 @default("totp") @db.Text
+  secretEncrypted  String                 @map("secret_encrypted") @db.Text
+  verifiedAt       DateTime?              @map("verified_at") @db.Timestamptz(6)
+  revokedAt        DateTime?              @map("revoked_at") @db.Timestamptz(6)
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  user             AuthUser               @relation(fields: [userId], references: [id])
+  recoveryCodes    AuthMfaRecoveryCode[]
+
+  @@map("auth_mfa_methods")
+  @@schema("app_auth")
+}
+
+model AuthMfaRecoveryCode {
+  id        BigInt        @id @default(autoincrement())
+  methodId  BigInt        @map("method_id")
+  codeHash  String        @map("code_hash") @db.Text
+  usedAt    DateTime?     @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  method    AuthMfaMethod @relation(fields: [methodId], references: [id])
+
+  @@map("auth_mfa_recovery_codes")
   @@schema("app_auth")
 }
 

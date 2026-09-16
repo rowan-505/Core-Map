@@ -8,21 +8,9 @@ import {
     logImportReviewAuthDecision,
     readImportReviewAuthDebugState,
 } from "@/src/lib/importReviewDevAccess";
+import { getAccessToken, tryRestoreDashboardSession } from "@/src/lib/api";
 
 type GateStatus = "loading" | "allowed" | "redirecting";
-
-function resolveGateStatus(pathname: string): GateStatus {
-    if (typeof window === "undefined") {
-        return "loading";
-    }
-    if (isImportReviewDevRouteBypassActive(pathname)) {
-        return "allowed";
-    }
-    if (window.localStorage.getItem("accessToken")?.trim()) {
-        return "allowed";
-    }
-    return "redirecting";
-}
 
 /**
  * Client gate for `/import-review/*` only (mounted from import-review layout).
@@ -34,26 +22,52 @@ export default function ImportReviewRouteAuthGate({ children }: { children: Reac
     const [status, setStatus] = useState<GateStatus>("loading");
 
     useEffect(() => {
-        const next = resolveGateStatus(pathname);
-        const resolved = readImportReviewAuthDebugState(pathname, false);
+        let cancelled = false;
 
-        if (next === "allowed") {
+        async function resolveGate() {
+            if (isImportReviewDevRouteBypassActive(pathname)) {
+                logImportReviewAuthDecision("ImportReviewRouteAuthGate", "allow-dev-bypass", {
+                    ...readImportReviewAuthDebugState(pathname, false),
+                    authLoading: false,
+                    importReviewDevBypassActive: true,
+                });
+                if (!cancelled) setStatus("allowed");
+                return;
+            }
+
+            if (getAccessToken()?.trim()) {
+                logImportReviewAuthDecision("ImportReviewRouteAuthGate", "allow-jwt", {
+                    ...readImportReviewAuthDebugState(pathname, false),
+                    authLoading: false,
+                });
+                if (!cancelled) setStatus("allowed");
+                return;
+            }
+
+            const restored = await tryRestoreDashboardSession();
+            if (cancelled) return;
+            if (restored && getAccessToken()?.trim()) {
+                logImportReviewAuthDecision("ImportReviewRouteAuthGate", "allow-jwt", {
+                    ...readImportReviewAuthDebugState(pathname, false),
+                    authLoading: false,
+                });
+                setStatus("allowed");
+                return;
+            }
+
             logImportReviewAuthDecision(
                 "ImportReviewRouteAuthGate",
-                isImportReviewDevRouteBypassActive(pathname) ? "allow-dev-bypass" : "allow-jwt",
-                {
-                    ...resolved,
-                    authLoading: false,
-                    importReviewDevBypassActive: isImportReviewDevRouteBypassActive(pathname),
-                }
+                "redirect-login",
+                readImportReviewAuthDebugState(pathname, false)
             );
-            queueMicrotask(() => setStatus("allowed"));
-            return;
+            setStatus("redirecting");
+            router.replace("/login");
         }
 
-        logImportReviewAuthDecision("ImportReviewRouteAuthGate", "redirect-login", resolved);
-        queueMicrotask(() => setStatus("redirecting"));
-        router.replace("/login");
+        void resolveGate();
+        return () => {
+            cancelled = true;
+        };
     }, [pathname, router]);
 
     if (status === "loading" || status === "redirecting") {

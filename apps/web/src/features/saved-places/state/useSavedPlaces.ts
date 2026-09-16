@@ -1,9 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { isUnauthorizedError } from '@/features/auth/api/http';
 import { useAuth } from '@/features/auth/state/useAuth';
 import {
   createSavedMapPoint,
@@ -33,15 +34,25 @@ export type UseSavedPlacesResult = {
 };
 
 export function useSavedPlaces(): UseSavedPlacesResult {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, initializing } = useAuth();
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: SAVED_PLACES_QUERY_KEY,
     queryFn: ({ signal }) => listSavedPlaces(signal),
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !initializing,
     staleTime: 30_000,
+    retry: (failureCount, error) => {
+      if (isUnauthorizedError(error)) return false;
+      return failureCount < 2;
+    },
   });
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      queryClient.removeQueries({ queryKey: SAVED_PLACES_QUERY_KEY });
+    }
+  }, [isAuthenticated, queryClient]);
 
   const savedByPlaceId = useMemo(() => {
     const map = new Map<string, SavedPlace>();

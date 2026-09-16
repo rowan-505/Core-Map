@@ -12,11 +12,20 @@ import { useMapUiStore } from '@/features/map/state/mapUiStore';
 import { resolveMartinTileUrl } from '../config';
 import {
   addTransportSources,
+  loadTransportEndpointCatalog,
   bindTransportTileErrorHandler,
+  removeTransportSources,
 } from '../lib/maplibre/transportSources';
-import { ensureTransportStopHighlightLayers } from '../lib/maplibre/transportStopHighlight';
+import {
+  ensureTransportStopHighlightLayers,
+  setTransportHighlightLayersVisible,
+} from '../lib/maplibre/transportStopHighlight';
 import { applySelectedTransportMarker } from '../lib/maplibre/selectedTransportMarker';
-import { addTransportLayers, setTransportOverlayVisible } from '../lib/maplibre/transportLayers';
+import {
+  addTransportLayers,
+  removeTransportLayers,
+  setTransportRouteSelectionActive,
+} from '../lib/maplibre/transportLayers';
 import { bindTransportMapInteractions } from '../lib/maplibre/transportMapInteractions';
 import { bindPublicMapClickInteractions } from '../lib/maplibre/publicMapClickInteractions';
 import type { MapViewProps } from '../types';
@@ -97,6 +106,7 @@ function MapViewInner({
   onSelectPoiId,
   selectedTransportSelection = null,
   onSelectTransportStop,
+  onSelectTransportRoute,
   onEmptyMapClick,
   onViewportChange,
   className,
@@ -111,8 +121,10 @@ function MapViewInner({
   const basemapModeError = useMapUiStore((s) => s.basemapModeError);
   const setBasemapModeError = useMapUiStore((s) => s.setBasemapModeError);
   const utilityCommand = useMapUiStore((s) => s.utilityCommand);
-  const transportOverlayVisible = useMapUiStore((s) => s.transportOverlayVisible);
-  const transportOverlayVisibleRef = useRef(transportOverlayVisible);
+  const transportMode = useMapUiStore((s) => s.transportMode);
+  const transportPointsVisible = useMapUiStore((s) => s.transportPointsVisible);
+  const transportPathsVisible = useMapUiStore((s) => s.transportPathsVisible);
+  const activeTransportModeRef = useRef<typeof transportMode>(null);
   const languageModeRef = useRef(languageMode);
   const mapModeRef = useRef(mapMode);
   const cameraLayoutRef = useRef(cameraLayout ?? DEFAULT_MAP_CAMERA_LAYOUT);
@@ -132,9 +144,6 @@ function MapViewInner({
   useEffect(() => {
     mapModeRef.current = mapMode;
   }, [mapMode]);
-  useEffect(() => {
-    transportOverlayVisibleRef.current = transportOverlayVisible;
-  }, [transportOverlayVisible]);
   useEffect(() => {
     cameraLayoutRef.current = cameraLayout;
   }, [cameraLayout]);
@@ -182,6 +191,7 @@ function MapViewInner({
 
   const onSelectRef = useRef(onSelectPoiId);
   const onSelectTransportStopRef = useRef(onSelectTransportStop);
+  const onSelectTransportRouteRef = useRef(onSelectTransportRoute);
   const onEmptyMapClickRef = useRef(onEmptyMapClick);
   const onViewportChangeRef = useRef(onViewportChange);
   useEffect(() => {
@@ -190,6 +200,9 @@ function MapViewInner({
   useEffect(() => {
     onSelectTransportStopRef.current = onSelectTransportStop;
   }, [onSelectTransportStop]);
+  useEffect(() => {
+    onSelectTransportRouteRef.current = onSelectTransportRoute;
+  }, [onSelectTransportRoute]);
   useEffect(() => {
     onEmptyMapClickRef.current = onEmptyMapClick;
   }, [onEmptyMapClick]);
@@ -238,12 +251,7 @@ function MapViewInner({
           // instead of aborting `onLoad` (which would leave `mapReady` false and stop the
           // regional PMTiles loader from ever starting).
           const martin = resolveMartinTileUrl();
-          if (martin.status === 'configured') {
-            addTransportSources(map, martin.baseUrl);
-            addTransportLayers(map);
-            ensureTransportStopHighlightLayers(map);
-            setTransportOverlayVisible(map, transportOverlayVisibleRef.current);
-          } else if (import.meta.env.DEV) {
+          if (martin.status !== 'configured' && import.meta.env.DEV) {
             console.warn('[map] Martin transport overlay disabled:', martin.status);
           }
           ensurePlacesLayer(map, geojsonRef.current, selectedRef.current, languageModeRef.current);
@@ -339,16 +347,60 @@ function MapViewInner({
     });
   }, [mapReady, setBasemapModeError, setMapMode]);
 
-  /** Transport overlay visibility — layout-only; basemap/POI layers untouched. */
+  /** Lazy transport activation: normal map load has no Martin sources or tile requests. */
   useEffect(() => {
     if (!mapReady) return;
     const map = mapRef.current;
     if (!map) return;
-    setTransportOverlayVisible(map, transportOverlayVisible);
-    // Re-stack when enabling: regional PMTiles may have loaded (above the overlay) while it was
-    // hidden, so lift transport back above the basemap whenever it is shown.
-    if (transportOverlayVisible) applyMapOverlayStackOrder(map);
-  }, [mapReady, transportOverlayVisible]);
+
+    const martin = resolveMartinTileUrl();
+    if (martin.status !== 'configured' || transportMode === null) {
+      removeTransportLayers(map);
+      removeTransportSources(map);
+      setTransportHighlightLayersVisible(map, false);
+      activeTransportModeRef.current = null;
+      return;
+    }
+
+    // Visibility changes must also drop the now-inactive vector source. Keeping a hidden
+    // source alive would let MapLibre continue fetching its tiles in the background.
+    removeTransportLayers(map);
+    removeTransportSources(map);
+    activeTransportModeRef.current = transportMode;
+
+    const visibility = { points: transportPointsVisible, paths: transportPathsVisible };
+    let cancelled = false;
+    void loadTransportEndpointCatalog(martin.baseUrl).then((availableEndpoints) => {
+      if (cancelled || mapRef.current !== map) return;
+      const activeSources = addTransportSources(
+        map,
+        martin.baseUrl,
+        transportMode,
+        visibility,
+        availableEndpoints,
+      );
+      addTransportLayers(map, transportMode, visibility, activeSources);
+      ensureTransportStopHighlightLayers(map);
+      setTransportHighlightLayersVisible(map, true);
+      applyMapOverlayStackOrder(map);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mapReady, transportMode, transportPathsVisible, transportPointsVisible]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    const map = mapRef.current;
+    if (!map) return;
+    const selectedRoute =
+      searchHighlight?.type === 'transport_route' ||
+      searchHighlight?.type === 'transport_route_variant' ||
+      searchHighlight?.type === 'bus_route' ||
+      searchHighlight?.type === 'bus_route_variant';
+    setTransportRouteSelectionActive(map, selectedRoute);
+  }, [mapReady, searchHighlight]);
 
   /** Dev-only: log Martin transport tile errors (no-op in production). */
   useEffect(() => {
@@ -364,7 +416,7 @@ function MapViewInner({
     const map = mapRef.current;
     if (!map) return;
     return bindTransportMapInteractions(map);
-  }, [mapReady]);
+  }, [mapReady, transportMode, transportPointsVisible]);
 
   /** Deterministic POI / transport / inspect click priority. */
   useEffect(() => {
@@ -378,6 +430,9 @@ function MapViewInner({
       },
       onSelectTransportStop: (selection) => {
         onSelectTransportStopRef.current?.(selection);
+      },
+      onSelectTransportRoute: (result) => {
+        onSelectTransportRouteRef.current?.(result);
       },
       onEmptyMapClick: (location) => {
         onEmptyMapClickRef.current?.(location);
@@ -410,12 +465,13 @@ function MapViewInner({
     let handle: RegionalPmtilesLoaderHandle | null = null;
 
     void startRegionalPmtilesLoader(map, () => {
+      if (cancelled || mapRef.current !== map) return;
       const camera = snapshotMapCamera(map);
       applyWebBasemapModePreservingCamera(map, mapModeRef.current, camera);
       applyMapOverlayStackOrder(map);
     })
       .then((started) => {
-        if (cancelled) {
+        if (cancelled || mapRef.current !== map) {
           started.destroy();
           return;
         }
@@ -562,12 +618,17 @@ function MapViewInner({
       return;
     }
 
+    let cancelled = false;
     void fitSearchResult(map, searchHighlight, {
       padding: visibleMapCameraPadding(cameraLayoutRef.current, containerRef.current),
       geometry: searchHighlightGeometry,
     }).finally(() => {
+      if (cancelled || mapRef.current !== map) return;
       applyMapOverlayStackOrder(map);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [mapReady, searchHighlight, searchHighlightGeometry]);
 
   useEffect(() => {

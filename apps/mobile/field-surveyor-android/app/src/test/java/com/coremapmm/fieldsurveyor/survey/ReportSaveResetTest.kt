@@ -19,7 +19,7 @@ class ReportSaveResetTest {
         assertEquals(ReportSaveReset.REPORT_SAVED, ReportSaveReset.successBanner(true))
         assertEquals(ReportSaveReset.SAVED_OFFLINE, ReportSaveReset.successBanner(false))
         assertEquals(
-            setOf("Report saved", "Saved offline"),
+            setOf("Report saved", "Saved offline — sync pending"),
             ReportSaveReset.allowedSuccessBanners(),
         )
         assertFalse(ReportSaveReset.allowedSuccessBanners().contains("✓ Captured"))
@@ -64,7 +64,7 @@ class ReportSaveResetTest {
             ),
         )
         assertEquals(
-            "Disk full",
+            ReportSaveReset.ROOM_SAVE_FAILED,
             ReportSaveReset.roomFailureMessage(RuntimeException("Disk full")),
         )
     }

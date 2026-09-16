@@ -41,6 +41,21 @@ function row(overrides: Partial<SurveySessionRow> = {}): SurveySessionRow {
         started_at: startedAt,
         ended_at: null,
         status: "active",
+        tracking_state: "active",
+        completion_status: "partial",
+        accumulated_active_seconds: 0,
+        finished_at: null,
+        reopened_at: null,
+        last_activity_at: startedAt,
+        last_checked_stop_sequence: null,
+        checked_stop_count: 0,
+        total_stop_count: 12,
+        pending_sync_count: 0,
+        last_gps_accuracy_m: null,
+        last_lat: null,
+        last_lng: null,
+        last_gps_at: null,
+        client_sync_state: null,
         created_at: startedAt,
         updated_at: startedAt,
         report_count: 0n,
@@ -65,6 +80,9 @@ function serviceWith(overrides: {
     findClient?: SurveySessionsRepository["findOwnedByClientSessionId"];
     findIdentifier?: SurveySessionsRepository["findOwnedByIdentifier"];
     end?: SurveySessionsRepository["end"];
+    updateSummary?: SurveySessionsRepository["updateSummary"];
+    finish?: SurveySessionsRepository["finish"];
+    reopen?: SurveySessionsRepository["reopen"];
     list?: SurveySessionsRepository["listOwned"];
 } = {}) {
     const repo = {
@@ -84,7 +102,47 @@ function serviceWith(overrides: {
         end:
             overrides.end ??
             (async (input) =>
-                row({ status: input.status, ended_at: input.endedAt, updated_at: input.endedAt })),
+                row({
+                    status: input.status,
+                    ended_at: input.endedAt,
+                    tracking_state: "idle",
+                    updated_at: input.endedAt,
+                })),
+        updateSummary:
+            overrides.updateSummary ??
+            (async (_id, _by, patch) =>
+                row({
+                    accumulated_active_seconds: patch.accumulatedActiveSeconds,
+                    last_activity_at: patch.lastActivityAt,
+                    last_checked_stop_sequence: patch.lastCheckedStopSequence,
+                    checked_stop_count: patch.checkedStopCount,
+                    total_stop_count: patch.totalStopCount,
+                    pending_sync_count: patch.pendingSyncCount,
+                    last_gps_accuracy_m: patch.lastGpsAccuracyM,
+                    last_lat: patch.lastLat,
+                    last_lng: patch.lastLng,
+                    last_gps_at: patch.lastGpsAt,
+                    client_sync_state: patch.clientSyncState,
+                })),
+        finish:
+            overrides.finish ??
+            (async (input) =>
+                row({
+                    completion_status: "finished",
+                    finished_at: input.finishedAt,
+                    status: "completed",
+                    tracking_state: "idle",
+                    ended_at: input.stoppedAt ?? input.finishedAt,
+                })),
+        reopen:
+            overrides.reopen ??
+            (async (input) =>
+                row({
+                    completion_status: "partial",
+                    reopened_at: input.reopenedAt,
+                    tracking_state: "idle",
+                    finished_at: startedAt,
+                })),
         listOwned: overrides.list ?? (async () => [row()]),
     } as unknown as SurveySessionsRepository;
     return new SurveySessionsService(repo);
@@ -272,4 +330,116 @@ test("history uses opaque cursor pagination and computed report counts", async (
     assert.equal(receivedAfter?.publicId, second.session_public_id);
     assert.equal(next.items.length, 1);
     assert.equal(next.nextCursor, null);
+});
+
+test("finish is idempotent and stops tracking without requiring reports", async () => {
+    const finishedAt = new Date("2026-09-04T02:00:00.000Z");
+    let stored = row({ report_count: 0n });
+    let writes = 0;
+    const service = serviceWith({
+        findClient: async () => stored,
+        finish: async (input) => {
+            writes += 1;
+            stored = row({
+                completion_status: "finished",
+                finished_at: input.finishedAt,
+                status: "completed",
+                tracking_state: "idle",
+                ended_at: input.finishedAt,
+                report_count: 0n,
+            });
+            return stored;
+        },
+    });
+    const first = await service.finish("user-sub", clientSessionId, { finishedAt });
+    const retry = await service.finish("user-sub", clientSessionId, {
+        finishedAt: new Date("2026-09-04T03:00:00.000Z"),
+    });
+    assert.equal(writes, 1);
+    assert.equal(first.completionStatus, "finished");
+    assert.equal(first.trackingState, "idle");
+    assert.equal(first.reportCount, 0);
+    assert.equal(retry.finishedAt, finishedAt.toISOString());
+});
+
+test("reopen returns partial without restarting tracking", async () => {
+    const reopenedAt = new Date("2026-09-04T04:00:00.000Z");
+    let stored = row({
+        status: "completed",
+        tracking_state: "idle",
+        completion_status: "finished",
+        finished_at: new Date("2026-09-04T02:00:00.000Z"),
+        ended_at: new Date("2026-09-04T02:00:00.000Z"),
+    });
+    const service = serviceWith({
+        findClient: async () => stored,
+        reopen: async (input) => {
+            stored = row({
+                ...stored,
+                completion_status: "partial",
+                reopened_at: input.reopenedAt,
+                tracking_state: "idle",
+            });
+            return stored;
+        },
+    });
+    const result = await service.reopen("user-sub", clientSessionId, { reopenedAt });
+    assert.equal(result.completionStatus, "partial");
+    assert.equal(result.trackingState, "idle");
+    assert.equal(result.reopenedAt, reopenedAt.toISOString());
+});
+
+test("summary sync accepts last gps only while tracking is active", async () => {
+    const active = await serviceWith({
+        findClient: async () => row({ tracking_state: "active" }),
+        updateSummary: async (_id, _by, patch) =>
+            row({
+                tracking_state: "active",
+                last_lat: patch.lastLat,
+                last_lng: patch.lastLng,
+                last_gps_accuracy_m: patch.lastGpsAccuracyM,
+                checked_stop_count: patch.checkedStopCount,
+            }),
+    }).syncSummary("user-sub", clientSessionId, {
+        accumulatedActiveSeconds: 60,
+        lastActivityAt: new Date("2026-09-04T01:01:00.000Z"),
+        checkedStopCount: 3,
+        totalStopCount: 12,
+        pendingSyncCount: 1,
+        lastLat: 16.8,
+        lastLng: 96.15,
+        lastGpsAccuracyM: 8,
+    });
+    assert.equal(active.lastLat, 16.8);
+    assert.equal(active.checkedStopCount, 3);
+
+    const idle = await serviceWith({
+        findClient: async () =>
+            row({
+                status: "completed",
+                tracking_state: "idle",
+                last_lat: 16.7,
+                last_lng: 96.1,
+                last_gps_accuracy_m: 5,
+            }),
+        updateSummary: async (_id, _by, patch) =>
+            row({
+                status: "completed",
+                tracking_state: "idle",
+                last_lat: patch.lastLat,
+                last_lng: patch.lastLng,
+                last_gps_accuracy_m: patch.lastGpsAccuracyM,
+            }),
+    }).syncSummary("user-sub", clientSessionId, {
+        accumulatedActiveSeconds: 120,
+        lastActivityAt: new Date("2026-09-04T01:02:00.000Z"),
+        checkedStopCount: 3,
+        totalStopCount: 12,
+        pendingSyncCount: 0,
+        lastLat: 16.9,
+        lastLng: 96.2,
+        lastGpsAccuracyM: 20,
+    });
+    assert.equal(idle.lastLat, 16.7);
+    assert.equal(idle.lastGpsAccuracyM, 5);
 });

@@ -103,7 +103,7 @@ export default function HomePage() {
   } = useCategoryFilter();
   const languageMode = useMapUiStore((s) => s.languageMode);
   const setLanguageMode = useMapUiStore((s) => s.setLanguageMode);
-  const { authModalView, closeAuthModal } = useAuth();
+  const { authModalView, closeAuthModal, openAuthModal } = useAuth();
 
   useEffect(() => {
     document.documentElement.lang = mapDocumentLanguage(languageMode);
@@ -111,7 +111,8 @@ export default function HomePage() {
 
   // A resolved share link (from /s/:code) hands its target here via router state.
   // It seeds the initial map/panel state so the shared location opens immediately.
-  const initialShare = readShareNavState(useLocation().state);
+  const location = useLocation();
+  const initialShare = readShareNavState(location.state);
 
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(
     initialShare?.kind === 'place' ? initialShare.placePublicId : null,
@@ -499,6 +500,16 @@ export default function HomePage() {
     });
   }, []);
 
+  const onSelectTransportRoute = useCallback((result: PublicSearchResult) => {
+    setSelectedSearchResult(result);
+    setSelectedTransportSelection(null);
+    setSelectedPoiId(null);
+    setClickedLocation(null);
+    setCameraTarget(undefined);
+    setActiveSidebarMode('search');
+    setIsSidebarOpen(true);
+  }, []);
+
   const openAccountDrawer = useCallback(() => {
     setActiveSidebarMode('account');
     setIsSidebarOpen(true);
@@ -536,6 +547,16 @@ export default function HomePage() {
     }, 100);
     closeAuthModal();
   }, [authModalView, closeAuthModal, openAccountDrawer]);
+
+  // OAuth link_required → “Sign in to existing account” lands here with ?auth=login.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('auth') !== 'login') return;
+    openAuthModal('login');
+    params.delete('auth');
+    const next = params.toString();
+    window.history.replaceState({}, '', next ? `/?${next}` : '/');
+  }, [location.search, openAuthModal]);
 
   const onRoutePlace = useCallback(
     (
@@ -875,6 +896,7 @@ export default function HomePage() {
             onSelectPoiId={onSelectPoiId}
             selectedTransportSelection={selectedTransportSelection}
             onSelectTransportStop={onSelectTransportStop}
+            onSelectTransportRoute={onSelectTransportRoute}
             onEmptyMapClick={onEmptyMapClick}
             onViewportChange={setMapViewport}
           />

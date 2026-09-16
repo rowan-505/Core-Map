@@ -9,7 +9,7 @@ This app is a field surveyor client of the CoreMap Fastify API. It does not talk
 Login → Setup/Sync → Routes | Survey | Settings
 
 - **Login** — `POST /auth/login`. Role must include `surveyor`.
-- **Setup/Sync** — `GET /field/bootstrap` (gzip when the phone sends `Accept-Encoding: gzip`) plus an optional Yangon PMTiles download (~120 MB for v2, Wi-Fi by default). Matching `revision` skips the snapshot.
+- **Setup/Sync** — `GET /field/bootstrap` (gzip when the phone sends `Accept-Encoding: gzip`) plus an optional Yangon PMTiles download (~120 MB for v2; Wi-Fi or mobile data). Matching `revision` skips the snapshot.
 - **Routes** — local Room search. Nearby GPS ranking can suggest a D0/D1 variant.
 - **Survey** — local PMTiles, selected path/stops, live GPS, report types, JPEG + short voice, survey session start/complete/abandon.
 - **Settings** — Profile, Outbox, survey history, Infra (Yangon map + YBS snapshot).

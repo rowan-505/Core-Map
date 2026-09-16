@@ -2,7 +2,6 @@
 
 /** Minimal user shape returned by /auth/login and /auth/refresh. */
 export type AuthUser = {
-  readonly id: string;
   readonly public_id: string;
   readonly email: string;
   readonly display_name: string;
@@ -29,9 +28,11 @@ export type UpdateProfileInput = {
 
 export type SessionResponse = {
   readonly accessToken: string;
-  readonly refreshToken: string;
+  readonly refreshToken?: string;
   readonly expiresIn: string;
   readonly user: AuthUser;
+  readonly mfaRequired?: boolean;
+  readonly mfaToken?: string;
 };
 
 export type PreferredLanguage = 'my' | 'en';

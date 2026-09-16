@@ -6,9 +6,13 @@ import com.coremapmm.fieldsurveyor.auth.SecureTokenStore
 import com.coremapmm.fieldsurveyor.data.FieldDatabase
 import com.coremapmm.fieldsurveyor.data.FieldMediaApi
 import com.coremapmm.fieldsurveyor.data.FieldReportsApi
+import com.coremapmm.fieldsurveyor.data.FieldSurveyAssignmentsApi
+import com.coremapmm.fieldsurveyor.data.FieldSurveyCompletionsApi
 import com.coremapmm.fieldsurveyor.data.FieldSurveySessionsApi
 import com.coremapmm.fieldsurveyor.data.LocalReportDao
 import com.coremapmm.fieldsurveyor.data.LocalReportMediaDao
+import com.coremapmm.fieldsurveyor.data.LocalSurveyVariantAssignmentDao
+import com.coremapmm.fieldsurveyor.data.LocalSurveyVariantCompletionDao
 import com.coremapmm.fieldsurveyor.data.SurveySessionRepository
 import com.coremapmm.fieldsurveyor.data.transport.BootstrapRepository
 import com.coremapmm.fieldsurveyor.data.transport.FieldBootstrapApi
@@ -33,6 +37,8 @@ class AppGraph(
     val reportMedia: LocalReportMediaDao,
     val sessions: SurveySessionRepository,
     val sessionDao: com.coremapmm.fieldsurveyor.data.LocalSurveySessionDao,
+    val completionDao: LocalSurveyVariantCompletionDao,
+    val assignmentDao: LocalSurveyVariantAssignmentDao,
     val photos: ReportPhotoStore,
     val voice: ReportVoiceStore,
     val bootstrap: BootstrapRepository,
@@ -40,6 +46,8 @@ class AppGraph(
     val fieldReportsApi: FieldReportsApi,
     val fieldMediaApi: FieldMediaApi,
     val fieldSurveySessionsApi: FieldSurveySessionsApi,
+    val fieldSurveyCompletionsApi: FieldSurveyCompletionsApi,
+    val fieldSurveyAssignmentsApi: FieldSurveyAssignmentsApi,
     val yangon: YangonBasemapStore,
     val nearbyRoutes: NearbyRouteRecommender,
     val apiBaseUrl: String,
@@ -58,6 +66,8 @@ class AppGraph(
             val reports = database.localReportDao()
             val reportMedia = database.localReportMediaDao()
             val sessionDao = database.localSurveySessionDao()
+            val completionDao = database.localSurveyVariantCompletionDao()
+            val assignmentDao = database.localSurveyVariantAssignmentDao()
             val sessions = SurveySessionRepository(sessionDao, reports, reportMedia)
             val photos = ReportPhotoStore(
                 mediaDir = ReportPhotoStore.dir(app.noBackupFilesDir),
@@ -75,6 +85,8 @@ class AppGraph(
             val fieldReportsApi = FieldReportsApi(apiBaseUrl, http)
             val fieldMediaApi = FieldMediaApi(apiBaseUrl, http)
             val fieldSurveySessionsApi = FieldSurveySessionsApi(apiBaseUrl, http)
+            val fieldSurveyCompletionsApi = FieldSurveyCompletionsApi(apiBaseUrl, http)
+            val fieldSurveyAssignmentsApi = FieldSurveyAssignmentsApi(apiBaseUrl, http)
             val yangon = YangonBasemapStore(
                 context = app,
                 downloadUrl = BuildConfig.YANGON_PMTILES_URL,
@@ -87,6 +99,8 @@ class AppGraph(
                 reportMedia = reportMedia,
                 sessions = sessions,
                 sessionDao = sessionDao,
+                completionDao = completionDao,
+                assignmentDao = assignmentDao,
                 photos = photos,
                 voice = voice,
                 bootstrap = bootstrap,
@@ -95,6 +109,8 @@ class AppGraph(
                     bootstrap = bootstrap,
                     reports = reports,
                     sessions = sessions,
+                    completions = completionDao,
+                    assignments = assignmentDao,
                     photos = photos,
                     voice = voice,
                     gpsEngine = GpsEngine(app),
@@ -105,6 +121,8 @@ class AppGraph(
                 fieldReportsApi = fieldReportsApi,
                 fieldMediaApi = fieldMediaApi,
                 fieldSurveySessionsApi = fieldSurveySessionsApi,
+                fieldSurveyCompletionsApi = fieldSurveyCompletionsApi,
+                fieldSurveyAssignmentsApi = fieldSurveyAssignmentsApi,
                 yangon = yangon,
                 nearbyRoutes = NearbyRouteRecommender(database.transportCacheDao()),
                 apiBaseUrl = apiBaseUrl,

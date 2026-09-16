@@ -208,7 +208,7 @@ class GpsTrackingTest {
         val fix = GpsFix(16.80, 96.15, 5f, 1_000L)
         val now = 1_000L + FieldLocationConfig.GOOD_FIX_STALE_MS + 1L
         assertEquals(GpsQuality.STALE, GpsQualityPolicy.quality(fix, now))
-        assertEquals("Using last location", GpsQualityPolicy.label(fix, now))
+        assertEquals("Last location", GpsQualityPolicy.label(fix, now))
         assertFalse(GpsQualityPolicy.canUseForNearby(fix, now))
     }
 

@@ -25,8 +25,8 @@ export async function login(input: LoginInput): Promise<SessionResponse> {
   });
 }
 
-export async function logout(refreshToken: string): Promise<void> {
-  await publicJson<{ message: string }>('/auth/logout', { refreshToken });
+export async function logout(): Promise<void> {
+  await publicJson<{ message: string }>('/auth/logout', {});
 }
 
 export async function fetchProfile(signal?: AbortSignal): Promise<AuthProfile> {

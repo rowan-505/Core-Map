@@ -254,6 +254,13 @@ export class AdminUsersRepository {
                     userAgent: input.userAgent,
                 },
             });
+
+            if (input.accountStatus !== "active") {
+                await tx.authSession.updateMany({
+                    where: { userId: input.targetUserId, revokedAt: null },
+                    data: { revokedAt: new Date(), revokeReason: "admin_status_change" },
+                });
+            }
         });
     }
 
@@ -350,6 +357,11 @@ export class AdminUsersRepository {
                     ipAddress: input.ipAddress,
                     userAgent: input.userAgent,
                 },
+            });
+
+            await tx.authSession.updateMany({
+                where: { userId: input.targetUserId, revokedAt: null },
+                data: { revokedAt: new Date(), revokeReason: "admin_role_removed" },
             });
 
             return true;

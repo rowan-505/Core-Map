@@ -1,8 +1,10 @@
 import { canonicalYbsVariantIdentity } from "../transport/ybs-direction.js";
 import {
     SurveySessionsRepository,
+    type SurveyCompletionStatus,
     type SurveySessionRow,
     type SurveySessionStatus,
+    type SurveyTrackingState,
 } from "./survey-sessions.repo.js";
 import {
     decodeSurveySessionCursor,
@@ -10,7 +12,10 @@ import {
     InvalidSurveySessionCursorError,
     type SurveySessionCreateBody,
     type SurveySessionEndBody,
+    type SurveySessionFinishBody,
     type SurveySessionIdentifier,
+    type SurveySessionReopenBody,
+    type SurveySessionSummaryBody,
 } from "./survey-sessions.schema.js";
 
 export class SurveySessionsError extends Error {
@@ -29,8 +34,25 @@ export type SurveySessionResponse = {
     clientSessionId: string;
     snapshotRevision: string;
     startedAt: string;
+    stoppedAt: string | null;
     endedAt: string | null;
     status: SurveySessionStatus;
+    trackingState: SurveyTrackingState;
+    completionStatus: SurveyCompletionStatus;
+    accumulatedActiveSeconds: number;
+    finishedAt: string | null;
+    reopenedAt: string | null;
+    lastActivityAt: string | null;
+    lastCheckedStopSequence: number | null;
+    checkedStopCount: number;
+    totalStopCount: number;
+    reportCount: number;
+    pendingSyncCount: number;
+    lastGpsAccuracyM: number | null;
+    lastLat: number | null;
+    lastLng: number | null;
+    lastGpsAt: string | null;
+    clientSyncState: string | null;
     route: { publicId: string; code: string };
     variant: {
         publicId: string;
@@ -38,7 +60,6 @@ export type SurveySessionResponse = {
         origin: string | null;
         destination: string | null;
     };
-    reportCount: number;
     createdAt: string;
     updatedAt: string;
 };
@@ -66,6 +87,8 @@ export class SurveySessionsService {
             routeVariantId: variant.id,
             snapshotRevision: body.snapshotRevision,
             startedAt: body.startedAt,
+            totalStopCount: body.totalStopCount ?? 0,
+            clientEventId: body.clientEventId,
         });
         if (!result.row || BigInt(result.row.created_by) !== BigInt(createdBy)) {
             throw new SurveySessionsError(
@@ -132,7 +155,7 @@ export class SurveySessionsService {
         clientSessionId: string,
         body: SurveySessionEndBody
     ): Promise<SurveySessionResponse> {
-        return this.end(jwtSub, clientSessionId, body.endedAt, "completed");
+        return this.end(jwtSub, clientSessionId, body, "completed");
     }
 
     async abandon(
@@ -140,7 +163,98 @@ export class SurveySessionsService {
         clientSessionId: string,
         body: SurveySessionEndBody
     ): Promise<SurveySessionResponse> {
-        return this.end(jwtSub, clientSessionId, body.endedAt, "abandoned");
+        return this.end(jwtSub, clientSessionId, body, "abandoned");
+    }
+
+    async syncSummary(
+        jwtSub: string,
+        clientSessionId: string,
+        body: SurveySessionSummaryBody
+    ): Promise<SurveySessionResponse> {
+        const createdBy = await this.requireUserId(jwtSub);
+        const existing = await this.repo.findOwnedByClientSessionId(clientSessionId, createdBy);
+        if (!existing) {
+            throw new SurveySessionsError("Survey session not found", 404, "SESSION_NOT_FOUND");
+        }
+        const allowGps = existing.tracking_state === "active";
+        const row = await this.repo.updateSummary(clientSessionId, createdBy, {
+            accumulatedActiveSeconds: body.accumulatedActiveSeconds,
+            lastActivityAt: body.lastActivityAt,
+            lastCheckedStopSequence: body.lastCheckedStopSequence ?? null,
+            checkedStopCount: body.checkedStopCount,
+            totalStopCount: body.totalStopCount,
+            pendingSyncCount: body.pendingSyncCount,
+            lastGpsAccuracyM: allowGps
+                ? (body.lastGpsAccuracyM ?? null)
+                : existing.last_gps_accuracy_m,
+            lastLat: allowGps ? (body.lastLat ?? null) : existing.last_lat,
+            lastLng: allowGps ? (body.lastLng ?? null) : existing.last_lng,
+            lastGpsAt: allowGps ? (body.lastGpsAt ?? null) : existing.last_gps_at,
+            clientSyncState: body.clientSyncState ?? null,
+        });
+        if (!row) {
+            throw new SurveySessionsError("Survey session not found", 404, "SESSION_NOT_FOUND");
+        }
+        return toResponse(row);
+    }
+
+    async finish(
+        jwtSub: string,
+        clientSessionId: string,
+        body: SurveySessionFinishBody
+    ): Promise<SurveySessionResponse> {
+        const createdBy = await this.requireUserId(jwtSub);
+        const existing = await this.repo.findOwnedByClientSessionId(clientSessionId, createdBy);
+        if (!existing) {
+            throw new SurveySessionsError("Survey session not found", 404, "SESSION_NOT_FOUND");
+        }
+        if (existing.completion_status === "finished") {
+            return toResponse(existing);
+        }
+        if (body.finishedAt.getTime() < existing.started_at.getTime()) {
+            throw new SurveySessionsError(
+                "finishedAt cannot be before startedAt",
+                400,
+                "INVALID_SESSION_TIMESTAMPS"
+            );
+        }
+        const row = await this.repo.finish({
+            clientSessionId,
+            createdBy,
+            finishedAt: body.finishedAt,
+            stoppedAt: body.stoppedAt,
+            accumulatedActiveSeconds: body.accumulatedActiveSeconds,
+            clientEventId: body.clientEventId,
+        });
+        if (!row) {
+            throw new SurveySessionsError("Survey session not found", 404, "SESSION_NOT_FOUND");
+        }
+        return toResponse(row);
+    }
+
+    async reopen(
+        jwtSub: string,
+        clientSessionId: string,
+        body: SurveySessionReopenBody
+    ): Promise<SurveySessionResponse> {
+        const createdBy = await this.requireUserId(jwtSub);
+        const existing = await this.repo.findOwnedByClientSessionId(clientSessionId, createdBy);
+        if (!existing) {
+            throw new SurveySessionsError("Survey session not found", 404, "SESSION_NOT_FOUND");
+        }
+        if (existing.completion_status === "partial") {
+            return toResponse(existing);
+        }
+        const row = await this.repo.reopen({
+            clientSessionId,
+            createdBy,
+            reopenedAt: body.reopenedAt,
+            clientEventId: body.clientEventId,
+        });
+        if (!row) {
+            throw new SurveySessionsError("Survey session not found", 404, "SESSION_NOT_FOUND");
+        }
+        return toResponse(row);
     }
 
     async requireOwnedForReport(
@@ -176,7 +290,7 @@ export class SurveySessionsService {
     private async end(
         jwtSub: string,
         clientSessionId: string,
-        endedAt: Date,
+        body: SurveySessionEndBody,
         status: "completed" | "abandoned"
     ): Promise<SurveySessionResponse> {
         const createdBy = await this.requireUserId(jwtSub);
@@ -194,14 +308,21 @@ export class SurveySessionsService {
                 "INVALID_SESSION_TRANSITION"
             );
         }
-        if (endedAt.getTime() < existing.started_at.getTime()) {
+        if (body.endedAt.getTime() < existing.started_at.getTime()) {
             throw new SurveySessionsError(
                 "endedAt cannot be before startedAt",
                 400,
                 "INVALID_SESSION_TIMESTAMPS"
             );
         }
-        const row = await this.repo.end({ clientSessionId, createdBy, status, endedAt });
+        const row = await this.repo.end({
+            clientSessionId,
+            createdBy,
+            status,
+            endedAt: body.endedAt,
+            accumulatedActiveSeconds: body.accumulatedActiveSeconds,
+            clientEventId: body.clientEventId,
+        });
         if (!row) {
             throw new SurveySessionsError("Survey session not found", 404, "SESSION_NOT_FOUND");
         }
@@ -234,8 +355,26 @@ function toResponse(row: SurveySessionRow): SurveySessionResponse {
         clientSessionId: row.client_session_id,
         snapshotRevision: row.snapshot_revision,
         startedAt: row.started_at.toISOString(),
+        stoppedAt: row.ended_at?.toISOString() ?? null,
         endedAt: row.ended_at?.toISOString() ?? null,
         status: row.status,
+        trackingState: row.tracking_state,
+        completionStatus: row.completion_status,
+        accumulatedActiveSeconds: Number(row.accumulated_active_seconds ?? 0),
+        finishedAt: row.finished_at?.toISOString() ?? null,
+        reopenedAt: row.reopened_at?.toISOString() ?? null,
+        lastActivityAt: row.last_activity_at?.toISOString() ?? null,
+        lastCheckedStopSequence:
+            row.last_checked_stop_sequence == null ? null : Number(row.last_checked_stop_sequence),
+        checkedStopCount: Number(row.checked_stop_count ?? 0),
+        totalStopCount: Number(row.total_stop_count ?? 0),
+        reportCount: Number(row.report_count),
+        pendingSyncCount: Number(row.pending_sync_count ?? 0),
+        lastGpsAccuracyM: row.last_gps_accuracy_m == null ? null : Number(row.last_gps_accuracy_m),
+        lastLat: row.last_lat == null ? null : Number(row.last_lat),
+        lastLng: row.last_lng == null ? null : Number(row.last_lng),
+        lastGpsAt: row.last_gps_at?.toISOString() ?? null,
+        clientSyncState: row.client_sync_state,
         route: { publicId: row.route_public_id, code: row.route_code },
         variant: {
             publicId: row.public_id,
@@ -243,7 +382,6 @@ function toResponse(row: SurveySessionRow): SurveySessionResponse {
             origin: row.origin_name,
             destination: row.destination_name,
         },
-        reportCount: Number(row.report_count),
         createdAt: row.created_at.toISOString(),
         updatedAt: row.updated_at.toISOString(),
     };

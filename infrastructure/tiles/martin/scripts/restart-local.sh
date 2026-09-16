@@ -53,10 +53,11 @@ container_running() {
 
 if container_exists; then
   if container_running; then
-    echo "Container ${CONTAINER_NAME} already exists and is running."
-    echo "  URL: http://localhost:${HOST_PORT}"
-    echo "  Tip: docker restart ${CONTAINER_NAME}"
-    echo "  Tip: to apply a new DATABASE_URL from .env → docker rm -f ${CONTAINER_NAME} && $0"
+    echo "Container ${CONTAINER_NAME} is running. Restarting it to reload mounted config..."
+    docker restart "${CONTAINER_NAME}" >/dev/null
+    echo "Restarted ${CONTAINER_NAME} (http://localhost:${HOST_PORT})."
+    echo "  Note: restart keeps the old container env. Recreate to pick up .env changes:"
+    echo "    docker rm -f ${CONTAINER_NAME} && $0"
     exit 0
   fi
 

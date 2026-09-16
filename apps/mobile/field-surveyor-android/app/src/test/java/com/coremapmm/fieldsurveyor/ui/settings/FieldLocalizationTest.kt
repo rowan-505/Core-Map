@@ -68,16 +68,37 @@ class FieldLocalizationTest {
         assertEquals("တည်နေရာဖွင့်ပါ", translateFieldText("Turn on location", FieldLanguage.MYANMAR))
         assertEquals("တည်နေရာခွင့်ပြုချက် လိုသည်", translateFieldText("Location permission required", FieldLanguage.MYANMAR))
         assertEquals("တည်နေရာ မရနိုင်ပါ", translateFieldText("Location unavailable", FieldLanguage.MYANMAR))
-        assertEquals("နောက်ဆုံးတည်နေရာ သုံးနေသည်", translateFieldText("Using last location", FieldLanguage.MYANMAR))
+        assertEquals("နောက်ဆုံးတည်နေရာ", translateFieldText("Last location", FieldLanguage.MYANMAR))
+        assertEquals("နောက်ဆုံးတည်နေရာ", translateFieldText("Using last location", FieldLanguage.MYANMAR))
         assertEquals(
             "GPS အားနည်း · ±40m",
             translateFieldText("Weak GPS · ±40m", FieldLanguage.MYANMAR),
         )
         assertEquals("GPS ±8m", translateFieldText("GPS ±8m", FieldLanguage.MYANMAR))
         assertEquals("စစ်တမ်း ပြီးဆုံးမည်", translateFieldText("End survey", FieldLanguage.MYANMAR))
+        assertEquals("ရပ်မည်", translateFieldText("Stop", FieldLanguage.MYANMAR))
+        assertEquals(
+            "အစီရင်ခံအမျိုးအစား မရွေးရသေးပါ",
+            translateFieldText("No report type selected", FieldLanguage.MYANMAR),
+        )
+        assertEquals(
+            "မှတ်တိုင်အသစ် · မြေပုံတည်နေရာ ရွေးပြီး",
+            translateFieldText("New stop · Map position selected", FieldLanguage.MYANMAR),
+        )
+        assertEquals("စောင့်ဆိုင်း 2 ခု", translateFieldText("2 pending", FieldLanguage.MYANMAR))
         assertEquals("မှတ်တိုင်အသစ် တင်မည်", translateFieldText("Report new stop", FieldLanguage.MYANMAR))
         assertEquals("အစီရင်ခံစာ သိမ်းပြီး", translateFieldText("Report saved", FieldLanguage.MYANMAR))
         assertEquals("အော့ဖ်လိုင်းတွင် သိမ်းပြီး", translateFieldText("Saved offline", FieldLanguage.MYANMAR))
+        assertEquals(
+            "အော့ဖ်လိုင်းတွင် သိမ်းပြီး — စင့်ခ် ဆိုင်းငံ့ထားသည်",
+            translateFieldText("Saved offline — sync pending", FieldLanguage.MYANMAR),
+        )
+        assertEquals(
+            "သိမ်း၍မရပါ",
+            translateFieldText("Could not save", FieldLanguage.MYANMAR),
+        )
+        assertEquals("စစ်တမ်း စတင်ပြီး", translateFieldText("Survey started", FieldLanguage.MYANMAR))
+        assertEquals("စစ်တမ်း ရပ်ပြီး", translateFieldText("Survey stopped", FieldLanguage.MYANMAR))
         assertEquals("အစီရင်ခံစာ သိမ်း၍မရပါ", translateFieldText("Could not save report", FieldLanguage.MYANMAR))
         assertEquals("သိမ်းမည်", translateFieldText("Save", FieldLanguage.MYANMAR))
         assertEquals("အထောက်အထား · မထည့်လည်းရသည်", translateFieldText("Evidence · Optional", FieldLanguage.MYANMAR))

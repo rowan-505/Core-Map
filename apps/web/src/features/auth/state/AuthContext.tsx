@@ -15,13 +15,9 @@ import {
   updateProfile as updateProfileRequest,
   verifyEmailOtp as verifyEmailOtpRequest,
 } from '../api/authApi';
-import { onSessionCleared } from '../api/http';
-import {
-  clearTokens,
-  getRefreshToken,
-  hasStoredSession,
-  setTokens,
-} from '../lib/tokenStorage';
+import { onSessionCleared, refreshAccessToken } from '../api/http';
+import { clearConnectProviderIntent, peekConnectProviderIntent } from '../lib/connectProviderIntent';
+import { clearTokens, setAccessToken } from '../lib/tokenStorage';
 import type {
   AuthProfile,
   EmailOtpStatus,
@@ -37,7 +33,7 @@ import {
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [user, setUser] = useState<AuthProfile | null>(null);
-  const [initializing, setInitializing] = useState<boolean>(hasStoredSession());
+  const [initializing, setInitializing] = useState(true);
   const [authModalView, setAuthModalView] = useState<AuthModalView | null>(null);
   const mounted = useRef(true);
 
@@ -46,7 +42,6 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       const profile = await fetchProfile(signal);
       if (mounted.current) setUser(profile);
     } catch {
-      // Token invalid/expired and refresh failed; treat as signed out.
       clearTokens();
       if (mounted.current) setUser(null);
     }
@@ -57,7 +52,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     const controller = new AbortController();
 
     const bootstrap = async () => {
-      if (hasStoredSession()) {
+      const token = await refreshAccessToken();
+      if (token && mounted.current) {
         await loadProfile(controller.signal);
       }
       if (mounted.current) setInitializing(false);
@@ -78,8 +74,17 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const login = useCallback(
     async (input: LoginInput) => {
       const session = await loginRequest(input);
-      setTokens({ accessToken: session.accessToken, refreshToken: session.refreshToken });
+      if (!session.accessToken) {
+        throw new Error('Could not sign in.');
+      }
+      setAccessToken(session.accessToken);
       await loadProfile();
+      if (peekConnectProviderIntent()) {
+        // Guide to Security; user still must click Connect (no auto-start).
+        window.location.assign('/account/security');
+        return;
+      }
+      clearConnectProviderIntent();
     },
     [loadProfile],
   );
@@ -87,20 +92,16 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const register = useCallback(
     async (input: RegisterInput) => {
       await registerAccount(input);
-      // Registration does not issue tokens; immediately sign in for a smooth flow.
       await login({ email: input.email, password: input.password });
     },
     [login],
   );
 
   const logout = useCallback(async () => {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-      try {
-        await logoutRequest(refreshToken);
-      } catch {
-        // Best-effort server revoke; always clear locally below.
-      }
+    try {
+      await logoutRequest();
+    } catch {
+      // Best-effort server revoke; always clear locally below.
     }
     clearTokens();
     setUser(null);

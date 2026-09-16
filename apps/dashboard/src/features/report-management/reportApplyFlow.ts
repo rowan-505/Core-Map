@@ -1,5 +1,6 @@
 import {
     PRIMARY_ACTION_LABELS,
+    STALE_SNAPSHOT_WARNING,
     buildReportDetailKeyFacts,
 } from "./reportDetailView";
 import { formatEvidenceDistanceMeters, haversineMeters, isValidEvidenceCoordinate } from "./evidenceMapModel";
@@ -22,6 +23,8 @@ export type ApplyConfirmationSummary = {
     affectedVariantsLabel: string;
     tone: "default" | "danger";
     confirmLabel: string;
+    /** Set when applying despite a stale field snapshot. */
+    staleWarning: string | null;
 };
 
 export type ApplyResultSummary = {
@@ -174,6 +177,13 @@ export function buildApplyConfirmation(
     const facts = buildReportDetailKeyFacts(report, () => "—");
     const coords = report.review.coordinates;
     const actionLabel = PRIMARY_ACTION_LABELS[action];
+    const mapMutating =
+        action === "MOVE_STOP" ||
+        action === "REMOVE_FROM_ROUTE" ||
+        action === "CREATE_AND_INSERT_STOP" ||
+        action === "UPDATE_STOP_DETAILS";
+    const staleWarning =
+        mapMutating && report.field?.snapshot_stale ? STALE_SNAPSHOT_WARNING : null;
     const base = {
         action,
         actionLabel,
@@ -181,6 +191,7 @@ export function buildApplyConfirmation(
         affectedVariantsLabel: affectedLabel(report),
         tone: action === "REJECT" ? ("danger" as const) : ("default" as const),
         confirmLabel: action === "REJECT" ? "Reject report" : `Confirm ${actionLabel.toLowerCase()}`,
+        staleWarning,
     };
 
     if (action === "MOVE_STOP") {

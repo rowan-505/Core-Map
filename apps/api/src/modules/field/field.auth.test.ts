@@ -6,6 +6,8 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import authPlugin, {
     hasFieldSurveyorAccess,
     requireFieldSurveyor,
+    canAccessSurveyAssignments,
+    canManageSurveyAssignments,
     DEV_AUTH_BYPASS_USER,
 } from "../../plugins/auth.js";
 
@@ -48,6 +50,15 @@ test("requireFieldSurveyor forbids dashboard and public roles", async () => {
     const result = await requireFieldSurveyor(requestWithRoles(["surveyor"]), ok.reply);
     assert.equal(result, undefined);
     assert.equal(ok.captured.statusCode, undefined);
+});
+
+test("survey assignment access allows surveyor or admin managers", () => {
+    assert.equal(canAccessSurveyAssignments(["surveyor"]), true);
+    assert.equal(canAccessSurveyAssignments(["admin"]), true);
+    assert.equal(canAccessSurveyAssignments(["super_admin"]), true);
+    assert.equal(canAccessSurveyAssignments(["viewer"]), false);
+    assert.equal(canManageSurveyAssignments(["surveyor"]), false);
+    assert.equal(canManageSurveyAssignments(["admin"]), true);
 });
 
 async function withAuthApp(

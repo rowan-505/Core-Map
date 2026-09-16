@@ -128,7 +128,7 @@ data class ReportFingerprint(
     val targetPublicId: String,
 )
 
-object CorrectStopAction {
+object StopSelectionAdvance {
     fun nextStopPublicId(stops: List<com.coremapmm.fieldsurveyor.data.transport.OrderedStopRow>, selectedStopPublicId: String?): String? {
         if (selectedStopPublicId.isNullOrBlank()) return null
         val ordered = StopContext.ordered(stops)

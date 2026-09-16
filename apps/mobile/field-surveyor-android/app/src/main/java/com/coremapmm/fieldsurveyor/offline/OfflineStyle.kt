@@ -12,6 +12,7 @@ object OfflineStyle {
     const val SPRITE_URI = "asset://sprites/empty"
     const val PMTILES_PLACEHOLDER = "pmtiles://__OVERVIEW_PMTILES_URL__"
     const val WEB_GLYPHS_URI = "/fonts/{fontstack}/{range}.pbf"
+    const val OVERVIEW_CONTEXT_MAX_ZOOM = 22
     /** Matches style `text-font` and `app/src/main/assets/fonts/NotoSansMyanmar-Regular.ttf`. */
     const val FONT_FACES_FRAGMENT =
         "\"font-faces\": {\"NotoSansMyanmar-Regular\": [{\"url\": \"asset://fonts/NotoSansMyanmar-Regular.ttf\"}]},"
@@ -19,12 +20,20 @@ object OfflineStyle {
 
     fun pmtilesFileUri(absolutePath: String): String = "pmtiles://file://$absolutePath"
 
-    fun rewrite(templateJson: String, pmtilesAbsolutePath: String): String {
+    fun rewrite(
+        templateJson: String,
+        pmtilesAbsolutePath: String,
+        archiveMaxZoom: Int? = null,
+    ): String {
         val pmtilesUri = pmtilesFileUri(pmtilesAbsolutePath)
         var json = templateJson
             .replace(WEB_GLYPHS_URI, GLYPHS_URI)
             .replace(PMTILES_PLACEHOLDER, pmtilesUri)
             .replace(HTTPS_PMTILES, pmtilesUri)
+        if (archiveMaxZoom != null) {
+            json = useArchiveMaxZoom(json, archiveMaxZoom)
+        }
+        json = keepOverviewContextVisible(json)
         if (!json.contains("\"font-faces\"")) {
             json = json.replaceFirst("\"glyphs\":", "$FONT_FACES_FRAGMENT\n  \"glyphs\":")
         }
@@ -43,6 +52,39 @@ object OfflineStyle {
             }
         }
         return json
+    }
+
+    /** Use the real archive ceiling so MapLibre overzooms existing tiles above it. */
+    private fun useArchiveMaxZoom(styleJson: String, archiveMaxZoom: Int): String {
+        val vectorSourceMaxZoom = Regex(
+            """("type"\s*:\s*"vector"[\s\S]*?"maxzoom"\s*:\s*)\d+(?:\.\d+)?""",
+        )
+        val match = vectorSourceMaxZoom.find(styleJson) ?: return styleJson
+        return styleJson.replaceRange(
+            match.range,
+            match.groupValues[1] + archiveMaxZoom.coerceIn(0, 30),
+        )
+    }
+
+    /**
+     * The bundled overview archive ends at z8 and is intentionally generalized, but MapLibre can
+     * overzoom those tiles. Keep the foundational geography visible when the detailed Yangon
+     * package has not been downloaded instead of hiding every map layer above z9.
+     */
+    private fun keepOverviewContextVisible(styleJson: String): String {
+        var rewritten = styleJson
+        listOf("overview-ocean", "overview-land", "overview-lakes", "overview-rivers").forEach { id ->
+            val layerMaxZoom = Regex(
+                """("id"\s*:\s*"$id"[\s\S]*?"maxzoom"\s*:\s*)9(?:\.0)?""",
+            )
+            layerMaxZoom.find(rewritten)?.let { match ->
+                rewritten = rewritten.replaceRange(
+                    match.range,
+                    match.groupValues[1] + OVERVIEW_CONTEXT_MAX_ZOOM,
+                )
+            }
+        }
+        return rewritten
     }
 
     fun httpBasemapUrls(styleJson: String): List<String> =

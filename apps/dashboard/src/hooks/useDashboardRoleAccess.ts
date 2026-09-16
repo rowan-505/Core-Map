@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { getAccessToken } from "@/src/lib/authTokenStorage";
 import {
     canDashboardWrite,
     hasDashboardAccess,
@@ -9,18 +10,33 @@ import {
     rolesFromJwtAccessToken,
 } from "@/src/lib/jwtRoles";
 
+function readRolesFromMemory(): string[] {
+    if (typeof window === "undefined") {
+        return [];
+    }
+    return rolesFromJwtAccessToken(getAccessToken());
+}
+
 export function useDashboardRoleAccess() {
     const [roles, setRoles] = useState<string[]>([]);
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
         const refreshRoles = () => {
-            setRoles(rolesFromJwtAccessToken(window.localStorage.getItem("accessToken")));
+            setRoles(readRolesFromMemory());
             setReady(true);
         };
         refreshRoles();
-        window.addEventListener("storage", refreshRoles);
-        return () => window.removeEventListener("storage", refreshRoles);
+        // Memory tokens do not fire storage events; refresh on focus/pageshow.
+        window.addEventListener("focus", refreshRoles);
+        const onPageShow = () => {
+            refreshRoles();
+        };
+        window.addEventListener("pageshow", onPageShow);
+        return () => {
+            window.removeEventListener("focus", refreshRoles);
+            window.removeEventListener("pageshow", onPageShow);
+        };
     }, []);
 
     return {

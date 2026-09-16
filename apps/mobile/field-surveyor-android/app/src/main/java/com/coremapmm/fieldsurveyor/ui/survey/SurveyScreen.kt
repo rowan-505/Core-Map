@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -39,7 +41,6 @@ import com.coremapmm.fieldsurveyor.media.JpegTarget
 import com.coremapmm.fieldsurveyor.media.VoiceRecorder
 import com.coremapmm.fieldsurveyor.media.VoiceTarget
 import com.coremapmm.fieldsurveyor.survey.*
-import com.coremapmm.fieldsurveyor.ui.components.StatusPill
 import com.coremapmm.fieldsurveyor.ui.report.ProposedLocationControls
 import com.coremapmm.fieldsurveyor.ui.report.ReportTypeSelector
 import com.coremapmm.fieldsurveyor.ui.settings.tr
@@ -308,23 +309,20 @@ fun SurveyScreen(survey: SurveyController) {
         setSheetStage(SurveySheetStage.STOPS)
     }
 
+    SurveyKeepScreenOnEffect(trackingActive = state.running)
+
     DisposableEffect(Unit) {
         onDispose {
             recorder.cancel()
             photoDrafts.forEach { it.delete() }
             voiceDraftForCleanup?.delete()
+            survey.clearTransientFeedback()
             survey.releaseMapGps()
         }
     }
     LaunchedEffect(Unit) {
         survey.loadCachedVariant()
         withLocationPermission("startup") { survey.startupLocation() }
-    }
-    LaunchedEffect(state.capturedBanner) {
-        if (state.capturedBanner != null) {
-            delay(1_400)
-            survey.clearBanner()
-        }
     }
     LaunchedEffect(Unit) {
         while (true) {
@@ -344,6 +342,8 @@ fun SurveyScreen(survey: SurveyController) {
             stops = state.stops,
             selectedStopPublicId = state.selection?.selectedStopPublicId,
             nearbyStopPublicIds = visibleNearbyStops.map { it.stop.stopPublicId }.toSet(),
+            reportedStopIds = state.reportedStopIds,
+            preferMyanmarLabels = true,
             gps = location.displayFix,
             cameraFollowEnabled = state.cameraFollowEnabled,
             centerOncePending = state.centerOncePending,
@@ -389,126 +389,58 @@ fun SurveyScreen(survey: SurveyController) {
             onVisibleFractionChange = { sheetVisibleFraction = it },
             modifier = Modifier.fillMaxSize(),
             header = { dragModifier, onHandleToggle ->
-                Column(
-                    dragModifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp)
-                        .testTag("survey_fixed_header"),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box(
-                        Modifier
-                            .size(width = 48.dp, height = 20.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onHandleToggle,
-                            )
-                            .testTag("survey_sheet_handle"),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Box(
-                            Modifier
-                                .size(width = 40.dp, height = 4.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                    RoundedCornerShape(100.dp),
-                                ),
-                        )
-                    }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        val title = state.selection?.let { "${it.routeCode} · ${it.variantCode}" }
-                            ?: tr("Select a D0/D1 variant")
-                        Text(
-                            title,
-                            style = MaterialTheme.typography.titleSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
+                val selectedStop = window.current
+                val sequences = state.stops.map { it.stopSequence }
+                val newStopHasPosition = pendingKind == AnomalyKind.NEW_STOP &&
+                    newStopDraft().proposed != null
+                SurveyStickySummaryBanner(
+                    routeTitle = SurveyStickyBannerModel.routeTitle(
+                        state.selection?.routeCode,
+                        state.selection?.variantCode,
+                    ),
+                    oppositeVariantCode = state.oppositeVariantCode,
+                    directionSwitchEnabled = state.directionSwitchEnabled,
+                    showDirectionSwitch = state.selection != null,
+                    onDirectionSwitch = {
+                        when (survey.requestDirectionSwitch()) {
+                            DirectionSwitchAction.SWITCH_NOW -> survey.switchToOppositeDirection()
+                            DirectionSwitchAction.CONFIRM_AND_SWITCH -> confirmDirectionSwitch = true
+                            DirectionSwitchAction.DISABLED -> Unit
+                        }
+                    },
+                    running = state.running,
+                    sessionTransitionBusy = state.sessionTransitionBusy,
+                    onStart = { withLocationPermission("survey") { survey.startSurvey() } },
+                    onStop = { survey.endSurvey() },
+                    variantFinished = state.variantFinished,
+                    finishEnabled = state.selection != null,
+                    onToggleFinished = {
                         if (state.selection != null) {
-                            OutlinedButton(
-                                onClick = {
-                                    when (survey.requestDirectionSwitch()) {
-                                        DirectionSwitchAction.SWITCH_NOW -> survey.switchToOppositeDirection()
-                                        DirectionSwitchAction.CONFIRM_AND_SWITCH -> confirmDirectionSwitch = true
-                                        DirectionSwitchAction.DISABLED -> Unit
-                                    }
-                                },
-                                enabled = state.directionSwitchEnabled,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                            ) {
-                                Text(
-                                    DirectionSwitchPolicy.buttonLabel(state.oppositeVariantCode),
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            }
+                            survey.setVariantFinished(!state.variantFinished)
                         }
-                    }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        StatusPill(
-                            tr(location.chipLabel),
-                            positive = location.status == SurveyLocationStatus.Live,
-                            warning = location.status == SurveyLocationStatus.Degraded ||
-                                location.status == SurveyLocationStatus.Stale,
-                            blockingError = location.status == SurveyLocationStatus.Disabled ||
-                                location.status == SurveyLocationStatus.PermissionDenied ||
-                                location.status == SurveyLocationStatus.Unavailable,
-                            modifier = Modifier.testTag("survey_gps_status"),
-                        )
-                        Text(
-                            tr("${state.sessionReportCount} reports · ${state.pendingSyncCount} pending"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f).testTag("survey_report_count"),
-                        )
-                        if (state.running) {
-                            OutlinedButton(
-                                onClick = { survey.endSurvey() },
-                                modifier = Modifier.heightIn(min = 48.dp).testTag("survey_end_or_start"),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                            ) {
-                                Text(
-                                    tr("End survey"),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
-                                )
-                            }
-                        } else {
-                            Button(
-                                onClick = { withLocationPermission("survey") { survey.startSurvey() } },
-                                modifier = Modifier.heightIn(min = 48.dp).testTag("survey_end_or_start"),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                            ) {
-                                Text(
-                                    tr("Start"),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
-                                )
-                            }
-                        }
-                    }
-                }
+                    },
+                    stopLine = SurveyStickyBannerModel.stopLine(
+                        stop = selectedStop,
+                        sequences = sequences,
+                        displayName = selectedStop?.let { stopDisplayName(it) },
+                    ),
+                    gpsLabel = location.chipLabel,
+                    gpsStatus = location.status,
+                    reportSummary = SurveyStickyBannerModel.reportSummary(
+                        selectedKinds = SurveyStickyBannerModel.selectedKinds(pendingKind),
+                        newStopHasMapPosition = newStopHasPosition,
+                    ),
+                    pendingSyncLabel = SurveyStickyBannerModel.pendingSyncLabel(state.pendingSyncCount),
+                    dragModifier = dragModifier,
+                    onHandleToggle = onHandleToggle,
+                )
             },
             content = { visibleStage ->
                 Column(
                     Modifier
                         .fillMaxWidth()
                         .weight(1f, fill = true)
-                        .imePadding()
-                        .navigationBarsPadding(),
+                        .imePadding(),
                 ) {
                     // Nearby stays reachable at half-sheet without opening full form.
                     if (visibleNearbyStops.isNotEmpty()) {
@@ -540,10 +472,10 @@ fun SurveyScreen(survey: SurveyController) {
                             .weight(1f)
                             .testTag("survey_form_list"),
                         contentPadding = PaddingValues(
-                            start = 14.dp,
-                            end = 14.dp,
+                            start = 16.dp,
+                            end = 16.dp,
                             top = 4.dp,
-                            bottom = 24.dp,
+                            bottom = 10.dp,
                         ),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -559,32 +491,16 @@ fun SurveyScreen(survey: SurveyController) {
                                 state.duplicateWarning?.let {
                                     SurveyNotice(tr(it), warning = true)
                                 }
-                                state.message?.takeIf {
-                                    it.isNotBlank() &&
-                                        it != location.chipLabel &&
-                                        it != SurveyLocationLabels.TEMPORARILY_UNAVAILABLE
-                                }?.let {
-                                    SurveyNotice(tr(it), warning = false)
-                                }
                             }
                         }
                         item("stops") {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                StopWindowRow(
-                                    window = window,
-                                    sequences = state.stops.map { it.stopSequence },
+                                SurveyStopStrip(
+                                    stops = state.stops,
+                                    selectedStopPublicId = state.selection?.selectedStopPublicId,
+                                    reportedStopIds = state.reportedStopIds,
                                     onSelect = ::selectStop,
                                 )
-                                FilledTonalButton(
-                                    onClick = {
-                                        if (survey.markStopCorrect()) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            resetDraft()
-                                        }
-                                    },
-                                    enabled = state.running && window.current != null,
-                                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                                ) { Text(tr("Stop is correct")) }
                                 state.endOfRouteNotice?.let {
                                     Text(
                                         tr(it),
@@ -770,16 +686,26 @@ fun SurveyScreen(survey: SurveyController) {
                                             .testTag("survey_report_save"),
                                     ) { Text(tr(EvidenceUi.SAVE)) }
                                 }
-                                state.capturedBanner?.let {
-                                    Text(
-                                        tr(it),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        style = MaterialTheme.typography.labelMedium,
-                                    )
-                                }
+                            }
+                        }
+                        if (pendingKind == null && state.selection != null) {
+                            item("finish") {
+                                SurveyFinishChip(
+                                    finished = state.variantFinished,
+                                    onToggle = { survey.setVariantFinished(!state.variantFinished) },
+                                )
                             }
                         }
                     }
+                }
+            },
+        )
+        SurveyNotifyHost(
+            event = state.notice,
+            onConsumed = survey::consumeNotice,
+            onAction = { key ->
+                if (key == SurveyNotifyCopy.ACTION_RETRY_SAVE) {
+                    submitPendingReport()
                 }
             },
         )
@@ -1072,7 +998,7 @@ private fun SelectedStopLine(
     label: String = "Selected stop",
 ) {
     val text = stop?.let {
-        "${StopSequenceDisplay.uiLabel(it.stopSequence, sequences)} ${it.nameEn ?: it.nameMy ?: "—"}"
+        "${StopSequenceDisplay.uiLabel(it.stopSequence, sequences)} ${SurveyStopStripModel.displayName(it.nameMy, it.nameEn)}"
     } ?: tr("Select a stop first.")
     Text("${tr(label)}: $text", style = MaterialTheme.typography.bodySmall)
 }
@@ -1088,10 +1014,10 @@ internal fun NewStopForm(
     onChooseOnMap: () -> Unit,
 ) {
     val previousLabel = previousStop?.let {
-        "${StopSequenceDisplay.uiLabel(it.stopSequence, sequences)} ${it.nameEn ?: it.nameMy ?: "—"}"
+        "${StopSequenceDisplay.uiLabel(it.stopSequence, sequences)} ${SurveyStopStripModel.displayName(it.nameMy, it.nameEn)}"
     } ?: tr("Select a stop first.")
     val nextLabel = nextStop?.let {
-        "${StopSequenceDisplay.uiLabel(it.stopSequence, sequences)} ${it.nameEn ?: it.nameMy ?: "—"}"
+        "${StopSequenceDisplay.uiLabel(it.stopSequence, sequences)} ${SurveyStopStripModel.displayName(it.nameMy, it.nameEn)}"
     } ?: "—"
     Text(tr("Previous stop") + ": $previousLabel", style = MaterialTheme.typography.bodySmall)
     Text(tr("Next stop") + ": $nextLabel", style = MaterialTheme.typography.bodySmall)
@@ -1158,6 +1084,40 @@ private fun SurveyNotice(text: String, warning: Boolean) {
             style = MaterialTheme.typography.bodySmall,
             color = content,
         )
+    }
+}
+
+@Composable
+private fun SurveyFinishChip(
+    finished: Boolean,
+    onToggle: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("survey_completion_row"),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        OutlinedButton(
+            onClick = onToggle,
+            modifier = Modifier
+                .heightIn(min = 36.dp)
+                .testTag("survey_completion_checkbox"),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+            border = BorderStroke(
+                1.dp,
+                if (finished) Color(0xFF1B7F3A) else MaterialTheme.colorScheme.outlineVariant,
+            ),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = if (finished) Color(0xFF1B7F3A) else MaterialTheme.colorScheme.onSurface,
+            ),
+        ) {
+            Text(
+                tr(if (finished) "✓ Finished" else "Mark finished"),
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+            )
+        }
     }
 }
 

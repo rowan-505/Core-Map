@@ -11,11 +11,9 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.coremapmm.fieldsurveyor.FieldApp
 import com.coremapmm.fieldsurveyor.data.SyncClaimPolicy
-import com.coremapmm.fieldsurveyor.device.DeviceStatus
 import com.coremapmm.fieldsurveyor.log.FieldLog
 import com.coremapmm.fieldsurveyor.media.MediaRetentionCleanup
 import com.coremapmm.fieldsurveyor.media.ReportPhotoStore
-import com.coremapmm.fieldsurveyor.offline.OfflineMapPolicy
 import java.util.concurrent.TimeUnit
 
 internal enum class SyncStage { REPORTS, MEDIA }
@@ -24,13 +22,23 @@ internal object FieldWorkPolicy {
     fun defaultStages() = listOf(SyncStage.REPORTS, SyncStage.MEDIA)
     fun meteredOverrideStages() = listOf(SyncStage.MEDIA)
 
-    fun uniqueMediaWorkPolicy(@Suppress("UNUSED_PARAMETER") allowMetered: Boolean): String = "APPEND_OR_REPLACE"
+    fun uniqueMediaWorkPolicy(@Suppress("UNUSED_PARAMETER") allowMetered: Boolean): String = "REPLACE"
 
     fun mediaShouldRetry(retryLater: Boolean, hasEligible: Boolean, hasFreshSyncing: Boolean): Boolean =
         retryLater || hasEligible || hasFreshSyncing
+
+    /** Session/completion retry must not skip later report sync in the same worker pass. */
+    fun shouldContinueAfterUpstreamRetry(upstreamRetryLater: Boolean): Boolean = true
+
+    fun shouldRetryWorker(
+        retryLater: Boolean,
+        moreSessions: Boolean,
+        moreCompletions: Boolean,
+        moreReports: Boolean,
+    ): Boolean = retryLater || moreSessions || moreCompletions || moreReports
 }
 
-/** Report JSON: any network. Media: Wi-Fi by default. */
+/** Report JSON + media + maps: any connected network (Wi-Fi or cellular). */
 class OutboxSyncWorker(
     context: Context,
     params: WorkerParameters,
@@ -50,15 +58,61 @@ class OutboxSyncWorker(
             sessions = graph.sessionDao,
             create = graph.fieldSurveySessionsApi::create,
             end = graph.fieldSurveySessionsApi::end,
+            summary = graph.fieldSurveySessionsApi::summary,
+            finish = graph.fieldSurveySessionsApi::finish,
+            reopen = graph.fieldSurveySessionsApi::reopen,
         )
+        val completionsRunner = SurveyCompletionSyncRunner(
+            hasAuth = { graph.auth.currentSession() != null },
+            token = { graph.auth.validAccessToken() },
+            completions = graph.completionDao,
+            put = graph.fieldSurveyCompletionsApi::put,
+        )
+        val completionsPull = SurveyCompletionPullRunner(
+            hasAuth = { graph.auth.currentSession() != null },
+            token = { graph.auth.validAccessToken() },
+            completions = graph.completionDao,
+            list = graph.fieldSurveyCompletionsApi::list,
+        )
+        val assignmentsPull = SurveyAssignmentPullRunner(
+            hasAuth = { graph.auth.currentSession() != null },
+            token = { graph.auth.validAccessToken() },
+            assignments = graph.assignmentDao,
+            listActive = graph.fieldSurveyAssignmentsApi::listActive,
+        )
+        // Do not abort the whole worker on session/completion RetryLater.
+        // A stuck session (offline API, stale active row) used to block report POST forever,
+        // which left Outbox items on "Waiting".
         var retryLater = false
         var sessionProcessed = 0
         while (sessionProcessed < 20) {
             when (sessionsRunner.syncOne()) {
                 OutboxRunResult.Idle -> break
                 OutboxRunResult.Processed -> sessionProcessed += 1
-                OutboxRunResult.RetryLater -> return Result.retry()
+                OutboxRunResult.RetryLater -> {
+                    retryLater = true
+                    break
+                }
             }
+        }
+        var completionProcessed = 0
+        while (completionProcessed < 20) {
+            when (completionsRunner.syncOne()) {
+                OutboxRunResult.Idle -> break
+                OutboxRunResult.Processed -> completionProcessed += 1
+                OutboxRunResult.RetryLater -> {
+                    retryLater = true
+                    break
+                }
+            }
+        }
+        when (completionsPull.pull()) {
+            OutboxRunResult.RetryLater -> retryLater = true
+            OutboxRunResult.Idle, OutboxRunResult.Processed -> Unit
+        }
+        when (assignmentsPull.pull()) {
+            OutboxRunResult.RetryLater -> retryLater = true
+            OutboxRunResult.Idle, OutboxRunResult.Processed -> Unit
         }
         var processed = 0
         while (processed < 20) {
@@ -71,12 +125,17 @@ class OutboxSyncWorker(
                 }
             }
         }
-        if (retryLater) {
-            return Result.retry()
-        }
         val moreSessions = graph.sessionDao.nextEligible() != null
+        val moreCompletions = graph.completionDao.nextEligible() != null
         val moreReports = graph.reports.nextEligible() != null
-        return if (moreSessions || moreReports) {
+        return if (
+            FieldWorkPolicy.shouldRetryWorker(
+                retryLater = retryLater,
+                moreSessions = moreSessions,
+                moreCompletions = moreCompletions,
+                moreReports = moreReports,
+            )
+        ) {
             Result.retry()
         } else {
             FieldWork.enqueueMedia(applicationContext)
@@ -92,9 +151,6 @@ class MediaSyncWorker(
     override suspend fun doWork(): Result {
         val app = applicationContext as? FieldApp ?: return Result.success()
         val graph = app.graph
-        if (!OfflineMapPolicy.canDownload(DeviceStatus.isMetered(applicationContext), MediaMeteredOptIn.get(applicationContext))) {
-            return Result.retry()
-        }
         val mediaRunner = MediaSyncRunner(
             hasSession = { graph.auth.currentSession() != null },
             accessToken = { graph.auth.validAccessToken() },
@@ -133,9 +189,6 @@ class MediaSyncWorker(
         val staleBefore = now - SyncClaimPolicy.LEASE_MS
         val hasEligible = graph.reportMedia.nextEligible(staleBefore) != null
         val hasFreshSyncing = graph.reportMedia.countFreshSyncing(staleBefore) > 0
-        if (!retryLater && !hasEligible && !hasFreshSyncing) {
-            MediaMeteredOptIn.clear(applicationContext)
-        }
         return if (FieldWorkPolicy.mediaShouldRetry(retryLater, hasEligible, hasFreshSyncing)) {
             Result.retry()
         } else {
@@ -156,8 +209,8 @@ object FieldWork {
         enqueueMedia(context)
     }
 
+    /** @deprecated Media uploads use any network; kept as alias for enqueueMedia. */
     fun enqueueMediaOverCellular(context: Context) {
-        MediaMeteredOptIn.set(context, true)
         enqueueMedia(context)
     }
 
@@ -168,11 +221,13 @@ object FieldWork {
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build(),
             )
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
+            .setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
             .build()
+        // REPLACE so a new capture restarts sync immediately instead of waiting on KEEP/backoff.
         WorkManager.getInstance(context).enqueueUniqueWork(
             UNIQUE_NAME,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.REPLACE,
             request,
         )
     }
@@ -184,30 +239,12 @@ object FieldWork {
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build(),
             )
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(
             MEDIA_WIFI,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            ExistingWorkPolicy.REPLACE,
             request,
         )
     }
-}
-
-internal object MediaMeteredOptIn {
-    private const val PREFS = "field_work"
-    private const val KEY = "media_allow_metered"
-
-    fun set(context: Context, allow: Boolean) {
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY, allow)
-            .apply()
-    }
-
-    fun get(context: Context): Boolean =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY, false)
-
-    fun clear(context: Context) = set(context, false)
 }

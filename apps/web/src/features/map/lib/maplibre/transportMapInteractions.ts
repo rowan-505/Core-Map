@@ -10,7 +10,10 @@ import {
   PUBLIC_MAP_TRANSPORT_HOVER_LAYER_IDS,
   queryTopRenderedMapFeature,
 } from './publicMapClickableLayerRegistry';
+import { isMapStyleUsable } from './isMapStyleUsable';
 import { applySelectedTransportMarker } from './selectedTransportMarker';
+import { TRANSPORT_ROUTE_PATHS_LAYER_ID } from './publicMapMarkerLayerIds';
+import { TRANSPORT_PATHS_SOURCE_ID } from './transportSources';
 import {
   highlightFromTransportFeature,
   setTransportStopHover,
@@ -142,6 +145,17 @@ export function showTransportLineFeaturePopup(
 
 /** Binds transport hover highlight on hitbox layers. */
 export function bindTransportMapInteractions(map: MapEngine): () => void {
+  let hoveredRoute: { sourceLayer: string; id: string | number } | null = null;
+
+  const clearRouteHover = () => {
+    if (!hoveredRoute || !map.getSource(TRANSPORT_PATHS_SOURCE_ID)) return;
+    map.setFeatureState(
+      { source: TRANSPORT_PATHS_SOURCE_ID, sourceLayer: hoveredRoute.sourceLayer, id: hoveredRoute.id },
+      { hover: false },
+    );
+    hoveredRoute = null;
+  };
+
   const onEnter = (event: MapMouseEvent) => {
     const canvas = map.getCanvas();
     if (canvas?.style) canvas.style.cursor = 'pointer';
@@ -163,7 +177,7 @@ export function bindTransportMapInteractions(map: MapEngine): () => void {
   };
 
   const hoverCleanups: Array<() => void> = [];
-  for (const layerId of PUBLIC_MAP_TRANSPORT_HOVER_LAYER_IDS) {
+  for (const layerId of filterPresentMapLayers(map, PUBLIC_MAP_TRANSPORT_HOVER_LAYER_IDS)) {
     map.on('mouseenter', layerId, onEnter);
     map.on('mouseleave', layerId, onLeave);
     hoverCleanups.push(() => {
@@ -172,10 +186,39 @@ export function bindTransportMapInteractions(map: MapEngine): () => void {
     });
   }
 
+  if (map.getLayer(TRANSPORT_ROUTE_PATHS_LAYER_ID)) {
+    const onRouteEnter = (event: MapMouseEvent) => {
+      const feature = queryTopRenderedMapFeature(map, event.point, [TRANSPORT_ROUTE_PATHS_LAYER_ID]);
+      if (!feature || feature.id === undefined || !feature.sourceLayer) return;
+      clearRouteHover();
+      hoveredRoute = { sourceLayer: feature.sourceLayer, id: feature.id };
+      map.setFeatureState(
+        { source: TRANSPORT_PATHS_SOURCE_ID, sourceLayer: feature.sourceLayer, id: feature.id },
+        { hover: true },
+      );
+      const canvas = map.getCanvas();
+      if (canvas?.style) canvas.style.cursor = 'pointer';
+    };
+    const onRouteLeave = () => {
+      clearRouteHover();
+      const canvas = map.getCanvas();
+      if (canvas?.style) canvas.style.cursor = '';
+    };
+    map.on('mouseenter', TRANSPORT_ROUTE_PATHS_LAYER_ID, onRouteEnter);
+    map.on('mouseleave', TRANSPORT_ROUTE_PATHS_LAYER_ID, onRouteLeave);
+    hoverCleanups.push(() => {
+      map.off('mouseenter', TRANSPORT_ROUTE_PATHS_LAYER_ID, onRouteEnter);
+      map.off('mouseleave', TRANSPORT_ROUTE_PATHS_LAYER_ID, onRouteLeave);
+      clearRouteHover();
+    });
+  }
+
   return () => {
     for (const cleanup of hoverCleanups) cleanup();
-    setTransportStopHover(map, null);
-    applySelectedTransportMarker(map, null);
+    if (isMapStyleUsable(map)) {
+      setTransportStopHover(map, null);
+      applySelectedTransportMarker(map, null);
+    }
     activeTransportLinePopup?.remove();
     activeTransportLinePopup = null;
   };

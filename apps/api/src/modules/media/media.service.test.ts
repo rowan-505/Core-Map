@@ -179,6 +179,9 @@ function serviceWith(overrides: {
         copyObject: async () => {
             throw new Error("copyObject not stubbed");
         },
+        deleteObject: async () => {
+            throw new Error("deleteObject not stubbed");
+        },
     };
     return new MediaService(
         mediaRepo,

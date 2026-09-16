@@ -1,10 +1,13 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useMapUiText } from '@/features/map/i18n/mapUiText';
 import { RegionCombobox } from '@/features/regions/components/RegionCombobox';
-import { ApiError } from '../api/http';
+import { LegalFooter } from '@/pages/legal/LegalLayout';
+import { ApiError, getApiBaseUrl } from '../api/http';
 import { useAuth } from '../state/useAuth';
 import type { AuthModalView } from '../state/useAuth';
 import type { PreferredLanguage } from '../types';
+import { useOAuthProviders } from '../hooks/useOAuthProviders';
 
 /**
  * Sign-in / sign-up form rendered inside the left drawer (not a centered modal).
@@ -18,10 +21,12 @@ export function AuthDrawerPanel({
 }) {
   const t = useMapUiText();
   const { login, register } = useAuth();
+  const oauthProviders = useOAuthProviders();
   const [view, setView] = useState<AuthModalView>(initialView);
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [preferredLanguage, setPreferredLanguage] = useState<PreferredLanguage>('my');
   const [regionId, setRegionId] = useState<string | null>(null);
   const [regionLabel, setRegionLabel] = useState<string | null>(null);
@@ -34,6 +39,10 @@ export function AuthDrawerPanel({
     event.preventDefault();
     if (submitting) return;
     setError(null);
+    if (isSignup && password !== confirmPassword) {
+      setError(t('စကားဝှက်နှစ်ခု မတူပါ။', 'Passwords do not match.'));
+      return;
+    }
     setSubmitting(true);
     try {
       if (isSignup) {
@@ -83,7 +92,23 @@ export function AuthDrawerPanel({
           </button>
         </div>
 
-        <form className="mt-4 space-y-3" onSubmit={onSubmit}>
+        <div className="mt-4 space-y-2">
+          {oauthProviders.google ? (
+            <OAuthButton provider="google" label={t('Google ဖြင့် ဆက်လုပ်ရန်', 'Continue with Google')} />
+          ) : null}
+          {oauthProviders.facebook ? (
+            <OAuthButton provider="facebook" label={t('Facebook ဖြင့် ဆက်လုပ်ရန်', 'Continue with Facebook')} />
+          ) : null}
+          {oauthProviders.google || oauthProviders.facebook ? (
+            <div className="flex items-center gap-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-map-muted">
+              <span className="h-px flex-1 bg-map-border" />
+              {t('သို့မဟုတ်', 'or')}
+              <span className="h-px flex-1 bg-map-border" />
+            </div>
+          ) : null}
+        </div>
+
+        <form className="mt-1 space-y-3" onSubmit={onSubmit}>
           {isSignup ? (
             <Field
               label={t('အသုံးပြုသူအမည်', 'Display name')}
@@ -117,8 +142,25 @@ export function AuthDrawerPanel({
                 : t('သင့်စကားဝှက်', 'Your password')
             }
             required
-            minLength={isSignup ? 8 : 6}
+            minLength={isSignup ? 8 : 8}
           />
+          {isSignup ? (
+            <Field
+              label={t('စကားဝှက် အတည်ပြုရန်', 'Confirm password')}
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              required
+              minLength={8}
+            />
+          ) : (
+            <p className="text-right text-xs">
+              <Link to="/forgot-password" className="text-map-primary hover:underline">
+                {t('စကားဝှက် မေ့နေပါသလား။', 'Forgot password?')}
+              </Link>
+            </p>
+          )}
           {isSignup ? (
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-map-muted">
@@ -177,6 +219,9 @@ export function AuthDrawerPanel({
           'Sign in only to save places.',
         )}
       </p>
+      <div className="mt-3 flex justify-center">
+        <LegalFooter />
+      </div>
     </section>
   );
 }
@@ -242,4 +287,21 @@ function toErrorMessage(
   return isSignup
     ? t('အကောင့်ဖွင့်၍မရပါ။', 'Could not create account.')
     : t('အကောင့်ဝင်၍မရပါ။', 'Could not sign in.');
+}
+
+function OAuthButton({
+  provider,
+  label,
+}: {
+  readonly provider: 'google' | 'facebook';
+  readonly label: string;
+}) {
+  return (
+    <a
+      href={`${getApiBaseUrl()}/auth/oauth/${provider}/start?client=web`}
+      className="flex w-full items-center justify-center rounded-map-control border border-map-border bg-map-surface px-4 py-2 text-sm font-semibold text-map-ink hover:bg-map-primary-soft"
+    >
+      {label}
+    </a>
+  );
 }

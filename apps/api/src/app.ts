@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import { Prisma } from "@prisma/client";
@@ -120,11 +121,14 @@ export async function buildApp() {
     });
 
     // Opt-in only (global: false): routes enable limits via `config.rateLimit`.
-    // In-memory store — no Redis. Sensitive auth routes opt in (see auth.routes.ts).
+    // Auth rate limiting assumes a single API instance (in-memory store).
+    // TODO(before horizontal scaling): move auth rate limits to shared Redis/central store.
+    // trustProxy is enabled in production (see http-server.ts) so request.ip reflects
+    // the immediate reverse-proxy hop — do not blindly trust arbitrary client X-Forwarded-For.
     await app.register(rateLimit, {
         global: false,
-        // The plugin throws this error; the global handler adds a stable client code
-        // while omitting limits, client IPs, and internal retry details.
+        // In-memory store (single API instance). Swap this plugin store for Redis
+        // later without changing route `config.rateLimit` buckets.
         errorResponseBuilder: (_request, context) => {
             const error = new Error(
                 "Too many requests. Please slow down and try again shortly."
@@ -134,6 +138,7 @@ export async function buildApp() {
         },
     });
 
+    await app.register(cookie);
     await app.register(prismaPlugin);
     app.addHook("onClose", async () => {
         await disconnectImportReviewPrisma();

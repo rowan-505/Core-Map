@@ -15,6 +15,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,44 +30,92 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coremapmm.fieldsurveyor.data.LocalReportEntity
 import com.coremapmm.fieldsurveyor.data.LocalReportMediaEntity
 import com.coremapmm.fieldsurveyor.data.LocalSurveySessionEntity
+import com.coremapmm.fieldsurveyor.data.LocalSurveyVariantCompletionDao
 import com.coremapmm.fieldsurveyor.data.SurveyHistoryRow
 import com.coremapmm.fieldsurveyor.data.SurveySessionRepository
 import com.coremapmm.fieldsurveyor.outbox.OutboxReportSummary
+import com.coremapmm.fieldsurveyor.survey.SurveySessionClassify
+import com.coremapmm.fieldsurveyor.survey.SurveyVariantCompletionMapping
 import com.coremapmm.fieldsurveyor.ui.components.StatusPill
 import com.coremapmm.fieldsurveyor.ui.media.OnDemandJpegPreview
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
-fun SurveyHistoryScreen(repository: SurveySessionRepository, onBack: () -> Unit, onOpen: (String) -> Unit) {
+fun SurveyHistoryScreen(
+    repository: SurveySessionRepository,
+    completions: LocalSurveyVariantCompletionDao,
+    onBack: () -> Unit,
+    onOpen: (String) -> Unit,
+) {
     var visibleLimit by remember { mutableStateOf(HISTORY_PAGE_SIZE) }
     val rows by repository.historyPage(visibleLimit).collectAsStateWithLifecycle(initialValue = emptyList())
+    var finishedByVariant by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
+    var showShortEmpty by remember { mutableStateOf(false) }
+    LaunchedEffect(rows) {
+        finishedByVariant = withContext(Dispatchers.IO) {
+            SurveyVariantCompletionMapping.finishedMap(
+                completions.listAll().map { it.variantPublicId to it.isFinished },
+            )
+        }
+    }
+    val (meaningful, shortEmpty) = remember(rows) { SurveySessionClassify.partitionHistory(rows) }
+    val visibleRows = if (showShortEmpty) meaningful + shortEmpty else meaningful
     SettingsPage(title = tr("Survey History"), onBack = onBack) {
         if (rows.isEmpty()) {
             Text(tr("No survey sessions yet."), modifier = Modifier.padding(24.dp))
         } else {
-            LazyColumn(Modifier.fillMaxSize()) {
-                items(rows, key = { it.clientSessionId }) { row ->
-                    SurveyHistoryItem(row, onClick = { onOpen(row.clientSessionId) })
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(visibleRows, key = { it.clientSessionId }) { row ->
+                    SurveyHistoryItem(
+                        row = row,
+                        finished = finishedByVariant[row.variantPublicId],
+                        onClick = { onOpen(row.clientSessionId) },
+                    )
                     HorizontalDivider()
+                }
+                if (!showShortEmpty && shortEmpty.isNotEmpty()) {
+                    item(key = "short-empty-toggle") {
+                        TextButton(
+                            onClick = { showShortEmpty = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                        ) {
+                            Text(tr("${shortEmpty.size} short sessions hidden"))
+                        }
+                    }
+                }
+                if (showShortEmpty && shortEmpty.isNotEmpty()) {
+                    item(key = "short-empty-hide") {
+                        TextButton(
+                            onClick = { showShortEmpty = false },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                        ) {
+                            Text(tr("Hide short sessions"))
+                        }
+                    }
                 }
                 if (rows.size == visibleLimit && visibleLimit < HISTORY_MAX_VISIBLE) {
                     item {
                         Button(
                             onClick = { visibleLimit = (visibleLimit + HISTORY_PAGE_SIZE).coerceAtMost(HISTORY_MAX_VISIBLE) },
                             modifier = Modifier.fillMaxWidth().padding(20.dp),
-                        ) { Text(tr("Load more")) }
+                        ) {
+                            Text(tr("Show more"))
+                        }
                     }
                 }
             }
         }
     }
 }
-
-private const val HISTORY_PAGE_SIZE = 50
-private const val HISTORY_MAX_VISIBLE = 500
 
 @Composable
 fun SurveyHistoryDetailScreen(
@@ -98,10 +147,16 @@ fun SurveyHistoryDetailScreen(
                 ) {
                     Text("${row.routeCode} · ${row.variantCode}", style = MaterialTheme.typography.headlineSmall)
                     Text(listOfNotNull(row.originName, row.destinationName).joinToString(" → ").ifBlank { "—" })
-                    Text("${tr("Duration")} · ${formatDuration(row)}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "${tr("Duration")} · ${SurveySessionClassify.formatActiveDuration(row.accumulatedActiveSeconds)}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        "${SurveySessionClassify.formatCheckedLabel(row.checkedStopCount, row.totalStopCount)} · ${tr(SurveySessionClassify.formatReportLabel(row.reportCount))}",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         StatusPill(tr(syncLabel(row.syncState)), positive = row.syncState == LocalSurveySessionEntity.SYNC_SYNCED)
-                        Text("${row.reportCount} ${tr("reports")}", modifier = Modifier.align(Alignment.CenterVertically))
                     }
                     Button(
                         onClick = { session?.let(onViewRoute) },
@@ -124,11 +179,11 @@ fun SurveyHistoryDetailScreen(
                     Text("${tr("Sync state")} · ${tr(syncLabel(item.report.status))}", style = MaterialTheme.typography.labelMedium)
                     Text("${tr("Media")} · ${mediaLabel(item.media)}", style = MaterialTheme.typography.labelMedium)
                     if (selected) {
-                        item.media.forEach { row ->
-                            if (row.mimeType == LocalReportMediaEntity.MIME_JPEG) {
-                                OnDemandJpegPreview(java.io.File(row.localPath), contentDescription = tr("Attached report photo"))
+                        item.media.forEach { mediaRow ->
+                            if (mediaRow.mimeType == LocalReportMediaEntity.MIME_JPEG) {
+                                OnDemandJpegPreview(java.io.File(mediaRow.localPath), contentDescription = tr("Attached report photo"))
                             } else {
-                                Text(tr("Voice · ${(row.durationMs ?: 0L) / 1_000}s"), style = MaterialTheme.typography.bodySmall)
+                                Text(tr("Voice · ${(mediaRow.durationMs ?: 0L) / 1_000}s"), style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -142,7 +197,13 @@ fun SurveyHistoryDetailScreen(
 private data class HistoryReport(val report: LocalReportEntity, val media: List<LocalReportMediaEntity>)
 
 @Composable
-private fun SurveyHistoryItem(row: SurveyHistoryRow, onClick: () -> Unit) {
+private fun SurveyHistoryItem(row: SurveyHistoryRow, finished: Boolean?, onClick: () -> Unit) {
+    val badge = SurveyVariantCompletionMapping.badge(finished)
+        ?: if (row.status.equals(LocalSurveySessionEntity.STATUS_ACTIVE, ignoreCase = true)) "Active" else "Partial"
+    val timeRange = row.endedAtEpochMs?.let {
+        "${formatTime(row.startedAtEpochMs)}–${formatTime(it)}"
+    } ?: tr("Active")
+    val duration = SurveySessionClassify.formatActiveDuration(row.accumulatedActiveSeconds)
     Surface(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 20.dp, vertical = 10.dp),
@@ -151,13 +212,18 @@ private fun SurveyHistoryItem(row: SurveyHistoryRow, onClick: () -> Unit) {
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("${row.routeCode} · ${row.variantCode}", style = MaterialTheme.typography.titleMedium)
-                val timeRange = row.endedAtEpochMs?.let {
-                    "${formatTime(row.startedAtEpochMs)}–${formatTime(it)}"
-                } ?: tr("Active")
-                Text("${formatDate(row.startedAtEpochMs)} · $timeRange", style = MaterialTheme.typography.bodySmall)
-                Text("${row.reportCount} ${tr("reports")}", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    "${formatDateShort(row.startedAtEpochMs)} · $timeRange · $duration",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    "${SurveySessionClassify.formatCheckedLabel(row.checkedStopCount, row.totalStopCount)} · ${tr(SurveySessionClassify.formatReportLabel(row.reportCount))}",
+                    style = MaterialTheme.typography.labelMedium,
+                )
             }
-            StatusPill(tr(syncLabel(row.syncState)), positive = row.syncState == LocalSurveySessionEntity.SYNC_SYNCED)
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                StatusPill(tr(badge), positive = finished == true)
+            }
         }
     }
 }
@@ -165,14 +231,11 @@ private fun SurveyHistoryItem(row: SurveyHistoryRow, onClick: () -> Unit) {
 private fun formatDate(epoch: Long): String = Instant.ofEpochMilli(epoch).atZone(ZoneId.systemDefault())
     .format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
 
+private fun formatDateShort(epoch: Long): String = Instant.ofEpochMilli(epoch).atZone(ZoneId.systemDefault())
+    .format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
+
 private fun formatTime(epoch: Long): String = Instant.ofEpochMilli(epoch).atZone(ZoneId.systemDefault())
     .format(DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault()))
-
-private fun formatDuration(row: SurveyHistoryRow): String {
-    val end = row.endedAtEpochMs ?: System.currentTimeMillis()
-    val minutes = ((end - row.startedAtEpochMs).coerceAtLeast(0L) / 60_000L)
-    return "${minutes / 60}h ${minutes % 60}m"
-}
 
 private fun syncLabel(value: String): String = when (value) {
     LocalSurveySessionEntity.SYNC_SYNCED, LocalReportEntity.STATUS_SYNCED -> "Synced"
@@ -194,7 +257,26 @@ private fun mediaLabel(rows: List<LocalReportMediaEntity>): String = when {
 @Composable
 private fun SurveyHistoryItemPreview() {
     SurveyHistoryItem(
-        SurveyHistoryRow("id", "YBS-13", "D0", "Sule", "Hledan", 1_788_480_000_000, null, "ACTIVE", "LOCAL", 0),
+        row = SurveyHistoryRow(
+            clientSessionId = "id",
+            routeCode = "YBS-13",
+            variantCode = "D0",
+            variantPublicId = "variant-d0",
+            originName = "Sule",
+            destinationName = "Hledan",
+            startedAtEpochMs = 1_788_480_000_000,
+            endedAtEpochMs = 1_788_480_060_000,
+            status = "COMPLETED",
+            syncState = "LOCAL",
+            reportCount = 1,
+            accumulatedActiveSeconds = 60,
+            checkedStopCount = 0,
+            totalStopCount = 114,
+        ),
+        finished = false,
         onClick = {},
     )
 }
+
+private const val HISTORY_PAGE_SIZE = 50
+private const val HISTORY_MAX_VISIBLE = 500

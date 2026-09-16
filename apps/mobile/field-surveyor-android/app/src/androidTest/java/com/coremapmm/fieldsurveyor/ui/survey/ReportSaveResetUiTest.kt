@@ -40,7 +40,7 @@ class ReportSaveResetUiTest {
             }
         }
         compose.onNodeWithText("Report saved").assertIsDisplayed()
-        compose.onNodeWithText("Saved offline").assertIsDisplayed()
+        compose.onNodeWithText("Saved offline — sync pending").assertIsDisplayed()
         compose.onNodeWithText("Last stop on this direction.").assertIsDisplayed()
         compose.onNodeWithText("✓ Captured").assertDoesNotExist()
     }
@@ -60,7 +60,7 @@ class ReportSaveResetUiTest {
             }
         }
         compose.onNodeWithTag("room_error").assertIsDisplayed()
-        compose.onNodeWithText("Could not save report. Try again.").assertIsDisplayed()
+        compose.onNodeWithText("Could not save").assertIsDisplayed()
     }
 
     @Test

@@ -43,11 +43,12 @@ export const POI_MARKER_COLORS = {
 } as const;
 
 /**
- * Transport overlay palette — teal/cyan family, distinct from POI category colors.
- * Major stations/terminals use indigo for stronger emphasis at the same zoom.
+ * Transport overlay palette — bus violet, rail teal, ferry blue.
+ * The modes remain distinguishable from water and blue POI markers; major stations/terminals
+ * use indigo for stronger emphasis at the same zoom.
  */
 export const TRANSPORT_MARKER_COLORS = {
-  bus: '#0891b2',
+  bus: '#7c3aed',
   rail: '#0f766e',
   ferry: '#2563eb',
   fallback: '#64748b',

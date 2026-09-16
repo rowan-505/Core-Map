@@ -91,13 +91,13 @@ class SurveyReportFlowTest {
     }
 
     @Test
-    fun correctStopAdvancesLocallyAndWritesNoRecord() {
+    fun savedReportCanAdvanceToTheNextStop() {
         val stops = listOf(
             OrderedStopRow(1, "a", null, null, null, 16.8, 96.15),
             OrderedStopRow(2, "b", null, null, null, 16.81, 96.16),
         )
-        assertEquals("b", CorrectStopAction.nextStopPublicId(stops, "a"))
-        assertNull(CorrectStopAction.nextStopPublicId(stops, "b"))
+        assertEquals("b", StopSelectionAdvance.nextStopPublicId(stops, "a"))
+        assertNull(StopSelectionAdvance.nextStopPublicId(stops, "b"))
         assertFalse(AnomalyKind.entries.any { it.name == "CORRECT" })
     }
 

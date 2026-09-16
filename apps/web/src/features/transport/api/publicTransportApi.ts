@@ -351,3 +351,41 @@ export async function fetchPublicTransportStopRoutes(
     offset: dto.offset,
   };
 }
+
+export type PublicTransportRouteStop = {
+  readonly stop_sequence: number;
+  readonly public_id: string;
+  readonly name_my: string | null;
+  readonly name_en: string | null;
+  readonly geometry: GeoJSON.Geometry | null;
+};
+
+export type PublicTransportRouteDetail = {
+  readonly route_code: string;
+  readonly route_name_my: string | null;
+  readonly route_name_en: string | null;
+  readonly operator: { readonly name: string } | null;
+  readonly variants: readonly {
+    readonly variant_code: string;
+    readonly direction_name: string | null;
+    readonly headsign: string | null;
+    readonly path: {
+      readonly path_kind: string;
+      readonly geometry: GeoJSON.Geometry | null;
+    } | null;
+    readonly stops: readonly PublicTransportRouteStop[];
+  }[];
+};
+
+/** Full public route detail stays in Fastify; vector tiles carry only route identity. */
+export async function getPublicTransportRouteDetail(
+  routeCode: string,
+  signal?: AbortSignal,
+): Promise<PublicTransportRouteDetail> {
+  const code = routeCode.trim();
+  if (code === '') throw new Error('Missing transport route code');
+  return publicGet<PublicTransportRouteDetail>(
+    `/transport/routes/${encodeURIComponent(code)}`,
+    signal,
+  );
+}

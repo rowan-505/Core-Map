@@ -1,49 +1,50 @@
 /**
- * Token storage for the public web app.
+ * Access-token storage for the public web app.
  *
- * MVP convention: persist the access + refresh tokens in localStorage, matching
- * the dashboard's existing `accessToken` key. This is intentionally simple so the
- * public map keeps working offline-friendly without an auth backend round trip.
- *
- * TODO(auth-cookie): move the refresh token to an httpOnly, Secure cookie issued
- * by the API so it is not readable from JS. The access token can stay in memory
- * with a short TTL. Until then we accept the XSS risk of localStorage for MVP.
+ * Refresh tokens live in an HttpOnly cookie on the API origin. The short-lived
+ * access token stays in memory only. A leftover localStorage refresh token from
+ * the old MVP is cleared on load.
  */
 
 const ACCESS_TOKEN_KEY = 'accessToken';
-const REFRESH_TOKEN_KEY = 'refreshToken';
+const LEGACY_REFRESH_TOKEN_KEY = 'refreshToken';
 
-export type StoredTokens = {
-  readonly accessToken: string;
-  readonly refreshToken: string;
-};
+let memoryAccessToken: string | null = null;
 
 function hasWindow(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  return typeof window !== 'undefined';
+}
+
+function clearLegacyStorage(): void {
+  if (!hasWindow() || typeof window.localStorage === 'undefined') return;
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
 }
 
 export function getAccessToken(): string | null {
-  if (!hasWindow()) return null;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  return memoryAccessToken;
 }
 
-export function getRefreshToken(): string | null {
-  if (!hasWindow()) return null;
-  return window.localStorage.getItem(REFRESH_TOKEN_KEY);
-}
-
-export function setTokens(tokens: StoredTokens): void {
-  if (!hasWindow()) return;
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
-  window.localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+export function setAccessToken(accessToken: string): void {
+  memoryAccessToken = accessToken;
+  clearLegacyStorage();
 }
 
 export function clearTokens(): void {
-  if (!hasWindow()) return;
-  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
-  window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  memoryAccessToken = null;
+  clearLegacyStorage();
 }
 
 export function hasStoredSession(): boolean {
-  return getAccessToken() !== null && getRefreshToken() !== null;
+  return memoryAccessToken !== null;
+}
+
+/** @deprecated Refresh tokens are cookie-only for browsers. */
+export function getRefreshToken(): string | null {
+  return null;
+}
+
+export function setTokens(tokens: { accessToken: string; refreshToken?: string }): void {
+  setAccessToken(tokens.accessToken);
+  void tokens.refreshToken;
 }

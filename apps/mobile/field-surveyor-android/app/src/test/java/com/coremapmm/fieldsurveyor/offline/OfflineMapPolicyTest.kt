@@ -14,9 +14,9 @@ class OfflineMapPolicyTest {
     )
 
     @Test
-    fun wifiOnlyUntilOverride() {
+    fun anyNetworkAllowsDownload() {
         assertTrue(OfflineMapPolicy.canDownload(metered = false, allowMetered = false))
-        assertFalse(OfflineMapPolicy.canDownload(metered = true, allowMetered = false))
+        assertTrue(OfflineMapPolicy.canDownload(metered = true, allowMetered = false))
         assertTrue(OfflineMapPolicy.canDownload(metered = true, allowMetered = true))
     }
 

@@ -179,6 +179,7 @@ export type PublicSearchResult = {
   readonly boundaryConfidenceScore?: number | null;
   readonly score?: number;
   readonly mode?: string | null;
+  readonly routeCode?: string | null;
   readonly stopType?: string | null;
   readonly reviewStatus?: string | null;
   readonly verificationStatus?: string | null;
@@ -322,6 +323,8 @@ export type SearchResultGeometry = {
   readonly geometryType: string | null;
   readonly bbox: readonly [number, number, number, number];
   readonly feature: GeoJSON.Feature;
+  /** Route-preview stop points shown with the selected path; absent for normal geometry. */
+  readonly importantStops?: readonly TransportRouteMapPreviewStop[];
 };
 
 export type TransportRouteMapPreviewVariant = {
@@ -695,6 +698,7 @@ function mapPreviewToSearchResultGeometry(
     geometryType,
     bbox: preview.bbox,
     feature: preview.path,
+    importantStops: preview.importantStops,
   };
 }
 
@@ -990,6 +994,7 @@ function publicSearchResultFromDto(result: PublicSearchResultDto): PublicSearchR
     boundaryConfidenceScore:
       verificationDto?.boundaryConfidenceScore ?? result.boundaryConfidenceScore ?? null,
     mode: trimOpt(transportDto?.mode ?? result.mode) ?? null,
+    routeCode: trimOpt(transportDto?.routeCode) ?? null,
     stopType: trimOpt(transportDto?.stopType ?? result.stopType) ?? null,
     reviewStatus: trimOpt(verificationDto?.reviewStatus ?? result.reviewStatus) ?? null,
     verificationStatus:

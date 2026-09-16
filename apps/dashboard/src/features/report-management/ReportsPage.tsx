@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, RefreshCw, SlidersHorizontal, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useState, startTransition } from "react";
 
-import AdminAreaCombobox from "@/src/components/admin-areas/AdminAreaCombobox";
 import { reportsPath } from "@/src/lib/dashboardPaths";
 
-import { listReports } from "./api";
+import { getReport, listReports, permanentDeleteRejectedReport } from "./api";
 import {
     FIELD_VARIANT_OPTIONS,
     REPORT_SOURCE_OPTIONS,
@@ -22,6 +22,14 @@ import {
     statusLabel,
     targetTypeLabel,
 } from "./constants";
+import PermanentDeleteReportDialog from "./PermanentDeleteReportDialog";
+import { ReportApplyToast } from "./ReportDetailPanels";
+import {
+    canPermanentlyDeleteReport,
+    classifyReportPermanentDeleteError,
+    removeReportFromList,
+    reportDeleteDialogSummary,
+} from "./reportPermanentDelete";
 import type {
     AdminReport,
     AdminReportList,
@@ -32,12 +40,19 @@ import type {
     ReportTypeCode,
 } from "./types";
 
+const AdminAreaCombobox = dynamic(
+    () => import("@/src/components/admin-areas/AdminAreaCombobox"),
+    { ssr: false }
+);
+
 const PAGE_SIZE = 25;
 
 const SELECT_CLASS =
     "rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900";
 const SECONDARY_BTN =
     "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50";
+const DELETE_BTN =
+    "ml-3 font-medium text-red-700 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50";
 
 type TriState = "" | "true" | "false";
 
@@ -105,15 +120,28 @@ function targetLabel(report: AdminReport): string {
 }
 
 export default function ReportsPage() {
+    const queryClient = useQueryClient();
     const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
     const [debouncedRouteCode, setDebouncedRouteCode] = useState("");
     const [advancedOpen, setAdvancedOpen] = useState(false);
     const [page, setPage] = useState(1);
+    const [deleteTarget, setDeleteTarget] = useState<AdminReport | null>(null);
+    const [deleteError, setDeleteError] = useState("");
+    const [deleting, setDeleting] = useState(false);
+    const [toast, setToast] = useState<string | null>(null);
 
     useEffect(() => {
         const timeout = window.setTimeout(() => setDebouncedRouteCode(filters.routeCode.trim()), 300);
         return () => window.clearTimeout(timeout);
     }, [filters.routeCode]);
+
+    useEffect(() => {
+        if (!toast) {
+            return;
+        }
+        const timeout = window.setTimeout(() => setToast(null), 3500);
+        return () => window.clearTimeout(timeout);
+    }, [toast]);
 
     const apiFilters = useMemo<ReportsListFilters>(
         () => ({
@@ -133,23 +161,85 @@ export default function ReportsPage() {
         [debouncedRouteCode, filters, page]
     );
 
+    const listQueryKey = useMemo(() => ["reports", "list", apiFilters] as const, [apiFilters]);
+
     const reportsQuery = useQuery({
-        queryKey: ["reports", "list", apiFilters],
+        queryKey: listQueryKey,
         queryFn: ({ signal }) => listReports(apiFilters, { signal }),
         placeholderData: keepPreviousData,
         staleTime: 30_000,
     });
 
     const patch = useCallback((next: Partial<Filters>) => {
-        setFilters((prev) => ({ ...prev, ...next }));
-        setPage(1);
+        startTransition(() => {
+            setFilters((prev) => ({ ...prev, ...next }));
+            setPage(1);
+        });
     }, []);
 
     const resetFilters = useCallback(() => {
-        setFilters(EMPTY_FILTERS);
-        setDebouncedRouteCode("");
-        setPage(1);
+        startTransition(() => {
+            setFilters(EMPTY_FILTERS);
+            setDebouncedRouteCode("");
+            setPage(1);
+        });
     }, []);
+
+    const prefetchReport = useCallback(
+        (id: string) => {
+            void queryClient.prefetchQuery({
+                queryKey: ["reports", "detail", id],
+                queryFn: ({ signal }) => getReport(id, { signal }),
+                staleTime: 30_000,
+            });
+        },
+        [queryClient]
+    );
+
+    const closeDeleteDialog = useCallback(() => {
+        if (deleting) {
+            return;
+        }
+        setDeleteTarget(null);
+        setDeleteError("");
+    }, [deleting]);
+
+    const confirmPermanentDelete = useCallback(() => {
+        const target = deleteTarget;
+        if (!target || deleting) {
+            return;
+        }
+        void (async () => {
+            setDeleting(true);
+            setDeleteError("");
+            try {
+                const result = await permanentDeleteRejectedReport(target.public_id);
+                queryClient.setQueryData<AdminReportList>(listQueryKey, (current) =>
+                    removeReportFromList(current, target.public_id) ?? current
+                );
+                queryClient.removeQueries({ queryKey: ["reports", "detail", target.public_id] });
+                setDeleteTarget(null);
+                setToast(
+                    result.media_cleanup_warning
+                        ? "Report deleted (media cleanup warning)"
+                        : "Report deleted permanently"
+                );
+            } catch (error) {
+                const classified = classifyReportPermanentDeleteError(error);
+                if (classified.kind === "not_found") {
+                    queryClient.setQueryData<AdminReportList>(listQueryKey, (current) =>
+                        removeReportFromList(current, target.public_id) ?? current
+                    );
+                    setDeleteTarget(null);
+                    setToast("Report already deleted");
+                    return;
+                }
+                setDeleteError(classified.message);
+            } finally {
+                setDeleting(false);
+            }
+        })();
+    }, [deleteTarget, deleting, listQueryKey, queryClient]);
 
     const data: AdminReportList | null = reportsQuery.data ?? null;
     const loading = reportsQuery.isPending;
@@ -162,6 +252,7 @@ export default function ReportsPage() {
     const rangeEnd = Math.min(page * PAGE_SIZE, total);
     const fieldTable = filters.source === "field_survey";
     const colSpan = fieldTable ? 9 : 10;
+    const deleteSummary = deleteTarget ? reportDeleteDialogSummary(deleteTarget) : null;
     const advancedFilterCount = [
         filters.targetEntityType,
         filters.routeCode,
@@ -434,14 +525,31 @@ export default function ReportsPage() {
                                                 {statusLabel(row.status.code)}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-2 text-right">
+                                        <td className="px-3 py-2 text-right whitespace-nowrap">
                                             <Link
                                                 prefetch={false}
                                                 href={reportsPath(row.public_id)}
+                                                onMouseEnter={() => prefetchReport(row.public_id)}
+                                                onFocus={() => prefetchReport(row.public_id)}
                                                 className="font-medium text-gray-900 underline-offset-2 hover:underline"
                                             >
                                                 Review
                                             </Link>
+                                            {canPermanentlyDeleteReport(row.status.code) ? (
+                                                <button
+                                                    type="button"
+                                                    className={DELETE_BTN}
+                                                    disabled={
+                                                        deleting && deleteTarget?.public_id === row.public_id
+                                                    }
+                                                    onClick={() => {
+                                                        setDeleteError("");
+                                                        setDeleteTarget(row);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
+                                            ) : null}
                                         </td>
                                     </tr>
                                 ))
@@ -486,14 +594,31 @@ export default function ReportsPage() {
                                             {formatDateTime(row.created_at)}
                                         </td>
                                         <td className="px-3 py-2 text-gray-700">{row.media_count ?? 0}</td>
-                                        <td className="px-3 py-2 text-right">
+                                        <td className="px-3 py-2 text-right whitespace-nowrap">
                                             <Link
                                                 prefetch={false}
                                                 href={reportsPath(row.public_id)}
+                                                onMouseEnter={() => prefetchReport(row.public_id)}
+                                                onFocus={() => prefetchReport(row.public_id)}
                                                 className="font-medium text-gray-900 underline-offset-2 hover:underline"
                                             >
                                                 Review
                                             </Link>
+                                            {canPermanentlyDeleteReport(row.status.code) ? (
+                                                <button
+                                                    type="button"
+                                                    className={DELETE_BTN}
+                                                    disabled={
+                                                        deleting && deleteTarget?.public_id === row.public_id
+                                                    }
+                                                    onClick={() => {
+                                                        setDeleteError("");
+                                                        setDeleteTarget(row);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
+                                            ) : null}
                                         </td>
                                     </tr>
                                 ))
@@ -531,6 +656,20 @@ export default function ReportsPage() {
                     </div>
                 </div>
             </div>
+
+            <PermanentDeleteReportDialog
+                open={deleteTarget !== null}
+                reportType={deleteSummary?.reportType ?? ""}
+                related={deleteSummary?.related ?? "—"}
+                timestamp={
+                    deleteSummary?.timestamp ? formatDateTime(deleteSummary.timestamp) : "—"
+                }
+                isBusy={deleting}
+                error={deleteError}
+                onConfirm={confirmPermanentDelete}
+                onCancel={closeDeleteDialog}
+            />
+            <ReportApplyToast message={toast} />
         </main>
     );
 }

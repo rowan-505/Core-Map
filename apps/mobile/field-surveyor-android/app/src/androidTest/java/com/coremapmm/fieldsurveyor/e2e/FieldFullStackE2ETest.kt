@@ -75,9 +75,6 @@ class FieldFullStackE2ETest {
 
             val firstStop = graph.survey.state.first().stops.first()
             graph.survey.selectStop(firstStop.stopPublicId)
-            val beforeCorrect = graph.reports.countAll()
-            assertTrue(graph.survey.markStopCorrect())
-            assertEquals(beforeCorrect, graph.reports.countAll())
 
             assertTrue(graph.survey.submitReport(AnomalyKind.DATA, note = "E2E text report"))
             delay(100)

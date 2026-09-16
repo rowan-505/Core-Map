@@ -150,14 +150,18 @@ class StopContextTest {
     }
 
     @Test
-    fun accessibilityLabelsRemainMeaningfulWithoutIcons() {
-        val sequences = listOf(1, 2, 3)
-        assertEquals("Previous, empty", com.coremapmm.fieldsurveyor.ui.survey.StopWindowDisplay.accessibilityLabel("Previous", null, sequences, null))
-        assertEquals(
-            "Current, #2, Sule",
-            com.coremapmm.fieldsurveyor.ui.survey.StopWindowDisplay.accessibilityLabel("Current", b, sequences, "Sule"),
+    fun stopStripCardsExposeMeaningfulLabelsWithoutPrevCurrentNext() {
+        val cards = SurveyStopStripModel.cards(
+            stops = listOf(a, b, c),
+            selectedStopPublicId = "b",
+            reportedStopIds = emptySet(),
+            preferMyanmar = false,
         )
-        assertFalse(com.coremapmm.fieldsurveyor.ui.survey.StopWindowDisplay.accessibilityLabel("Current", b, sequences, "Sule").contains("#0"))
+        assertEquals("#2", cards[1].sequenceLabel)
+        assertEquals("b", cards[1].displayName)
+        assertEquals(SurveyStopCardState.SELECTED, cards[1].state)
+        assertEquals(SurveyStopCardState.NEUTRAL, cards[0].state)
+        assertFalse(cards.any { it.sequenceLabel == "#0" })
     }
 
     @Test

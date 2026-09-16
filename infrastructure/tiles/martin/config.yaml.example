@@ -13,6 +13,10 @@ postgres:
     from_schemas:
       - tiles
 
+  # The public web uses six fixed zoom-aware transport functions from migration
+  # 20260916100000_public_transport_martin_sources.sql. They are auto-published
+  # from the curated tiles schema; do not expose transport source tables directly.
+
   tables:
     tiles_buildings_v:
       schema: tiles

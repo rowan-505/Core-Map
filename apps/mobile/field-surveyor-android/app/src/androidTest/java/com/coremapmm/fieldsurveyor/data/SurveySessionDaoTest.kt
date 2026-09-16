@@ -38,7 +38,7 @@ class SurveySessionDaoTest {
     @Test fun offlineCompletionIsRetainedForLaterSync() = runBlocking {
         val dao = db.localSurveySessionDao()
         dao.insert(session())
-        assertEquals(1, dao.markEnded("session-1", LocalSurveySessionEntity.STATUS_COMPLETED, 2_000L))
+        assertEquals(1, dao.markEnded("session-1", LocalSurveySessionEntity.STATUS_COMPLETED, 2_000L, 10))
         assertNull(dao.findActive())
         val ended = dao.findById("session-1")!!
         assertEquals(LocalSurveySessionEntity.STATUS_COMPLETED, ended.status)
@@ -75,7 +75,7 @@ class SurveySessionDaoTest {
             startedAtEpochMs = 2_000L,
             updatedAtEpochMs = 2_000L,
         )
-        assertNotNull(sessions.completeActiveAndStart("session-1", next, 2_000L))
+        assertNotNull(sessions.completeActiveAndStart("session-1", next, 2_000L, 10))
         assertEquals("session-2", sessions.findActive()?.clientSessionId)
         assertEquals(LocalSurveySessionEntity.STATUS_COMPLETED, sessions.findById("session-1")?.status)
         assertEquals(LocalSurveySessionEntity.SYNC_LOCAL, sessions.findById("session-1")?.syncState)
@@ -90,7 +90,7 @@ class SurveySessionDaoTest {
         val sessions = db.localSurveySessionDao()
         sessions.insert(session())
         val next = session().copy(clientSessionId = "session-2", variantCode = "D1", startedAtEpochMs = 2_000L)
-        assertNotNull(sessions.completeActiveAndStart("session-1", next, 2_000L))
+        assertNotNull(sessions.completeActiveAndStart("session-1", next, 2_000L, 10))
         assertEquals(0, sessions.observeHistory().first().sumOf { it.reportCount })
         assertEquals("session-2", sessions.findActive()?.clientSessionId)
     }
@@ -146,7 +146,7 @@ class SurveySessionDaoTest {
         val sessions = db.localSurveySessionDao()
         sessions.insert(session())
         db.localReportDao().upsert(report("r1", "session-1"))
-        assertEquals(1, sessions.markEnded("session-1", LocalSurveySessionEntity.STATUS_COMPLETED, 2_000L))
+        assertEquals(1, sessions.markEnded("session-1", LocalSurveySessionEntity.STATUS_COMPLETED, 2_000L, 10))
         assertNull(sessions.findActive())
         assertEquals("r1", db.localReportDao().listForSession("session-1").single().clientPublicId)
     }

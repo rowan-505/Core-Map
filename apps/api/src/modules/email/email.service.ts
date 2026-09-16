@@ -35,6 +35,9 @@ export type EmailVerificationOtpMessage = {
 export interface EmailService {
     isConfigured(): boolean;
     sendEmailVerificationOtp(message: EmailVerificationOtpMessage): Promise<void>;
+    sendPasswordReset(message: { to: string; resetUrl: string }): Promise<void>;
+    sendPasswordChanged(message: { to: string }): Promise<void>;
+    sendEmailChangedNotice(message: { to: string; newEmail: string }): Promise<void>;
 }
 
 class ResendEmailService implements EmailService {
@@ -70,6 +73,51 @@ class ResendEmailService implements EmailService {
             html: buildOtpHtml(message.code, message.ttlMinutes),
         });
 
+        if (error) {
+            throw new EmailSendError(error.message ?? "Failed to send email");
+        }
+    }
+
+    async sendPasswordReset(message: { to: string; resetUrl: string }): Promise<void> {
+        const client = this.getClient();
+        const { error } = await client.emails.send({
+            from: this.config.from!,
+            to: message.to,
+            subject: "Reset your CoreMap password",
+            text: [
+                "Reset your CoreMap password using this link:",
+                "",
+                message.resetUrl,
+                "",
+                "This link expires in 1 hour. If you did not request it, you can ignore this email.",
+            ].join("\n"),
+        });
+        if (error) {
+            throw new EmailSendError(error.message ?? "Failed to send email");
+        }
+    }
+
+    async sendPasswordChanged(message: { to: string }): Promise<void> {
+        const client = this.getClient();
+        const { error } = await client.emails.send({
+            from: this.config.from!,
+            to: message.to,
+            subject: "Your CoreMap password was changed",
+            text: "Your CoreMap password was changed. If this was not you, contact security@coremapmm.com.",
+        });
+        if (error) {
+            throw new EmailSendError(error.message ?? "Failed to send email");
+        }
+    }
+
+    async sendEmailChangedNotice(message: { to: string; newEmail: string }): Promise<void> {
+        const client = this.getClient();
+        const { error } = await client.emails.send({
+            from: this.config.from!,
+            to: message.to,
+            subject: "Your CoreMap email was changed",
+            text: `Your CoreMap account email was changed to ${message.newEmail}. If this was not you, contact security@coremapmm.com.`,
+        });
         if (error) {
             throw new EmailSendError(error.message ?? "Failed to send email");
         }

@@ -1,6 +1,7 @@
 /** DEV ONLY — temporary import-review access without app_auth JWT (see AGENTS / import-review admin token). */
 
 import { IMPORT_REVIEW_PATH } from "@/src/lib/dashboardPaths";
+import { getAccessToken } from "@/src/lib/authTokenStorage";
 
 const ADMIN_HEADER = "x-import-review-admin-token";
 
@@ -96,7 +97,7 @@ export function readImportReviewAuthDebugState(
     authLoading: boolean
 ): ImportReviewAuthDebugState {
     const hasAccessToken =
-        typeof window !== "undefined" && Boolean(window.localStorage.getItem("accessToken")?.trim());
+        typeof window !== "undefined" && Boolean(getAccessToken()?.trim());
 
     let importReviewApiAuthFailedFlag = false;
     if (typeof window !== "undefined") {

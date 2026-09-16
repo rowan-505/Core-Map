@@ -4,6 +4,8 @@
 import type { MapEngine, MapMouseEvent } from '../mapEngineTypes';
 import type { MapClickedLocation } from '../../types';
 import type { TransportMapSelection } from '@/features/transport/transportMapSelection';
+import type { PublicSearchResult } from '@/features/poi/api/publicMapApi';
+import { transportRouteSelectionFromFeature } from './transportRouteSelection';
 import { transportSelectionFromFeature } from '@/features/transport/transportMapSelection';
 import {
   isTransportMapClickTargetKind,
@@ -18,6 +20,7 @@ export type BindPublicMapClickInteractionsOptions = {
   readonly getRoutePickMode?: () => RoutePickMode;
   readonly onSelectPoiId?: (id: string | null) => void;
   readonly onSelectTransportStop?: (selection: TransportMapSelection) => void;
+  readonly onSelectTransportRoute?: (result: PublicSearchResult) => void;
   readonly onEmptyMapClick?: (location: MapClickedLocation) => void;
 };
 
@@ -84,6 +87,12 @@ export function bindPublicMapClickInteractions(
     }
 
     if (target.kind === 'transport_line' && target.feature) {
+      const routeSelection = transportRouteSelectionFromFeature(target.feature);
+      if (routeSelection) {
+        options.onSelectTransportRoute?.(routeSelection);
+        event.originalEvent?.stopPropagation?.();
+        return;
+      }
       showTransportLineFeaturePopup(map, event, target.feature);
       return;
     }

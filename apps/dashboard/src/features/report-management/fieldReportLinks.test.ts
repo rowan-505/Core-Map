@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { fieldRouteEditorHref, fieldStopEditorHref } from "./fieldReportLinks.js";
+import {
+    FIELD_EDITOR_LINK_PROPS,
+    fieldRouteEditorHref,
+    fieldStopEditorHref,
+} from "./fieldReportLinks.js";
 
 describe("field report deep links", () => {
     it("opens the existing stop editor query", () => {
@@ -16,5 +20,10 @@ describe("field report deep links", () => {
             fieldRouteEditorHref("11111111-2222-3333-4444-555555555555"),
             "/dashboard/transport/routes?route=11111111-2222-3333-4444-555555555555"
         );
+    });
+
+    it("opens editors in a new tab", () => {
+        assert.equal(FIELD_EDITOR_LINK_PROPS.target, "_blank");
+        assert.equal(FIELD_EDITOR_LINK_PROPS.rel, "noopener noreferrer");
     });
 });

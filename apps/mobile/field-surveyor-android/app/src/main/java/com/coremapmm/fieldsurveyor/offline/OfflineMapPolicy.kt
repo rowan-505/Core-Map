@@ -47,12 +47,14 @@ object YangonMapManifestParser {
 
 object OfflineMapPolicy {
     const val STORAGE_HEADROOM_BYTES = 8L * 1024 * 1024
-    const val METERED_MESSAGE = "Wi-Fi is required for this map download."
+    const val METERED_MESSAGE = "Network is required for this map download."
     const val STORAGE_MESSAGE = "Not enough storage for this map."
     const val CHECKSUM_MESSAGE = "Map checksum did not match. Kept the last valid map."
     const val CANCELLED_MESSAGE = "Map download cancelled. Partial file kept for resume."
 
-    fun canDownload(metered: Boolean, allowMetered: Boolean): Boolean = !metered || allowMetered
+    /** Downloads are allowed on Wi-Fi and cellular. */
+    fun canDownload(@Suppress("UNUSED_PARAMETER") metered: Boolean, @Suppress("UNUSED_PARAMETER") allowMetered: Boolean): Boolean =
+        true
 
     fun neededBytes(expectedBytes: Long, tmpAlready: Long, keepingCurrentBytes: Long): Long {
         val remaining = (expectedBytes - tmpAlready).coerceAtLeast(0L)

@@ -22,6 +22,7 @@ export function apiFastifyOptions(): FastifyServerOptions {
         bodyLimit: API_JSON_BODY_LIMIT_BYTES,
         requestIdHeader: REQUEST_ID_HEADER,
         genReqId: (req: IncomingMessage) => resolveRequestId(req.headers[REQUEST_ID_HEADER]),
+        trustProxy: production,
         logger: {
             level: process.env.LOG_LEVEL ?? (production ? "info" : "info"),
             redact: {

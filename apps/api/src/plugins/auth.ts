@@ -2,11 +2,15 @@ import fp from "fastify-plugin";
 import fastifyJwt from "@fastify/jwt";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
+import { AuthRepository } from "../modules/auth/auth.repo.js";
+
 export type JwtUser = {
     sub: string;
     id?: string;
     email: string;
     roles: string[];
+    sid?: string;
+    jti?: string;
 };
 
 /** Dashboard login/read. `user` and `surveyor` authenticate but are not dashboard roles. */
@@ -48,6 +52,39 @@ export async function requireFieldSurveyor(
         return reply.code(403).send({
             code: "FORBIDDEN",
             message: "Field survey access requires the surveyor role.",
+        });
+    }
+}
+
+/** Managers for survey assignments = dashboard write roles (admin / super_admin). */
+export function canManageSurveyAssignments(roles: readonly string[] | null | undefined): boolean {
+    return canDashboardWrite(roles);
+}
+
+export function canAccessSurveyAssignments(roles: readonly string[] | null | undefined): boolean {
+    return hasFieldSurveyorAccess(roles) || canManageSurveyAssignments(roles);
+}
+
+export async function requireSurveyAssignmentAccess(
+    request: FastifyRequest,
+    reply: FastifyReply
+): Promise<void | FastifyReply> {
+    if (!canAccessSurveyAssignments(request.user?.roles)) {
+        return reply.code(403).send({
+            code: "FORBIDDEN",
+            message: "Survey assignments require the surveyor or administrator role.",
+        });
+    }
+}
+
+export async function requireSurveyAssignmentManage(
+    request: FastifyRequest,
+    reply: FastifyReply
+): Promise<void | FastifyReply> {
+    if (!canManageSurveyAssignments(request.user?.roles)) {
+        return reply.code(403).send({
+            code: "FORBIDDEN",
+            message: "Managing survey assignments requires an administrator role.",
         });
     }
 }
@@ -135,23 +172,65 @@ declare module "fastify" {
         requireDashboardWrite: typeof requireDashboardWrite;
         requireFieldSurveyor: typeof requireFieldSurveyor;
         requireReportsReview: typeof requireReportsReview;
+        requireSurveyAssignmentAccess: typeof requireSurveyAssignmentAccess;
+        requireSurveyAssignmentManage: typeof requireSurveyAssignmentManage;
         requireRole: (
             ...allowedRoles: string[]
         ) => (request: FastifyRequest, reply: FastifyReply) => Promise<void | FastifyReply>;
     }
 }
 
+function jwtIssuer(): string {
+    return (
+        process.env.AUTH_JWT_ISS?.replace(/\/+$/, "") ||
+        process.env.API_PUBLIC_URL?.replace(/\/+$/, "") ||
+        "http://localhost:3001"
+    );
+}
+
+function jwtAudience(): string {
+    return process.env.AUTH_JWT_AUD?.trim() || "coremap";
+}
+
+function jwtSecret(): string {
+    const secret = process.env.AUTH_JWT_SECRET?.trim() || process.env.JWT_SECRET?.trim();
+    if (!secret) {
+        throw new Error("AUTH_JWT_SECRET or JWT_SECRET is required");
+    }
+    return secret;
+}
+
 export default fp(async function authPlugin(app) {
     assertAuthBypassNotInProduction();
 
-    const secret = process.env.JWT_SECRET;
-
-    if (!secret) {
-        throw new Error("JWT_SECRET is required");
-    }
+    const secret = jwtSecret();
+    const iss = jwtIssuer();
+    const aud = jwtAudience();
 
     await app.register(fastifyJwt, {
         secret,
+        sign: {
+            algorithm: "HS256",
+            iss,
+            aud,
+        },
+        verify: {
+            algorithms: ["HS256"],
+            allowedIss: iss,
+            allowedAud: aud,
+        },
+        decode: { complete: false },
+        formatUser: (payload) => {
+            const raw = payload as JwtUser & { jti?: string };
+            return {
+                sub: raw.sub,
+                id: raw.id,
+                email: raw.email,
+                roles: Array.isArray(raw.roles) ? raw.roles : [],
+                sid: raw.sid,
+                jti: raw.jti,
+            };
+        },
     });
 
     app.decorate("authenticate", async function authenticate(request, reply) {
@@ -160,13 +239,54 @@ export default fp(async function authPlugin(app) {
             return;
         }
 
-        await request.jwtVerify();
+        try {
+            await request.jwtVerify();
+        } catch {
+            return reply.code(401).send({ message: "Unauthorized" });
+        }
+
+        const user = request.user;
+        if (!user?.sub) {
+            return reply.code(401).send({ message: "Unauthorized" });
+        }
+
+        // Production access tokens must carry sid so session revoke cannot be bypassed.
+        // MFA challenge/enrollment tokens never use this authenticate hook.
+        const requireSessionId = process.env.NODE_ENV === "production";
+        if (requireSessionId && !user.sid) {
+            return reply.code(401).send({ message: "Unauthorized" });
+        }
+
+        // Session revalidation: when sid is present and Prisma is decorated.
+        // Non-production unit tests may inject JWTs without sid.
+        if (user.sid && this.prisma) {
+            try {
+                const authRepo = new AuthRepository(this.prisma);
+                const session = await authRepo.findActiveSessionByPublicId(user.sid);
+                if (!session || session.user.public_id !== user.sub) {
+                    return reply.code(401).send({ message: "Unauthorized" });
+                }
+                if (!session.user.is_active || session.user.account_status !== "active") {
+                    return reply.code(403).send({ message: "User account is inactive" });
+                }
+                request.user = {
+                    ...user,
+                    email: session.user.email,
+                    roles: session.user.roles,
+                    sid: session.public_id,
+                };
+            } catch {
+                return reply.code(401).send({ message: "Unauthorized" });
+            }
+        }
     });
 
     app.decorate("requireDashboardAccess", requireDashboardAccess);
     app.decorate("requireDashboardWrite", requireDashboardWrite);
     app.decorate("requireFieldSurveyor", requireFieldSurveyor);
     app.decorate("requireReportsReview", requireReportsReview);
+    app.decorate("requireSurveyAssignmentAccess", requireSurveyAssignmentAccess);
+    app.decorate("requireSurveyAssignmentManage", requireSurveyAssignmentManage);
 
     /**
      * Role gate factory. Use as a preHandler AFTER `app.authenticate`, e.g.

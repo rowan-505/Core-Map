@@ -1,165 +1,176 @@
-/**
- * Martin vector-tile sources for the transport overlay (sources only — no layers yet).
- * Tiles are served by Martin at `VITE_MARTIN_TILE_URL` (see `config/martinTileUrl.ts`);
- * this module never calls the Fastify API and never touches the PMTiles basemap.
- */
+/** Lazy, mode-specific Martin sources for the public transport browser. */
 import type { VectorSourceSpecification } from 'maplibre-gl';
+import type { TransportBrowseMode } from '../../state/mapUiStore';
 import type { MapEngine } from '../mapEngineTypes';
-import { PUBLIC_MAP_MAX_ZOOM } from '../../config/publicMapViewport';
 
-/** Safe zoom envelope for the Martin transport tiles. */
-export const TRANSPORT_SOURCE_MIN_ZOOM = 0;
-/**
- * Tile request ceiling for all Martin transport sources.
- * Must be >= the public map camera max zoom ({@link PUBLIC_MAP_MAX_ZOOM} is 20) and match
- * Martin transport table `maxzoom` in `infrastructure/tiles/martin/config.yaml` (22).
- * When Martin serves only ~z14 tiles but this value is higher, MapLibre requests native z15+
- * tiles that do not exist and dense bus-stop points disappear when zooming in.
- */
-export const TRANSPORT_SOURCE_MAX_ZOOM = 22;
+export const TRANSPORT_SOURCE_BOUNDS = [90, 9, 102, 29] as const;
+export const TRANSPORT_SOURCE_MAX_ZOOM = 20;
+export const TRANSPORT_POINTS_SOURCE_ID = 'transport-stops-source';
+export const TRANSPORT_TERMINALS_SOURCE_ID = 'transport-terminals-source';
+export const TRANSPORT_PATHS_SOURCE_ID = 'transport-route-paths-source';
 
-/** Martin TileJSON must expose at least this maxzoom for street-level stop density. */
-export const TRANSPORT_MARTIN_MIN_TILEJSON_MAX_ZOOM = PUBLIC_MAP_MAX_ZOOM;
+export type TransportSourceDefinition = {
+  readonly mode: TransportBrowseMode;
+  readonly kind: 'points' | 'paths';
+  readonly endpoint: string;
+  readonly sourceId: string;
+  readonly minZoom: number;
+};
 
-/**
- * MapLibre source id → Martin tile endpoint / source-layer name.
- * The Martin endpoint path and the source-layer name are identical per Martin's catalog.
- */
-export const TRANSPORT_SOURCES = [
-  {
-    sourceId: 'transport-infrastructure-lines-source',
-    sourceLayer: 'transport_infrastructure_lines_v',
-  },
-  {
-    sourceId: 'transport-route-paths-source',
-    sourceLayer: 'transport_route_paths_v',
-  },
-  {
-    sourceId: 'transport-terminals-source',
-    sourceLayer: 'transport_terminals_v',
-  },
-  {
-    sourceId: 'transport-stops-source',
-    sourceLayer: 'transport_stops_v',
-  },
+export type ActiveTransportSourceDefinition = TransportSourceDefinition & {
+  readonly sourceLayer: string;
+  /** Legacy mixed-mode views need a client-side mode filter during migration rollout. */
+  readonly legacyModeFilter: string | null;
+};
+
+export type ActiveTransportSources = {
+  readonly points?: ActiveTransportSourceDefinition;
+  readonly paths?: ActiveTransportSourceDefinition;
+};
+
+export const TRANSPORT_SOURCES: readonly TransportSourceDefinition[] = [
+  { mode: 'bus', kind: 'points', endpoint: 'transport_bus_stops', sourceId: TRANSPORT_POINTS_SOURCE_ID, minZoom: 11 },
+  { mode: 'bus', kind: 'paths', endpoint: 'transport_bus_route_overview', sourceId: TRANSPORT_PATHS_SOURCE_ID, minZoom: 9 },
+  { mode: 'train', kind: 'points', endpoint: 'transport_train_stations', sourceId: TRANSPORT_POINTS_SOURCE_ID, minZoom: 8 },
+  { mode: 'train', kind: 'paths', endpoint: 'transport_train_routes', sourceId: TRANSPORT_PATHS_SOURCE_ID, minZoom: 7 },
+  { mode: 'express', kind: 'points', endpoint: 'transport_express_terminals', sourceId: TRANSPORT_TERMINALS_SOURCE_ID, minZoom: 9 },
+  { mode: 'express', kind: 'paths', endpoint: 'transport_express_route_corridors', sourceId: TRANSPORT_PATHS_SOURCE_ID, minZoom: 7 },
 ] as const;
 
-export type TransportSourceId = (typeof TRANSPORT_SOURCES)[number]['sourceId'];
-
-export const TRANSPORT_SOURCE_IDS = TRANSPORT_SOURCES.map((entry) => entry.sourceId);
+export const TRANSPORT_SOURCE_IDS = [
+  TRANSPORT_POINTS_SOURCE_ID,
+  TRANSPORT_TERMINALS_SOURCE_ID,
+  TRANSPORT_PATHS_SOURCE_ID,
+] as const;
 
 const TRANSPORT_SOURCE_ID_SET = new Set<string>(TRANSPORT_SOURCE_IDS);
 
-function buildTransportVectorSource(
-  martinTileUrl: string,
-  sourceLayer: string,
-): VectorSourceSpecification {
-  const base = martinTileUrl.replace(/\/+$/, '');
+const LEGACY_ENDPOINTS = {
+  points: 'transport_stops_v',
+  terminals: 'transport_terminals_v',
+  paths: 'transport_route_paths_v',
+  infrastructure: 'transport_infrastructure_lines_v',
+} as const;
+
+const catalogCache = new Map<string, Promise<ReadonlySet<string> | null>>();
+
+export function transportSourceDefinition(
+  mode: TransportBrowseMode,
+  kind: 'points' | 'paths',
+): TransportSourceDefinition {
+  const definition = TRANSPORT_SOURCES.find((entry) => entry.mode === mode && entry.kind === kind);
+  if (!definition) throw new Error(`Missing Martin transport source for ${mode}/${kind}`);
+  return definition;
+}
+
+function vectorSource(baseUrl: string, definition: TransportSourceDefinition): VectorSourceSpecification {
   return {
     type: 'vector',
-    tiles: [`${base}/${sourceLayer}/{z}/{x}/{y}`],
-    minzoom: TRANSPORT_SOURCE_MIN_ZOOM,
+    tiles: [`${baseUrl.replace(/\/+$/, '')}/${definition.endpoint}/{z}/{x}/{y}`],
+    bounds: [...TRANSPORT_SOURCE_BOUNDS],
+    minzoom: definition.minZoom,
     maxzoom: TRANSPORT_SOURCE_MAX_ZOOM,
   };
 }
 
-function readVectorSourceMaxZoom(map: MapEngine, sourceId: string): number | undefined {
-  const source = map.getSource(sourceId);
-  if (!source || source.type !== 'vector') return undefined;
-  const maxzoom = (source as { maxzoom?: number }).maxzoom;
-  return typeof maxzoom === 'number' ? maxzoom : undefined;
-}
+/**
+ * Read Martin's source catalog only after the user activates transit. This lets a rolling
+ * deployment use the new fixed endpoints when present. Development can temporarily fall back
+ * to existing mixed transport views while the local database migration is pending.
+ */
+export function loadTransportEndpointCatalog(baseUrl: string): Promise<ReadonlySet<string> | null> {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
+  const cached = catalogCache.get(normalizedBaseUrl);
+  if (cached) return cached;
 
-/** Dev-only: warn when Martin TileJSON maxzoom is below street-level map zoom. */
-function warnIfMartinTransportTileJsonMaxZoomTooLow(martinTileUrl: string): void {
-  if (!import.meta.env.DEV) return;
-
-  const base = martinTileUrl.replace(/\/+$/, '');
-  void fetch(`${base}/transport_stops_v`)
-    .then((response) => (response.ok ? response.json() : null))
-    .then((tileJson: { maxzoom?: number } | null) => {
-      if (!tileJson || typeof tileJson.maxzoom !== 'number') return;
-      if (tileJson.maxzoom >= TRANSPORT_MARTIN_MIN_TILEJSON_MAX_ZOOM) return;
-      console.warn(
-        `[map][transport] Martin transport_stops_v maxzoom=${tileJson.maxzoom} is below ` +
-          `street zoom (${TRANSPORT_MARTIN_MIN_TILEJSON_MAX_ZOOM}). Bus stops may disappear above ` +
-          `z${tileJson.maxzoom}. Set maxzoom: ${TRANSPORT_SOURCE_MAX_ZOOM} on transport tables in ` +
-          'infrastructure/tiles/martin/config.yaml and redeploy Martin.',
-      );
+  const request = fetch(`${normalizedBaseUrl}/catalog`)
+    .then(async (response) => {
+      if (!response.ok) return null;
+      const body = (await response.json()) as { tiles?: Record<string, unknown> };
+      return new Set(Object.keys(body.tiles ?? {}));
     })
-    .catch(() => {
-      // Martin may be offline in dev — overlay is optional.
-    });
+    .catch(() => null);
+  catalogCache.set(normalizedBaseUrl, request);
+  return request;
 }
 
-function sourceHasDependentLayers(map: MapEngine, sourceId: string): boolean {
-  const layers = map.getStyle()?.layers ?? [];
-  return layers.some((layer) => 'source' in layer && layer.source === sourceId);
-}
-
-/**
- * Registers the four Martin transport vector sources on the map.
- * Idempotent: existing sources with the correct maxzoom are left untouched.
- * Stale sources (wrong maxzoom, no dependent layers yet) are removed and re-registered.
- *
- * Adds sources only — no layers are created here.
- */
-export function addTransportSources(map: MapEngine, martinTileUrl: string): void {
-  const trimmed = martinTileUrl.trim();
-  if (trimmed === '') return;
-
-  let addedAny = false;
-
-  for (const { sourceId, sourceLayer } of TRANSPORT_SOURCES) {
-    const existingMaxZoom = readVectorSourceMaxZoom(map, sourceId);
-    if (existingMaxZoom !== undefined && existingMaxZoom !== TRANSPORT_SOURCE_MAX_ZOOM) {
-      if (sourceHasDependentLayers(map, sourceId)) {
-        if (import.meta.env.DEV) {
-          console.warn(
-            `[map][transport] ${sourceId} maxzoom=${existingMaxZoom} is stale; reload the page ` +
-              `after redeploying Martin with maxzoom ${TRANSPORT_SOURCE_MAX_ZOOM}.`,
-          );
-        }
-        continue;
-      }
-      map.removeSource(sourceId);
-    } else if (map.getSource(sourceId)) {
-      continue;
-    }
-
-    map.addSource(sourceId, buildTransportVectorSource(trimmed, sourceLayer));
-    addedAny = true;
+function activeDefinition(
+  definition: TransportSourceDefinition,
+  availableEndpoints?: ReadonlySet<string> | null,
+): ActiveTransportSourceDefinition {
+  if (!availableEndpoints || availableEndpoints.has(definition.endpoint)) {
+    return { ...definition, sourceLayer: definition.endpoint, legacyModeFilter: null };
   }
 
-  if (addedAny) {
-    warnIfMartinTransportTileJsonMaxZoomTooLow(trimmed);
+  // Never request mixed legacy tiles in production: even a client-side filter would still
+  // transfer unpublished rows to the browser. Production fails closed until migration deploy.
+  if (import.meta.env?.PROD === true) {
+    return { ...definition, sourceLayer: definition.endpoint, legacyModeFilter: null };
+  }
+
+  const endpoint =
+    definition.kind === 'paths' && definition.mode === 'train'
+      ? LEGACY_ENDPOINTS.infrastructure
+      : definition.kind === 'paths'
+        ? LEGACY_ENDPOINTS.paths
+      : definition.mode === 'express'
+        ? LEGACY_ENDPOINTS.terminals
+        : LEGACY_ENDPOINTS.points;
+  if (!availableEndpoints.has(endpoint)) {
+    return { ...definition, sourceLayer: definition.endpoint, legacyModeFilter: null };
+  }
+
+  return {
+    ...definition,
+    endpoint,
+    sourceLayer: endpoint,
+    legacyModeFilter:
+      definition.mode === 'express' && definition.kind === 'points'
+        ? 'bus'
+        : definition.mode === 'express'
+          ? 'express_bus'
+          : definition.mode,
+  };
+}
+
+/** Add only sources that can currently render. Existing same-mode sources are reused. */
+export function addTransportSources(
+  map: MapEngine,
+  martinTileUrl: string,
+  mode: TransportBrowseMode,
+  visibility: { readonly points: boolean; readonly paths: boolean },
+  availableEndpoints?: ReadonlySet<string> | null,
+): ActiveTransportSources {
+  const active: { points?: ActiveTransportSourceDefinition; paths?: ActiveTransportSourceDefinition } = {};
+  if (visibility.points) {
+    const points = activeDefinition(transportSourceDefinition(mode, 'points'), availableEndpoints);
+    if (!map.getSource(points.sourceId)) map.addSource(points.sourceId, vectorSource(martinTileUrl, points));
+    active.points = points;
+  }
+  if (visibility.paths) {
+    const paths = activeDefinition(transportSourceDefinition(mode, 'paths'), availableEndpoints);
+    if (!map.getSource(paths.sourceId)) map.addSource(paths.sourceId, vectorSource(martinTileUrl, paths));
+    active.paths = paths;
+  }
+  return active;
+}
+
+/** Remove inactive mode sources after their dependent layers have been removed. */
+export function removeTransportSources(map: MapEngine): void {
+  for (const sourceId of TRANSPORT_SOURCE_IDS) {
+    if (map.getSource(sourceId)) map.removeSource(sourceId);
   }
 }
 
-/**
- * Dev-only: logs MapLibre tile errors that belong to the Martin transport sources.
- * Ignores unrelated PMTiles/glyph/basemap errors so the console stays quiet.
- * No-op in production (returns a noop unsubscribe) — keeps production behavior unchanged.
- *
- * Returns an unsubscribe function.
- */
+/** Dev-only transport tile diagnostics; production stays silent. */
 export function bindTransportTileErrorHandler(map: MapEngine): () => void {
-  if (!import.meta.env.DEV) {
-    return () => {};
-  }
-
+  if (!import.meta.env.DEV) return () => {};
   const handler = (event: { sourceId?: string; error?: Error & { url?: string } }) => {
     if (!event.sourceId || !TRANSPORT_SOURCE_ID_SET.has(event.sourceId)) return;
-    const tileUrl = event.error?.url;
     console.warn(
-      `[map][transport] tile error — source: ${event.sourceId}` +
-        (tileUrl ? `, url: ${tileUrl}` : '') +
-        `, error: ${event.error?.message ?? 'unknown error'}`,
+      `[map][transport] tile error — source: ${event.sourceId}, error: ${event.error?.message ?? 'unknown error'}`,
     );
   };
-
   map.on('error', handler);
-  return () => {
-    map.off('error', handler);
-  };
+  return () => map.off('error', handler);
 }

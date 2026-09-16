@@ -6,17 +6,23 @@ import { fileURLToPath } from "node:url";
  * Load .env files for LOCAL development only. On a hosting platform (Render,
  * etc.) the environment is injected directly, so we never read .env there.
  *
- * Precedence: real shell/platform env > apps/api/.env > repo-root .env. We load
- * apps/api/.env first and WITHOUT override, so an already-set variable (the shell
- * or the platform, e.g. PORT) always wins and apps/api still beats the repo root.
- * Using `override: true` here was the bug: a committed PORT=3001 could clobber
- * the platform's injected PORT and make the bind fail Render's port scan.
+ * Precedence (highest wins last among files):
+ *   real shell/platform env (never overridden by files)
+ *   apps/api/.env.local  (local overrides; loaded with override)
+ *   apps/api/.env
+ *   repo-root .env
+ *
+ * We load apps/api/.env first WITHOUT override so an already-set shell variable
+ * (e.g. PORT) always wins. Then .env.local overrides file defaults for local
+ * OAuth/URL testing without rewriting production values in .env.
+ * Do not use override:true on .env itself — that previously clobbered platform PORT.
  */
 if (process.env.NODE_ENV !== "production") {
     const apiRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
     const repoRoot = resolve(apiRoot, "../..");
     config({ path: resolve(apiRoot, ".env") });
     config({ path: resolve(repoRoot, ".env") });
+    config({ path: resolve(apiRoot, ".env.local"), override: true });
 }
 
 async function start() {

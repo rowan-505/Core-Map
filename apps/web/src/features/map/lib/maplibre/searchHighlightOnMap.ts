@@ -230,7 +230,26 @@ export async function fitSearchResult(
   }
 
   if (options.geometry?.feature) {
-    setSearchHighlight(map, withHighlightProps(options.geometry.feature, result));
+    const path = withHighlightProps(options.geometry.feature, result);
+    const stops = options.geometry.importantStops ?? [];
+    setSearchHighlight(map, {
+      type: 'FeatureCollection',
+      features: [
+        path,
+        ...stops.map((stop): GeoJSON.Feature<GeoJSON.Point> => ({
+          type: 'Feature',
+          id: stop.publicId,
+          geometry: { type: 'Point', coordinates: [stop.lng, stop.lat] },
+          properties: {
+            ...highlightProps(result),
+            role: 'selected-route-stop',
+            public_id: stop.publicId,
+            name: stop.displayName,
+            stop_sequence: stop.sequence,
+          },
+        })),
+      ],
+    });
   } else if (result.bbox) {
     setSearchHighlight(map, highlightBboxFeature(result.bbox, result));
   } else if (center) {

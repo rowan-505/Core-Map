@@ -32,3 +32,36 @@ Public web map, MapLibre + PMTiles, POI markers, Myanmar labels, dashboard core/
 ## Out of V2 (unless asked)
 
 Automatic points, fake live bus GPS, flights, social feeds, LLM-as-core-search, nationwide manual precision, production native mobile, offline downloads.
+
+## Current production auth
+
+- Email / password
+- OTP / password recovery
+- Google OAuth
+- Session / device management
+- Admin MFA
+- Secure Google account linking (Account → Security)
+
+## Facebook OAuth — deferred to later release
+
+Reason:
+
+- Technical integration already exists in the API/web/dashboard.
+- Meta public production publishing currently requires additional verification/review.
+- CoreMap is not enabling Facebook for the current release (`FACEBOOK_OAUTH_ENABLED=false`).
+
+Later activation checklist:
+
+1. Complete valid Meta verification path
+2. Complete Meta App Review
+3. Publish Meta app
+4. Rotate/create production Meta App Secret
+5. Configure production `FACEBOOK_OAUTH_APP_ID`
+6. Configure production `FACEBOOK_OAUTH_APP_SECRET`
+7. Configure redirect URI: `https://api.coremapmm.com/auth/oauth/facebook/callback`
+8. Test Facebook user with email
+9. Test Facebook user without email (`/auth/complete-profile`)
+10. Test same-email `link_required` flow
+11. Test Account → Security linking
+12. Test with a normal non-developer Facebook account
+13. Set `FACEBOOK_OAUTH_ENABLED=true`

@@ -2,7 +2,19 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
-import { getAuthMe, isAbortError, logout, type AuthMeProfile } from "@/src/lib/api";
+import {
+    changeDashboardPassword,
+    enrollDashboardMfa,
+    getAuthMe,
+    isAbortError,
+    listDashboardSecurityEvents,
+    listDashboardSessions,
+    logout,
+    revokeDashboardSession,
+    revokeOtherDashboardSessions,
+    verifyDashboardMfaEnroll,
+    type AuthMeProfile,
+} from "@/src/lib/api";
 import { RolePills, VerifiedBadge } from "@/src/features/user-management/ui";
 import { statusLabel } from "@/src/features/user-management/constants";
 
@@ -76,6 +88,7 @@ export default function AccountPage() {
                 ) : null}
 
                 {profile ? (
+                    <>
                     <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <Field label="Display name">{profile.display_name}</Field>
@@ -94,6 +107,8 @@ export default function AccountPage() {
                             {profile.phone ? <Field label="Phone">{profile.phone}</Field> : null}
                         </dl>
                     </section>
+                    <AccountSecurityPanel roles={profile.roles} />
+                    </>
                 ) : null}
 
                 <div>
@@ -108,5 +123,157 @@ export default function AccountPage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+function AccountSecurityPanel({ roles }: { roles: string[] }) {
+    const privileged = roles.includes("admin") || roles.includes("super_admin");
+    const [sessions, setSessions] = useState<
+        { public_id: string; current: boolean; device_label: string; last_used_at: string | null }[]
+    >([]);
+    const [events, setEvents] = useState<{ event_type: string; created_at: string; success: boolean }[]>([]);
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [message, setMessage] = useState("");
+    const [otpauth, setOtpauth] = useState("");
+    const [mfaCode, setMfaCode] = useState("");
+    const [recovery, setRecovery] = useState<string[]>([]);
+
+    useEffect(() => {
+        void listDashboardSessions()
+            .then((body) => setSessions(body.sessions))
+            .catch(() => undefined);
+        void listDashboardSecurityEvents()
+            .then((body) => setEvents(body.events))
+            .catch(() => undefined);
+    }, []);
+
+    return (
+        <section className="space-y-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold text-gray-900">Security</h2>
+            <form
+                className="space-y-2"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    void changeDashboardPassword(currentPassword, newPassword)
+                        .then(() => setMessage("Password updated. Other devices were signed out."))
+                        .catch((err) => setMessage(err instanceof Error ? err.message : "Could not update password."));
+                }}
+            >
+                <p className="text-sm font-medium text-gray-800">Change password</p>
+                <input
+                    type="password"
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                />
+                <input
+                    type="password"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                />
+                <button type="submit" className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white">
+                    Update password
+                </button>
+            </form>
+
+            <div>
+                <p className="text-sm font-medium text-gray-800">Sessions</p>
+                <ul className="mt-2 space-y-1 text-sm text-gray-700">
+                    {sessions.map((session) => (
+                        <li key={session.public_id} className="flex items-center justify-between gap-2">
+                            <span>
+                                {session.device_label}
+                                {session.current ? " (this device)" : ""}
+                            </span>
+                            {session.current ? null : (
+                                <button
+                                    type="button"
+                                    className="text-xs text-blue-700 underline"
+                                    onClick={() => {
+                                        void revokeDashboardSession(session.public_id).then(() =>
+                                            setSessions((rows) => rows.filter((row) => row.public_id !== session.public_id))
+                                        );
+                                    }}
+                                >
+                                    Sign out
+                                </button>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+                <button
+                    type="button"
+                    className="mt-2 text-xs text-gray-700 underline"
+                    onClick={() => {
+                        void revokeOtherDashboardSessions().then(() =>
+                            setSessions((rows) => rows.filter((row) => row.current))
+                        );
+                    }}
+                >
+                    Sign out other devices
+                </button>
+            </div>
+
+            {privileged ? (
+                <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-800">Authenticator MFA</p>
+                    <button
+                        type="button"
+                        className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+                        onClick={() => {
+                            void enrollDashboardMfa()
+                                .then((body) => setOtpauth(body.otpauthUrl))
+                                .catch((err) => setMessage(err instanceof Error ? err.message : "Could not start MFA."));
+                        }}
+                    >
+                        Start enrollment
+                    </button>
+                    {otpauth ? <p className="break-all text-xs text-gray-600">{otpauth}</p> : null}
+                    {otpauth ? (
+                        <form
+                            className="space-y-2"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                void verifyDashboardMfaEnroll(mfaCode)
+                                    .then((body) => setRecovery(body.recoveryCodes))
+                                    .catch((err) => setMessage(err instanceof Error ? err.message : "Invalid code."));
+                            }}
+                        >
+                            <input
+                                value={mfaCode}
+                                onChange={(event) => setMfaCode(event.target.value)}
+                                placeholder="6-digit code"
+                                className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                            />
+                            <button type="submit" className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white">
+                                Verify MFA
+                            </button>
+                        </form>
+                    ) : null}
+                    {recovery.length > 0 ? (
+                        <p className="text-xs text-gray-700">
+                            Save these recovery codes: {recovery.join(", ")}
+                        </p>
+                    ) : null}
+                </div>
+            ) : null}
+
+            <div>
+                <p className="text-sm font-medium text-gray-800">Recent activity</p>
+                <ul className="mt-2 space-y-1 text-xs text-gray-600">
+                    {events.map((event) => (
+                        <li key={`${event.event_type}-${event.created_at}`}>
+                            {event.created_at}: {event.event_type}
+                            {event.success ? "" : " (failed)"}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            {message ? <p className="text-sm text-gray-700">{message}</p> : null}
+        </section>
     );
 }

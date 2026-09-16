@@ -76,7 +76,7 @@ private fun ReportTypeChip(
     Surface(
         onClick = onClick,
         modifier = modifier
-            .heightIn(min = 48.dp)
+            .heightIn(min = 50.dp)
             .testTag("report_type_${kind.name}"),
         shape = RoundedCornerShape(12.dp),
         color = if (selected) CoreMapGreenContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -124,7 +124,7 @@ internal fun ProposedLocationControls(
                     enabled = gps != null,
                     modifier = Modifier
                         .weight(1f)
-                        .heightIn(min = 48.dp)
+                        .heightIn(min = 50.dp)
                         .testTag("newStopUseMyLocation"),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                 ) {
@@ -140,7 +140,7 @@ internal fun ProposedLocationControls(
                     onClick = onChooseOnMap,
                     modifier = Modifier
                         .weight(1f)
-                        .heightIn(min = 48.dp)
+                        .heightIn(min = 50.dp)
                         .testTag("newStopChooseOnMap"),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                 ) {
@@ -167,13 +167,13 @@ internal fun ProposedLocationControls(
                 TextButton(
                     onClick = onRemove,
                     modifier = Modifier
-                        .heightIn(min = 48.dp)
+                        .heightIn(min = 50.dp)
                         .testTag("newStopRemove"),
                 ) { Text(tr("Remove")) }
                 TextButton(
                     onClick = onChooseAgain,
                     modifier = Modifier
-                        .heightIn(min = 48.dp)
+                        .heightIn(min = 50.dp)
                         .testTag("newStopChooseAgain"),
                 ) { Text(tr("Choose again")) }
             }

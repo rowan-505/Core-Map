@@ -58,6 +58,7 @@ class SurveySheetLayoutTest {
         assertFalse(SurveySheetGesturePolicy.sheetGesturePansMap())
         assertTrue(SurveySheetGesturePolicy.onlyHeaderDragsSheet())
         assertEquals(48f, SurveySheetGesturePolicy.headerDragHeightDp(), 0.01f)
+        // Sticky banner wraps content; 48dp remains the minimum drag hit target only.
     }
 
     @Test

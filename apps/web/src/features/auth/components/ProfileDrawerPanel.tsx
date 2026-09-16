@@ -7,6 +7,8 @@ import { ApiError } from '../api/http';
 import { useAuth } from '../state/useAuth';
 import type { PreferredLanguage } from '../types';
 import { EmailVerifySection } from './EmailVerifySection';
+import { LegalFooter } from '@/pages/legal/LegalLayout';
+import { Link } from 'react-router-dom';
 
 /** Email returned by the API's dev AUTH_BYPASS profile (never a real verified user). */
 const DEV_BYPASS_EMAIL = 'dev@local';
@@ -126,6 +128,14 @@ export function ProfileDrawerPanel({
         <span className="text-map-primary">›</span>
       </button>
 
+      <Link
+        to="/account/security"
+        className="flex w-full items-center justify-between rounded-map-card border border-map-border bg-map-surface px-4 py-3 text-sm font-semibold text-map-ink shadow-map-card hover:border-map-primary/30 hover:bg-map-primary-soft"
+      >
+        <span>Account security</span>
+        <span className="text-map-primary">›</span>
+      </Link>
+
       <button
         type="button"
         className="w-full rounded-map-control border border-map-border bg-map-surface px-4 py-2.5 text-sm font-semibold text-map-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
@@ -133,6 +143,9 @@ export function ProfileDrawerPanel({
       >
         Log out
       </button>
+      <div className="px-1 pt-1">
+        <LegalFooter />
+      </div>
     </section>
   );
 }

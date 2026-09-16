@@ -31,6 +31,8 @@ import java.time.Instant
 
 data class SurveyUiState(
     val running: Boolean = false,
+    /** True while Start/Stop persistence is in flight — disables double taps. */
+    val sessionTransitionBusy: Boolean = false,
     val locationMode: LocationMode = LocationMode.IDLE,
     val cameraFollowEnabled: Boolean = false,
     val centerOncePending: Boolean = false,
@@ -43,6 +45,8 @@ data class SurveyUiState(
     val nearbyStops: List<NearbyStop> = emptyList(),
     val capturedBanner: String? = null,
     val message: String? = null,
+    /** One-shot in-app notification; UI queues via SnackbarHost. */
+    val notice: SurveyNotifyEvent? = null,
     val snapshotRevision: String? = null,
     val anomalies: List<GpsFix> = emptyList(),
     val openSurveyRequestId: Long = 0L,
@@ -52,6 +56,10 @@ data class SurveyUiState(
     val pendingSyncCount: Int = 0,
     val duplicateWarning: String? = null,
     val endOfRouteNotice: String? = null,
+    /** Stop ids with a local issue report in the active session/variant. */
+    val reportedStopIds: Set<String> = emptySet(),
+    /** Personal finished mark for the selected variant (survey_variant_completions). */
+    val variantFinished: Boolean = false,
 )
 
 class SurveyController(
@@ -59,6 +67,8 @@ class SurveyController(
     private val bootstrap: BootstrapRepository,
     private val reports: LocalReportDao,
     private val sessions: SurveySessionRepository,
+    private val completions: com.coremapmm.fieldsurveyor.data.LocalSurveyVariantCompletionDao,
+    private val assignments: com.coremapmm.fieldsurveyor.data.LocalSurveyVariantAssignmentDao,
     private val photos: ReportPhotoStore,
     private val voice: ReportVoiceStore,
     private val gpsEngine: GpsEngine,
@@ -72,6 +82,7 @@ class SurveyController(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val mutex = Mutex()
     private val gpsBuffer = ArrayDeque<GpsFix>(GpsBuffer.MAX_FIXES)
+    private var nextNoticeId = 0L
     private var lastKind: AnomalyKind? = null
     private var lastCaptureUptime = 0L
     private var startupRequested = false
@@ -172,7 +183,7 @@ class SurveyController(
             enabled = stateFlow.value.directionSwitchEnabled,
         )
         if (action == DirectionSwitchAction.DISABLED) {
-            stateFlow.value = stateFlow.value.copy(message = OppositeVariantLookup.MISSING_COUNTERPART_MESSAGE)
+            pushNotice { SurveyNotify.failure(OppositeVariantLookup.MISSING_COUNTERPART_MESSAGE, it) }
         }
         return action
     }
@@ -183,7 +194,7 @@ class SurveyController(
 
     suspend fun openHistoryRoute(session: LocalSurveySessionEntity) {
         if (stateFlow.value.running && activeSessionId != session.clientSessionId) {
-            stateFlow.value = stateFlow.value.copy(message = "Finish the active survey before viewing another route.")
+            pushNotice { SurveyNotify.failure("Finish the active survey before viewing another route.", it) }
             requestOpenSurvey()
             return
         }
@@ -211,29 +222,6 @@ class SurveyController(
         )
     }
 
-    fun markStopCorrect(): Boolean {
-        if (!stateFlow.value.running) {
-            stateFlow.value = stateFlow.value.copy(message = "Start the survey first.")
-            return false
-        }
-        val selectedId = stateFlow.value.selection?.selectedStopPublicId
-        if (selectedId == null) {
-            stateFlow.value = stateFlow.value.copy(message = "Select a stop first.")
-            return false
-        }
-        val nextId = CorrectStopAction.nextStopPublicId(stateFlow.value.stops, selectedId)
-        if (nextId == null) {
-            stateFlow.value = stateFlow.value.copy(message = "This is the last stop on this direction.")
-            return false
-        }
-        selectStop(nextId)
-        stateFlow.value = stateFlow.value.copy(
-            capturedBanner = "Stop marked correct",
-            message = null,
-        )
-        return true
-    }
-
     fun refreshDuplicateWarning(kind: AnomalyKind) {
         scope.launch { applyDuplicateWarning(kind) }
     }
@@ -249,6 +237,7 @@ class SurveyController(
     }
 
     fun startSurvey(): String? {
+        if (stateFlow.value.sessionTransitionBusy) return null
         val decision = SurveyRuntimePolicy.visibleStart(
             running = stateFlow.value.running,
             hasSelection = stateFlow.value.selection != null,
@@ -263,7 +252,7 @@ class SurveyController(
             else -> null
         }
         if (error != null) {
-            stateFlow.value = stateFlow.value.copy(message = error)
+            pushNotice { SurveyNotify.failure(error, it) }
             return error
         }
         scope.launch { startSurveyPersisted() }
@@ -271,17 +260,36 @@ class SurveyController(
     }
 
     fun endSurvey() {
+        if (stateFlow.value.sessionTransitionBusy) return
         scope.launch {
             finishSurveyPersisted(
                 LocalSurveySessionEntity.STATUS_COMPLETED,
-                "Survey ended. Start again to save reports.",
+                notice = { SurveyNotify.surveyStopped(it) },
             )
         }
     }
 
+    /** Personal work finish — reversible, not a report, zero reports allowed. */
+    fun setVariantFinished(finished: Boolean) {
+        scope.launch { setVariantFinishedPersisted(finished) }
+    }
+
+    suspend fun variantCompletionStatuses(): Map<String, Boolean> = withContext(Dispatchers.IO) {
+        SurveyVariantCompletionMapping.finishedMap(
+            completions.listAll().map { it.variantPublicId to it.isFinished },
+        )
+    }
+
+    suspend fun assignmentWorkStatuses(): Map<String, String> = withContext(Dispatchers.IO) {
+        SurveyAssignmentMapping.workStatusMap(assignments.listActive())
+    }
+
     fun abandonSurvey() {
         scope.launch {
-            finishSurveyPersisted(LocalSurveySessionEntity.STATUS_ABANDONED, "Survey abandoned.")
+            finishSurveyPersisted(
+                LocalSurveySessionEntity.STATUS_ABANDONED,
+                notice = { SurveyNotify.surveyStopped(it) },
+            )
         }
     }
 
@@ -289,7 +297,7 @@ class SurveyController(
         scope.launch {
             finishSurveyPersisted(
                 LocalSurveySessionEntity.STATUS_ABANDONED,
-                "Survey stopped from notification.",
+                notice = { SurveyNotify.surveyStopped(it) },
                 notifyService = false,
             )
         }
@@ -306,12 +314,15 @@ class SurveyController(
         if (decision == SurveyStartDecision.NOT_ACTIVE) return false
         if (trackingStarted && gpsEngine.isTracking()) return true
         if (decision == SurveyStartDecision.NO_PERMISSION || decision == SurveyStartDecision.NO_SELECTION) {
-            val message = when (decision) {
+            val detail = when (decision) {
                 SurveyStartDecision.NO_PERMISSION -> "Location permission was removed; survey stopped."
                 else -> "Survey selection is unavailable; survey stopped."
             }
             scope.launch {
-                finishSurveyPersisted(LocalSurveySessionEntity.STATUS_ABANDONED, message)
+                finishSurveyPersisted(
+                    LocalSurveySessionEntity.STATUS_ABANDONED,
+                    notice = { SurveyNotify.failure(detail, it) },
+                )
             }
             return false
         }
@@ -321,10 +332,11 @@ class SurveyController(
             locationMode = location.mode,
             cameraFollowEnabled = location.cameraFollowEnabled,
             centerOncePending = location.centerOncePending,
-            message = if (decision == SurveyStartDecision.LOCATION_DISABLED) {
-                "Location services are disabled."
-            } else null,
+            message = null,
         )
+        if (decision == SurveyStartDecision.LOCATION_DISABLED) {
+            pushNotice { SurveyNotify.failure("Location services are disabled.", it) }
+        }
         return startTracking()
     }
 
@@ -338,7 +350,7 @@ class SurveyController(
         if (startupRequested || stateFlow.value.running) return null
         if (!gpsEngine.locationEnabled()) {
             val error = "Turn on GPS."
-            stateFlow.value = stateFlow.value.copy(message = error)
+            pushNotice { SurveyNotify.failure(error, it) }
             return error
         }
         startupRequested = true
@@ -353,7 +365,7 @@ class SurveyController(
     fun locate(): String? {
         if (!gpsEngine.locationEnabled()) {
             val error = "Turn on GPS."
-            stateFlow.value = stateFlow.value.copy(message = error)
+            pushNotice { SurveyNotify.failure(error, it) }
             return error
         }
         val location = LocationStateModel.locate(locationState())
@@ -430,22 +442,22 @@ class SurveyController(
             proposedStopName = proposedStopName,
         )
         if (flowError != null) {
-            stateFlow.value = snapshot.copy(message = flowError)
+            pushNotice { SurveyNotify.failure(flowError, it) }
             return false
         }
         ReportBundlePolicy.error(photoDrafts, voiceDraft, voiceDurationMs)?.let { error ->
-            stateFlow.value = snapshot.copy(message = error)
+            pushNotice { SurveyNotify.failure(error, it) }
             return false
         }
         val revision = snapshot.snapshotRevision
         if (revision.isNullOrBlank()) {
-            stateFlow.value = snapshot.copy(message = "No local snapshot. Sync first.")
+            pushNotice { SurveyNotify.failure("No local snapshot. Sync first.", it) }
             return false
         }
         val gps = evidenceGps(stateFlow.value)
         val newStopHasProposed = kind == AnomalyKind.NEW_STOP && reportLocation != null
         if (gps == null && !newStopHasProposed) {
-            stateFlow.value = snapshot.copy(message = "Need a GPS fix")
+            pushNotice { SurveyNotify.failure("Need a GPS fix", it) }
             return false
         }
         val observedAtMs = gps?.epochMs ?: nowMs()
@@ -465,7 +477,7 @@ class SurveyController(
             createdAtEpochMs = nowMs(),
             proposedStopName = proposedStopName,
             nextStopPublicId = if (kind == AnomalyKind.NEW_STOP) {
-                CorrectStopAction.nextStopPublicId(snapshot.stops, selectedStop?.stopPublicId)
+                StopSelectionAdvance.nextStopPublicId(snapshot.stops, selectedStop?.stopPublicId)
             } else {
                 null
             },
@@ -490,12 +502,9 @@ class SurveyController(
                     reports.upsert(row)
                 }
             }
-        } catch (error: Exception) {
+        } catch (_: Exception) {
             withContext(Dispatchers.IO) { photos.deleteForReport(input.clientPublicId) }
-            stateFlow.value = stateFlow.value.copy(
-                message = ReportSaveReset.roomFailureMessage(error),
-                capturedBanner = null,
-            )
+            pushNotice { SurveyNotify.afterRoomFailure(it) }
             return false
         }
         onCaptured()
@@ -503,17 +512,19 @@ class SurveyController(
         lastCaptureUptime = uptimeMs()
         refreshAnomalies()
         refreshCounts()
+        refreshReportedStopIds()
         val selectedId = selectedStop?.stopPublicId
         val after = ReportSaveReset.afterLocalSave(snapshot.stops, selectedId)
         if (after.nextStopPublicId != null) {
             selectStop(after.nextStopPublicId)
         }
         stateFlow.value = stateFlow.value.copy(
-            capturedBanner = ReportSaveReset.successBanner(online),
+            capturedBanner = null,
             message = null,
             duplicateWarning = null,
             endOfRouteNotice = if (after.endOfRoute) ReportSaveReset.END_OF_ROUTE else null,
         )
+        pushNotice { SurveyNotify.afterLocalSave(online, it) }
         return true
     }
 
@@ -523,11 +534,39 @@ class SurveyController(
     }
 
     fun setMessage(message: String) {
-        stateFlow.value = stateFlow.value.copy(message = message.ifBlank { null })
+        if (message.isBlank()) {
+            stateFlow.value = stateFlow.value.copy(message = null)
+            return
+        }
+        pushNotice { id -> SurveyNotify.fromMessage(message, id) }
     }
 
     fun clearBanner() {
         stateFlow.value = stateFlow.value.copy(capturedBanner = null)
+    }
+
+    fun consumeNotice(id: Long) {
+        val current = stateFlow.value.notice ?: return
+        if (current.id == id) {
+            stateFlow.value = stateFlow.value.copy(notice = null)
+        }
+    }
+
+    fun clearTransientFeedback() {
+        stateFlow.value = stateFlow.value.copy(
+            notice = null,
+            message = null,
+            capturedBanner = null,
+        )
+    }
+
+    private fun pushNotice(build: (Long) -> SurveyNotifyEvent) {
+        nextNoticeId += 1L
+        stateFlow.value = stateFlow.value.copy(
+            notice = build(nextNoticeId),
+            message = null,
+            capturedBanner = null,
+        )
     }
 
     suspend fun refreshAnomalies() {
@@ -592,6 +631,7 @@ class SurveyController(
             }
             TrackingWatchdogAction.NONE -> Unit
         }
+        scope.launch { maybeHeartbeatSummary() }
     }
 
     fun onHostResumed() {
@@ -700,7 +740,7 @@ class SurveyController(
             scope.launch {
                 finishSurveyPersisted(
                     LocalSurveySessionEntity.STATUS_ABANDONED,
-                    "Location permission was removed; survey stopped.",
+                    notice = { SurveyNotify.failure("Location permission was removed; survey stopped.", it) },
                 )
             }
             return
@@ -715,69 +755,79 @@ class SurveyController(
     }
 
     private suspend fun startSurveyPersisted() = mutex.withLock {
-        if (stateFlow.value.running) return@withLock
-        val selection = stateFlow.value.selection ?: return@withLock
-        val revision = stateFlow.value.snapshotRevision ?: bootstrap.snapshotRevision()
-        if (revision.isNullOrBlank()) {
-            stateFlow.value = stateFlow.value.copy(message = "No local snapshot. Sync first.")
-            return@withLock
-        }
-        val route = bootstrap.listSelections().firstOrNull {
-            it.variantPublicId == selection.variantPublicId
-        }
-        if (route == null) {
-            stateFlow.value = stateFlow.value.copy(message = "Select a D0/D1 variant first.")
-            return@withLock
-        }
-        val local = withContext(Dispatchers.IO) { sessions.start(route, revision, nowMs()) }
-        activeSessionId = local.clientSessionId
-        selectionStore.setActiveSessionId(local.clientSessionId)
-        selectionStore.setSurveyActive(true)
-        gpsBuffer.clear()
-        lastNearbyFix = null
-        lastNearbyComputedAtMs = 0L
-        val location = LocationStateModel.startSurvey()
-        stateFlow.value = stateFlow.value.copy(
-            locationMode = location.mode,
-            cameraFollowEnabled = location.cameraFollowEnabled,
-            centerOncePending = location.centerOncePending,
-        )
-        setRunning(true)
-        if (!foreground.start() || !startTracking()) {
-            finishSurveyPersisted(
-                LocalSurveySessionEntity.STATUS_ABANDONED,
-                "Could not start location tracking.",
+        if (stateFlow.value.running || stateFlow.value.sessionTransitionBusy) return@withLock
+        stateFlow.value = stateFlow.value.copy(sessionTransitionBusy = true)
+        try {
+            val selection = stateFlow.value.selection ?: return@withLock
+            val revision = stateFlow.value.snapshotRevision ?: bootstrap.snapshotRevision()
+            if (revision.isNullOrBlank()) {
+                pushNotice { SurveyNotify.failure("No local snapshot. Sync first.", it) }
+                return@withLock
+            }
+            val route = bootstrap.listSelections().firstOrNull {
+                it.variantPublicId == selection.variantPublicId
+            }
+            if (route == null) {
+                pushNotice { SurveyNotify.failure("Select a D0/D1 variant first.", it) }
+                return@withLock
+            }
+            val local = withContext(Dispatchers.IO) {
+                sessions.start(route, revision, nowMs(), totalStopCount = stateFlow.value.stops.size)
+            }
+            activeSessionId = local.clientSessionId
+            selectionStore.setActiveSessionId(local.clientSessionId)
+            selectionStore.setSurveyActive(true)
+            gpsBuffer.clear()
+            lastNearbyFix = null
+            lastNearbyComputedAtMs = 0L
+            val location = LocationStateModel.startSurvey()
+            stateFlow.value = stateFlow.value.copy(
+                locationMode = location.mode,
+                cameraFollowEnabled = location.cameraFollowEnabled,
+                centerOncePending = location.centerOncePending,
             )
-            return@withLock
+            setRunning(true)
+            if (!foreground.start() || !startTracking()) {
+                finishSurveyPersisted(
+                    LocalSurveySessionEntity.STATUS_ABANDONED,
+                    notice = { SurveyNotify.failure("Could not start location tracking.", it) },
+                )
+                return@withLock
+            }
+            onCaptured()
+            pushNotice { SurveyNotify.surveyStarted(it) }
+            refreshCounts()
+            refreshLocalAssignmentWorkStatus(selection.variantPublicId)
+        } finally {
+            stateFlow.value = stateFlow.value.copy(sessionTransitionBusy = false)
         }
-        onCaptured()
-        stateFlow.value = stateFlow.value.copy(message = null)
-        refreshCounts()
     }
 
     private suspend fun switchToOppositePersisted() = mutex.withLock {
         val current = stateFlow.value.selection ?: return@withLock
         val target = loadSwitchTarget(current) ?: run {
             refreshSwitchAvailability(current)
-            stateFlow.value = stateFlow.value.copy(
-                message = OppositeVariantLookup.MISSING_COUNTERPART_MESSAGE,
-            )
+            pushNotice { SurveyNotify.failure(OppositeVariantLookup.MISSING_COUNTERPART_MESSAGE, it) }
             return@withLock
         }
         val revision = stateFlow.value.snapshotRevision ?: bootstrap.snapshotRevision()
         if (revision.isNullOrBlank()) {
-            stateFlow.value = stateFlow.value.copy(message = "No local snapshot. Sync first.")
+            pushNotice { SurveyNotify.failure("No local snapshot. Sync first.", it) }
             return@withLock
         }
         if (stateFlow.value.running) {
             val activeId = activeSessionId ?: return@withLock
             val next = withContext(Dispatchers.IO) {
-                sessions.completeAndStartOpposite(activeId, target.selection, revision, nowMs())
+                sessions.completeAndStartOpposite(
+                    activeId,
+                    target.selection,
+                    revision,
+                    nowMs(),
+                    totalStopCount = bootstrap.orderedStops(target.selection.variantPublicId).size,
+                )
             }
             if (next == null) {
-                stateFlow.value = stateFlow.value.copy(
-                    message = OppositeVariantLookup.MISSING_COUNTERPART_MESSAGE,
-                )
+                pushNotice { SurveyNotify.failure(OppositeVariantLookup.MISSING_COUNTERPART_MESSAGE, it) }
                 return@withLock
             }
             activeSessionId = next.clientSessionId
@@ -808,21 +858,37 @@ class SurveyController(
 
     private suspend fun finishSurveyPersisted(
         status: String,
-        message: String,
+        notice: ((Long) -> SurveyNotifyEvent)? = { SurveyNotify.surveyStopped(it) },
         notifyService: Boolean = true,
     ) {
-        activeSessionId?.let { id ->
-            withContext(Dispatchers.IO) {
-                if (status == LocalSurveySessionEntity.STATUS_COMPLETED) sessions.complete(id, nowMs())
-                else sessions.abandon(id, nowMs())
-            }
-            onCaptured()
+        if (stateFlow.value.sessionTransitionBusy && status == LocalSurveySessionEntity.STATUS_COMPLETED) {
+            // Allow nested abandon from failed start while busy flag is set.
         }
-        finishSurvey(message, notifyService)
-        refreshCounts()
+        val markBusy = !stateFlow.value.sessionTransitionBusy
+        if (markBusy) {
+            stateFlow.value = stateFlow.value.copy(sessionTransitionBusy = true)
+        }
+        try {
+            activeSessionId?.let { id ->
+                withContext(Dispatchers.IO) {
+                    if (status == LocalSurveySessionEntity.STATUS_COMPLETED) sessions.complete(id, nowMs())
+                    else sessions.abandon(id, nowMs())
+                }
+                onCaptured()
+            }
+            finishSurvey(notice, notifyService)
+            refreshCounts()
+        } finally {
+            if (markBusy) {
+                stateFlow.value = stateFlow.value.copy(sessionTransitionBusy = false)
+            }
+        }
     }
 
-    private fun finishSurvey(message: String, notifyService: Boolean = true) {
+    private fun finishSurvey(
+        notice: ((Long) -> SurveyNotifyEvent)?,
+        notifyService: Boolean = true,
+    ) {
         gpsEngine.stop()
         trackingStarted = false
         watchdog = TrackingWatchdog.stopped()
@@ -840,9 +906,123 @@ class SurveyController(
             cameraFollowEnabled = location.cameraFollowEnabled,
             centerOncePending = location.centerOncePending,
             nearbyStops = emptyList(),
-            message = message,
+            message = null,
+            capturedBanner = null,
         )
+        if (notice != null) {
+            pushNotice(notice)
+        }
         if (notifyService) foreground.stop()
+    }
+
+    private suspend fun setVariantFinishedPersisted(finished: Boolean) {
+        val selection = stateFlow.value.selection ?: return
+        val trackingActive = stateFlow.value.running
+        val shouldStop = SurveyPersonalFinish.shouldStopTracking(finished, trackingActive)
+        val now = nowMs()
+        val existing = withContext(Dispatchers.IO) {
+            completions.findByVariant(selection.variantPublicId)
+        }
+        val put = SurveyVariantCompletionMapping.applyLocalPut(
+            existingFinished = existing?.isFinished,
+            finished = finished,
+            nowMs = now,
+            previousFinishedAt = existing?.finishedAtEpochMs,
+        )
+        if (!put.changed && !shouldStop) {
+            return
+        }
+        if (SurveyPersonalFinish.shouldEnqueue(put.changed)) {
+            withContext(Dispatchers.IO) {
+                completions.upsert(
+                    com.coremapmm.fieldsurveyor.data.LocalSurveyVariantCompletionEntity(
+                        variantPublicId = selection.variantPublicId,
+                        routePublicId = selection.routePublicId,
+                        routeCode = selection.routeCode,
+                        variantCode = selection.variantCode,
+                        isFinished = put.isFinished,
+                        finishedAtEpochMs = put.finishedAtEpochMs,
+                        updatedAtEpochMs = now,
+                        syncState = com.coremapmm.fieldsurveyor.data.LocalSurveyVariantCompletionEntity.SYNC_LOCAL,
+                    ),
+                )
+            }
+            stateFlow.value = stateFlow.value.copy(variantFinished = put.isFinished)
+            refreshLocalAssignmentWorkStatus(selection.variantPublicId)
+            onCaptured()
+        }
+        // Exact Stop teardown used by the Start/Stop button (session complete + GPS/FGS halt).
+        // Notice suppressed so the personal Finish snackbar stays the single success signal.
+        if (shouldStop) {
+            finishSurveyPersisted(
+                LocalSurveySessionEntity.STATUS_COMPLETED,
+                notice = null,
+            )
+        }
+        if (put.changed) {
+            pushNotice {
+                if (finished) {
+                    SurveyNotify.success("Survey finished", it)
+                } else {
+                    SurveyNotify.info("Survey reopened", it)
+                }
+            }
+        }
+    }
+
+    private suspend fun refreshLocalAssignmentWorkStatus(variantPublicId: String) {
+        val assignment = withContext(Dispatchers.IO) { assignments.findByVariant(variantPublicId) } ?: return
+        val hasSession = withContext(Dispatchers.IO) {
+            sessions.latestForVariant(variantPublicId) != null
+        }
+        val isFinished = withContext(Dispatchers.IO) {
+            completions.findByVariant(variantPublicId)?.isFinished == true
+        }
+        val workStatus = SurveyAssignmentMapping.workStatus(hasSession, isFinished)
+        withContext(Dispatchers.IO) {
+            assignments.upsert(
+                assignment.copy(
+                    workStatus = workStatus,
+                    remaining = SurveyAssignmentMapping.remaining(assignment.status, workStatus),
+                    updatedAtEpochMs = nowMs(),
+                ),
+            )
+        }
+    }
+
+    private suspend fun refreshVariantFinished() {
+        val variantId = stateFlow.value.selection?.variantPublicId ?: return
+        val row = withContext(Dispatchers.IO) { completions.findByVariant(variantId) }
+        stateFlow.value = stateFlow.value.copy(variantFinished = row?.isFinished == true)
+    }
+
+    private suspend fun maybeHeartbeatSummary() {
+        if (!stateFlow.value.running) return
+        val sessionId = activeSessionId ?: return
+        val row = withContext(Dispatchers.IO) { sessions.session(sessionId) } ?: return
+        val now = nowMs()
+        if (!SurveySessionOps.shouldHeartbeat(row.lastHeartbeatAtEpochMs, now)) return
+        val gps = stateFlow.value.location.displayFix ?: stateFlow.value.gps
+        val seconds = SurveySessionOps.accumulateSeconds(
+            row.accumulatedActiveSeconds,
+            row.activeSegmentStartedAtEpochMs,
+            now,
+        )
+        val updated = row.copy(
+            accumulatedActiveSeconds = seconds,
+            activeSegmentStartedAtEpochMs = now,
+            lastActivityAtEpochMs = now,
+            lastHeartbeatAtEpochMs = now,
+            lastGpsAccuracyM = gps?.accuracyM ?: row.lastGpsAccuracyM,
+            lastLat = gps?.lat ?: row.lastLat,
+            lastLng = gps?.lng ?: row.lastLng,
+            lastGpsAtEpochMs = gps?.epochMs ?: row.lastGpsAtEpochMs,
+            pendingSyncCount = stateFlow.value.pendingSyncCount,
+            totalStopCount = stateFlow.value.stops.size,
+            updatedAtEpochMs = now,
+        )
+        withContext(Dispatchers.IO) { sessions.saveOperational(updated) }
+        onCaptured()
     }
 
     private fun locationState(): LocationState = LocationState(
@@ -876,6 +1056,7 @@ class SurveyController(
         )
         val switchTarget = loadSwitchTarget(selected)
         val intendedOpposite = if (selected.variantCode == "D0") "D1" else "D0"
+        val reported = loadReportedStopIds(selected.variantPublicId)
         stateFlow.value = stateFlow.value.copy(
             selection = selected,
             stops = stops,
@@ -884,9 +1065,11 @@ class SurveyController(
             nearbyStops = nearby,
             oppositeVariantCode = switchTarget?.oppositeCode ?: intendedOpposite,
             directionSwitchEnabled = switchTarget != null,
+            reportedStopIds = reported,
         )
         refreshAnomalies()
         refreshCounts()
+        refreshVariantFinished()
     }
 
     private suspend fun duplicateWarningFor(
@@ -925,6 +1108,41 @@ class SurveyController(
             sessionReportCount = counts.first,
             pendingSyncCount = counts.second,
         )
+        if (sessionId != null) {
+            val row = withContext(Dispatchers.IO) { sessions.session(sessionId) }
+            if (row != null) {
+                withContext(Dispatchers.IO) {
+                    sessions.saveOperational(
+                        row.copy(
+                            pendingSyncCount = counts.second,
+                            totalStopCount = stateFlow.value.stops.size.coerceAtLeast(row.totalStopCount),
+                            lastActivityAtEpochMs = nowMs(),
+                            updatedAtEpochMs = nowMs(),
+                        ),
+                    )
+                }
+            }
+        }
+        refreshVariantFinished()
+    }
+
+    private suspend fun refreshReportedStopIds() {
+        val variantId = stateFlow.value.selection?.variantPublicId ?: return
+        stateFlow.value = stateFlow.value.copy(reportedStopIds = loadReportedStopIds(variantId))
+    }
+
+    private suspend fun loadReportedStopIds(variantPublicId: String): Set<String> {
+        val sessionId = activeSessionId
+        val rows = withContext(Dispatchers.IO) {
+            if (sessionId == null) reports.listAll() else reports.listForSession(sessionId)
+        }
+        return rows.mapNotNull { row ->
+            if (AnomalyPayload.variantPublicId(row.payloadJson) != variantPublicId) {
+                null
+            } else {
+                SurveyStopStripModel.reportedStopPublicId(row.payloadJson)
+            }
+        }.toSet()
     }
 
     private suspend fun loadSwitchTarget(selection: SurveySelection): DirectionSwitchTarget? {

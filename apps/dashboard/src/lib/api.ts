@@ -6,8 +6,15 @@ import {
     markImportReviewApiAuthFailed,
     readImportReviewAuthDebugState,
 } from "./importReviewDevAccess";
+import {
+    clearAuthTokens,
+    getAccessToken,
+    setAccessToken,
+} from "./authTokenStorage";
 import { resolveImportReviewApiFamily } from "@/src/features/import-review/utils/importReviewApiFamily";
 import type { CoreReviewVerificationStatusFilter } from "@/src/features/core-review/verification/coreReviewVerificationFilter";
+
+export { getAccessToken, setAccessToken, clearAuthTokens };
 
 type QueryValue = string | number | boolean | null | undefined;
 
@@ -1201,43 +1208,6 @@ function buildUrl(path: string, params?: Record<string, QueryValue>): string {
     return url.toString();
 }
 
-function getAccessToken(): string | null {
-    if (typeof window === "undefined") {
-        return null;
-    }
-
-    return window.localStorage.getItem("accessToken");
-}
-
-function getRefreshToken(): string | null {
-    if (typeof window === "undefined") {
-        return null;
-    }
-
-    return window.localStorage.getItem("refreshToken");
-}
-
-function setAuthTokens(accessToken: string, refreshToken: string) {
-    if (typeof window === "undefined") {
-        return;
-    }
-
-    window.localStorage.setItem("accessToken", accessToken);
-    window.localStorage.setItem("refreshToken", refreshToken);
-}
-
-function clearAuthTokens() {
-    if (typeof window === "undefined") {
-        return;
-    }
-
-    window.localStorage.removeItem("accessToken");
-    window.localStorage.removeItem("refreshToken");
-    window.localStorage.removeItem("token");
-    window.localStorage.removeItem("authToken");
-    window.localStorage.removeItem("jwt");
-}
-
 /**
  * Single in-flight refresh shared by all concurrent 401s so a burst of expired
  * requests triggers exactly one POST /auth/refresh (refresh-token rotation means
@@ -1255,21 +1225,17 @@ async function refreshSession(): Promise<boolean> {
         return false;
     }
 
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-        return false;
-    }
-
     if (!refreshInFlight) {
         refreshInFlight = (async () => {
             try {
                 const response = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
                     method: "POST",
+                    credentials: "include",
                     headers: {
                         Accept: "application/json",
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ refreshToken }),
+                    body: JSON.stringify({}),
                 });
 
                 if (!response.ok) {
@@ -1278,14 +1244,13 @@ async function refreshSession(): Promise<boolean> {
 
                 const data = (await response.json()) as {
                     accessToken?: string;
-                    refreshToken?: string;
                 };
 
-                if (!data.accessToken || !data.refreshToken) {
+                if (!data.accessToken) {
                     return false;
                 }
 
-                setAuthTokens(data.accessToken, data.refreshToken);
+                setAccessToken(data.accessToken);
                 return true;
             } catch {
                 return false;
@@ -1303,20 +1268,18 @@ async function refreshSession(): Promise<boolean> {
  * admin to the login page. Safe to call even if no refresh token is stored.
  */
 export async function logout(): Promise<void> {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-        try {
-            await fetch(`${getApiBaseUrl()}/auth/logout`, {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ refreshToken }),
-            });
-        } catch {
-            // Best-effort server revoke; always clear locally below.
-        }
+    try {
+        await fetch(`${getApiBaseUrl()}/auth/logout`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({}),
+        });
+    } catch {
+        // Best-effort server revoke; always clear locally below.
     }
 
     clearAuthTokens();
@@ -1324,7 +1287,6 @@ export async function logout(): Promise<void> {
 }
 
 export type AuthMeProfile = {
-    id: string;
     public_id: string;
     email: string;
     display_name: string;
@@ -1339,6 +1301,72 @@ export type AuthMeProfile = {
 
 export function getAuthMe(fetchInit?: Pick<RequestInit, "signal">) {
     return apiFetch<AuthMeProfile>("/auth/me", { method: "GET", ...fetchInit });
+}
+
+export async function tryRestoreDashboardSession(): Promise<boolean> {
+    return refreshSession();
+}
+
+const jsonHeaders = { "Content-Type": "application/json" };
+
+export function changeDashboardPassword(currentPassword: string, newPassword: string) {
+    return apiFetch<{ message: string }>("/auth/password/change", {
+        method: "POST",
+        headers: jsonHeaders,
+        body: JSON.stringify({ currentPassword, newPassword }),
+    });
+}
+
+export function listDashboardSessions() {
+    return apiFetch<{
+        sessions: {
+            public_id: string;
+            current: boolean;
+            created_at: string;
+            last_used_at: string | null;
+            device_label: string;
+        }[];
+    }>("/auth/sessions");
+}
+
+export function listDashboardSecurityEvents() {
+    return apiFetch<{
+        events: {
+            event_type: string;
+            success: boolean;
+            provider: string | null;
+            created_at: string;
+            ip_address: string | null;
+        }[];
+    }>("/auth/security-events");
+}
+
+export function revokeDashboardSession(publicId: string) {
+    return apiFetch<{ message: string }>(`/auth/sessions/${publicId}`, { method: "DELETE" });
+}
+
+export function revokeOtherDashboardSessions() {
+    return apiFetch<{ message: string }>("/auth/sessions/revoke-others", {
+        method: "POST",
+        headers: jsonHeaders,
+        body: JSON.stringify({}),
+    });
+}
+
+export function enrollDashboardMfa() {
+    return apiFetch<{ secret: string; otpauthUrl: string }>("/auth/mfa/enroll", {
+        method: "POST",
+        headers: jsonHeaders,
+        body: JSON.stringify({}),
+    });
+}
+
+export function verifyDashboardMfaEnroll(code: string) {
+    return apiFetch<{ recoveryCodes: string[] }>("/auth/mfa/enroll/verify", {
+        method: "POST",
+        headers: jsonHeaders,
+        body: JSON.stringify({ code }),
+    });
 }
 
 function redirectToLogin(reason: string) {
@@ -1548,6 +1576,7 @@ async function apiFetchInternal<T>(
 
     const response = await fetch(buildUrl(path, params), {
         ...init,
+        credentials: "include",
         headers,
     });
 
@@ -1555,7 +1584,7 @@ async function apiFetchInternal<T>(
         // Access token likely expired (short-lived). Try one refresh + retry
         // before clearing the session — only logout if refresh fails. Skipped for
         // the import-review dev-admin-header path, which does not use a JWT.
-        if (allowRefresh && !importPipelineApiDevAuth && getRefreshToken()) {
+        if (allowRefresh && !importPipelineApiDevAuth) {
             const refreshed = await refreshSession();
             if (refreshed) {
                 return apiFetchInternal<T>(path, init, params, false);

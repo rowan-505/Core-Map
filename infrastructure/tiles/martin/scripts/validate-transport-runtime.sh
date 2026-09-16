@@ -8,10 +8,12 @@ MARTIN_URL="${MARTIN_URL:-http://localhost:3002}"
 BASE="${MARTIN_URL%/}"
 
 TRANSPORT_SOURCES=(
-  transport_stops_v
-  transport_terminals_v
-  transport_route_paths_v
-  transport_infrastructure_lines_v
+  transport_bus_stops
+  transport_bus_route_overview
+  transport_train_stations
+  transport_train_routes
+  transport_express_terminals
+  transport_express_route_corridors
 )
 
 # Yangon CBD — dense stop cluster used for zoom probes.
@@ -46,23 +48,23 @@ for source in "${TRANSPORT_SOURCES[@]}"; do
   fields="$(printf '%s' "${tilejson}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(' '.join(sorted(d.get('vector_layers',[{}])[0].get('fields',{}).keys())))")"
   echo "OK   ${source} TileJSON fields: ${fields}"
 
-  if [[ "${source}" != "transport_stops_v" ]]; then
+  if [[ "${source}" != "transport_bus_stops" ]]; then
     continue
   fi
 
-  for z in 14 16 18 20; do
+  for z in 10 12 14 16; do
     read -r x y < <(lat_lon_to_tile "${PROBE_LAT}" "${PROBE_LON}" "${z}")
     headers="$(curl -sSI "${BASE}/${source}/${z}/${x}/${y}" | tr -d '\r')"
     status="$(printf '%s\n' "${headers}" | awk 'toupper($1) ~ /^HTTP/ { print $2; exit }')"
   size="$(printf '%s\n' "${headers}" | awk -F': ' 'tolower($1)=="content-length" { print $2; exit }')"
     size="${size:-0}"
     echo "     probe z${z} tile ${x}/${y}: http=${status} bytes=${size}"
-    if [[ "${z}" -le 16 && "${status}" != "200" ]]; then
+    if [[ "${z}" -ge 11 && "${status}" != "200" ]]; then
       echo "  WARN ${source}: expected data at z${z} for Yangon probe tile"
       failures=$((failures + 1))
     fi
-    if [[ "${z}" -ge 18 && "${status}" == "200" && "${size}" == "0" ]]; then
-      echo "  WARN ${source}: empty tile at z${z} (MapLibre may hide stops unless it overzooms)"
+    if [[ "${z}" -eq 10 && "${status}" == "200" && "${size}" != "0" ]]; then
+      echo "  WARN ${source}: bus stops must be empty below z11"
     fi
   done
 done

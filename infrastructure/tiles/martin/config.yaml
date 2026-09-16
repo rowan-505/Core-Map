@@ -13,6 +13,14 @@ postgres:
     from_schemas:
       - tiles
 
+  # Public transport browse endpoints are zoom-aware MVT functions created by
+  # 20260916100000_public_transport_martin_sources.sql and auto-published above:
+  # transport_bus_stops, transport_bus_route_overview,
+  # transport_train_stations, transport_train_routes,
+  # transport_express_terminals, transport_express_route_corridors.
+  # The table sources below remain temporarily for backwards compatibility;
+  # the public web map no longer requests their mixed-mode transport tiles.
+
   tables:
     tiles_buildings_v:
       schema: tiles
@@ -30,7 +38,7 @@ postgres:
       srid: 4326
       geometry_column: geom
       id_column: id
-      minzoom: 0
+      minzoom: 13
       maxzoom: 22
       properties:
         id: int8
@@ -49,7 +57,7 @@ postgres:
       srid: 4326
       geometry_column: geom
       id_column: id
-      minzoom: 0
+      minzoom: 12
       maxzoom: 22
       properties:
         id: int8
@@ -68,7 +76,7 @@ postgres:
       srid: 4326
       geometry_column: geom
       id_column: id
-      minzoom: 0
+      minzoom: 10
       maxzoom: 22
       properties:
         id: int8
@@ -92,7 +100,7 @@ postgres:
       srid: 4326
       geometry_column: geom
       id_column: id
-      minzoom: 0
+      minzoom: 8
       maxzoom: 22
       properties:
         id: int8

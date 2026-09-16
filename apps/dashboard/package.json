@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:reports": "node --import tsx --test src/features/report-management/*.test.ts"
+    "test:reports": "node --import tsx --test src/features/report-management/*.test.ts",
+    "test:field-survey-activity": "node --import tsx --test src/features/field-survey-activity/*.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

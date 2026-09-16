@@ -9,6 +9,7 @@ import type { ExpressionSpecification, GeoJSONSource, MapGeoJSONFeature } from '
 import type { LanguageMode } from '@local-map/localized-name';
 import type { MapEngine } from '../mapEngineTypes';
 import { MAP_SYMBOL_TEXT_FONT } from '../../config';
+import { isMapStyleUsable } from './isMapStyleUsable';
 import {
   TRANSPORT_HIGHLIGHT_SOURCE_ID,
   TRANSPORT_HOVER_HALO_LAYER_ID,
@@ -18,6 +19,7 @@ import {
   TRANSPORT_SELECTED_PIN_LAYER_ID,
   TRANSPORT_STOP_HIGHLIGHT_LAYER_IDS,
   TRANSPORT_STOPS_LAYER_ID,
+  TRANSPORT_MAJOR_TERMINALS_LAYER_ID,
 } from './publicMapMarkerLayerIds';
 import {
   MARKER_STROKE_WHITE,
@@ -138,6 +140,7 @@ function buildHighlightFeature(
 }
 
 function syncHighlightSource(map: MapEngine): void {
+  if (!isMapStyleUsable(map)) return;
   const source = map.getSource(TRANSPORT_HIGHLIGHT_SOURCE_ID) as GeoJSONSource | undefined;
   if (!source) return;
   const features = [hoverHighlight, selectedHighlight].filter(
@@ -150,12 +153,15 @@ function syncHighlightSource(map: MapEngine): void {
 }
 
 function readTransportOverlayVisible(map: MapEngine): boolean {
-  if (!map.getLayer(TRANSPORT_STOPS_LAYER_ID)) return false;
-  return map.getLayoutProperty(TRANSPORT_STOPS_LAYER_ID, 'visibility') !== 'none';
+  if (!isMapStyleUsable(map)) return false;
+  return [TRANSPORT_STOPS_LAYER_ID, TRANSPORT_MAJOR_TERMINALS_LAYER_ID].some(
+    (layerId) => map.getLayer(layerId) && map.getLayoutProperty(layerId, 'visibility') !== 'none',
+  );
 }
 
 /** Matches highlight layer visibility to the transport overlay toggle. */
 export function setTransportHighlightLayersVisible(map: MapEngine, visible: boolean): void {
+  if (!isMapStyleUsable(map)) return;
   const visibility = visible ? 'visible' : 'none';
   for (const layerId of TRANSPORT_STOP_HIGHLIGHT_LAYER_IDS) {
     if (!map.getLayer(layerId)) continue;
@@ -165,6 +171,7 @@ export function setTransportHighlightLayersVisible(map: MapEngine, visible: bool
 
 /** Registers the hover/selected stop overlay layers (idempotent). */
 export function ensureTransportStopHighlightLayers(map: MapEngine): void {
+  if (!isMapStyleUsable(map)) return;
   ensureSelectedTransportPinImages(map);
 
   if (!map.getSource(TRANSPORT_HIGHLIGHT_SOURCE_ID)) {
@@ -309,6 +316,7 @@ export function highlightFromTransportFeature(
 
   const kind =
     feature.sourceLayer === 'transport_terminals_v' ||
+    feature.sourceLayer === 'transport_express_terminals' ||
     feature.layer?.id === 'transport-major-terminals' ||
     feature.layer?.id === 'transport-ferry-landings'
       ? 'terminal'

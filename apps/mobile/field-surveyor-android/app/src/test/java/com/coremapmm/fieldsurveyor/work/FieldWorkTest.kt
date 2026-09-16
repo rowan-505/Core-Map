@@ -24,9 +24,9 @@ class FieldWorkTest {
     }
 
     @Test
-    fun meteredRetryMustNotReplaceInFlightMediaWork() {
-        assertEquals("APPEND_OR_REPLACE", FieldWorkPolicy.uniqueMediaWorkPolicy(allowMetered = false))
-        assertEquals("APPEND_OR_REPLACE", FieldWorkPolicy.uniqueMediaWorkPolicy(allowMetered = true))
+    fun syncWorkUsesReplaceSoNewCapturesRunImmediately() {
+        assertEquals("REPLACE", FieldWorkPolicy.uniqueMediaWorkPolicy(allowMetered = false))
+        assertEquals("REPLACE", FieldWorkPolicy.uniqueMediaWorkPolicy(allowMetered = true))
         assertEquals(FieldWork.MEDIA_WIFI, FieldWork.MEDIA_CELLULAR)
     }
 
@@ -35,5 +35,26 @@ class FieldWorkTest {
         assertTrue(FieldWorkPolicy.mediaShouldRetry(retryLater = false, hasEligible = false, hasFreshSyncing = true))
         assertTrue(FieldWorkPolicy.mediaShouldRetry(retryLater = true, hasEligible = false, hasFreshSyncing = false))
         assertTrue(!FieldWorkPolicy.mediaShouldRetry(retryLater = false, hasEligible = false, hasFreshSyncing = false))
+    }
+
+    @Test
+    fun sessionRetryDoesNotSkipReportStageInSamePass() {
+        assertTrue(FieldWorkPolicy.shouldContinueAfterUpstreamRetry(upstreamRetryLater = true))
+        assertTrue(
+            FieldWorkPolicy.shouldRetryWorker(
+                retryLater = true,
+                moreSessions = false,
+                moreCompletions = false,
+                moreReports = false,
+            ),
+        )
+        assertTrue(
+            !FieldWorkPolicy.shouldRetryWorker(
+                retryLater = false,
+                moreSessions = false,
+                moreCompletions = false,
+                moreReports = false,
+            ),
+        )
     }
 }

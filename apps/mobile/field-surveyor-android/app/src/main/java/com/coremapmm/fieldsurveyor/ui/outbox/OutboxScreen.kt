@@ -99,7 +99,7 @@ fun OutboxScreen(
                 rows = rows,
                 photoCounts = photoCounts,
                 onOpen = { selectedId = it },
-                onUploadMediaNow = { FieldWork.enqueueMediaOverCellular(context) },
+                onSyncNow = { FieldWork.enqueue(context) },
             )
         } else {
             OutboxDetail(
@@ -143,7 +143,7 @@ private fun OutboxList(
     rows: List<OutboxReportSummary>,
     photoCounts: Map<String, Int>,
     onOpen: (String) -> Unit,
-    onUploadMediaNow: () -> Unit,
+    onSyncNow: () -> Unit,
 ) {
     val captured = rows.size
     val synced = rows.count { it.status == LocalReportEntity.STATUS_SYNCED }
@@ -151,7 +151,7 @@ private fun OutboxList(
     Column(modifier = Modifier.fillMaxSize()) {
         ScreenHeader(
             title = tr("Outbox"),
-            subtitle = tr("Reports upload on any network. Photos and voice wait for Wi-Fi unless you upload now."),
+            subtitle = tr("Reports, photos, and voice upload on Wi-Fi or mobile data."),
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
         )
         MetricRow(
@@ -161,9 +161,9 @@ private fun OutboxList(
             modifier = Modifier.padding(horizontal = 20.dp),
         )
         OutlinedButton(
-            onClick = onUploadMediaNow,
+            onClick = onSyncNow,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-        ) { Text(tr("Upload now using mobile data")) }
+        ) { Text(tr("Sync now")) }
         if (rows.isEmpty()) {
             Text(
                 tr("No reports yet."),
