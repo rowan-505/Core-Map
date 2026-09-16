@@ -1,10 +1,17 @@
 import pluscodes from "pluscodes";
+import type { Coordinates, DecodedLocation } from "pluscodes";
 
-const { decode, encode, expand } = pluscodes as {
-    decode: (code: string) => unknown;
-    encode: (coords: { latitude: number; longitude: number }) => string | null;
-    expand: (...args: unknown[]) => unknown;
+/**
+ * pluscodes ships CJS named exports; Node ESM default-import gets the module
+ * object. The published .d.ts has no default export, so cast once for types.
+ */
+type PluscodesApi = {
+    decode: (code: string) => DecodedLocation | null;
+    encode: (coordinates: Coordinates, length?: number) => string | null;
+    expand: (shortCode: string, ref: Coordinates) => string | null;
 };
+
+const { decode, encode, expand } = pluscodes as unknown as PluscodesApi;
 
 /**
  * Generate a full Open Location Code (Plus Code) from coordinates.
