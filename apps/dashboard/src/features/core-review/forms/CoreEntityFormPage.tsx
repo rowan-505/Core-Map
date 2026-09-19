@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Resolver } from "react-hook-form";
@@ -63,7 +63,16 @@ export type CoreEntityFormPageProps = {
     id?: string;
 };
 
-export default function CoreEntityFormPage({ entityKey, mode, id }: CoreEntityFormPageProps) {
+/** Outer shell so `useSearchParams` inside is under Suspense (Next.js prerender / Vercel build). */
+export default function CoreEntityFormPage(props: CoreEntityFormPageProps) {
+    return (
+        <Suspense fallback={<p className="p-6 text-sm text-gray-500">Loading form…</p>}>
+            <CoreEntityFormPageContent {...props} />
+        </Suspense>
+    );
+}
+
+function CoreEntityFormPageContent({ entityKey, mode, id }: CoreEntityFormPageProps) {
     const config = getCoreEntityConfig(entityKey);
     const router = useRouter();
     const searchParams = useSearchParams();
