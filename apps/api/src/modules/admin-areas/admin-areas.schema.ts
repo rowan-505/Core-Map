@@ -12,8 +12,21 @@ export const adminAreaOptionsQuerySchema = z.object({
         .min(1)
         .max(200)
         .optional(),
-    /** When `township`, only township-level areas (for place/road/building manual override). */
-    admin_level_code: z.enum(["township"]).optional(),
+    /**
+     * Level filter for pickers:
+     * - `state_region` — Region/State rows only
+     * - `township` — township/town rows (place/road/building override + tourism filters)
+     */
+    admin_level_code: z.enum(["township", "state_region"]).optional(),
+    /**
+     * When set with `admin_level_code=township`, only townships that descend from this
+     * Region/State (walks parent_id / child hierarchy).
+     */
+    region_admin_area_id: z
+        .string()
+        .trim()
+        .regex(/^\d+$/, "region_admin_area_id must be a numeric id")
+        .optional(),
 });
 
 /** Road/street manual township override search (server-side, capped results). */

@@ -8,6 +8,9 @@ import {
     Flag,
     Library,
     LineChart,
+    MapPinned,
+    MessagesSquare,
+    Star,
     Route,
     ScanSearch,
     Search,
@@ -19,15 +22,18 @@ import { listImportReviewNavEntityConfigs } from "@/src/features/import-review/c
 
 import {
     accountPath,
+    communityPath,
     coreReviewPath,
     importReviewPath,
     pointManagementPath,
     referencesPath,
     reportsPath,
+    reviewsPath,
     fieldSurveyPath,
     routingAdminPath,
     searchPath,
     statsPath,
+    tourismPath,
     transportPath,
     userAnalyticsPath,
     usersPath,
@@ -35,27 +41,33 @@ import {
 
 export {
     ACCOUNT_PATH,
+    COMMUNITY_PATH,
     CORE_REVIEW_PATH,
     DASHBOARD_PATH,
     IMPORT_REVIEW_PATH,
     POINT_MANAGEMENT_PATH,
     REFERENCES_PATH,
     REPORTS_PATH,
+    REVIEWS_PATH,
     FIELD_SURVEY_PATH,
     SEARCH_PATH,
     STATS_PATH,
+    TOURISM_PATH,
     TRANSPORT_PATH,
     USERS_PATH,
     USER_ANALYTICS_PATH,
     accountPath,
+    communityPath,
     coreReviewPath,
     importReviewPath,
     pointManagementPath,
     referencesPath,
     reportsPath,
+    reviewsPath,
     fieldSurveyPath,
     searchPath,
     statsPath,
+    tourismPath,
     transportPath,
     userAnalyticsPath,
     usersPath,
@@ -70,7 +82,10 @@ export type DashboardSidebarModuleKey =
     | "transport"
     | "search"
     | "reports"
+    | "reviews"
     | "field-survey"
+    | "community"
+    | "tourism"
     | "users"
     | "user-analytics"
     | "point-management"
@@ -116,7 +131,10 @@ export function sidebarModuleFromPathname(pathname: string): DashboardSidebarMod
         key === "transport" ||
         key === "search" ||
         key === "reports" ||
+        key === "reviews" ||
         key === "field-survey" ||
+        key === "community" ||
+        key === "tourism" ||
         key === "users" ||
         key === "user-analytics" ||
         key === "point-management" ||
@@ -177,10 +195,28 @@ export const dashboardSidebarItems: readonly DashboardSidebarItem[] = [
         Icon: Flag,
     },
     {
+        moduleKey: "reviews",
+        href: reviewsPath(),
+        label: "Reviews",
+        Icon: Star,
+    },
+    {
         moduleKey: "field-survey",
         href: fieldSurveyPath(),
         label: "Field Survey",
         Icon: Activity,
+    },
+    {
+        moduleKey: "community",
+        href: communityPath(),
+        label: "Community Moderation",
+        Icon: MessagesSquare,
+    },
+    {
+        moduleKey: "tourism",
+        href: tourismPath("places"),
+        label: "Tourism",
+        Icon: MapPinned,
     },
 ];
 
@@ -219,6 +255,7 @@ export const coreReviewTabs: readonly FamilyNavTab[] = [
     { label: "Overview", segment: "", match: "exact" },
     { label: "Buildings", segment: "buildings" },
     { label: "Places", segment: "places" },
+    { label: "Recommendations", segment: "recommendations" },
     { label: "Settlements", segment: "settlements" },
     { label: "Roads", segment: "roads" },
     { label: "Land areas", segment: "land-areas" },
@@ -283,6 +320,14 @@ export const searchTabs: readonly FamilyNavTab[] = [
     { label: "Failed Searches", segment: "failed-searches" },
     { label: "Analytics", segment: "analytics" },
     { label: "Index Health", segment: "index-health" },
+];
+
+export const tourismTabs: readonly FamilyNavTab[] = [
+    { label: "Attractions", segment: "places" },
+    { label: "Activities", segment: "activities" },
+    { label: "Events", segment: "events" },
+    { label: "Candidates", segment: "candidates" },
+    { label: "Ranking", segment: "ranking" },
 ];
 
 function joinPath(base: string, segment?: string): string {

@@ -100,15 +100,18 @@ export default function AccountSecurityPage() {
       <article className="space-y-3 text-sm">
         <h1 className="text-2xl font-semibold">Account security</h1>
         <p>Sign in on the map first, then return here to manage sessions, password, and connected accounts.</p>
-        <Link to="/" className="text-map-primary underline">
-          Back to the map
+        <Link
+          to="/?auth=login"
+          className="inline-flex min-h-11 items-center justify-center rounded-map-control bg-map-primary px-4 py-2.5 font-semibold text-white"
+        >
+          Sign in to continue
         </Link>
       </article>
     );
   }
 
   return (
-    <article className="space-y-8 text-sm leading-6 text-map-ink">
+    <article className="space-y-5 text-sm leading-6 text-map-ink [&>section]:rounded-2xl [&>section]:border [&>section]:border-map-border [&>section]:bg-map-surface [&>section]:p-4 sm:[&>section]:p-5">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Account security</h1>
         <p className="text-map-muted">
@@ -116,7 +119,7 @@ export default function AccountSecurityPage() {
           {user.email_verified ? ' · verified' : ' · email not verified'}
         </p>
       </header>
-      {banner ? <p className="rounded-map-card border border-map-border bg-map-surface px-3 py-2">{banner}</p> : null}
+      {banner ? <p className="rounded-map-card border border-map-border bg-map-surface px-3 py-2" role="status">{banner}</p> : null}
       {error ? <p className="text-map-error">{error}</p> : null}
 
       <ConnectedAccountsPanel
@@ -171,6 +174,8 @@ function ConnectedAccountsPanel({
   };
 
   const unlink = async (provider: 'google' | 'facebook') => {
+    const label = provider === 'google' ? 'Google' : 'Facebook';
+    if (!window.confirm(`Disconnect ${label} from your CoreMap account?`)) return;
     try {
       await authJson(`/auth/identities/${provider}`, {
         method: 'DELETE',
@@ -234,15 +239,18 @@ function ConnectedAccountsPanel({
         );
       })}
       {identities?.has_password ? (
-        <input
-          type="password"
-          placeholder="Password required to disconnect"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="max-w-sm w-full rounded-map-control border border-map-border px-3 py-2"
-        />
+        <label className="block max-w-sm">
+          <span className="mb-1 block text-xs font-semibold text-map-muted">Password required to disconnect</span>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="w-full rounded-map-control border border-map-border px-3 py-2"
+          />
+        </label>
       ) : null}
-      {message ? <p>{message}</p> : null}
+      {message ? <p role="status">{message}</p> : null}
     </section>
   );
 }
@@ -373,35 +381,9 @@ function ChangePasswordForm({ privileged }: { privileged: boolean }) {
           : 'Use at least 8 characters.'}
       </p>
       <form className="max-w-sm space-y-2" onSubmit={(event) => void onSubmit(event)}>
-        <input
-          type="password"
-          required
-          autoComplete="current-password"
-          placeholder="Current password"
-          value={currentPassword}
-          onChange={(event) => setCurrentPassword(event.target.value)}
-          className="w-full rounded-map-control border border-map-border px-3 py-2"
-        />
-        <input
-          type="password"
-          required
-          minLength={minLength}
-          autoComplete="new-password"
-          placeholder={`New password (min ${minLength})`}
-          value={newPassword}
-          onChange={(event) => setNewPassword(event.target.value)}
-          className="w-full rounded-map-control border border-map-border px-3 py-2"
-        />
-        <input
-          type="password"
-          required
-          minLength={minLength}
-          autoComplete="new-password"
-          placeholder="Confirm new password"
-          value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)}
-          className="w-full rounded-map-control border border-map-border px-3 py-2"
-        />
+        <SecurityInput label="Current password" type="password" required autoComplete="current-password" value={currentPassword} onChange={setCurrentPassword} />
+        <SecurityInput label={`New password (minimum ${minLength} characters)`} type="password" required minLength={minLength} autoComplete="new-password" value={newPassword} onChange={setNewPassword} />
+        <SecurityInput label="Confirm new password" type="password" required minLength={minLength} autoComplete="new-password" value={confirmPassword} onChange={setConfirmPassword} />
         <button
           type="submit"
           disabled={busy}
@@ -497,24 +479,8 @@ function ChangeEmailForm({ hasPassword }: { hasPassword: boolean }) {
       <h2 className="text-lg font-semibold">Email</h2>
       {stage === 'form' ? (
         <form className="max-w-sm space-y-2" onSubmit={(event) => void onStart(event)}>
-          <input
-            type="password"
-            required
-            placeholder="Current password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-map-control border border-map-border px-3 py-2"
-          />
-          <input
-            type="email"
-            required
-            inputMode="email"
-            autoComplete="email"
-            placeholder="New email"
-            value={newEmail}
-            onChange={(event) => setNewEmail(event.target.value)}
-            className="w-full rounded-map-control border border-map-border px-3 py-2"
-          />
+          <SecurityInput label="Current password" type="password" required autoComplete="current-password" value={password} onChange={setPassword} />
+          <SecurityInput label="New email" type="email" required inputMode="email" autoComplete="email" value={newEmail} onChange={setNewEmail} />
           <button
             type="submit"
             disabled={busy}
@@ -525,16 +491,7 @@ function ChangeEmailForm({ hasPassword }: { hasPassword: boolean }) {
         </form>
       ) : (
         <form className="max-w-sm space-y-2" onSubmit={(event) => void onConfirm(event)}>
-          <input
-            inputMode="numeric"
-            pattern="\d{6}"
-            maxLength={6}
-            required
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-            placeholder="6-digit code"
-            className="w-full rounded-map-control border border-map-border px-3 py-2"
-          />
+          <SecurityInput label="6-digit verification code" inputMode="numeric" pattern="\d{6}" maxLength={6} required autoComplete="one-time-code" value={code} onChange={(value) => setCode(value.replace(/\D/g, '').slice(0, 6))} />
           <button
             type="submit"
             disabled={busy}
@@ -602,6 +559,7 @@ function SessionsPanel({
                   type="button"
                   className="mt-1 text-map-primary underline"
                   onClick={() => {
+                    if (!window.confirm(`Sign out ${session.device_label}?`)) return;
                     void authJson(`/auth/sessions/${session.public_id}`, { method: 'DELETE' }).then(
                       onChanged,
                     );
@@ -625,6 +583,7 @@ function SessionsPanel({
             type="button"
             className="rounded-map-control border border-map-border px-3 py-1.5"
             onClick={() => {
+              if (!window.confirm('Sign out all other devices?')) return;
               void authJson('/auth/sessions/revoke-others', { method: 'POST', body: {} }).then(
                 onChanged,
               );
@@ -691,6 +650,7 @@ function DeleteAccountForm({
         className="max-w-sm space-y-2"
         onSubmit={(event) => {
           event.preventDefault();
+          if (!window.confirm('Delete this CoreMap account? This action cannot be undone.')) return;
           void authJson('/auth/account/delete', {
             method: 'POST',
             body: { password, confirm },
@@ -699,26 +659,41 @@ function DeleteAccountForm({
             .catch((err) => setMessage(err instanceof Error ? err.message : 'Could not delete account.'));
         }}
       >
-        <input
-          type="password"
-          required
-          placeholder="Password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="w-full rounded-map-control border border-map-border px-3 py-2"
-        />
-        <input
-          required
-          placeholder="Type DELETE"
-          value={confirm}
-          onChange={(event) => setConfirm(event.target.value)}
-          className="w-full rounded-map-control border border-map-border px-3 py-2"
-        />
-        <button type="submit" className="rounded-map-control border border-red-300 px-4 py-2 text-red-700">
+        <SecurityInput label="Password" type="password" required autoComplete="current-password" value={password} onChange={setPassword} />
+        <SecurityInput label="Type DELETE to confirm" required value={confirm} onChange={setConfirm} />
+        <button type="submit" disabled={confirm !== 'DELETE'} className="rounded-map-control border border-red-300 px-4 py-2 text-red-700 disabled:cursor-not-allowed disabled:opacity-50">
           Delete account
         </button>
       </form>
       {message ? <p className="text-map-error">{message}</p> : null}
     </div>
+  );
+}
+
+function SecurityInput({
+  label,
+  onChange,
+  ...inputProps
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly type?: string;
+  readonly required?: boolean;
+  readonly minLength?: number;
+  readonly maxLength?: number;
+  readonly autoComplete?: string;
+  readonly inputMode?: 'email' | 'numeric' | 'text';
+  readonly pattern?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-semibold text-map-muted">{label}</span>
+      <input
+        {...inputProps}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-map-control border border-map-border bg-map-surface px-3 py-2 text-map-ink outline-none transition-colors focus:border-map-primary"
+      />
+    </label>
   );
 }

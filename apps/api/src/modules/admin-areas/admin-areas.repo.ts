@@ -53,7 +53,8 @@ export class AdminAreasRepository {
     async listAdminAreaOptions(args: {
         limit: number;
         q?: string | undefined;
-        adminLevelCode?: "township";
+        adminLevelCode?: "township" | "state_region";
+        regionAdminAreaId?: bigint | undefined;
     }): Promise<AdminAreaOptionRow[]> {
         const pattern = args.q?.trim() ? `%${args.q.trim()}%` : null;
 
@@ -69,12 +70,36 @@ export class AdminAreasRepository {
                       )
                   `;
 
-        const townshipOnlyClause =
+        const levelClause =
             args.adminLevelCode === "township"
                 ? Prisma.sql`
                       AND (
                           lower(btrim(al.code)) IN ('township', 'town')
                           OR lower(btrim(al.name)) IN ('township', 'town')
+                      )
+                  `
+                : args.adminLevelCode === "state_region"
+                  ? Prisma.sql`
+                        AND lower(btrim(al.code)) IN ('state_region', 'region', 'state', 'division')
+                    `
+                  : Prisma.empty;
+
+        const regionDescendantClause =
+            args.regionAdminAreaId !== undefined
+                ? Prisma.sql`
+                      AND EXISTS (
+                          WITH RECURSIVE region_tree AS (
+                              SELECT aa.id
+                              FROM core.core_admin_areas AS aa
+                              WHERE aa.id = ${args.regionAdminAreaId}
+                              UNION ALL
+                              SELECT child.id
+                              FROM core.core_admin_areas AS child
+                              INNER JOIN region_tree AS rt ON child.parent_id = rt.id
+                          )
+                          SELECT 1
+                          FROM region_tree AS rt
+                          WHERE rt.id = a.id
                       )
                   `
                 : Prisma.empty;
@@ -179,8 +204,10 @@ export class AdminAreasRepository {
             ) AS an_en ON true
             WHERE a.is_active = true
               AND a.deleted_at IS NULL
+              AND a.is_public_usable = true
               AND a.address_usage <> 'disabled'
-            ${townshipOnlyClause}
+            ${levelClause}
+            ${regionDescendantClause}
             ${searchClause}
             ORDER BY a.canonical_name ASC
             LIMIT ${args.limit}

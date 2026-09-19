@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
+import { recordPlaceActivityByPublicIdSafe } from "../place-popularity/place-popularity.record.js";
 import type { ShareLinkRow } from "./share.types.js";
 
 // Shared projection — internal `id` and access counters are intentionally never selected.
@@ -114,7 +115,11 @@ export class ShareRepository {
                 plus_code
         `);
 
-        return rows[0]!;
+        const row = rows[0]!;
+        if (input.targetType === "place" && input.placePublicId) {
+            recordPlaceActivityByPublicIdSafe(this.prisma, input.placePublicId, "share");
+        }
+        return row;
     }
 
     /** Best-effort access tracking. Failures here must not affect the resolve response. */

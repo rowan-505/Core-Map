@@ -19,6 +19,8 @@ type MapFloatingControlsProps = {
   readonly bottomSheetState: BottomSheetState;
   /** Own-user location control, anchored bottom-right with bottom-sheet-aware offset. */
   readonly locationSlot?: ReactNode;
+  /** Mobile notification bell (desktop uses the left rail). */
+  readonly notificationsSlot?: ReactNode;
 };
 
 type OpenControlsPanel = 'map' | 'language' | 'transport' | null;
@@ -96,6 +98,7 @@ export function MapFloatingControls({
   isSidebarOpen,
   bottomSheetState,
   locationSlot,
+  notificationsSlot,
 }: MapFloatingControlsProps) {
   const [openPanel, setOpenPanel] = useState<OpenControlsPanel>(null);
   const controlsDockRef = useRef<HTMLDivElement | null>(null);
@@ -137,7 +140,10 @@ export function MapFloatingControls({
   const transportConfigured = martinConfiguration.status === 'configured';
 
   return (
-    <div className="pointer-events-none absolute right-3 top-3 z-20 flex origin-top-right flex-col items-end gap-1.5 lg:right-4 lg:top-4">
+    <div className="pointer-events-none absolute right-3 top-3 z-20 flex origin-top-right flex-col items-end gap-2 lg:right-4 lg:top-4">
+      {notificationsSlot ? (
+        <div className="pointer-events-auto lg:hidden">{notificationsSlot}</div>
+      ) : null}
       <MapRightControls ref={controlsDockRef}>
         <LayerModeSelect
           selectedOption={selectedMapOption}
@@ -177,7 +183,7 @@ export function MapFloatingControls({
       </MapRightControls>
       {locationSlot ? (
         <div
-          className={`pointer-events-none fixed z-20 transition-all duration-300 lg:bottom-8 lg:left-auto lg:right-4 lg:top-auto ${locateButtonMobilePositionClass(
+          className={`pointer-events-none fixed z-20 transition-all duration-300 md:bottom-20 md:left-auto md:right-4 md:top-auto ${locateButtonMobilePositionClass(
             isSidebarOpen,
             bottomSheetState,
           )}`}
@@ -195,7 +201,7 @@ const MapRightControls = forwardRef<HTMLDivElement, { readonly children: ReactNo
     return (
       <div
         ref={ref}
-        className="pointer-events-auto flex flex-col items-end gap-1.5"
+        className="pointer-events-auto flex flex-col items-end gap-2"
         aria-label={t('မြေပုံထိန်းချုပ်ခလုတ်များ', 'Map controls')}
       >
         {children}
@@ -313,24 +319,23 @@ function CompactControlSelect({
     <div className="relative">
       <button
         type="button"
-        className={`flex h-11 w-11 items-center justify-center gap-1.5 rounded-2xl border text-sm font-semibold shadow-map-control backdrop-blur-xl transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 lg:h-10 lg:w-auto lg:min-w-20 lg:px-3 ${
+        className={`grid h-11 w-11 place-items-center rounded-map-control border text-map-ink shadow-map-control transition-colors duration-150 lg:h-10 lg:w-10 ${
           isOpen
-            ? 'border-map-primary bg-map-primary text-white shadow-map-control'
-            : 'border-white/90 bg-white/94 text-map-ink hover:border-map-primary/25 hover:bg-map-primary-soft hover:text-map-primary'
+            ? 'border-map-primary/30 bg-map-primary-soft text-map-primary'
+            : 'border-map-border/80 bg-map-surface hover:border-map-primary/25 hover:bg-map-primary-soft hover:text-map-primary'
         }`}
+        aria-label={title}
         aria-expanded={isOpen}
         aria-haspopup="menu"
         title={title}
         onClick={() => onOpenChange(!isOpen)}
       >
-        <span className="grid h-4.5 w-4.5 shrink-0 place-items-center lg:h-4 lg:w-4">
-          {icon}
-        </span>
-        <span className="hidden min-w-0 truncate lg:block">{label}</span>
+        <span className="grid h-4.5 w-4.5 place-items-center">{icon}</span>
+        <span className="sr-only">{label}</span>
       </button>
       {isOpen ? (
         <div
-          className="absolute right-full top-0 z-10 mr-2 grid min-w-36 gap-0.5 rounded-map-card border border-map-border bg-white/98 p-1.5 shadow-map-float backdrop-blur-xl"
+          className="absolute right-full top-0 z-10 mr-2 grid min-w-36 gap-0.5 rounded-map-card border border-map-border bg-map-surface p-1.5 shadow-map-float"
           role="menu"
         >
           {children}
@@ -379,22 +384,21 @@ function TransportLayerControl({
     <div className="relative">
       <button
         type="button"
-        className={`relative flex h-11 w-11 items-center justify-center gap-1.5 rounded-2xl border text-sm font-semibold shadow-map-control backdrop-blur-xl transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 lg:h-10 lg:w-auto lg:min-w-20 lg:px-3 ${
+        className={`relative grid h-11 w-11 place-items-center rounded-map-control border shadow-map-control transition-colors duration-150 lg:h-10 lg:w-10 ${
           isOpen || mode !== null
-            ? 'border-violet-600 bg-violet-600 text-white shadow-map-control'
-            : 'border-white/90 bg-white/94 text-map-ink hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700'
+            ? 'border-map-primary/30 bg-map-primary-soft text-map-primary'
+            : 'border-map-border/80 bg-map-surface text-map-ink hover:border-map-primary/25 hover:bg-map-primary-soft hover:text-map-primary'
         } ${available ? '' : 'opacity-75'}`}
+        aria-label={t('အများသုံးယာဉ်အလွှာများ', 'Transit layers')}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         title={t('အများသုံးယာဉ်အလွှာများ', 'Transit layers')}
         onClick={() => onOpenChange(!isOpen)}
       >
-        <span className="grid h-4.5 w-4.5 shrink-0 place-items-center lg:h-4 lg:w-4">
+        <span className="grid h-4.5 w-4.5 place-items-center">
           <TransportIcon />
         </span>
-        <span className="hidden min-w-0 truncate text-sm lg:block">
-          {t('ယာဉ်လိုင်း', 'Transit')}
-        </span>
+        <span className="sr-only">{t('ယာဉ်လိုင်း', 'Transit')}</span>
         {mode !== null ? (
           <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
         ) : null}
@@ -402,7 +406,7 @@ function TransportLayerControl({
 
       {isOpen ? (
         <div
-          className="absolute right-full top-0 z-10 mr-2 w-60 rounded-xl border border-map-border bg-white/98 p-2 shadow-map-control backdrop-blur-xl"
+          className="absolute right-full top-0 z-10 mr-2 w-60 rounded-xl border border-map-border bg-map-surface p-2 shadow-map-control"
           role="dialog"
           aria-label={t('အများသုံးယာဉ်အလွှာများ', 'Transit layers')}
         >
@@ -496,7 +500,7 @@ function ZoomControls({
 
   return (
     <div
-      className="grid rounded-2xl border border-white/90 bg-white/94 p-1 shadow-map-control backdrop-blur-xl"
+      className="grid overflow-hidden rounded-map-control border border-map-border/80 bg-map-surface shadow-map-control"
       aria-label={t('မြေပုံ အရွယ်အစားထိန်းချုပ်ရန်', 'Map zoom controls')}
     >
       <UtilityButton label={t('ချဲ့ရန်', 'Zoom in')} onClick={onZoomIn}>
@@ -514,10 +518,12 @@ function locateButtonMobilePositionClass(
   isSidebarOpen: boolean,
   bottomSheetState: BottomSheetState,
 ): string {
-  if (!isSidebarOpen) return 'bottom-4 right-3';
-  if (bottomSheetState === 'collapsed') return 'bottom-[6.75rem] right-3';
-  if (bottomSheetState === 'expanded') return 'left-3 top-[4.5rem]';
-  return 'bottom-[calc(48vh+0.75rem)] right-3';
+  if (!isSidebarOpen) return 'bottom-8 right-3 md:bottom-20 md:right-4';
+  if (bottomSheetState === 'collapsed') return 'bottom-[6.5rem] right-3 md:bottom-20 md:right-4';
+  if (bottomSheetState === 'expanded') {
+    return 'left-3 top-[4.5rem] md:bottom-20 md:left-auto md:right-4 md:top-auto';
+  }
+  return 'bottom-[calc(48dvh+0.75rem)] right-3 md:bottom-20 md:right-4';
 }
 
 function ControlOptionButton({
@@ -540,8 +546,8 @@ function ControlOptionButton({
       type="button"
       className={`flex h-10 items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 ${
         active
-          ? 'bg-map-primary text-white shadow-map-control'
-          : 'text-map-ink hover:bg-map-primary-soft hover:text-map-primary disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:bg-transparent'
+          ? 'bg-map-primary-soft text-map-primary'
+          : 'text-map-ink hover:bg-map-bg hover:text-map-ink disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:bg-transparent'
       }`}
       role="menuitemradio"
       aria-checked={active}
@@ -567,7 +573,7 @@ function UtilityButton({
   return (
     <button
       type="button"
-      className="grid h-11 w-11 place-items-center rounded-xl text-sm font-semibold text-map-ink transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 hover:bg-map-primary-soft hover:text-map-primary lg:h-10 lg:w-10"
+      className="grid h-11 w-11 place-items-center text-lg font-medium text-map-ink transition-colors duration-150 hover:bg-map-primary-soft hover:text-map-primary lg:h-10 lg:w-10"
       aria-label={label}
       title={label}
       onClick={onClick}

@@ -11,6 +11,11 @@ export const REPORT_TYPE_CODES = [
     "community_info",
     "other_map_issue",
     "new_stop",
+    "tourism_incorrect_type",
+    "tourism_incorrect_description",
+    "tourism_incorrect_price",
+    "tourism_incorrect_review",
+    "tourism_other",
 ] as const;
 
 /** Lifecycle status codes — must match the seeded ref.ref_report_statuses rows. */
@@ -33,6 +38,7 @@ export const ADMIN_REPORT_TARGET_ENTITY_TYPES = [
     "bus_stop",
     "bus_route",
     "map_point",
+    "tourism_review",
     "stop",
     "route",
     "variant",
@@ -64,6 +70,7 @@ export const REPORT_TARGET_ENTITY_TYPES = [
     "bus_stop",
     "bus_route",
     "map_point",
+    "tourism_review",
 ] as const;
 
 export const reportCreateBodySchema = z
@@ -87,6 +94,14 @@ export const reportCreateBodySchema = z
                     code: z.ZodIssueCode.custom,
                     path: ["latitude"],
                     message: "latitude and longitude are required for map_point targets",
+                });
+            }
+        } else if (value.targetEntityType === "tourism_review") {
+            if (!value.targetPublicId) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["targetPublicId"],
+                    message: "targetPublicId is required for tourism_review targets",
                 });
             }
         } else if (value.targetEntityId === undefined) {

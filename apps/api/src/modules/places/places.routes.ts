@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 
 import {
     createPlaceBodySchema,
+    placeContactBodySchema,
     placeIdParamsSchema,
     placesQuerySchema,
     updatePlaceBodySchema,
@@ -43,7 +44,22 @@ function sanitizePlacePatchBody(body: unknown) {
         return body;
     }
 
-    const { updated_at: _ignoredUpdatedAt, ...rest } = body as Record<string, unknown>;
+    const {
+        updated_at: _ignoredUpdatedAt,
+        created_at: _ignoredCreatedAt,
+        deleted_at: _ignoredDeletedAt,
+        public_id: _ignoredPublicId,
+        id: _ignoredId,
+        popularityScore: _ignoredPopularity,
+        popularity_score: _ignoredPopularitySnake,
+        verified_by: _ignoredVerifiedBy,
+        verified_at: _ignoredVerifiedAt,
+        is_verified: _ignoredIsVerified,
+        isVerified: _ignoredIsVerifiedCamel,
+        normalized_data: _ignoredNormalized,
+        source_refs: _ignoredSourceRefs,
+        ...rest
+    } = body as Record<string, unknown>;
     return rest;
 }
 
@@ -216,6 +232,43 @@ const placesRoutes: FastifyPluginAsync = async (app) => {
                     });
                 }
 
+                throw error;
+            }
+        }
+    );
+
+    app.put(
+        "/places/:id/contact",
+        {
+            preHandler: [app.authenticate, app.requireDashboardWrite],
+        },
+        async (request, reply) => {
+            const paramsParsed = placeIdParamsSchema.safeParse(request.params);
+            if (!paramsParsed.success) {
+                return reply.code(400).send({
+                    message: "Invalid place id",
+                    issues: paramsParsed.error.flatten(),
+                });
+            }
+
+            const bodyParsed = placeContactBodySchema.safeParse(request.body ?? {});
+            if (!bodyParsed.success) {
+                return reply.code(400).send({
+                    message: "Invalid place contact payload",
+                    issues: bodyParsed.error.flatten(),
+                });
+            }
+
+            try {
+                const contact = await placesService.upsertPlaceContact(
+                    paramsParsed.data.id,
+                    bodyParsed.data,
+                );
+                return reply.send(contact);
+            } catch (error) {
+                if (error instanceof PlaceNotFoundError) {
+                    return reply.code(404).send({ message: error.message });
+                }
                 throw error;
             }
         }

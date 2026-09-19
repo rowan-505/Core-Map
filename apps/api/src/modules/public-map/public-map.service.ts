@@ -243,6 +243,8 @@ export class PublicMapService {
             throw new PublicPlaceNotFoundError();
         }
 
+        this.publicMapRepo.recordPlaceView(place.id);
+
         const serialized = serializePlace(place);
 
         // Detail-only enrichment: one Plus Code (pure compute) + one reverse lookup for this place.
@@ -739,6 +741,14 @@ export class PublicMapService {
                 "Failed to persist search click analytics",
             );
         });
+
+        if (payload.entityType === "place" && /^\d+$/.test(payload.entityId)) {
+            try {
+                this.publicMapRepo.recordPlaceView(BigInt(payload.entityId));
+            } catch {
+                // ignore invalid ids
+            }
+        }
     }
 
     /**

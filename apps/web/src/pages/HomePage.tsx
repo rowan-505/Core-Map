@@ -21,6 +21,27 @@ import {
   type SavedLocationSelection,
 } from '@/features/saved-places/components/SavedPlacesPanel';
 import { MyReportsPanel } from '@/features/reports/components/MyReportsPanel';
+import { CommunityPanel } from '@/features/community/components/CommunityPanel';
+import { CommunitySearchAreaButton } from '@/features/community/components/CommunitySearchAreaButton';
+import { useCommunityMapMarkers } from '@/features/community/api/useCommunityData';
+import {
+  formatCommunityBbox,
+  shouldOfferCommunityAreaSearch,
+  type CommunityBbox,
+} from '@/features/community/lib/communityBbox';
+import {
+  communityPostsToGeoJSON,
+} from '@/features/community/lib/communityMarkersOnMap';
+import {
+  readCommunityPostIdFromSearch,
+  syncCommunityPostIdInUrl,
+} from '@/features/community/lib/communityUrlState';
+import type { CommunityLocation } from '@/features/community/api/communityApi';
+import { TourismPanel } from '@/features/tourism/components/TourismPanel';
+import { FoodDrinkPanel } from '@/features/food-drink/components/FoodDrinkPanel';
+import { MoreToolsPanel } from '@/features/map/components/MoreToolsPanel';
+import { NotificationsPanel } from '@/features/notifications/components/NotificationsPanel';
+import { NotificationBellButton } from '@/features/notifications/components/NotificationBellButton';
 import MapView from '@/features/map/components/MapView';
 import { RoutePlannerPanel } from '@/features/map/components/RoutePlannerPanel';
 import type { DirectionsMapOverlay } from '@/features/map/lib/maplibre/directionsRouteGeoJson';
@@ -104,7 +125,6 @@ export default function HomePage() {
   const languageMode = useMapUiStore((s) => s.languageMode);
   const setLanguageMode = useMapUiStore((s) => s.setLanguageMode);
   const { authModalView, closeAuthModal, openAuthModal } = useAuth();
-
   useEffect(() => {
     document.documentElement.lang = mapDocumentLanguage(languageMode);
   }, [languageMode]);
@@ -113,6 +133,7 @@ export default function HomePage() {
   // It seeds the initial map/panel state so the shared location opens immediately.
   const location = useLocation();
   const initialShare = readShareNavState(location.state);
+  const initialCommunityPostId = readCommunityPostIdFromSearch(location.search);
 
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(
     initialShare?.kind === 'place' ? initialShare.placePublicId : null,
@@ -139,10 +160,28 @@ export default function HomePage() {
   );
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSidebarMode, setActiveSidebarMode] = useState<SidebarMode>(
-    initialShare ? (initialShare.kind === 'place' ? 'placeDetail' : 'address') : 'search',
+    initialCommunityPostId
+      ? 'community'
+      : initialShare
+        ? initialShare.kind === 'place'
+          ? 'placeDetail'
+          : 'address'
+        : 'search',
   );
   const [bottomSheetState, setBottomSheetState] = useState<BottomSheetState>('half');
   const [mapViewport, setMapViewport] = useState<MapViewportState | null>(null);
+  const [selectedCommunityPostId, setSelectedCommunityPostId] = useState<string | null>(
+    initialCommunityPostId,
+  );
+  const [communityCommittedViewport, setCommunityCommittedViewport] = useState<{
+    readonly bbox: CommunityBbox;
+    readonly zoom: number;
+  } | null>(null);
+  const [communityDraftLocation, setCommunityDraftLocation] =
+    useState<CommunityLocation | null>(null);
+  const [communityMapFeed, setCommunityMapFeed] = useState<'latest' | 'trusted'>('latest');
+  const [selectedTourismPlaceId, setSelectedTourismPlaceId] = useState<string | null>(null);
+  const [selectedFoodDrinkPlaceId, setSelectedFoodDrinkPlaceId] = useState<string | null>(null);
   const [routeDestination, setRouteDestination] = useState<RouteDestination | null>(null);
   const route = useRouteState('motorcycle');
   const [clickedLocation, setClickedLocation] = useState<MapClickedLocation | null>(
@@ -525,6 +564,140 @@ export default function HomePage() {
     setIsSidebarOpen(true);
   }, []);
 
+  const onSelectCommunityPostId = useCallback((publicId: string | null) => {
+    setSelectedCommunityPostId(publicId);
+    syncCommunityPostIdInUrl(publicId);
+    if (publicId) {
+      setActiveSidebarMode('community');
+      setIsSidebarOpen(true);
+      setBottomSheetState('half');
+    }
+  }, []);
+
+  const openNotificationsDrawer = useCallback(() => {
+    setActiveSidebarMode('notifications');
+    setIsSidebarOpen(true);
+    setBottomSheetState('half');
+  }, []);
+
+  const onFocusCommunityLocation = useCallback((lng: number, lat: number) => {
+    setCameraTarget({
+      type: 'point',
+      center: [lng, lat],
+      zoom: 16,
+      duration: 400,
+    });
+  }, []);
+
+  const openTourismDrawer = useCallback(() => {
+    setActiveSidebarMode('tourism');
+    setIsSidebarOpen(true);
+    setBottomSheetState('half');
+  }, []);
+
+  const openFoodDrinkDrawer = useCallback(() => {
+    setActiveSidebarMode('foodDrink');
+    setIsSidebarOpen(true);
+    setBottomSheetState('half');
+  }, []);
+
+  const onSelectTourismPlaceId = useCallback((publicId: string | null) => {
+    setSelectedTourismPlaceId(publicId);
+  }, []);
+
+  const onSelectFoodDrinkPlaceId = useCallback((publicId: string | null) => {
+    setSelectedFoodDrinkPlaceId(publicId);
+  }, []);
+
+  const onOpenFoodDrinkPlaceDetail = useCallback((publicId: string) => {
+    setSelectedFoodDrinkPlaceId(publicId);
+    setSelectedPoiId(publicId);
+    setSelectedSearchResult(null);
+    setActiveSidebarMode('placeDetail');
+    setIsSidebarOpen(true);
+    setBottomSheetState('half');
+  }, []);
+
+  const onFocusTourismPlace = useCallback((lng: number, lat: number) => {
+    setCameraTarget({
+      type: 'point',
+      center: [lng, lat],
+      zoom: 16,
+      duration: 400,
+    });
+  }, []);
+
+  const onFocusFoodDrinkPlace = useCallback((lng: number, lat: number) => {
+    setCameraTarget({
+      type: 'point',
+      center: [lng, lat],
+      zoom: 16,
+      duration: 400,
+    });
+  }, []);
+
+  const tourismMapCenter = useMemo(() => {
+    if (!mapViewport) return null;
+    const [minLng, minLat, maxLng, maxLat] = mapViewport.bbox;
+    return {
+      lat: (minLat + maxLat) / 2,
+      lng: (minLng + maxLng) / 2,
+    };
+  }, [mapViewport]);
+
+  const isCommunityActive = activeSidebarMode === 'community';
+
+  useEffect(() => {
+    if (!isCommunityActive) {
+      setCommunityCommittedViewport(null);
+      return;
+    }
+    if (!mapViewport) return;
+    setCommunityCommittedViewport((prev) =>
+      prev
+        ? prev
+        : {
+            bbox: mapViewport.bbox,
+            zoom: mapViewport.zoom,
+          },
+    );
+  }, [isCommunityActive, mapViewport]);
+
+  const communityMarkersQuery = useCommunityMapMarkers({
+    enabled: isCommunityActive,
+    feed: communityMapFeed,
+    bbox: communityCommittedViewport
+      ? formatCommunityBbox(communityCommittedViewport.bbox)
+      : null,
+  });
+
+  const communityMarkersGeoJson = useMemo(() => {
+    if (!isCommunityActive) return null;
+    const items = communityMarkersQuery.data?.items ?? [];
+    return communityPostsToGeoJSON(items, selectedCommunityPostId);
+  }, [isCommunityActive, communityMarkersQuery.data, selectedCommunityPostId]);
+
+  const showCommunityAreaSearch = Boolean(
+    isCommunityActive &&
+      communityCommittedViewport &&
+      mapViewport &&
+      shouldOfferCommunityAreaSearch({
+        committed: communityCommittedViewport.bbox,
+        live: mapViewport.bbox,
+        committedZoom: communityCommittedViewport.zoom,
+        liveZoom: mapViewport.zoom,
+      }),
+  );
+
+  useEffect(() => {
+    if (!isCommunityActive || !clickedLocation) return;
+    setCommunityDraftLocation({
+      lng: clickedLocation.coordinates[0],
+      lat: clickedLocation.coordinates[1],
+      label: clickedLocation.addressLine ?? clickedLocation.label,
+    });
+  }, [isCommunityActive, clickedLocation]);
+
   const onSelectSavedLocation = useCallback((selection: SavedLocationSelection) => {
     setSelectedPoiId(null);
     setSelectedSearchResult(null);
@@ -866,6 +1039,9 @@ export default function HomePage() {
           onModeChange={(mode) => {
             setActiveSidebarMode(mode);
             setIsSidebarOpen(true);
+            if (mode === 'community' || mode === 'notifications' || mode === 'tourism') {
+              setBottomSheetState('half');
+            }
           }}
           accountSlot={
             <AccountMenu
@@ -894,11 +1070,26 @@ export default function HomePage() {
             locationCameraCommand={locationCamera}
             onUserLocationFollowDisengage={userLocation.disableFollowing}
             onSelectPoiId={onSelectPoiId}
+            communityMarkers={communityMarkersGeoJson}
+            onSelectCommunityPostId={(publicId) => {
+              onSelectCommunityPostId(publicId);
+            }}
             selectedTransportSelection={selectedTransportSelection}
             onSelectTransportStop={onSelectTransportStop}
             onSelectTransportRoute={onSelectTransportRoute}
             onEmptyMapClick={onEmptyMapClick}
             onViewportChange={setMapViewport}
+          />
+          <CommunitySearchAreaButton
+            visible={showCommunityAreaSearch}
+            loading={communityMarkersQuery.isFetching}
+            onSearch={() => {
+              if (!mapViewport) return;
+              setCommunityCommittedViewport({
+                bbox: mapViewport.bbox,
+                zoom: mapViewport.zoom,
+              });
+            }}
           />
         </MapViewport>
       }
@@ -907,9 +1098,9 @@ export default function HomePage() {
           isOpen={isSidebarOpen}
           activeMode={activeSidebarMode}
           transportStopDetailTitle={transportStopDetailTitle}
-          onCollapse={() => setIsSidebarOpen(false)}
           bottomSheetState={bottomSheetState}
-          onBottomSheetStateChange={setBottomSheetState}
+          onBottomSheetChange={setBottomSheetState}
+          onCollapse={() => setIsSidebarOpen(false)}
           searchPanel={
             <SearchPanel
               categories={categoriesQuery.data ?? []}
@@ -1010,6 +1201,62 @@ export default function HomePage() {
           busPanel={<BusPanelPlaceholder />}
           savedPanel={<SavedPlacesPanel onSelectLocation={onSelectSavedLocation} />}
           reportsPanel={<MyReportsPanel />}
+          communityPanel={
+            <CommunityPanel
+              selectedPostId={selectedCommunityPostId}
+              onSelectPost={onSelectCommunityPostId}
+              activeFeed={communityMapFeed}
+              onActiveFeedChange={setCommunityMapFeed}
+              draftLocation={
+                communityDraftLocation ??
+                (mapViewport
+                  ? {
+                      lng: (mapViewport.bbox[0] + mapViewport.bbox[2]) / 2,
+                      lat: (mapViewport.bbox[1] + mapViewport.bbox[3]) / 2,
+                      label: null,
+                    }
+                  : null)
+              }
+              onFocusLocation={onFocusCommunityLocation}
+            />
+          }
+          tourismPanel={
+            <TourismPanel
+              mapCenter={tourismMapCenter}
+              selectedPlaceId={selectedTourismPlaceId}
+              onSelectPlace={onSelectTourismPlaceId}
+              onFocusPlace={onFocusTourismPlace}
+            />
+          }
+          foodDrinkPanel={
+            <FoodDrinkPanel
+              mapCenter={tourismMapCenter}
+              selectedPlaceId={selectedFoodDrinkPlaceId}
+              onSelectPlace={onSelectFoodDrinkPlaceId}
+              onFocusPlace={onFocusFoodDrinkPlace}
+              onDirections={(place) => onRoutePlace('to', place)}
+              onOpenPlaceDetail={onOpenFoodDrinkPlaceDetail}
+            />
+          }
+          morePanel={
+            <MoreToolsPanel
+              onOpenAccount={openAccountDrawer}
+              onOpenReports={openReportsDrawer}
+              onOpenCommunity={() => {
+                setActiveSidebarMode('community');
+                setIsSidebarOpen(true);
+              }}
+              onOpenTourism={openTourismDrawer}
+              onOpenFoodDrink={openFoodDrinkDrawer}
+            />
+          }
+          notificationsPanel={
+            <NotificationsPanel
+              onOpenCommunityPost={(publicId) => {
+                onSelectCommunityPostId(publicId);
+              }}
+            />
+          }
           accountPanel={
             <AccountPanel onOpenSaved={openSavedDrawer} onOpenReports={openReportsDrawer} />
           }
@@ -1022,6 +1269,13 @@ export default function HomePage() {
             onSelectLanguageMode={setLanguageMode}
             isSidebarOpen={isSidebarOpen}
             bottomSheetState={bottomSheetState}
+            notificationsSlot={
+              <NotificationBellButton
+                active={activeSidebarMode === 'notifications'}
+                onOpen={openNotificationsDrawer}
+                mobileOnly
+              />
+            }
             locationSlot={
               <LocationControl
                 status={userLocation.status}

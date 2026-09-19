@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
+import { recordPlaceActivitySafe } from "../place-popularity/place-popularity.record.js";
 import { expandSearchEntityTypeFilters } from "../search/transport-search-entity.js";
 import {
     searchOverlayActiveCondition,
@@ -273,6 +274,11 @@ export type SearchResultClickAnalyticsInsert = {
 
 export class PublicMapRepository {
     constructor(private readonly prisma: PrismaClient) {}
+
+    /** Best-effort place detail / search-click view bump into daily activity. */
+    recordPlaceView(placeId: bigint): void {
+        recordPlaceActivitySafe(this.prisma, placeId, "view");
+    }
 
     async listPlaces(params: ListPublicPlacesParams): Promise<PublicPlaceRow[]> {
         const conditions = buildPublicPlaceConditions(params);

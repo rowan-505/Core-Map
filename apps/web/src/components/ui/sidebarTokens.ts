@@ -4,9 +4,9 @@
  * components (react-refresh friendly). Presentation only.
  */
 
-/** Outer card surface: consistent radius, border, and soft shadow. */
+/** Quiet inset surface — prefer headings/dividers over nested cards. */
 export const sidebarCard =
-  'overflow-hidden rounded-map-card border border-map-border bg-map-surface shadow-map-card';
+  'overflow-hidden bg-transparent';
 
 /** Small uppercase muted label used for section titles and row labels. */
 export const mutedLabel =
@@ -15,6 +15,10 @@ export const mutedLabel =
 /** Title class for selectable result/list rows (truncates or wraps for bilingual). */
 export function resultTitleClass(multiline: boolean): string {
   return multiline
-    ? 'block whitespace-pre-line wrap-break-word text-sm font-medium leading-tight text-map-ink'
-    : 'block truncate text-sm font-medium leading-tight text-map-ink';
+    ? 'map-clamp-2 block wrap-break-word text-[15px] font-medium leading-[1.55] text-map-ink'
+    : 'map-clamp-1 block text-[15px] font-medium leading-[1.55] text-map-ink';
 }
+
+export const panelPad = 'px-4 py-4';
+export const listDivider = 'divide-y divide-map-border/80';
+export const controlHeight = 'h-11 lg:h-10';

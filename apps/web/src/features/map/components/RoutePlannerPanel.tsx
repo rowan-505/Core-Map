@@ -263,13 +263,13 @@ export function RoutePlannerPanel({
   );
 
   return (
-    <section className="relative space-y-3 p-3 text-sm" aria-label={t('လမ်းညွှန်', 'Directions')}>
-      <div className="rounded-map-card border border-map-border bg-map-surface p-3 shadow-map-card">
+    <section className="relative space-y-4 p-4 text-sm" aria-label={t('လမ်းညွှန်', 'Directions')}>
+      <div>
         {hasRouteDraft ? (
           <div className="mb-2 flex justify-end">
             <button
               type="button"
-              className="min-h-9 rounded-full border border-map-border bg-map-surface px-3 py-1 text-xs font-semibold text-map-muted transition-colors duration-150 hover:border-map-primary/40 hover:bg-map-primary-soft hover:text-map-primary"
+              className="min-h-9 rounded-full px-3 py-1 text-xs font-semibold text-map-muted transition-colors duration-150 hover:bg-map-primary-soft hover:text-map-primary"
               aria-label={t('လမ်းညွှန်ချက်များကို ရှင်းရန်', 'Clear directions and route')}
               onClick={() => handleClearAll()}
             >
@@ -345,19 +345,19 @@ export function RoutePlannerPanel({
 
       </div>
 
-      <div className="rounded-map-card border border-map-border bg-map-surface p-3 shadow-map-card">
-        <h3 className="map-kicker mb-2 text-map-muted">
+      <div>
+        <h3 className="mb-2 text-[15px] font-semibold text-map-ink">
           {t('ယာဉ်', 'Mode')}
         </h3>
-        <div className="-mx-1 grid grid-cols-3 gap-1 rounded-map-control bg-slate-100 p-1">
+        <div className="-mx-1 grid grid-cols-3 gap-1 rounded-map-control bg-map-bg p-1">
           {ENABLED_PROFILES.map((option) => (
             <button
               type="button"
               key={option.id}
-              className={`flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-1.5 text-sm font-semibold transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 lg:min-h-10 ${
+              className={`flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-1.5 text-sm font-semibold transition-colors duration-150 lg:min-h-10 ${
                 route.selectedMode === option.id
-                  ? 'bg-map-primary text-white shadow-map-control'
-                  : 'text-map-muted hover:bg-white hover:text-map-primary'
+                  ? 'bg-map-surface text-map-ink shadow-map-control'
+                  : 'text-map-muted hover:bg-white hover:text-map-ink'
               }`}
               aria-pressed={route.selectedMode === option.id}
               onClick={() => route.setSelectedMode(option.id)}
@@ -420,9 +420,9 @@ export function RoutePlannerPanel({
       ) : null}
 
       {phase === 'success' && routeResult ? (
-        <div className="rounded-map-card border border-map-border bg-map-surface p-3.5 shadow-map-card">
+        <div>
           <div className="mb-3">
-            <h3 className="text-sm font-semibold text-map-ink">{t('လမ်းကြောင်းအကျဉ်း', 'Route summary')}</h3>
+            <h3 className="text-[15px] font-semibold text-map-ink">{t('လမ်းကြောင်းအကျဉ်း', 'Route summary')}</h3>
             <p className="mt-1 text-sm font-medium text-map-ink/85">
               {routeProfileLabel(routeResult.profile, t)}
             </p>
@@ -460,8 +460,8 @@ export function RoutePlannerPanel({
       ) : null}
 
       {steps.length > 0 ? (
-        <div className="rounded-map-card border border-map-border bg-map-surface p-3.5 shadow-map-card">
-          <h3 className="text-sm font-semibold text-map-ink">{t('အဆင့်ဆင့် လမ်းညွှန်ချက်', 'Turn-by-turn')}</h3>
+        <div>
+          <h3 className="text-[15px] font-semibold text-map-ink">{t('အဆင့်ဆင့် လမ်းညွှန်ချက်', 'Turn-by-turn')}</h3>
           <ol className="mt-2 space-y-2 text-xs leading-5 text-map-ink/80">
             {steps.map((step, index) => (
               <li

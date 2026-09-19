@@ -64,12 +64,16 @@ function makePlaceDetail(adminAreaId: bigint | null) {
         confidence_score: 50,
         is_public: true,
         verification_status: "unverified",
+        verification_note: null,
         is_verified: false,
         source_type_id: 1n,
         publish_status_id: null,
         plus_code: null,
+        current_version_id: null,
+        deleted_at: null,
         created_at: new Date(),
         updated_at: new Date(),
+        names: [],
         myanmar_name: null,
         english_name: "Test",
     };
@@ -82,6 +86,8 @@ function makePlacesService(args: {
     const entityAdminArea = new EntityAdminAreaService(makeEntityAdminAreaRepo());
     const placesRepo = {
         getPlaceDetailByPublicId: async () => makePlaceDetail(args.existingAdminAreaId),
+        getPlaceContactByPlaceId: async () => null,
+        getPrimaryAddressByPlaceId: async () => null,
         hasCategory: async () => true,
         updatePlace: async (_id: string, input: { admin_area_id?: bigint | null }) => {
             args.onUpdate?.(input);

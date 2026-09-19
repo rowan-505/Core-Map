@@ -12,11 +12,14 @@ import ResetPasswordPage from '../pages/legal/ResetPasswordPage';
 import OAuthResultPage from '../pages/legal/OAuthResultPage';
 import CompleteProfilePage from '../pages/legal/CompleteProfilePage';
 import AccountSecurityPage from '../pages/account/AccountSecurityPage';
+import NotFoundPage from '../pages/NotFoundPage';
+import RouteErrorPage from '../pages/RouteErrorPage';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <RootLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <HomePage /> },
       { path: 's/:code', element: <ShareResolver /> },
@@ -24,6 +27,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <LegalLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { path: 'privacy', element: <PrivacyPage /> },
       { path: 'terms', element: <TermsPage /> },
@@ -36,4 +40,5 @@ export const router = createBrowserRouter([
       { path: 'account/security', element: <AccountSecurityPage /> },
     ],
   },
+  { path: '*', element: <NotFoundPage /> },
 ]);

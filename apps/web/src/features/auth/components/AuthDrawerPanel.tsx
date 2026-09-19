@@ -143,6 +143,9 @@ export function AuthDrawerPanel({
             }
             required
             minLength={isSignup ? 8 : 8}
+            revealable
+            showLabel={t('စကားဝှက် ပြရန်', 'Show password')}
+            hideLabel={t('စကားဝှက် ဖျောက်ရန်', 'Hide password')}
           />
           {isSignup ? (
             <Field
@@ -153,6 +156,9 @@ export function AuthDrawerPanel({
               onChange={setConfirmPassword}
               required
               minLength={8}
+              revealable
+              showLabel={t('စကားဝှက် ပြရန်', 'Show password')}
+              hideLabel={t('စကားဝှက် ဖျောက်ရန်', 'Hide password')}
             />
           ) : (
             <p className="text-right text-xs">
@@ -190,6 +196,22 @@ export function AuthDrawerPanel({
             />
           ) : null}
 
+          {isSignup ? (
+            <label className="flex items-start gap-2 text-xs leading-5 text-map-muted">
+              <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0 accent-map-primary" />
+              <span>
+                By creating an account, I agree to the{' '}
+                <Link to="/terms" className="font-semibold text-map-primary hover:underline">
+                  Terms
+                </Link>{' '}
+                and{' '}
+                <Link to="/privacy" className="font-semibold text-map-primary hover:underline">
+                  Privacy Policy
+                </Link>.
+              </span>
+            </label>
+          ) : null}
+
           {error ? (
             <p
               className="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-700"
@@ -216,7 +238,7 @@ export function AuthDrawerPanel({
       <p className="mt-3 px-1 text-center text-xs text-map-muted">
         {t(
           'နေရာသိမ်းရန်သာ အကောင့်လိုသည်။',
-          'Sign in only to save places.',
+          'Sign in to save places, send reports, and manage your account.',
         )}
       </p>
       <div className="mt-3 flex justify-center">
@@ -235,6 +257,9 @@ function Field({
   autoComplete,
   required = false,
   minLength,
+  revealable = false,
+  showLabel = 'Show password',
+  hideLabel = 'Hide password',
 }: {
   readonly label: string;
   readonly type: string;
@@ -244,21 +269,63 @@ function Field({
   readonly autoComplete?: string;
   readonly required?: boolean;
   readonly minLength?: number;
+  readonly revealable?: boolean;
+  readonly showLabel?: string;
+  readonly hideLabel?: string;
 }) {
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === 'password';
+  const inputType = isPassword && revealable && visible ? 'text' : type;
+
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-semibold text-map-muted">{label}</span>
-      <input
-        className="w-full rounded-map-control border border-map-border bg-map-surface px-3 py-2 text-sm text-map-ink outline-none transition-colors focus:border-map-primary "
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        required={required}
-        minLength={minLength}
-      />
+      <div className="relative">
+        <input
+          className={`w-full rounded-map-control border border-map-border bg-map-surface px-3 py-2 text-sm text-map-ink outline-none transition-colors focus:border-map-primary ${
+            revealable && isPassword ? 'pr-10' : ''
+          }`}
+          type={inputType}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          required={required}
+          minLength={minLength}
+        />
+        {revealable && isPassword ? (
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-map-muted transition-colors hover:text-map-ink"
+            aria-label={visible ? hideLabel : showLabel}
+            aria-pressed={visible}
+            onClick={() => setVisible((current) => !current)}
+          >
+            {visible ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        ) : null}
+      </div>
     </label>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="2.75" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M3 3l18 18" />
+      <path d="M10.6 10.6a2.75 2.75 0 0 0 3.8 3.8" />
+      <path d="M9.9 5.5A10.3 10.3 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16.7 16.7 0 0 1-3.1 3.7" />
+      <path d="M6.1 6.2A16.4 16.4 0 0 0 2.5 12S6 18.5 12 18.5c1.3 0 2.5-.2 3.6-.6" />
+    </svg>
   );
 }
 

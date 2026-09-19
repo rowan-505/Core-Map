@@ -12,8 +12,8 @@ import {
   type PublicSearchTransportType,
 } from '@/features/poi/api/publicSearchConstants';
 import { PoiList } from '@/features/poi/components/PoiList';
-import { Chip, ChipRow, ResultRow, SidebarSectionTitle } from '@/components/ui/sidebarUi';
-import { resultTitleClass, sidebarCard } from '@/components/ui/sidebarTokens';
+import { Chip, ChipRow, ListSkeleton, PanelEmptyState, ResultRow, SearchField, SidebarSectionTitle } from '@/components/ui/sidebarUi';
+import { resultTitleClass } from '@/components/ui/sidebarTokens';
 import type { Poi, PoiCategory, PoiCategoryCode } from '@/types';
 import { getLocalizedName } from '@local-map/localized-name';
 import { usePublicTransportRoute } from '@/features/transport/api/usePublicTransportRoute';
@@ -128,34 +128,16 @@ function SearchPanelInner({
   const zoomTooLow = typeof mapZoom === 'number' && mapZoom < 12;
 
   return (
-    <section className="space-y-4 p-4 text-sm" aria-label={t('နေရာရှာဖွေရန်', 'Search places')}>
-      <div className="relative">
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-map-muted">
-          <SearchIcon />
-        </span>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchQueryChange(e.target.value)}
-          placeholder={t('နေရာ သို့မဟုတ် လမ်း ရှာရန်', 'Search the map')}
-          className="h-12 w-full rounded-map-control border border-map-border bg-map-surface py-2 pl-11 pr-16 text-sm text-map-ink shadow-map-control transition-colors placeholder:text-map-muted focus:border-map-primary"
-          autoComplete="off"
-          aria-label={t('မြေပုံ ရှာရန်', 'Search the map')}
-        />
-        {searchLoading ? (
-          <span className="absolute right-10 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-map-border border-t-map-primary" />
-        ) : null}
-        {searchQuery.length > 0 ? (
-          <button
-            type="button"
-            className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-sm leading-none text-map-muted transition-colors fine-hover:bg-map-bg fine-hover:text-map-ink"
-            aria-label={t('ရှာဖွေမှုကို ရှင်းရန်', 'Clear search')}
-            onClick={onClearSearch}
-          >
-            <ClearIcon />
-          </button>
-        ) : null}
-      </div>
+    <section className="space-y-4 px-4 py-4 text-sm" aria-label={t('နေရာရှာဖွေရန်', 'Search places')}>
+      <SearchField
+        value={searchQuery}
+        onChange={onSearchQueryChange}
+        onClear={onClearSearch}
+        placeholder={t('နေရာ သို့မဟုတ် လမ်း ရှာရန်', 'Search the map')}
+        label={t('မြေပုံ ရှာရန်', 'Search the map')}
+        clearLabel={t('ရှာဖွေမှုကို ရှင်းရန်', 'Clear search')}
+        loading={searchLoading}
+      />
 
       {showSearchResults ? (
         <div className="space-y-3">
@@ -171,7 +153,7 @@ function SearchPanelInner({
             ))}
           </ChipRow>
           {showTransportFilters ? (
-            <div className="space-y-2 rounded-map-card border border-map-border bg-map-bg px-2 py-2">
+            <div className="space-y-2 rounded-map-control border border-map-border/80 bg-map-bg px-2 py-2">
               <p className="map-kicker px-1 text-map-muted">
                 {t('အများသုံးယာဉ် စစ်ထုတ်ရန်', 'Transport filters')}
               </p>
@@ -242,24 +224,22 @@ function SearchPanelInner({
             ) : null}
           </div>
 
-          <div className={sidebarCard}>
-            <div className="border-b border-map-border px-3.5 py-2.5">
-              <SidebarSectionTitle
-                trailing={
-                  placesLoading
-                    ? t('ဖွင့်နေသည်…', 'Loading…')
-                    : zoomTooLow
-                      ? undefined
-                      : t(`${placesShown} နေရာ`, `${placesShown} places`)
-                }
-              >
-                {t('အနီးအနား', 'Nearby')}
-              </SidebarSectionTitle>
-            </div>
+          <div className="space-y-1">
+            <SidebarSectionTitle
+              trailing={
+                placesLoading
+                  ? t('ဖွင့်နေသည်…', 'Loading…')
+                  : zoomTooLow
+                    ? undefined
+                    : t(`${placesShown} နေရာ`, `${placesShown} places`)
+              }
+            >
+              {t('အနီးအနား', 'Nearby')}
+            </SidebarSectionTitle>
             {zoomTooLow ? (
-              <p className="px-3.5 py-4 text-sm leading-6 text-map-muted">
-                {t('အနီးအနားကြည့်ရန် ချဲ့ပါ။', 'Zoom in to browse nearby.')}
-              </p>
+              <PanelEmptyState
+                title={t('အနီးအနားကြည့်ရန် ချဲ့ပါ။', 'Zoom in to browse nearby.')}
+              />
             ) : (
               <>
                 <PoiList
@@ -270,10 +250,10 @@ function SearchPanelInner({
                   error={placesError}
                 />
                 {!placesLoading && !placesError && hasMorePlaces ? (
-                  <div className="border-t border-map-border p-2.5">
+                  <div className="pt-1">
                     <button
                       type="button"
-                      className="flex h-11 w-full items-center justify-center rounded-map-control border border-map-border bg-map-surface px-3 text-sm font-semibold text-map-ink transition-colors fine-hover:bg-map-bg disabled:cursor-wait disabled:opacity-60 lg:h-10"
+                      className="flex h-11 w-full items-center justify-center rounded-map-control border border-map-border bg-map-surface px-3 text-sm font-semibold text-map-ink transition-colors hover:bg-map-bg disabled:cursor-wait disabled:opacity-60 lg:h-10"
                       onClick={onLoadMorePlaces}
                       disabled={placesLoadingMore}
                     >
@@ -353,7 +333,22 @@ function categoryDisplayName(category: PoiCategory, languageMode: PlaceLanguageM
   if (code.includes('educat') || code.includes('school')) {
     return mapUiText(languageMode, 'ပညာရေး', 'Education');
   }
-  return category.name;
+  const knownLabels: ReadonlyArray<readonly [string, string, string]> = [
+    ['government', 'အစိုးရ', 'Government'],
+    ['religion', 'ဘာသာရေး', 'Religion'],
+    ['service', 'ဝန်ဆောင်မှုများ', 'Services'],
+    ['hotel', 'ဟိုတယ်', 'Hotel'],
+    ['entertainment', 'အပန်းဖြေ', 'Entertainment'],
+    ['emergency', 'အရေးပေါ်', 'Emergency'],
+    ['finance', 'ငွေကြေးဝန်ဆောင်မှု', 'Finance'],
+    ['community', 'လူမှုအသိုင်းအဝိုင်း', 'Community'],
+    ['industry', 'စက်မှုလုပ်ငန်း', 'Industry'],
+    ['facility', 'အများသုံးနေရာ', 'Facility'],
+    ['office', 'ရုံး', 'Office'],
+  ];
+  const known = knownLabels.find(([needle]) => code.includes(needle));
+  if (known) return mapUiText(languageMode, known[1], known[2]);
+  return languageMode === 'en' ? category.name : (category.nameMm ?? category.nameLocal ?? category.name);
 }
 
 function searchFilterLabel(
@@ -443,7 +438,7 @@ function SelectedResultCard({
     routeDetail.data?.variants.reduce((sum, variant) => sum + variant.stops.length, 0) ?? 0;
 
   return (
-    <div className="rounded-map-card border border-map-primary/20 bg-map-primary-soft p-3">
+    <div className="rounded-map-card border border-map-primary/15 bg-map-primary-soft p-3">
       <div className="flex items-start gap-2.5">
         <SearchResultBadge type={entityType} />
         <span className="min-w-0 flex-1">
@@ -593,16 +588,24 @@ function SearchResults({
   }, [canLoadMore, onLoadMoreSearch, results.length]);
 
   return (
-    <div className={sidebarCard}>
-      <div className="border-b border-map-border/70 px-3.5 py-2">
-        <SidebarSectionTitle>{t('ရှာဖွေမှုရလဒ်များ', 'Search results')}</SidebarSectionTitle>
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <SidebarSectionTitle
+          trailing={
+            hasResults
+              ? t(`${visibleResults.length} ရလဒ်`, `${visibleResults.length} results`)
+              : undefined
+          }
+        >
+          {t('ရှာဖွေမှုရလဒ်များ', 'Search results')}
+        </SidebarSectionTitle>
       </div>
       {initialLoading ? (
-        <SearchResultSkeleton />
+        <ListSkeleton rows={4} />
       ) : null}
       {searchError ? (
-        <div className="px-3.5 py-3">
-          <SearchStateMessage
+        <div>
+          <PanelEmptyState
             tone="error"
             title={t('ရလဒ်များ မရပါ။', 'Results unavailable.')}
             body={
@@ -613,27 +616,29 @@ function SearchResults({
                   )
                 : t('ချိတ်ဆက်မှုကို စစ်ဆေးပါ။', 'Check your connection.')
             }
+            action={
+              onRetrySearch ? (
+                <button
+                  type="button"
+                  className="inline-flex min-h-10 items-center rounded-map-control px-3 text-sm font-semibold text-map-primary hover:bg-map-primary-soft"
+                  onClick={onRetrySearch}
+                >
+                  {t('ပြန်ရှာရန်', 'Retry search')}
+                </button>
+              ) : null
+            }
           />
-          {onRetrySearch ? (
-            <button
-              type="button"
-              className="mt-2 inline-flex min-h-10 items-center rounded-map-control px-2 text-sm font-semibold text-map-primary fine-hover:bg-map-primary-soft fine-hover:text-map-primary-hover"
-              onClick={onRetrySearch}
-            >
-              {t('ပြန်ရှာရန်', 'Retry search')}
-            </button>
-          ) : null}
         </div>
       ) : null}
       {!initialLoading && !searchError && !hasResults ? (
-        <SearchStateMessage
+        <PanelEmptyState
           title={t('ရလဒ်မတွေ့ပါ။', 'No results found.')}
           body={t('အခြားအမည်ဖြင့် ရှာပါ။', 'Try another name.')}
         />
       ) : null}
       {!searchError && hasResults ? (
         <ul
-          className="divide-y divide-map-border/65"
+          className="-mx-4 divide-y divide-map-border/70"
           role="listbox"
           aria-label={t('ရှာဖွေမှုရလဒ်များ', 'Search results')}
         >
@@ -682,27 +687,28 @@ function SearchResults({
         </ul>
       ) : null}
       {searchLoadingMore ? (
-        <SearchStateMessage
-          title={t('ရလဒ်များ ထပ်ဖွင့်နေသည်…', 'Loading more results...')}
-          body={t('နောက်ထပ်ရလဒ်များ ရယူနေသည်။', 'Fetching more results.')}
-        />
+        <p className="px-1 py-2 text-xs text-map-muted">
+          {t('ရလဒ်များ ထပ်ဖွင့်နေသည်…', 'Loading more results...')}
+        </p>
       ) : null}
       {searchFetchMoreError ? (
-        <div className="border-t border-map-border/70 px-3.5 py-3">
-          <SearchStateMessage
+        <div className="py-2">
+          <PanelEmptyState
             tone="error"
             title={t('ထပ်ဖွင့်၍မရပါ။', 'Could not load more.')}
             body={t('ပြန်ကြိုးစားပါ။', 'Try again.')}
+            action={
+              onLoadMoreSearch ? (
+                <button
+                  type="button"
+                  className="inline-flex min-h-10 items-center rounded-map-control px-3 text-sm font-semibold text-map-primary hover:bg-map-primary-soft"
+                  onClick={onLoadMoreSearch}
+                >
+                  {t('ပြန်ကြိုးစားရန်', 'Retry')}
+                </button>
+              ) : null
+            }
           />
-          {onLoadMoreSearch ? (
-            <button
-              type="button"
-              className="mt-2 inline-flex min-h-10 items-center rounded-map-control px-2 text-sm font-semibold text-map-primary fine-hover:bg-map-primary-soft fine-hover:text-map-primary-hover"
-              onClick={onLoadMoreSearch}
-            >
-              {t('ပြန်ကြိုးစားရန်', 'Retry')}
-            </button>
-          ) : null}
         </div>
       ) : null}
       {!searchLoading &&
@@ -711,34 +717,12 @@ function SearchResults({
       !hasMoreSearch &&
       !searchLoadingMore &&
       !searchFetchMoreError ? (
-        <p className="border-t border-map-border/70 px-3.5 py-2.5 text-xs text-map-muted">
+        <p className="px-1 py-2 text-xs text-map-muted">
           {searchReachedCap
             ? t('ရလဒ်အားလုံး ပြထားသည်။', 'All results shown.')
             : t('ရလဒ်ကုန်ပါပြီ။', 'End of results.')}
         </p>
       ) : null}
-    </div>
-  );
-}
-
-/** Stable three-row placeholder: immediate feedback without layout shifts. */
-function SearchResultSkeleton() {
-  const t = useMapUiText();
-  return (
-    <div
-      className="divide-y divide-map-border/65"
-      role="status"
-      aria-label={t('ရှာဖွေနေသည်', 'Searching')}
-    >
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="flex items-center gap-3 px-3.5 py-3" aria-hidden="true">
-          <span className="h-7 w-7 shrink-0 animate-pulse rounded-full bg-map-border/60" />
-          <span className="min-w-0 flex-1 space-y-2">
-            <span className="block h-3.5 w-2/3 animate-pulse rounded bg-map-border/70" />
-            <span className="block h-3 w-1/2 animate-pulse rounded bg-map-border/45" />
-          </span>
-        </div>
-      ))}
     </div>
   );
 }
@@ -854,23 +838,6 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
   return 6_371_000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function SearchStateMessage({
-  title,
-  body,
-  tone = 'neutral',
-}: {
-  readonly title: string;
-  readonly body: string;
-  readonly tone?: 'neutral' | 'error';
-}) {
-  return (
-    <div className={`px-3.5 py-3 ${tone === 'error' ? 'text-red-700' : 'text-map-ink/80'}`}>
-      <p className="text-sm font-medium">{title}</p>
-      <p className="mt-0.5 text-xs leading-5 text-map-muted">{body}</p>
-    </div>
-  );
-}
-
 function SearchResultBadge({ type }: { readonly type: SearchResultType }) {
   const meta = searchResultTypeMeta(type);
 
@@ -967,29 +934,3 @@ function searchResultTypeMeta(type: SearchResultType): {
 }
 
 export const SearchPanel = memo(SearchPanelInner);
-
-function SearchIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M9 15.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM13.8 13.8 18 18"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function ClearIcon() {
-  return (
-    <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path
-        d="m4.5 4.5 7 7M11.5 4.5l-7 7"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}

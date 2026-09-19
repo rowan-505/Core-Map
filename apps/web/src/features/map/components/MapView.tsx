@@ -84,6 +84,11 @@ import {
 import { getRecommendedLocationZoom } from '@/features/location/locationAccuracy';
 import { logLocationEvent } from '@/features/location/locationDebug';
 import { COREMAP_DEFAULT_FOCUS } from '@/features/location/locationCoverage';
+import {
+  clearCommunityMarkers,
+  ensureCommunityMarkerLayers,
+  setCommunityMarkers,
+} from '@/features/community/lib/communityMarkersOnMap';
 const KYAUKTAN_CENTER: [number, number] = [96.3168, 16.6590];
 const KYAUKTAN_CENTER_ZOOM = 14.5;
 
@@ -104,6 +109,8 @@ function MapViewInner({
   locationCameraCommand = null,
   onUserLocationFollowDisengage,
   onSelectPoiId,
+  communityMarkers = null,
+  onSelectCommunityPostId,
   selectedTransportSelection = null,
   onSelectTransportStop,
   onSelectTransportRoute,
@@ -190,6 +197,7 @@ function MapViewInner({
   }, [onUserLocationFollowDisengage]);
 
   const onSelectRef = useRef(onSelectPoiId);
+  const onSelectCommunityPostRef = useRef(onSelectCommunityPostId);
   const onSelectTransportStopRef = useRef(onSelectTransportStop);
   const onSelectTransportRouteRef = useRef(onSelectTransportRoute);
   const onEmptyMapClickRef = useRef(onEmptyMapClick);
@@ -197,6 +205,9 @@ function MapViewInner({
   useEffect(() => {
     onSelectRef.current = onSelectPoiId;
   }, [onSelectPoiId]);
+  useEffect(() => {
+    onSelectCommunityPostRef.current = onSelectCommunityPostId;
+  }, [onSelectCommunityPostId]);
   useEffect(() => {
     onSelectTransportStopRef.current = onSelectTransportStop;
   }, [onSelectTransportStop]);
@@ -258,6 +269,7 @@ function MapViewInner({
           ensureDirectionsRouteLayers(map);
           setDirectionsRouteOverlay(map, directionsOverlayRef.current ?? null);
           ensureSearchHighlightLayers(map);
+          ensureCommunityMarkerLayers(map);
           ensureClickedLocationLayer(map, clickedLocationRef.current);
           ensureUserLocationLayers(map);
           updateUserLocationLayers(map, userLocationFixRef.current);
@@ -428,6 +440,9 @@ function MapViewInner({
       onSelectPoiId: (id) => {
         onSelectRef.current(id);
       },
+      onSelectCommunityPostId: (publicId) => {
+        onSelectCommunityPostRef.current?.(publicId);
+      },
       onSelectTransportStop: (selection) => {
         onSelectTransportStopRef.current?.(selection);
       },
@@ -494,6 +509,19 @@ function MapViewInner({
     if (!map) return;
     setPlacesGeoJSON(map, geojson);
   }, [mapReady, geojson]);
+
+  /** Community geotags — data-only; cleared when Community is inactive (empty FC / null). */
+  useEffect(() => {
+    if (!mapReady) return;
+    const map = mapRef.current;
+    if (!map) return;
+    if (!communityMarkers || communityMarkers.features.length === 0) {
+      clearCommunityMarkers(map);
+      return;
+    }
+    setCommunityMarkers(map, communityMarkers);
+    applyMapOverlayStackOrder(map);
+  }, [mapReady, communityMarkers]);
 
   /** Selection is paint-only — avoids touching GeoJSON or rebuilding the layer. */
   useEffect(() => {

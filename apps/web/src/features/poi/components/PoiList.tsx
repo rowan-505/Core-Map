@@ -2,7 +2,7 @@
 import { memo } from 'react';
 import { useMapUiText } from '@/features/map/i18n/mapUiText';
 import { useMapUiStore } from '@/features/map/state/mapUiStore';
-import { ResultRow } from '@/components/ui/sidebarUi';
+import { ListSkeleton, PanelEmptyState, ResultRow } from '@/components/ui/sidebarUi';
 import { resultTitleClass } from '@/components/ui/sidebarTokens';
 import type { Poi } from '@/types';
 import { getLocalizedName } from '@local-map/localized-name';
@@ -28,40 +28,31 @@ function PoiListInner({
   const languageMode = useMapUiStore((s) => s.languageMode);
 
   if (isLoading) {
-    return (
-      <div className="px-4 py-6 text-center text-xs text-map-muted">
-        <span className="mx-auto mb-2 block h-5 w-5 animate-spin rounded-full border-2 border-map-primary/20 border-t-map-primary" />
-        {t('နေရာများ ဖွင့်နေသည်…', 'Loading places…')}
-      </div>
-    );
+    return <ListSkeleton rows={4} />;
   }
 
   if (error) {
     return (
-      <div className="bg-red-50/60 px-4 py-6 text-center text-xs leading-5 text-red-700">
-        <p className="font-medium">{t('နေရာများကို ဖွင့်၍မရပါ။', 'Could not load places.')}</p>
-        <p className="mt-0.5 text-red-600">
-          {t('ချိတ်ဆက်မှုကို စစ်ဆေးပါ။', 'Check your connection.')}
-        </p>
-      </div>
+      <PanelEmptyState
+        tone="error"
+        title={t('နေရာများကို ဖွင့်၍မရပါ။', 'Could not load places.')}
+        body={t('ချိတ်ဆက်မှုကို စစ်ဆေးပါ။', 'Check your connection.')}
+      />
     );
   }
 
   if (pois.length === 0) {
     return (
-      <div className="px-4 py-6 text-center text-xs text-map-muted">
-        <span className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-map-primary-soft text-map-primary">
-          <EmptyPlacesIcon />
-        </span>
-        <p className="font-semibold text-map-ink">{t('နေရာမတွေ့ပါ', 'No places found')}</p>
-        <p className="mt-1">{t('စစ်ထုတ်မှု ပြောင်းပါ။', 'Change the filter.')}</p>
-      </div>
+      <PanelEmptyState
+        title={t('နေရာမတွေ့ပါ', 'No places found')}
+        body={t('စစ်ထုတ်မှု ပြောင်းပါ။', 'Change the filter.')}
+      />
     );
   }
 
   return (
     <ul
-      className="divide-y divide-map-border/65"
+      className="-mx-4 divide-y divide-map-border/70"
       role="listbox"
       aria-label={t('မြင်ရသောနေရာများ', 'Visible places')}
     >
@@ -111,16 +102,3 @@ function PoiListInner({
 
 export const PoiList = memo(PoiListInner);
 
-function EmptyPlacesIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M10 17s5-4.3 5-9a5 5 0 1 0-10 0c0 4.7 5 9 5 9Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path d="M8 8h4M10 6v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}

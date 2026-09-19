@@ -110,6 +110,7 @@ export type UpdatePlaceInput = {
     isPublic?: boolean;
     is_public?: boolean;
     verification_status?: string;
+    verification_note?: string | null;
     source_type_id?: bigint | null;
     publish_status_id?: bigint | null;
 };
@@ -164,6 +165,29 @@ export type PlaceDetailRow = PlaceRow & {
     plus_code: string | null;
     current_version_id: bigint | null;
     deleted_at: Date | null;
+    verification_note: string | null;
+};
+
+export type PlaceContactRow = {
+    phone: string | null;
+    website: string | null;
+    facebook_url: string | null;
+    email: string | null;
+    opening_hours: string | null;
+};
+
+export type PlacePrimaryAddressRow = {
+    public_id: string;
+    full_address: string;
+    house_number: string | null;
+    street_name: string | null;
+    quarter: string | null;
+    suburb: string | null;
+    township: string | null;
+    city: string | null;
+    district: string | null;
+    state_region: string | null;
+    postal_code: string | null;
 };
 
 export type PlaceNameRow = {
@@ -393,6 +417,7 @@ export class PlacesRepository {
                 p.confidence_score::double precision AS confidence_score,
                 p.is_public,
                 p.verification_status,
+                p.verification_note,
                 p.is_verified,
                 p.source_type_id,
                 p.publish_status_id,
@@ -417,6 +442,123 @@ export class PlacesRepository {
         `);
 
         return rows[0] ?? null;
+    }
+
+    async getPlaceContactByPlaceId(placeId: bigint): Promise<PlaceContactRow | null> {
+        const rows = await this.prisma.$queryRaw<PlaceContactRow[]>`
+            SELECT
+                ct.phone,
+                ct.website,
+                ct.facebook_url,
+                ct.email,
+                ct.opening_hours
+            FROM core.core_place_contacts AS ct
+            WHERE ct.place_id = ${placeId}
+            ORDER BY ct.id ASC
+            LIMIT 1
+        `;
+        return rows[0] ?? null;
+    }
+
+    async getPrimaryAddressByPlaceId(placeId: bigint): Promise<PlacePrimaryAddressRow | null> {
+        const rows = await this.prisma.$queryRaw<PlacePrimaryAddressRow[]>`
+            SELECT
+                a.public_id::text AS public_id,
+                a.full_address,
+                a.house_number,
+                a.street_name,
+                a.quarter,
+                a.suburb,
+                a.township,
+                a.city,
+                a.district,
+                a.state_region,
+                a.postal_code
+            FROM core.core_place_addresses AS pa
+            INNER JOIN core.core_addresses AS a ON a.id = pa.address_id
+            WHERE pa.place_id = ${placeId}
+              AND a.deleted_at IS NULL
+            ORDER BY pa.is_primary DESC, a.id ASC
+            LIMIT 1
+        `;
+        return rows[0] ?? null;
+    }
+
+    async upsertPlaceContact(
+        placeId: bigint,
+        input: {
+            phone?: string | null;
+            website?: string | null;
+            facebookUrl?: string | null;
+            email?: string | null;
+            openingHours?: string | null;
+        },
+    ): Promise<PlaceContactRow> {
+        const existing = await this.prisma.$queryRaw<Array<{ id: bigint }>>`
+            SELECT id FROM core.core_place_contacts WHERE place_id = ${placeId} ORDER BY id ASC LIMIT 1
+        `;
+
+        const phone = input.phone === undefined ? undefined : input.phone || null;
+        const website = input.website === undefined ? undefined : input.website || null;
+        const facebookUrl =
+            input.facebookUrl === undefined ? undefined : input.facebookUrl || null;
+        const email = input.email === undefined ? undefined : input.email || null;
+        const openingHours =
+            input.openingHours === undefined ? undefined : input.openingHours || null;
+
+        if (existing[0]) {
+            const assignments: Prisma.Sql[] = [];
+            if (phone !== undefined) assignments.push(Prisma.sql`phone = ${phone}`);
+            if (website !== undefined) assignments.push(Prisma.sql`website = ${website}`);
+            if (facebookUrl !== undefined) {
+                assignments.push(Prisma.sql`facebook_url = ${facebookUrl}`);
+            }
+            if (email !== undefined) assignments.push(Prisma.sql`email = ${email}`);
+            if (openingHours !== undefined) {
+                assignments.push(Prisma.sql`opening_hours = ${openingHours}`);
+            }
+            if (assignments.length === 0) {
+                const current = await this.getPlaceContactByPlaceId(placeId);
+                return (
+                    current ?? {
+                        phone: null,
+                        website: null,
+                        facebook_url: null,
+                        email: null,
+                        opening_hours: null,
+                    }
+                );
+            }
+            await this.prisma.$executeRaw`
+                UPDATE core.core_place_contacts
+                SET ${Prisma.join(assignments, ", ")}
+                WHERE id = ${existing[0].id}
+            `;
+        } else {
+            await this.prisma.$executeRaw`
+                INSERT INTO core.core_place_contacts (
+                    place_id, phone, website, facebook_url, email, opening_hours
+                ) VALUES (
+                    ${placeId},
+                    ${phone ?? null},
+                    ${website ?? null},
+                    ${facebookUrl ?? null},
+                    ${email ?? null},
+                    ${openingHours ?? null}
+                )
+            `;
+        }
+
+        const row = await this.getPlaceContactByPlaceId(placeId);
+        return (
+            row ?? {
+                phone: null,
+                website: null,
+                facebook_url: null,
+                email: null,
+                opening_hours: null,
+            }
+        );
     }
 
     async restorePlaceByPublicId(publicId: string): Promise<boolean> {
@@ -658,6 +800,10 @@ export class PlacesRepository {
 
         if (input.verification_status !== undefined) {
             assignments.push(Prisma.sql`verification_status = ${input.verification_status}`);
+        }
+
+        if (input.verification_note !== undefined) {
+            assignments.push(Prisma.sql`verification_note = ${input.verification_note}`);
         }
 
         if (input.source_type_id !== undefined) {

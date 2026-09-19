@@ -7,6 +7,7 @@ import type { TransportMapSelection } from '@/features/transport/transportMapSel
 import type { PublicSearchResult } from '@/features/poi/api/publicMapApi';
 import { transportRouteSelectionFromFeature } from './transportRouteSelection';
 import { transportSelectionFromFeature } from '@/features/transport/transportMapSelection';
+import { readCommunityPostIdFromFeature } from '@/features/community/lib/communityMarkersOnMap';
 import {
   isTransportMapClickTargetKind,
   resolveMapClickTarget,
@@ -19,6 +20,7 @@ export type RoutePickMode = 'from' | 'to' | null;
 export type BindPublicMapClickInteractionsOptions = {
   readonly getRoutePickMode?: () => RoutePickMode;
   readonly onSelectPoiId?: (id: string | null) => void;
+  readonly onSelectCommunityPostId?: (publicId: string) => void;
   readonly onSelectTransportStop?: (selection: TransportMapSelection) => void;
   readonly onSelectTransportRoute?: (result: PublicSearchResult) => void;
   readonly onEmptyMapClick?: (location: MapClickedLocation) => void;
@@ -52,6 +54,15 @@ export function bindPublicMapClickInteractions(
         coordinates: [event.lngLat.lng, event.lngLat.lat],
       });
       return;
+    }
+
+    if (target.kind === 'community_post') {
+      const publicId = readCommunityPostIdFromFeature(target.feature);
+      if (publicId) {
+        options.onSelectCommunityPostId?.(publicId);
+        event.originalEvent?.stopPropagation?.();
+        return;
+      }
     }
 
     if (target.kind === 'poi_selected' || target.kind === 'poi') {

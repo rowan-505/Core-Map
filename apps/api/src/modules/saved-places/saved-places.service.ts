@@ -64,11 +64,13 @@ export class SavedPlacesService {
         }
 
         try {
-            return await this.savedPlacesRepo.insertSavedPlace({
+            const savedId = await this.savedPlacesRepo.insertSavedPlace({
                 userId,
                 placeId: place.id,
                 adminAreaId: place.admin_area_id,
             });
+            this.savedPlacesRepo.recordPlaceSave(place.id);
+            return savedId;
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
                 throw new SavedPlacesError("Place is already saved", 409);

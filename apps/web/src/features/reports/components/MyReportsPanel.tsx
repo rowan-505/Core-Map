@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/state/useAuth';
 import { ApiError } from '@/features/auth/api/http';
+import { useMapUiText } from '@/features/map/i18n/mapUiText';
+import { useMapUiStore } from '@/features/map/state/mapUiStore';
+import { ListSkeleton, PanelEmptyState } from '@/components/ui/sidebarUi';
 import {
   getMyReport,
   listMyReports,
@@ -27,12 +30,42 @@ const TARGET_LABELS: Record<string, string> = {
   map_point: 'Map point',
 };
 
+const TARGET_LABELS_MY: Record<string, string> = {
+  place: 'နေရာ',
+  street: 'လမ်း',
+  building: 'အဆောက်အအုံ',
+  bus_stop: 'ဘတ်စ်မှတ်တိုင်',
+  bus_route: 'ဘတ်စ်လမ်းကြောင်း',
+  map_point: 'မြေပုံအမှတ်',
+};
+
+const STATUS_LABELS_MY: Record<string, string> = {
+  submitted: 'ပို့ပြီး',
+  in_review: 'စစ်ဆေးနေသည်',
+  needs_more_info: 'အချက်အလက်လိုသည်',
+  accepted: 'လက်ခံပြီး',
+  rejected: 'ပယ်ချပြီး',
+  duplicate: 'ထပ်နေသည်',
+};
+
+const REPORT_TYPE_LABELS_MY: Record<string, string> = {
+  wrong_info: 'အချက်အလက်မှား',
+  wrong_location: 'တည်နေရာမှား',
+  missing_item: 'နေရာပျောက်နေသည်',
+  closed_or_removed: 'ပိတ်ထား သို့မဟုတ် ဖယ်ရှားပြီး',
+  duplicate_item: 'နေရာထပ်နေသည်',
+  transport_issue: 'အများသုံးယာဉ် ပြဿနာ',
+  community_info: 'ဒေသဆိုင်ရာ အချက်အလက်',
+  other_map_issue: 'အခြား မြေပုံပြဿနာ',
+};
+
 /**
  * Signed-in user's own reports. Shows type, status, target, date, and reward
  * status. When a report needs more info, the admin's question and a reply box
  * are shown inline (owner-only; anonymous reports are never listed here).
  */
 export function MyReportsPanel() {
+  const t = useMapUiText();
   const { isAuthenticated, openAuthModal } = useAuth();
 
   const query = useQuery({
@@ -43,39 +76,32 @@ export function MyReportsPanel() {
 
   if (!isAuthenticated) {
     return (
-      <section className="p-4">
-        <div className="rounded-map-card border border-dashed border-map-primary/25 bg-map-primary-soft/55 p-5 text-center shadow-map-card">
-          <h2 className="text-sm font-semibold text-map-ink">Track your reports</h2>
-          <p className="mt-2 text-sm leading-6 text-map-muted">
-            Sign in to view your reports.
-          </p>
+      <PanelEmptyState
+        title={t('တိုင်ကြားချက်များ', 'Track your reports')}
+        body={t('သင့်တိုင်ကြားချက်များကို ကြည့်ရန် အကောင့်ဝင်ပါ။', 'Sign in to view your reports.')}
+        action={
           <button
             type="button"
-            className="mt-3 rounded-map-control bg-map-primary px-4 py-2 text-sm font-semibold text-white shadow-map-control transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 hover:bg-map-primary-hover"
+            className="rounded-map-control bg-map-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-map-primary-hover"
             onClick={() => openAuthModal('login')}
           >
-            Sign in
+            {t('အကောင့်ဝင်ရန်', 'Sign in')}
           </button>
-        </div>
-      </section>
+        }
+      />
     );
   }
 
   if (query.isLoading) {
-    return (
-      <section className="p-4">
-        <p className="text-sm text-map-muted">Loading your reports…</p>
-      </section>
-    );
+    return <ListSkeleton rows={4} />;
   }
 
   if (query.isError) {
     return (
-      <section className="p-4">
-        <p className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
-          Reports unavailable.
-        </p>
-      </section>
+      <PanelEmptyState
+        tone="error"
+        title={t('တိုင်ကြားချက်များ မရရှိနိုင်ပါ။', 'Reports unavailable.')}
+      />
     );
   }
 
@@ -83,19 +109,15 @@ export function MyReportsPanel() {
 
   if (items.length === 0) {
     return (
-      <section className="p-4">
-        <div className="rounded-map-card border border-dashed border-map-primary/25 bg-map-primary-soft/55 p-5 shadow-map-card">
-          <h2 className="text-sm font-semibold text-map-ink">No reports yet</h2>
-          <p className="mt-2 text-sm leading-6 text-map-muted">
-            Select “Report” on any place or map point.
-          </p>
-        </div>
-      </section>
+      <PanelEmptyState
+        title={t('တိုင်ကြားချက် မရှိသေးပါ', 'No reports yet')}
+        body={t('နေရာတစ်ခုရွေးပြီး “တိုင်ကြား” ကို နှိပ်ပါ။', 'Select “Report” on any place or map point.')}
+      />
     );
   }
 
   return (
-    <section className="space-y-2 p-3.5" aria-label="My reports">
+    <section className="space-y-2 p-3.5" aria-label={t('ကျွန်ုပ်၏ တိုင်ကြားချက်များ', 'My reports')}>
       {items.map((report) => (
         <MyReportCard key={report.public_id} report={report} />
       ))}
@@ -104,25 +126,35 @@ export function MyReportsPanel() {
 }
 
 function MyReportCard({ report }: { readonly report: MyReport }) {
+  const t = useMapUiText();
+  const languageMode = useMapUiStore((state) => state.languageMode);
   const needsInfo = report.status.code === 'needs_more_info';
+  const reportTypeLabel =
+    languageMode === 'en'
+      ? report.report_type.name
+      : REPORT_TYPE_LABELS_MY[report.report_type.code] ?? report.report_type.name;
+  const statusLabel =
+    languageMode === 'en'
+      ? report.status.name
+      : STATUS_LABELS_MY[report.status.code] ?? report.status.name;
 
   return (
     <div className="rounded-map-card border border-map-border bg-map-surface p-3.5 shadow-map-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-map-ink">
-            {report.report_type.name}
+            {reportTypeLabel}
           </p>
-          {targetLabel(report) ? (
-            <p className="mt-0.5 truncate text-xs text-map-muted">{targetLabel(report)}</p>
+          {targetLabel(report, languageMode) ? (
+            <p className="mt-0.5 truncate text-xs text-map-muted">{targetLabel(report, languageMode)}</p>
           ) : null}
-          <p className="mt-0.5 text-xs text-map-muted/75">{formatDate(report.created_at)}</p>
+          <p className="mt-0.5 text-xs text-map-muted/75">{formatDate(report.created_at, languageMode)}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <StatusBadge code={report.status.code} label={report.status.name} />
+          <StatusBadge code={report.status.code} label={statusLabel} />
           {report.reward_granted_at ? (
             <span className="inline-flex rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
-              Rewarded
+              {t('အမှတ်ရပြီး', 'Rewarded')}
             </span>
           ) : null}
         </div>
@@ -139,6 +171,8 @@ function MyReportCard({ report }: { readonly report: MyReport }) {
 
 /** Loads follow-ups for a report awaiting the owner's reply and renders the reply form. */
 function NeedsInfoSection({ publicId }: { readonly publicId: string }) {
+  const t = useMapUiText();
+  const languageMode = useMapUiStore((state) => state.languageMode);
   const queryClient = useQueryClient();
   const [reply, setReply] = useState('');
 
@@ -166,24 +200,24 @@ function NeedsInfoSection({ publicId }: { readonly publicId: string }) {
     mutation.error instanceof ApiError
       ? mutation.error.message
       : mutation.isError
-        ? 'Could not send your reply. Try again.'
+        ? t('စာပြန်ပို့၍ မရပါ။ ထပ်ကြိုးစားပါ။', 'Could not send your reply. Try again.')
         : null;
 
   return (
     <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50/60 p-3">
       <p className="map-kicker text-amber-700">
-        The team needs more info
+        {t('အချက်အလက် ထပ်လိုပါသည်', 'The team needs more info')}
       </p>
 
       {detail.isLoading ? (
-        <p className="mt-1.5 text-xs text-map-muted">Loading the question…</p>
+        <p className="mt-1.5 text-xs text-map-muted">{t('မေးခွန်း ဖွင့်နေသည်…', 'Loading the question…')}</p>
       ) : latestAdminQuestion ? (
         <p className="mt-1.5 whitespace-pre-wrap text-sm leading-5 text-map-ink">
           {latestAdminQuestion.message}
         </p>
       ) : (
         <p className="mt-1.5 text-sm text-map-ink/80">
-          Add a short reply.
+          {t('အတိုချုံး ပြန်ဖြေပါ။', 'Add a short reply.')}
         </p>
       )}
 
@@ -192,9 +226,9 @@ function NeedsInfoSection({ publicId }: { readonly publicId: string }) {
           {followups.map((f, i) => (
             <li key={`${f.created_at}-${i}`} className="text-xs">
               <span className="font-semibold text-map-ink/80">
-                {f.actor_type === 'admin' ? 'Team' : 'You'}
+                {f.actor_type === 'admin' ? t('CoreMap အဖွဲ့', 'Team') : t('သင်', 'You')}
               </span>
-              <span className="text-map-muted/75"> · {formatDate(f.created_at)}</span>
+              <span className="text-map-muted/75"> · {formatDate(f.created_at, languageMode)}</span>
               <p className="mt-0.5 whitespace-pre-wrap leading-5 text-map-muted">{f.message}</p>
             </li>
           ))}
@@ -207,7 +241,7 @@ function NeedsInfoSection({ publicId }: { readonly publicId: string }) {
           rows={3}
           value={reply}
           onChange={(e) => setReply(e.target.value)}
-          placeholder="Reply to the team…"
+          placeholder={t('စာပြန်ရေးရန်…', 'Reply to the team…')}
           disabled={mutation.isPending}
         />
         {errorMessage ? (
@@ -221,10 +255,10 @@ function NeedsInfoSection({ publicId }: { readonly publicId: string }) {
           disabled={mutation.isPending || trimmed.length === 0}
           onClick={() => mutation.mutate(trimmed)}
         >
-          {mutation.isPending ? 'Sending…' : 'Send reply'}
+          {mutation.isPending ? t('ပို့နေသည်…', 'Sending…') : t('စာပြန်ပို့ရန်', 'Send reply')}
         </button>
         <p className="mt-1 text-xs text-map-muted/75">
-          Replies reopen the report.
+          {t('စာပြန်ပို့လျှင် တိုင်ကြားချက်ကို ပြန်လည်စစ်ဆေးပါမည်။', 'Replies reopen the report.')}
         </p>
       </div>
     </div>
@@ -240,24 +274,26 @@ function StatusBadge({ code, label }: { readonly code: string; readonly label: s
   );
 }
 
-function targetLabel(report: MyReport): string | null {
+function targetLabel(report: MyReport, languageMode: 'my' | 'en' | 'both'): string | null {
+  const myanmar = languageMode !== 'en';
   if (report.target_entity_type === 'map_point') {
     if (typeof report.latitude === 'number' && typeof report.longitude === 'number') {
-      return `Map point · ${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`;
+      return `${myanmar ? 'မြေပုံအမှတ်' : 'Map point'} · ${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`;
     }
-    return 'Map point';
+    return myanmar ? 'မြေပုံအမှတ်' : 'Map point';
   }
   if (report.target_entity_type) {
-    const label = TARGET_LABELS[report.target_entity_type] ?? report.target_entity_type;
+    const labels = myanmar ? TARGET_LABELS_MY : TARGET_LABELS;
+    const label = labels[report.target_entity_type] ?? report.target_entity_type;
     return report.target_entity_id ? `${label} #${report.target_entity_id}` : label;
   }
   return null;
 }
 
-function formatDate(value: string): string {
+function formatDate(value: string, languageMode: 'my' | 'en' | 'both'): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(languageMode === 'en' ? 'en-US' : 'my-MM', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

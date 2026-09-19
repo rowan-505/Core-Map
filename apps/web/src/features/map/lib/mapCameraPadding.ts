@@ -1,3 +1,11 @@
+import {
+  MAP_DESKTOP_BREAKPOINT_PX,
+  MAP_DESKTOP_COLLAPSED_LEFT_PADDING_PX,
+  MAP_DESKTOP_OPEN_LEFT_PADDING_PX,
+  MAP_SIDEBAR_WIDTH_PX,
+  MAP_TABLET_BREAKPOINT_PX,
+} from './mapChromeLayout';
+
 export type MapCameraPadding = {
   readonly top: number;
   readonly right: number;
@@ -15,9 +23,9 @@ export const DEFAULT_MAP_CAMERA_LAYOUT: MapCameraLayout = {
   bottomSheetState: 'half',
 };
 
-const DESKTOP_BREAKPOINT_PX = 1024;
-const DESKTOP_OPEN_LEFT_PADDING_PX = 524;
-const DESKTOP_COLLAPSED_LEFT_PADDING_PX = 96;
+const DESKTOP_BREAKPOINT_PX = MAP_DESKTOP_BREAKPOINT_PX;
+const DESKTOP_OPEN_LEFT_PADDING_PX = MAP_DESKTOP_OPEN_LEFT_PADDING_PX;
+const DESKTOP_COLLAPSED_LEFT_PADDING_PX = MAP_DESKTOP_COLLAPSED_LEFT_PADDING_PX;
 
 export function visibleMapCameraPadding(
   layout: MapCameraLayout,
@@ -37,6 +45,15 @@ export function visibleMapCameraPadding(
     };
   }
 
+  if (width >= MAP_TABLET_BREAKPOINT_PX) {
+    return {
+      top: 76,
+      right: 80,
+      bottom: 40,
+      left: layout.isSidebarOpen ? MAP_SIDEBAR_WIDTH_PX + 16 : 24,
+    };
+  }
+
   return {
     top: 72,
     right: 24,
@@ -52,7 +69,7 @@ function mobileBottomPadding(layout: MapCameraLayout, height: number): number {
     layout.bottomSheetState === 'expanded'
       ? height * 0.86
       : layout.bottomSheetState === 'collapsed'
-        ? 92
+        ? 76
         : height * 0.48;
 
   // Leave at least a narrow map viewport above the bottom sheet for camera fitting.

@@ -607,6 +607,21 @@ export class ReportsRepository {
     }
 
     /**
+     * Resolve community.place_reviews.id from public_id for report entity references.
+     * Reports never write to community review/summary tables.
+     */
+    async findTourismReviewIdByPublicId(publicId: string): Promise<bigint | null> {
+        const rows = await this.prisma.$queryRaw<{ id: bigint }[]>(Prisma.sql`
+            SELECT id
+            FROM community.place_reviews
+            WHERE public_id::text = ${publicId}
+              AND status <> 'deleted'
+            LIMIT 1
+        `);
+        return rows[0]?.id ?? null;
+    }
+
+    /**
      * Per-submitter submission stats used for DB-based rate limiting: count of
      * reports in the last 24h plus the most recent report timestamp (cooldown).
      */

@@ -20,6 +20,7 @@ export const Tags = {
     Media: "Media",
     Reports: "Reports",
     Share: "Share",
+    Community: "Community",
 } as const;
 
 export const bearerAuth = [{ bearerAuth: [] }] as const;

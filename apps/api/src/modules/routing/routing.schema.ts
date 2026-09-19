@@ -89,6 +89,8 @@ export const postRouteRequestBodySchema = z
         departureTime: z.union([z.string().datetime({ offset: true }), z.null()]).optional(),
         maxWalkMeters: z.number().min(0).max(50_000).optional(),
         maxTransfers: z.number().int().min(0).max(20).optional(),
+        /** Optional destination place attribution for popularity directions_count. */
+        destination_place_public_id: z.string().trim().uuid().optional(),
     })
     .refine(
         (body) =>

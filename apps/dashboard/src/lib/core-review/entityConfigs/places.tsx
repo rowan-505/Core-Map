@@ -11,6 +11,7 @@ import { coreReviewPath } from "@/src/lib/dashboardNavigation";
 import { getFormGeometry } from "@/src/lib/core-review/geometryFieldUtils";
 import { placeAdminAreaForPayload } from "@/src/lib/core-review/placeAdminAreaPayload";
 import { townshipAdminEntityField } from "@/src/lib/core-review/townshipAdminEntityField";
+import PlaceContactAddressPanel from "@/src/components/places/PlaceContactAddressPanel";
 
 import { scoreFieldSchema } from "./buildings";
 import {
@@ -39,10 +40,10 @@ function placeFormSchema(mode: CoreEntityFormMode) {
         admin_area_explicit_clear: z.boolean().optional(),
         plusCode: z.string(),
         importanceScore: scoreFieldSchema,
-        popularityScore: scoreFieldSchema,
         confidenceScore: scoreFieldSchema,
         isPublic: z.boolean(),
         verification_status: z.string(),
+        verification_note: z.string(),
         sourceTypeId: z.string(),
         publishStatusId: z.string(),
         point_geom: z.custom<Geometry | null>(),
@@ -82,6 +83,7 @@ function formValuesToPlacePayload(values: CoreEntityFormValues): CreatePlacePayl
     const { lat, lng } = pointFromFormValues(values);
     const mm = String(values.myanmarName ?? "").trim();
     const en = String(values.englishName ?? "").trim();
+    const note = String(values.verification_note ?? "").trim();
 
     return {
         ...(mm ? { myanmarName: mm } : {}),
@@ -93,12 +95,11 @@ function formValuesToPlacePayload(values: CoreEntityFormValues): CreatePlacePayl
         plusCode: String(values.plusCode ?? "").trim() || null,
         importanceScore:
             values.importanceScore === "" ? 0 : (values.importanceScore as number),
-        popularityScore:
-            values.popularityScore === "" ? 0 : (values.popularityScore as number),
         confidenceScore:
             values.confidenceScore === "" ? 50 : (values.confidenceScore as number),
         isPublic: Boolean(values.isPublic),
         ...verificationStatusWritePayload(values),
+        verification_note: note || null,
         sourceTypeId: String(values.sourceTypeId ?? "").trim() || null,
         publishStatusId: String(values.publishStatusId ?? "").trim() || null,
     };
@@ -141,11 +142,31 @@ export const PLACES_ENTITY_CONFIG: CoreEntityConfig<
             adminAreaIdKey: "adminAreaId",
         }),
         { key: "plusCode", label: "Plus code", type: "text", placeholder: "Optional" },
-        { key: "importanceScore", label: "Importance score", type: "number", placeholder: "Optional" },
-        { key: "popularityScore", label: "Popularity score", type: "number", placeholder: "Optional" },
-        { key: "confidenceScore", label: "Confidence score", type: "number", numberMin: 0, numberMax: 100 },
+        {
+            key: "importanceScore",
+            label: "Importance score",
+            type: "number",
+            numberMin: 0,
+            numberMax: 100,
+            placeholder: "0–100",
+            helpText:
+                "Importance controls the place's objective map/search significance. It is not a user rating or Tourism editorial score.",
+        },
+        {
+            key: "confidenceScore",
+            label: "Confidence score",
+            type: "number",
+            numberMin: 0,
+            numberMax: 100,
+        },
         { key: "isPublic", label: "Public", type: "boolean" },
         verificationStatusFormField(),
+        {
+            key: "verification_note",
+            label: "Verification note",
+            type: "textarea",
+            placeholder: "Optional curator note",
+        },
         {
             key: "sourceTypeId",
             label: "Source type",
@@ -166,6 +187,12 @@ export const PLACES_ENTITY_CONFIG: CoreEntityConfig<
         { key: "primary_name", label: "Primary name", type: "text", detailPath: "primary_name" },
         { key: "category_name", label: "Category", type: "text", detailPath: "category_name" },
         { key: "admin_area_name", label: "Admin area", type: "text", detailPath: "admin_area_name" },
+        {
+            key: "popularity_score",
+            label: "Popularity score (read-only)",
+            type: "text",
+            detailPath: "popularity_score",
+        },
         { key: "created_at", label: "Created", type: "date-readonly", detailPath: "created_at" },
         { key: "updated_at", label: "Updated", type: "date-readonly", detailPath: "updated_at" },
     ],
@@ -178,10 +205,10 @@ export const PLACES_ENTITY_CONFIG: CoreEntityConfig<
         admin_area_explicit_clear: false,
         plusCode: "",
         importanceScore: "",
-        popularityScore: "",
         confidenceScore: "",
         isPublic: true,
         verification_status: "unverified",
+        verification_note: "",
         sourceTypeId: "",
         publishStatusId: "",
         point_geom: null,
@@ -193,11 +220,11 @@ export const PLACES_ENTITY_CONFIG: CoreEntityConfig<
             adminAreaId?: string | number | null;
             plusCode?: string | null;
             importanceScore?: number | null;
-            popularityScore?: number | null;
             confidenceScore?: number | null;
             isPublic?: boolean | null;
             sourceTypeId?: string | number | null;
             publishStatusId?: string | number | null;
+            verification_note?: string | null;
             geometry?: { coordinates?: number[] };
         };
         const lat =
@@ -221,10 +248,10 @@ export const PLACES_ENTITY_CONFIG: CoreEntityConfig<
             admin_area_explicit_clear: false,
             plusCode: d.plus_code ?? d.plusCode ?? "",
             importanceScore: String(d.importance_score ?? d.importanceScore ?? ""),
-            popularityScore: String(d.popularity_score ?? d.popularityScore ?? ""),
             confidenceScore: String(d.confidence_score ?? d.confidenceScore ?? ""),
             isPublic: d.is_public ?? d.isPublic ?? true,
             verification_status: verificationStatusFromDetail(d),
+            verification_note: d.verification_note ?? "",
             sourceTypeId: String(d.source_type_id ?? d.sourceTypeId ?? ""),
             publishStatusId: String(d.publish_status_id ?? d.publishStatusId ?? ""),
             point_geom: {
@@ -249,7 +276,12 @@ export const PLACES_ENTITY_CONFIG: CoreEntityConfig<
     fetchDetail: getPlace,
     createEntity: placeWriteMutations.createEntity,
     updateEntity: placeWriteMutations.updateEntity,
-    createDescription: "Set the place location on the map and fill in attributes. All changes go through the API.",
-    editDescription: (detail) => `public_id: ${detail.public_id}`,
+    createDescription:
+        "Set the place location on the map and fill in attributes. All changes go through the API.",
+    editDescription: (detail) =>
+        `${detail.display_name || detail.primary_name || "Place"} · ${detail.admin_area_name || "No admin area"}`,
     writeApiAvailable: true,
+    renderEditExtras: ({ detail, reload, isSaving }) => (
+        <PlaceContactAddressPanel place={detail} reload={reload} disabled={isSaving} />
+    ),
 };

@@ -230,7 +230,7 @@ describe("privileged password reset policy", () => {
     });
 });
 
-describe("mandatory admin MFA enrollment gate", () => {
+describe("mandatory super_admin MFA enrollment gate", () => {
     it("lets normal users login without MFA", async () => {
         const passwordHash = await hashPassword("correct-password-12");
         const auth = new AuthService(
@@ -258,7 +258,7 @@ describe("mandatory admin MFA enrollment gate", () => {
         assert.equal(outcome.kind, "session");
     });
 
-    it("blocks dashboard admin login without MFA enrollment", async () => {
+    it("allows dashboard admin login without MFA enrollment", async () => {
         const passwordHash = await hashPassword("correct-password-12");
         const auth = new AuthService(
             repo({
@@ -266,6 +266,37 @@ describe("mandatory admin MFA enrollment gate", () => {
                     user({
                         password_hash: passwordHash,
                         roles: ["admin"],
+                        email_verified: true,
+                    }),
+                findActiveTotp: async () => null,
+                touchLastLogin: async () => undefined,
+                cleanupExpiredSessions: async () => undefined,
+                createSession: async () => ({
+                    id: 1n,
+                    public_id: "22222222-2222-4222-8222-222222222222",
+                    token_family_id: "33333333-3333-4333-8333-333333333333",
+                    client_type: "dashboard",
+                }),
+                recordSecurityEvent: async () => undefined,
+            })
+        );
+        const outcome = await auth.login(
+            { email: "ada@example.com" },
+            "correct-password-12",
+            { clientType: "dashboard" },
+            { requireDashboard: true }
+        );
+        assert.equal(outcome.kind, "session");
+    });
+
+    it("blocks dashboard super_admin login without MFA enrollment", async () => {
+        const passwordHash = await hashPassword("correct-password-12");
+        const auth = new AuthService(
+            repo({
+                findUserByEmail: async () =>
+                    user({
+                        password_hash: passwordHash,
+                        roles: ["super_admin"],
                         email_verified: true,
                     }),
                 findActiveTotp: async () => null,
@@ -281,7 +312,35 @@ describe("mandatory admin MFA enrollment gate", () => {
         assert.equal(outcome.kind, "mfa_enrollment_required");
     });
 
-    it("requires TOTP when admin already has MFA", async () => {
+    it("requires TOTP when admin already has optional MFA", async () => {
+        const passwordHash = await hashPassword("correct-password-12");
+        const auth = new AuthService(
+            repo({
+                findUserByEmail: async () =>
+                    user({
+                        password_hash: passwordHash,
+                        roles: ["admin"],
+                        email_verified: true,
+                    }),
+                findActiveTotp: async () =>
+                    ({
+                        id: 1n,
+                        secretEncrypted: "x",
+                        status: "active",
+                    }) as never,
+                recordSecurityEvent: async () => undefined,
+            })
+        );
+        const outcome = await auth.login(
+            { email: "ada@example.com" },
+            "correct-password-12",
+            { clientType: "dashboard" },
+            { requireDashboard: true }
+        );
+        assert.equal(outcome.kind, "mfa");
+    });
+
+    it("requires TOTP when super_admin already has MFA", async () => {
         const passwordHash = await hashPassword("correct-password-12");
         const auth = new AuthService(
             repo({
