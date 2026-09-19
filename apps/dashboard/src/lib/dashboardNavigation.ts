@@ -16,7 +16,6 @@ import {
     Search,
     Users,
     Map,
-    MapPinned,
     type LucideIcon,
 } from "lucide-react";
 
