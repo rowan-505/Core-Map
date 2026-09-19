@@ -37,14 +37,14 @@ export const OVERVIEW_STARTUP_PADDING_EXPANDED: PaddingOptions = {
   top: 48,
   right: 72,
   bottom: 48,
-  left: 560,
+  left: 460,
 };
 
 export const OVERVIEW_STARTUP_PADDING_COLLAPSED: PaddingOptions = {
   top: 48,
   right: 72,
   bottom: 48,
-  left: 120,
+  left: 88,
 };
 
 /** @deprecated Use {@link OVERVIEW_STARTUP_PADDING_EXPANDED} */

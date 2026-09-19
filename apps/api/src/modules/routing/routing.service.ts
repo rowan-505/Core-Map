@@ -111,12 +111,26 @@ export class RoutingService {
         }
 
         try {
-            const response = await this.directions.route(parsed);
+            const response = await this.directions.route({
+                origin: parsed.origin,
+                destination: parsed.destination,
+                profile: parsed.profile,
+                allowedModes: parsed.allowedModes,
+                excludedModes: parsed.excludedModes,
+                serviceClasses: parsed.serviceClasses,
+                preference: parsed.preference,
+                departureTime: parsed.departureTime,
+                maxWalkMeters: parsed.maxWalkMeters,
+                maxTransfers: parsed.maxTransfers,
+            });
             await this.completeRouteRequestLog(requestPublicId, response, startedMs, {
                 context,
                 activeBuild,
                 engineCode,
             });
+            if (parsed.destination_place_public_id) {
+                this.repo.recordDirectionsForPlace(parsed.destination_place_public_id);
+            }
             return this.withRequestDebug(response, requestPublicId, activeBuild?.buildCode);
         } catch (error) {
             await this.failRouteRequestLog(requestPublicId, error, startedMs, {

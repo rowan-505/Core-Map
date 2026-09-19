@@ -41,10 +41,30 @@ type MapUiState = {
 };
 
 const initialMapMode = readPersistedMapMode() ?? 'normal';
+const LANGUAGE_STORAGE_KEY = 'coremap:map-language';
+
+function readPersistedLanguageMode(): PlaceLanguageMode {
+  if (typeof localStorage === 'undefined') return 'my';
+  try {
+    const value = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return value === 'en' || value === 'both' || value === 'my' ? value : 'my';
+  } catch {
+    return 'my';
+  }
+}
+
+function persistLanguageMode(mode: PlaceLanguageMode): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, mode);
+  } catch {
+    /* Storage can be unavailable in private browsing. */
+  }
+}
 
 /** Global map UI: language mode drives MapLibre `text-field` + React labels (API returns bilingual fields). */
 export const useMapUiStore = create<MapUiState>((set) => ({
-  languageMode: 'my',
+  languageMode: readPersistedLanguageMode(),
   mapMode: initialMapMode,
   basemapModeError: null,
   utilityCommand: null,
@@ -52,7 +72,10 @@ export const useMapUiStore = create<MapUiState>((set) => ({
   transportPointsVisible: false,
   transportPathsVisible: false,
   transportVisibilityByMode: TRANSPORT_MODE_DEFAULTS,
-  setLanguageMode: (mode) => set({ languageMode: mode }),
+  setLanguageMode: (mode) => {
+    persistLanguageMode(mode);
+    set({ languageMode: mode });
+  },
   setMapMode: (mode) => {
     persistMapMode(mode);
     set({ mapMode: mode, basemapModeError: null });

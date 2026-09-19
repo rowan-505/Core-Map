@@ -141,7 +141,7 @@ export default function CompleteProfilePage() {
               className="w-full rounded-md border border-map-border bg-map-surface px-3 py-2"
             />
           </label>
-          {error ? <p className="text-red-700">{error}</p> : null}
+          {error ? <p className="text-red-700" role="alert">{error}</p> : null}
           <button
             type="submit"
             disabled={busy}
@@ -165,8 +165,8 @@ export default function CompleteProfilePage() {
               className="w-full rounded-md border border-map-border bg-map-surface px-3 py-2"
             />
           </label>
-          {info ? <p className="text-map-muted">{info}</p> : null}
-          {error ? <p className="text-red-700">{error}</p> : null}
+          {info ? <p className="text-map-muted" role="status">{info}</p> : null}
+          {error ? <p className="text-red-700" role="alert">{error}</p> : null}
           <div className="flex flex-wrap gap-3">
             <button
               type="submit"

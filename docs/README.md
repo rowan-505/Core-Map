@@ -18,6 +18,8 @@ Product README is at the [repo root](../README.md). Short guides start here.
 | Tiles | [tiles.md](tiles.md) |
 | OSM / import | [data-pipeline.md](data-pipeline.md) |
 | Search / address / routing | [search-routing.md](search-routing.md) |
+| Tourism reviews / ranking | [COREMAP_TOURISM_REVIEWS_RANKING_README.md](COREMAP_TOURISM_REVIEWS_RANKING_README.md) |
+| Tourism activities / events | [TOURISM_ACTIVITIES_EVENTS.md](TOURISM_ACTIVITIES_EVENTS.md) |
 | Deploy | [deployment.md](deployment.md) |
 | Debug | [debugging.md](debugging.md) |
 | Current status | [current_status.md](current_status.md) |

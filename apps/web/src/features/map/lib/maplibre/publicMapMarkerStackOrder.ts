@@ -58,6 +58,7 @@ import {
 import { PUBLIC_MAP_GEO_LABEL_LAYER_IDS } from './publicMapGeoLayers';
 import { YANGON_ROAD_LABEL_OVERLAY_LAYER_IDS } from './roadLabelTextFields';
 import { SEARCH_HIGHLIGHT_LAYER_IDS } from './searchHighlightOnMap';
+import { COMMUNITY_MARKER_LAYER_IDS } from '@/features/community/lib/communityMarkersOnMap';
 
 /** Road-label overlays that should stay under transport route lines. */
 const ROAD_LABEL_OVERLAY_STACK_BOTTOM_TO_TOP = [
@@ -153,6 +154,7 @@ export const PUBLIC_MAP_OVERLAY_STACK_BOTTOM_TO_TOP = [
   ...PUBLIC_MAP_GEO_LABEL_LAYER_IDS,
   ...POI_NORMAL_OVERLAY_STACK_BOTTOM_TO_TOP,
   ...SEARCH_HIGHLIGHT_LAYER_IDS,
+  ...COMMUNITY_MARKER_LAYER_IDS,
   ...ACTIVE_DIRECTIONS_ROUTE_ENDPOINT_STACK_BOTTOM_TO_TOP,
   ...TRANSPORT_SELECTED_MARKER_STACK_BOTTOM_TO_TOP,
   ...POI_SELECTED_OVERLAY_STACK_BOTTOM_TO_TOP,

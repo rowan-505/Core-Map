@@ -258,8 +258,25 @@ export class ReportsService {
         }
 
         const isMapPoint = body.targetEntityType === "map_point";
-        const targetEntityId =
+        const isTourismReview = body.targetEntityType === "tourism_review";
+        let targetEntityId: bigint | null =
             isMapPoint || body.targetEntityId === undefined ? null : BigInt(body.targetEntityId);
+
+        if (isTourismReview) {
+            const reviewPublicId = body.targetPublicId?.trim();
+            if (!reviewPublicId) {
+                throw new ReportsError(
+                    "targetPublicId is required for tourism_review targets",
+                    400
+                );
+            }
+            const resolved = await this.reportsRepo.findTourismReviewIdByPublicId(reviewPublicId);
+            if (!resolved) {
+                throw new ReportsError("Tourism review not found", 404);
+            }
+            targetEntityId = resolved;
+        }
+
         const latitude = body.latitude ?? null;
         const longitude = body.longitude ?? null;
 

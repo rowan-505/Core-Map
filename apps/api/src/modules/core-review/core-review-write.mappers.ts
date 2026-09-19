@@ -127,9 +127,7 @@ export function mapCoreReviewPlacePatch(body: Record<string, unknown>) {
     if (pickAlias(body, "importanceScore", "importance_score") !== undefined) {
         out.importanceScore = pickAlias(body, "importanceScore", "importance_score");
     }
-    if (pickAlias(body, "popularityScore", "popularity_score") !== undefined) {
-        out.popularityScore = pickAlias(body, "popularityScore", "popularity_score");
-    }
+    // popularityScore is intentionally not mapped on PATCH — derived / system-managed.
     if (pickAlias(body, "confidenceScore", "confidence_score") !== undefined) {
         out.confidenceScore = pickAlias(body, "confidenceScore", "confidence_score");
     }
@@ -138,6 +136,9 @@ export function mapCoreReviewPlacePatch(body: Record<string, unknown>) {
     }
     if (pickAlias(body, "verificationStatus", "verification_status") !== undefined) {
         out.verificationStatus = pickAlias(body, "verificationStatus", "verification_status");
+    }
+    if (pickAlias(body, "verificationNote", "verification_note") !== undefined) {
+        out.verificationNote = pickAlias(body, "verificationNote", "verification_note");
     }
     if (pickAlias(body, "sourceTypeId", "source_type_id") !== undefined) {
         out.sourceTypeId = pickAlias(body, "sourceTypeId", "source_type_id");

@@ -3,13 +3,19 @@
  *
  * Priority (highest first):
  * 1. Selected POI / selected transport pin
- * 2. POI circles
- * 3. Transport hitboxes, then transport point labels (label fallback only)
- * 4. Transport route / infrastructure lines
- * 5. Empty map (handled by caller)
+ * 2. Community geotag markers (when Community overlay is active)
+ * 3. POI circles
+ * 4. Transport hitboxes, then transport point labels (label fallback only)
+ * 5. Transport route / infrastructure lines
+ * 6. Empty map (handled by caller)
  */
 import type { MapGeoJSONFeature } from 'maplibre-gl';
 import type { MapEngine, MapMouseEvent } from '../mapEngineTypes';
+import {
+  COMMUNITY_MARKERS_HITBOX_LAYER_ID,
+  COMMUNITY_MARKERS_LAYER_ID,
+  COMMUNITY_MARKERS_SELECTED_LAYER_ID,
+} from '@/features/community/lib/communityMarkersOnMap';
 import {
   PLACES_IMPORTANT_LAYER_ID,
   PLACES_LAYER_ID,
@@ -34,6 +40,7 @@ import { resolveTransportKind } from './transportPopupModel';
 export type MapClickTargetKind =
   | 'poi_selected'
   | 'poi'
+  | 'community_post'
   | 'transport_selected'
   | 'transport_stop'
   | 'transport_terminal'
@@ -63,6 +70,12 @@ const TRANSPORT_TERMINAL_LABEL_LAYER_IDS = [
   TRANSPORT_FERRY_LANDING_LABELS_LAYER_ID,
 ] as const;
 
+const COMMUNITY_CLICK_LAYER_IDS = [
+  COMMUNITY_MARKERS_SELECTED_LAYER_ID,
+  COMMUNITY_MARKERS_LAYER_ID,
+  COMMUNITY_MARKERS_HITBOX_LAYER_ID,
+] as const;
+
 /** Route / infrastructure line layers (dev inspection today; no public route detail yet). */
 export const PUBLIC_MAP_TRANSPORT_LINE_CLICK_LAYER_IDS = [
   TRANSPORT_ROUTE_PATHS_LAYER_ID,
@@ -70,7 +83,7 @@ export const PUBLIC_MAP_TRANSPORT_LINE_CLICK_LAYER_IDS = [
 ] as const;
 
 type DirectClickResolutionStep = {
-  readonly kind: 'poi_selected' | 'transport_selected' | 'poi';
+  readonly kind: 'poi_selected' | 'transport_selected' | 'community_post' | 'poi';
   readonly layerIds: readonly string[];
 };
 
@@ -82,6 +95,10 @@ const DIRECT_CLICK_RESOLUTION_STEPS: readonly DirectClickResolutionStep[] = [
   {
     kind: 'transport_selected',
     layerIds: PUBLIC_MAP_TRANSPORT_SELECTED_CLICK_LAYER_IDS,
+  },
+  {
+    kind: 'community_post',
+    layerIds: COMMUNITY_CLICK_LAYER_IDS,
   },
   {
     kind: 'poi',

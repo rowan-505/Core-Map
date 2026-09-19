@@ -9,6 +9,7 @@ import type { PreferredLanguage } from '../types';
 import { EmailVerifySection } from './EmailVerifySection';
 import { LegalFooter } from '@/pages/legal/LegalLayout';
 import { Link } from 'react-router-dom';
+import { useMapUiText } from '@/features/map/i18n/mapUiText';
 
 /** Email returned by the API's dev AUTH_BYPASS profile (never a real verified user). */
 const DEV_BYPASS_EMAIL = 'dev@local';
@@ -34,6 +35,7 @@ export function ProfileDrawerPanel({
   readonly onOpenSaved?: () => void;
   readonly onOpenReports?: () => void;
 }) {
+  const t = useMapUiText();
   const { user, logout } = useAuth();
   const { items, loading: savedLoading } = useSavedPlaces();
   const [editing, setEditing] = useState(false);
@@ -52,7 +54,7 @@ export function ProfileDrawerPanel({
   }
 
   return (
-    <section className="space-y-3 p-3.5" aria-label="Account profile">
+    <section className="space-y-2.5 p-3.5" aria-label={t('အကောင့်အချက်အလက်', 'Account profile')}>
       <div className="rounded-map-card border border-map-border bg-map-surface p-4 shadow-map-card">
         <div className="flex items-start gap-3">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#0f68e8,#087c8f)] text-base font-bold text-white shadow-map-control">
@@ -63,11 +65,11 @@ export function ProfileDrawerPanel({
             <p className="truncate text-xs text-map-muted">{user.email}</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {isDevBypass ? (
-                <Badge tone="purple">Development bypass account</Badge>
+                <Badge tone="purple">{t('စမ်းသပ်အကောင့်', 'Development account')}</Badge>
               ) : verified ? (
-                <Badge tone="emerald">Email verified</Badge>
+                <Badge tone="emerald">{t('အီးမေးလ် အတည်ပြုပြီး', 'Email verified')}</Badge>
               ) : (
-                <Badge tone="amber">Email not verified</Badge>
+                <Badge tone="amber">{t('အီးမေးလ် မအတည်ပြုရသေး', 'Email not verified')}</Badge>
               )}
               {user.roles.map((role) => (
                 <Badge key={role} tone="slate">
@@ -80,7 +82,7 @@ export function ProfileDrawerPanel({
 
         {isDevBypass ? (
           <p className="mt-3 rounded-xl bg-purple-50 px-3 py-2 text-xs leading-4 text-purple-700">
-            Development bypass is active. Verification is unavailable.
+            {t('စမ်းသပ်အကောင့်ဖြစ်သဖြင့် အတည်ပြုခြင်း မလိုပါ။', 'Development account is active. Verification is unavailable.')}
           </p>
         ) : null}
       </div>
@@ -92,12 +94,12 @@ export function ProfileDrawerPanel({
       ) : null}
 
       <div className="rounded-map-card border border-map-border bg-map-surface p-1.5 shadow-map-card">
-        <InfoRow label="Phone" value={user.phone ?? 'Not set'} />
-        <InfoRow label="Preferred language" value={languageLabel} />
+        <InfoRow label={t('ဖုန်း', 'Phone')} value={user.phone ?? t('မသတ်မှတ်ရသေး', 'Not set')} />
+        <InfoRow label={t('အသုံးပြုမည့်ဘာသာ', 'Preferred language')} value={languageLabel} />
         <RegionInfoRow regionId={user.primary_region_id} />
-        <InfoRow label="Total points" value={String(user.total_points)} />
+        <InfoRow label={t('စုစုပေါင်းအမှတ်', 'Total points')} value={String(user.total_points)} />
         <InfoRow
-          label="Saved places"
+          label={t('သိမ်းထားသောနေရာ', 'Saved places')}
           value={savedLoading ? '…' : String(savedCount)}
         />
       </div>
@@ -107,7 +109,7 @@ export function ProfileDrawerPanel({
         className="w-full rounded-map-control bg-map-primary px-4 py-2.5 text-sm font-semibold text-white shadow-map-control transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 hover:bg-map-primary-hover"
         onClick={() => setEditing(true)}
       >
-        Edit profile
+        {t('အကောင့်ပြင်ရန်', 'Edit profile')}
       </button>
 
       <button
@@ -115,7 +117,7 @@ export function ProfileDrawerPanel({
         className="flex w-full items-center justify-between rounded-map-card border border-map-border bg-map-surface px-4 py-3 text-sm font-semibold text-map-ink shadow-map-card transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 hover:border-map-primary/30 hover:bg-map-primary-soft"
         onClick={onOpenSaved}
       >
-        <span>View saved places</span>
+        <span>{t('သိမ်းထားသောနေရာများ', 'View saved places')}</span>
         <span className="text-map-primary">›</span>
       </button>
 
@@ -124,7 +126,7 @@ export function ProfileDrawerPanel({
         className="flex w-full items-center justify-between rounded-map-card border border-map-border bg-map-surface px-4 py-3 text-sm font-semibold text-map-ink shadow-map-card transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 hover:border-map-primary/30 hover:bg-map-primary-soft"
         onClick={onOpenReports}
       >
-        <span>My reports</span>
+        <span>{t('ကျွန်ုပ်၏ တိုင်ကြားချက်များ', 'My reports')}</span>
         <span className="text-map-primary">›</span>
       </button>
 
@@ -132,7 +134,7 @@ export function ProfileDrawerPanel({
         to="/account/security"
         className="flex w-full items-center justify-between rounded-map-card border border-map-border bg-map-surface px-4 py-3 text-sm font-semibold text-map-ink shadow-map-card hover:border-map-primary/30 hover:bg-map-primary-soft"
       >
-        <span>Account security</span>
+        <span>{t('အကောင့်လုံခြုံရေး', 'Account security')}</span>
         <span className="text-map-primary">›</span>
       </Link>
 
@@ -141,7 +143,7 @@ export function ProfileDrawerPanel({
         className="w-full rounded-map-control border border-map-border bg-map-surface px-4 py-2.5 text-sm font-semibold text-map-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
         onClick={() => void logout()}
       >
-        Log out
+        {t('အကောင့်ထွက်ရန်', 'Log out')}
       </button>
       <div className="px-1 pt-1">
         <LegalFooter />
@@ -156,6 +158,7 @@ export function ProfileDrawerPanel({
  * Read-only here: email, verification, roles, points.
  */
 function ProfileEditForm({ onClose }: { readonly onClose: () => void }) {
+  const t = useMapUiText();
   const { user, updateProfile } = useAuth();
   const [displayName, setDisplayName] = useState(user?.display_name ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
@@ -194,7 +197,7 @@ function ProfileEditForm({ onClose }: { readonly onClose: () => void }) {
 
     const regionValue = regionId === null ? null : Number.parseInt(regionId, 10);
     if (regionValue !== null && (!Number.isFinite(regionValue) || regionValue <= 0)) {
-      setError('Selected region is invalid. Clear it and search again.');
+      setError(t('ရွေးထားသောဒေသ မမှန်ပါ။ ရှင်းပြီး ထပ်ရှာပါ။', 'Selected region is invalid. Clear it and search again.'));
       setBusy(false);
       return;
     }
@@ -215,18 +218,18 @@ function ProfileEditForm({ onClose }: { readonly onClose: () => void }) {
   };
 
   return (
-    <section className="space-y-3 p-3.5" aria-label="Edit profile">
+    <section className="space-y-3 p-3.5" aria-label={t('အကောင့်ပြင်ရန်', 'Edit profile')}>
       <div className="rounded-map-card border border-map-border bg-map-surface p-4 shadow-map-card">
         <form className="space-y-3" onSubmit={onSubmit}>
           <TextField
-            label="Display name"
+            label={t('အမည်', 'Display name')}
             value={displayName}
             onChange={setDisplayName}
             required
             minLength={2}
           />
           <TextField
-            label="Phone (optional)"
+            label={t('ဖုန်း (မဖြည့်လည်းရ)', 'Phone (optional)')}
             value={phone}
             onChange={setPhone}
             type="tel"
@@ -234,7 +237,7 @@ function ProfileEditForm({ onClose }: { readonly onClose: () => void }) {
           />
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-map-muted">
-              Preferred language
+              {t('အသုံးပြုမည့်ဘာသာ', 'Preferred language')}
             </span>
             <select
               className="w-full rounded-map-control border border-map-border bg-map-surface px-3 py-2 text-sm text-map-ink outline-none transition-colors focus:border-map-primary "
@@ -246,7 +249,7 @@ function ProfileEditForm({ onClose }: { readonly onClose: () => void }) {
             </select>
           </label>
           <RegionCombobox
-            label="Primary region (optional)"
+            label={t('အဓိကဒေသ (မရွေးလည်းရ)', 'Primary region (optional)')}
             value={regionId}
             selectedLabel={effectiveRegionLabel}
             onChange={(id, displayName) => {
@@ -256,7 +259,7 @@ function ProfileEditForm({ onClose }: { readonly onClose: () => void }) {
           />
 
           <div className="rounded-map-control bg-map-bg px-3 py-2 text-xs leading-4 text-map-muted ring-1 ring-map-border/70">
-            Security and points are managed separately.
+            {t('လုံခြုံရေးနှင့် အမှတ်များကို သီးခြား စီမံနိုင်သည်။', 'Security and points are managed separately.')}
           </div>
 
           {error ? (
@@ -266,7 +269,7 @@ function ProfileEditForm({ onClose }: { readonly onClose: () => void }) {
           ) : null}
           {success ? (
             <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-              Profile updated.
+              {t('အကောင့်အချက်အလက် ပြင်ပြီးပါပြီ။', 'Profile updated.')}
             </p>
           ) : null}
 
@@ -276,14 +279,14 @@ function ProfileEditForm({ onClose }: { readonly onClose: () => void }) {
               className="flex-1 rounded-map-control bg-map-primary px-4 py-2.5 text-sm font-semibold text-white shadow-map-control transition-colors hover:bg-map-primary-hover disabled:opacity-60"
               disabled={busy}
             >
-              {busy ? 'Saving…' : 'Save changes'}
+              {busy ? t('သိမ်းနေသည်…', 'Saving…') : t('သိမ်းရန်', 'Save changes')}
             </button>
             <button
               type="button"
               className="rounded-map-control border border-map-border bg-map-surface px-4 py-2.5 text-sm font-semibold text-map-muted transition-colors hover:bg-map-primary-soft hover:text-map-primary"
               onClick={onClose}
             >
-              {success ? 'Back' : 'Cancel'}
+              {success ? t('နောက်သို့', 'Back') : t('မလုပ်တော့ပါ', 'Cancel')}
             </button>
           </div>
         </form>
@@ -335,6 +338,7 @@ function toMessage(error: unknown): string {
 
 /** Primary region row that resolves the admin-area id to a human-readable name. */
 function RegionInfoRow({ regionId }: { readonly regionId: string | null }) {
+  const t = useMapUiText();
   const region = useQuery({
     queryKey: ['region', regionId],
     queryFn: ({ signal }) => (regionId ? getRegionById(regionId, signal) : Promise.resolve(null)),
@@ -344,15 +348,15 @@ function RegionInfoRow({ regionId }: { readonly regionId: string | null }) {
 
   let value: string;
   if (regionId === null) {
-    value = 'Not set';
+    value = t('မသတ်မှတ်ရသေး', 'Not set');
   } else if (region.isLoading) {
     value = '…';
   } else {
     // Never show "Not set" when an id exists; fall back to a generic label.
-    value = region.data?.display_name ?? 'Region selected';
+    value = region.data?.display_name ?? t('ဒေသရွေးထားသည်', 'Region selected');
   }
 
-  return <InfoRow label="Primary region" value={value} />;
+  return <InfoRow label={t('အဓိကဒေသ', 'Primary region')} value={value} />;
 }
 
 function InfoRow({ label, value }: { readonly label: string; readonly value: string }) {

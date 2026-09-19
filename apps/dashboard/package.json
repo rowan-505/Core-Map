@@ -9,7 +9,11 @@
     "start": "next start",
     "lint": "eslint",
     "test:reports": "node --import tsx --test src/features/report-management/*.test.ts",
-    "test:field-survey-activity": "node --import tsx --test src/features/field-survey-activity/*.test.ts"
+    "test:field-survey-activity": "node --import tsx --test src/features/field-survey-activity/*.test.ts",
+    "test:community-moderation": "node --import tsx --test src/features/community-moderation/*.test.ts",
+    "test:tourism-moderation": "node --import tsx --test src/features/tourism-moderation/*.test.ts",
+    "test:tourism-place-picker": "node --import tsx --test src/components/tourism/*.test.ts",
+    "test:place-review-moderation": "node --import tsx --test src/features/place-review-moderation/*.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -19,6 +23,7 @@
     "maplibre-gl": "^5.24.0",
     "maplibre-gl-complex-text": "github:wipfli/maplibre-gl-complex-text",
     "next": "16.2.1",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.74.0",
@@ -30,6 +35,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

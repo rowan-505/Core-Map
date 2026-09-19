@@ -90,7 +90,7 @@ const finiteLatSchema = z.number().finite().min(-90).max(90);
 
 const finiteLngSchema = z.number().finite().min(-180).max(180);
 
-const finiteScoreSchema = z.number().finite();
+const finiteScoreSchema = z.number().finite().min(0).max(100);
 
 const patchTrimmedNameSchema = z.preprocess((value) => {
     if (value === undefined || value === null) {
@@ -145,9 +145,10 @@ export const updatePlaceBodySchema = z
         lng: finiteLngSchema.optional(),
         plusCode: optionalPlusCodeSchema,
         importanceScore: finiteScoreSchema.optional(),
-        popularityScore: finiteScoreSchema.optional(),
         confidenceScore: finiteScoreSchema.optional(),
         isPublic: z.boolean().optional(),
+        verificationNote: z.string().trim().max(2000).nullable().optional(),
+        verification_note: z.string().trim().max(2000).nullable().optional(),
         ...coreReviewVerificationWriteFields,
         sourceTypeId: optionalBigintBodySchema,
         publishStatusId: optionalBigintBodySchema,
@@ -157,6 +158,45 @@ export const updatePlaceBodySchema = z
         message: "At least one field is required",
         path: ["categoryId"],
     });
+
+export const placeContactBodySchema = z
+    .object({
+        phone: z.string().trim().max(64).nullable().optional(),
+        website: z
+            .string()
+            .trim()
+            .max(500)
+            .nullable()
+            .optional()
+            .refine(
+                (v) => v == null || v === "" || /^https?:\/\//i.test(v),
+                "website must start with http:// or https://",
+            ),
+        facebookUrl: z
+            .string()
+            .trim()
+            .max(500)
+            .nullable()
+            .optional()
+            .refine(
+                (v) => v == null || v === "" || /^https?:\/\//i.test(v),
+                "facebookUrl must start with http:// or https://",
+            ),
+        email: z
+            .string()
+            .trim()
+            .max(320)
+            .nullable()
+            .optional()
+            .refine(
+                (v) => v == null || v === "" || z.string().email().safeParse(v).success,
+                "email is invalid",
+            ),
+        openingHours: z.string().trim().max(2000).nullable().optional(),
+    })
+    .strict();
+
+export type PlaceContactBody = z.infer<typeof placeContactBodySchema>;
 
 export const placeIdParamsSchema = z.object({
     id: z.string().uuid(),

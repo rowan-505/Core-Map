@@ -60,9 +60,17 @@ export class AdminAreasService {
     async listAdminAreaOptions(args: {
         limit: number;
         q?: string | undefined;
-        adminLevelCode?: "township";
+        adminLevelCode?: "township" | "state_region";
+        regionAdminAreaId?: string | undefined;
     }) {
-        const rows = await this.adminAreasRepo.listAdminAreaOptions(args);
+        const rows = await this.adminAreasRepo.listAdminAreaOptions({
+            limit: args.limit,
+            q: args.q,
+            adminLevelCode: args.adminLevelCode,
+            regionAdminAreaId: args.regionAdminAreaId
+                ? BigInt(args.regionAdminAreaId)
+                : undefined,
+        });
         return rows.map((row) => this.mapAdminAreaOptionRow(row));
     }
 

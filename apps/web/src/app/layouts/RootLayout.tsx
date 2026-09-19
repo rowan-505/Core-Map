@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 
 export default function RootLayout() {
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden">
+    <div className="flex h-[100dvh] w-full flex-col overflow-hidden">
       <Outlet />
     </div>
   );

@@ -435,7 +435,7 @@ export class ReverseAddressRepository {
                     lc.name_mm
                 ) AS name,
                 lc.code AS class_code,
-                lc.name AS class_name
+                COALESCE(lc.name_en, lc.name_mm, lc.code) AS class_name
             FROM core.core_land_areas AS lu
             CROSS JOIN click
             LEFT JOIN ref.ref_land_area_classes AS lc ON lc.id = lu.land_area_class_id

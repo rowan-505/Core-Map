@@ -34,7 +34,9 @@ export function composeWebMapStyle(
   const regionalLayers = [...(regionalStyle.layers ?? [])] as LayerSpecification[];
   const background = regionalLayers.find((l) => l.id === 'background');
   const regionalWithoutBackground = regionalLayers.filter((l) => l.id !== 'background');
-  const patchedRegional = patchRegionalLayersForProgressiveDetail(regionalWithoutBackground);
+  const patchedRegional = quietWebBasemapPaint(
+    patchRegionalLayersForProgressiveDetail(regionalWithoutBackground),
+  );
   const overviewLayers = patchOverviewLayersForProgressiveDetail(createOverviewLayers());
 
   const regionalSources = { ...regionalStyle.sources };
@@ -75,4 +77,32 @@ export function getComposedWebMapLayerIds(regionalLayerIds: readonly string[]): 
   const background = regionalLayerIds.includes('background') ? ['background'] : [];
   const regionalRest = regionalLayerIds.filter((id) => id !== 'background');
   return [...background, ...OVERVIEW_LAYER_IDS, ...regionalRest];
+}
+
+/**
+ * Safer public-web paint quieting: desaturate known road/building colors without
+ * changing filters, zoom, sources, or layer presence.
+ */
+const WEB_BASEMAP_PAINT_QUIET: Readonly<Record<string, string>> = {
+  '#ffd76d': '#e8d089',
+  '#ffe9a8': '#eee3c4',
+  '#c99d3f': '#c4a66a',
+  '#e9edf2': '#eef1f4',
+  '#d9efd7': '#e4f0e3',
+};
+
+function quietWebBasemapPaint(layers: LayerSpecification[]): LayerSpecification[] {
+  return layers.map((layer) => {
+    if (!('paint' in layer) || !layer.paint) return layer;
+    const paint = { ...layer.paint } as Record<string, unknown>;
+    let changed = false;
+    for (const [key, value] of Object.entries(paint)) {
+      if (typeof value !== 'string') continue;
+      const next = WEB_BASEMAP_PAINT_QUIET[value.toLowerCase()];
+      if (!next) continue;
+      paint[key] = next;
+      changed = true;
+    }
+    return changed ? ({ ...layer, paint } as LayerSpecification) : layer;
+  });
 }

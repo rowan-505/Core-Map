@@ -774,7 +774,7 @@ const authRoutes: FastifyPluginAsync = async (app) => {
         }
     );
 
-    // Restricted MFA enrollment for privileged dashboard users who do not yet have MFA.
+    // Restricted MFA enrollment for super_admin users who do not yet have MFA.
     // Enrollment JWT only — never a full access session until TOTP verifies.
     app.post(
         "/auth/mfa/enroll/bootstrap",

@@ -6,8 +6,7 @@ import { useAuth } from '@/features/auth/state/useAuth';
 import { useSavedPlaces } from '@/features/saved-places/state/useSavedPlaces';
 import { ReportEntryButton } from '@/features/reports/components/ReportEntryButton';
 import { ShareCard } from '@/features/share/components/ShareCard';
-import { ActionButton, MetadataList, MetadataRow } from '@/components/ui/sidebarUi';
-import { sidebarCard } from '@/components/ui/sidebarTokens';
+import { ActionButton, MetadataList, MetadataRow, PanelEmptyState } from '@/components/ui/sidebarUi';
 import type { RoutePoint } from '@/features/routing/lib/routePoint';
 
 type AddressLocationPanelProps = {
@@ -37,14 +36,10 @@ export function AddressLocationPanel({
 
   if (!location) {
     return (
-      <section className="p-3" aria-label={t('မြေပုံတည်နေရာ စစ်ဆေးရန်', 'Inspect map location')}>
-        <article className={sidebarCard}>
-          <div className="px-4 py-4 text-center">
-            <p className="text-sm font-medium leading-5 text-map-muted">
-              {t('မြေပုံပေါ်တွင် နှိပ်ပါ', 'Click the map')}
-            </p>
-          </div>
-        </article>
+      <section className="px-4 py-4" aria-label={t('မြေပုံတည်နေရာ စစ်ဆေးရန်', 'Inspect map location')}>
+        <PanelEmptyState
+          title={t('မြေပုံပေါ်တွင် နှိပ်ပါ', 'Click the map')}
+        />
       </section>
     );
   }
@@ -63,9 +58,9 @@ export function AddressLocationPanel({
   const plusCode = reverse.data?.plus_code ?? location.plusCode ?? null;
 
   return (
-    <section className="p-3" aria-label={t('မြေပုံတည်နေရာ စစ်ဆေးရန်', 'Inspect map location')}>
-      <article className={sidebarCard}>
-        <div className="px-4 pb-3.5 pt-3">
+    <section className="px-4 py-4" aria-label={t('မြေပုံတည်နေရာ စစ်ဆေးရန်', 'Inspect map location')}>
+      <article>
+        <div className="pb-3">
           <div className="flex items-center justify-between gap-3">
             <p className="truncate text-xs font-medium text-map-muted">
               {t('ရွေးထားသောနေရာ', 'Selected point')}
@@ -84,15 +79,15 @@ export function AddressLocationPanel({
             >
               {t('သို့', 'To')}
             </ActionButton>
+          </div>
+
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
             <ActionButton title={t('တည်နေရာမျှဝေရန်', 'Share location')} onClick={() => setShowShare((open) => !open)}>
               {t('မျှဝေ', 'Share')}
             </ActionButton>
             <ActionButton title={t('ကိုဩဒိနိတ်ကူးယူရန်', 'Copy coordinates')} onClick={() => copyText(coordinates)}>
               {t('ကူးယူ', 'Copy')}
             </ActionButton>
-          </div>
-
-          <div className="mt-2 grid grid-cols-2 gap-2">
             {isAuthenticated ? (
               <SaveLocationControl
                 key={`${lat}:${lng}`}

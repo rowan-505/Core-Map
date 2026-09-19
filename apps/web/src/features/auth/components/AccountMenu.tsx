@@ -23,14 +23,15 @@ export function AccountMenu({ onOpen, active = false }: AccountMenuProps) {
     return (
       <button
         type="button"
-        className={`group grid h-11 w-11 place-items-center rounded-2xl transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 ${
+        className={`map-rail-tip group grid h-11 w-11 place-items-center rounded-map-control transition-colors duration-150 ${
           active
-            ? 'bg-map-primary text-white shadow-map-control'
-            : 'text-map-muted hover:bg-map-primary-soft hover:text-map-primary'
+            ? 'bg-map-primary-soft text-map-primary'
+            : 'text-map-muted hover:bg-map-bg hover:text-map-ink'
         }`}
         aria-label={t('အကောင့်ဝင်ရန်', 'Sign in')}
         aria-current={active ? 'page' : undefined}
         title={t('အကောင့်ဝင်ရန်', 'Sign in')}
+        data-tooltip={t('အကောင့်ဝင်ရန်', 'Sign in')}
         onClick={onOpen}
       >
         <AccountIcon />
@@ -43,15 +44,16 @@ export function AccountMenu({ onOpen, active = false }: AccountMenuProps) {
   return (
     <button
       type="button"
-      className={`grid h-11 w-11 place-items-center rounded-2xl transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 ${
-        active ? 'bg-map-primary-soft ring-2 ring-map-primary/25' : 'hover:bg-map-primary-soft'
+      className={`map-rail-tip grid h-11 w-11 place-items-center rounded-map-control transition-colors duration-150 ${
+        active ? 'bg-map-primary-soft text-map-primary' : 'hover:bg-map-bg'
       }`}
       aria-label={t('အကောင့်', 'Account')}
       aria-current={active ? 'page' : undefined}
       title={user.display_name}
+      data-tooltip={user.display_name}
       onClick={onOpen}
     >
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#0f68e8,#087c8f)] text-xs font-bold text-white shadow-map-control">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-map-primary text-xs font-bold text-white">
         {initial}
       </span>
     </button>

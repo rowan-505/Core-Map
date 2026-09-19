@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Resolver } from "react-hook-form";
 import type { Map as MaplibreMap } from "maplibre-gl";
@@ -66,6 +66,7 @@ export type CoreEntityFormPageProps = {
 export default function CoreEntityFormPage({ entityKey, mode, id }: CoreEntityFormPageProps) {
     const config = getCoreEntityConfig(entityKey);
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { bumpPlaceTileVersion, bumpStreetTileVersion, bumpRoadLabelTileVersion } = useDashboardTileVersions();
     const { bumpBuildingTileVersion } = useBuildingTileVersion();
 
@@ -150,6 +151,15 @@ export default function CoreEntityFormPage({ entityKey, mode, id }: CoreEntityFo
             mounted = false;
         };
     }, [entityKey, mode, createForm]);
+
+    useEffect(() => {
+        if (mode !== "create" || entityKey !== "places") {
+            return;
+        }
+        const adminAreaId = searchParams.get("adminAreaId")?.trim() ?? "";
+        if (!adminAreaId) return;
+        createForm.setValue("adminAreaId", adminAreaId);
+    }, [entityKey, mode, searchParams, createForm]);
 
     useEffect(() => {
         if (mode !== "create") {

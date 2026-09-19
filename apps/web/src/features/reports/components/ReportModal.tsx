@@ -16,18 +16,35 @@ type ReportModalProps = {
   readonly onClose: () => void;
 };
 
-const DEFAULT_TYPE: ReportTypeCode = 'wrong_info';
+function resolveTypeOptions(target: ReportTarget) {
+  if (!target.allowedTypeCodes || target.allowedTypeCodes.length === 0) {
+    return REPORT_TYPE_OPTIONS;
+  }
+  const allowed = new Set(target.allowedTypeCodes);
+  return REPORT_TYPE_OPTIONS.filter((option) => allowed.has(option.code));
+}
+
+function resolveDefaultType(target: ReportTarget): ReportTypeCode {
+  const options = resolveTypeOptions(target);
+  if (target.defaultTypeCode && options.some((o) => o.code === target.defaultTypeCode)) {
+    return target.defaultTypeCode;
+  }
+  return options[0]?.code ?? 'wrong_info';
+}
 
 export function ReportModal({ open, target, onClose }: ReportModalProps) {
   const t = useMapUiText();
   const { isAuthenticated } = useAuth();
-  const [reportTypeCode, setReportTypeCode] = useState<ReportTypeCode>(DEFAULT_TYPE);
+  const typeOptions = resolveTypeOptions(target);
+  const [reportTypeCode, setReportTypeCode] = useState<ReportTypeCode>(() =>
+    resolveDefaultType(target),
+  );
   const [description, setDescription] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmittedReport | null>(null);
   const closeAndReset = () => {
-    setReportTypeCode(DEFAULT_TYPE);
+    setReportTypeCode(resolveDefaultType(target));
     setDescription('');
     setBusy(false);
     setError(null);
@@ -124,7 +141,7 @@ export function ReportModal({ open, target, onClose }: ReportModalProps) {
                 value={reportTypeCode}
                 onChange={(event) => setReportTypeCode(event.target.value as ReportTypeCode)}
               >
-                {REPORT_TYPE_OPTIONS.map((option) => (
+                {typeOptions.map((option) => (
                   <option key={option.code} value={option.code}>
                     {reportTypeLabel(option.code, option.label, t)}
                   </option>
@@ -231,6 +248,11 @@ function reportTypeLabel(
     transport_issue: 'အများသုံးယာဉ် ပြဿနာ',
     community_info: 'လူထုအချက်အလက်',
     other_map_issue: 'အခြားပြဿနာ',
+    tourism_incorrect_type: 'ခရီးသွားအမျိုးအစား မှားနေသည်',
+    tourism_incorrect_description: 'ဖော်ပြချက် မှားနေသည်',
+    tourism_incorrect_price: 'ဈေးနှုန်းအဆင့် မှားနေသည်',
+    tourism_incorrect_review: 'အဆင့်/သုံးသပ်ချက် မှားနေသည်',
+    tourism_other: 'အခြား ခရီးသွားအချက်အလက်',
   };
   return t(labels[code], english);
 }

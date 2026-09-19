@@ -57,6 +57,9 @@ export type MapViewProps = {
   readonly onUserLocationFollowDisengage?: () => void;
   /** Called when a POI marker is clicked, or when the map is clicked away from markers. */
   readonly onSelectPoiId: (id: string | null) => void;
+  /** Community geotag markers (GeoJSON) — empty while Community is inactive. */
+  readonly communityMarkers?: GeoJSON.FeatureCollection | null;
+  readonly onSelectCommunityPostId?: (publicId: string) => void;
   /** Selected transport stop/station from the Martin overlay (drives highlight + detail panel). */
   readonly selectedTransportSelection?: TransportMapSelection | null;
   readonly onSelectTransportStop?: (selection: TransportMapSelection) => void;

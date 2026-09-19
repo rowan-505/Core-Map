@@ -24,7 +24,13 @@ import {
     type OAuthBrowserClient,
 } from "./auth-client.js";
 import type { NormalizedIdentity, OAuthClient, OAuthProviderName } from "./oauth/types.js";
-import { assertPasswordPolicy, isPrivilegedRoleList, PasswordPolicyError, privilegedDashboardOAuthMfaAction } from "./password-policy.js";
+import {
+    assertPasswordPolicy,
+    isMfaRequiredRoleList,
+    isPrivilegedRoleList,
+    PasswordPolicyError,
+    privilegedDashboardOAuthMfaAction,
+} from "./password-policy.js";
 import { hashPassword, verifyPassword } from "./password.js";
 import {
     absoluteExpiry,
@@ -278,6 +284,7 @@ export class AuthService {
             }
         }
 
+        // Challenge TOTP when enrolled (required for super_admin; optional for admin).
         const totp = isPrivilegedRoleList(user.roles) ? await this.authRepo.findActiveTotp(userId) : null;
         if (totp) {
             return {
@@ -291,9 +298,8 @@ export class AuthService {
             };
         }
 
-        // Dashboard access for admin/super_admin requires MFA. Unenrolled privileged
-        // users get a restricted enrollment token — never a full dashboard session.
-        if (options.requireDashboard && isPrivilegedRoleList(user.roles)) {
+        // Mandatory MFA enrollment is super_admin only. Admin may use password alone.
+        if (options.requireDashboard && isMfaRequiredRoleList(user.roles)) {
             return {
                 kind: "mfa_enrollment_required",
                 enrollmentClaims: {
@@ -779,30 +785,32 @@ export class AuthService {
                 }
                 const totp = await this.authRepo.findActiveTotp(BigInt(profileUser.id));
                 const mfaAction = privilegedDashboardOAuthMfaAction(result.user.roles, Boolean(totp));
-                // Always revoke the session resolveOAuthIdentity already created — password
-                // login never issues a session before MFA either.
-                await this.authRepo.revokeSessionByTokenHash(
-                    hashRefreshToken(result.refreshToken),
-                    mfaAction === "mfa" ? "mfa_required" : "mfa_enrollment_required"
-                );
-                if (mfaAction === "enrollment_required") {
-                    throw new AuthError(
-                        "Administrator MFA enrollment required. Sign in with email and password to set up MFA.",
-                        403,
-                        "mfa_enrollment_required"
+                if (mfaAction !== "session") {
+                    // Revoke the session resolveOAuthIdentity already created — password
+                    // login never issues a session before MFA either.
+                    await this.authRepo.revokeSessionByTokenHash(
+                        hashRefreshToken(result.refreshToken),
+                        mfaAction === "mfa" ? "mfa_required" : "mfa_enrollment_required"
                     );
+                    if (mfaAction === "enrollment_required") {
+                        throw new AuthError(
+                            "Super admin MFA enrollment required. Sign in with email and password to set up MFA.",
+                            403,
+                            "mfa_enrollment_required"
+                        );
+                    }
+                    return {
+                        kind: "mfa",
+                        mfaClaims: {
+                            sub: result.user.public_id,
+                            purpose: "mfa",
+                            email,
+                            roles: result.user.roles,
+                        },
+                        client,
+                        returnTo: stored.return_to,
+                    };
                 }
-                return {
-                    kind: "mfa",
-                    mfaClaims: {
-                        sub: result.user.public_id,
-                        purpose: "mfa",
-                        email,
-                        roles: result.user.roles,
-                    },
-                    client,
-                    returnTo: stored.return_to,
-                };
             }
         }
         return { kind: "session", session: result, client, returnTo: stored.return_to };
@@ -1227,7 +1235,7 @@ export class AuthService {
     }
 
     /**
-     * Finish mandatory privileged MFA enrollment and issue a full session.
+     * Finish mandatory super_admin MFA enrollment and issue a full session.
      * Used by the dashboard bootstrap flow after password login (no session yet).
      */
     async completeMfaEnrollmentBootstrap(
@@ -1237,8 +1245,8 @@ export class AuthService {
     ): Promise<{ session: AuthSessionResult; recoveryCodes: string[] }> {
         const recoveryCodes = (await this.enrollMfaVerify(userPublicId, code)).recoveryCodes;
         const user = await this.requireActiveUser(userPublicId);
-        if (!isPrivilegedRoleList(user.roles)) {
-            throw new AuthError("MFA enrollment is only for administrators.", 403);
+        if (!isMfaRequiredRoleList(user.roles)) {
+            throw new AuthError("Mandatory MFA enrollment is only for super admins.", 403);
         }
         await this.authRepo.touchLastLogin(BigInt(user.id));
         const session = await this.issueSession(user, {

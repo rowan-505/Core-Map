@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["app", "app_auth", "contrib", "core", "ref", "system"]
+  schemas  = ["app", "app_auth", "community", "contrib", "core", "ref", "system", "tourism"]
 }
 
 model AuthUser {
@@ -39,6 +39,22 @@ model AuthUser {
   pointLedgerCreated    PointLedger[]          @relation("PointLedgerCreatedBy")
   pointSummary          UserPointSummary?
   auditLogs             AuditLog[]
+  communityPosts        CommunityPost[]              @relation("CommunityPostAuthor")
+  communityReactions    CommunityPostReaction[]      @relation("CommunityReactionUser")
+  communityNotifications CommunityNotification[]     @relation("CommunityNotificationRecipient")
+  communityNotificationsActed CommunityNotification[] @relation("CommunityNotificationActor")
+  communityModerationEvents CommunityPostModerationEvent[] @relation("CommunityModerationActor")
+  tourismProfilesCreated    TourismPlaceProfile[]            @relation("TourismProfileCreatedBy")
+  tourismProfilesUpdated    TourismPlaceProfile[]            @relation("TourismProfileUpdatedBy")
+  tourismCandidateIgnores   TourismPlaceCandidateIgnore[]    @relation("TourismCandidateIgnoredBy")
+  tourismActivitiesCreated  TourismActivity[]                @relation("TourismActivityCreatedBy")
+  tourismActivitiesUpdated  TourismActivity[]                @relation("TourismActivityUpdatedBy")
+  tourismEventsCreated      TourismEvent[]                   @relation("TourismEventCreatedBy")
+  tourismEventsUpdated      TourismEvent[]                   @relation("TourismEventUpdatedBy")
+  tourismEventOccurrencesCreated TourismEventOccurrence[]    @relation("TourismEventOccurrenceCreatedBy")
+  tourismEventOccurrencesUpdated TourismEventOccurrence[]    @relation("TourismEventOccurrenceUpdatedBy")
+  communityPlaceReviews     CommunityPlaceReview[]           @relation("CommunityPlaceReviewAuthor")
+  communityReviewModerationEvents CommunityReviewModerationEvent[] @relation("CommunityReviewModerationActor")
 
   @@map("auth_users")
   @@schema("app_auth")
@@ -256,6 +272,25 @@ model UserSavedPlace {
   @@schema("app")
 }
 
+/// Daily place engagement counters for contextual popularity (Phase 3).
+/// Do not treat as a global popularity score store.
+model PlaceActivityDaily {
+  placeId          BigInt   @map("place_id")
+  activityDate     DateTime @map("activity_date") @db.Date
+  viewCount        Int      @default(0) @map("view_count")
+  saveCount        Int      @default(0) @map("save_count")
+  shareCount       Int      @default(0) @map("share_count")
+  directionsCount  Int      @default(0) @map("directions_count")
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@id([placeId, activityDate])
+  @@unique([placeId, activityDate], map: "place_activity_daily_place_date_uidx")
+  @@index([activityDate(sort: Desc)], map: "place_activity_daily_date_idx")
+  @@index([placeId, activityDate(sort: Desc)], map: "place_activity_daily_place_date_desc_idx")
+  @@map("place_activity_daily")
+  @@schema("app")
+}
+
 model PointLedger {
   id                BigInt    @id @default(autoincrement())
   userId            BigInt    @map("user_id")
@@ -303,14 +338,15 @@ model AuditLog {
 }
 
 model RefPoiCategory {
-  id           BigInt   @id @default(autoincrement())
-  parentId     BigInt?  @map("parent_id")
-  code         String   @unique @db.Text
-  name         String   @unique @db.Text
-  sortOrder    Int      @map("sort_order")
-  isSearchable Boolean  @default(true) @map("is_searchable")
-  isPublic     Boolean  @default(true) @map("is_public")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id            BigInt   @id @default(autoincrement())
+  parentId      BigInt?  @map("parent_id")
+  code          String   @unique @db.Text
+  name          String   @unique @db.Text
+  sortOrder     Int      @map("sort_order")
+  isSearchable  Boolean  @default(true) @map("is_searchable")
+  isPublic      Boolean  @default(true) @map("is_public")
+  rankingGroup  String?  @map("ranking_group") @db.Text
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("ref_poi_categories")
   @@schema("ref")
@@ -333,6 +369,57 @@ model RefBuildingType {
   @@schema("ref")
 }
 
+model RefTourismType {
+  id          BigInt                @id @default(autoincrement())
+  code        String                @unique @db.Text
+  nameEn      String                @map("name_en") @db.Text
+  nameMm      String?               @map("name_mm") @db.Text
+  description String?               @db.Text
+  sortOrder   Int                   @default(0) @map("sort_order")
+  isActive    Boolean               @default(true) @map("is_active")
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime              @default(now()) @map("updated_at") @db.Timestamptz(6)
+  profiles    TourismPlaceProfile[]
+
+  @@index([isActive, sortOrder, id], map: "ref_tourism_types_active_sort_idx")
+  @@map("ref_tourism_types")
+  @@schema("ref")
+}
+
+model RefActivityType {
+  id          BigInt            @id @default(autoincrement())
+  code        String            @unique @db.Text
+  nameEn      String            @map("name_en") @db.Text
+  nameMm      String?           @map("name_mm") @db.Text
+  description String?           @db.Text
+  sortOrder   Int               @default(100) @map("sort_order")
+  isActive    Boolean           @default(true) @map("is_active")
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  activities  TourismActivity[]
+
+  @@index([isActive, sortOrder, id], map: "ref_activity_types_active_sort_idx")
+  @@map("ref_activity_types")
+  @@schema("ref")
+}
+
+model RefEventType {
+  id          BigInt         @id @default(autoincrement())
+  code        String         @unique @db.Text
+  nameEn      String         @map("name_en") @db.Text
+  nameMm      String?        @map("name_mm") @db.Text
+  description String?        @db.Text
+  sortOrder   Int            @default(100) @map("sort_order")
+  isActive    Boolean        @default(true) @map("is_active")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  events      TourismEvent[]
+
+  @@index([isActive, sortOrder, id], map: "ref_event_types_active_sort_idx")
+  @@map("ref_event_types")
+  @@schema("ref")
+}
+
 model CoreAdminArea {
   id            BigInt   @id @default(autoincrement())
   publicId      String   @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
@@ -344,6 +431,9 @@ model CoreAdminArea {
   isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  tourismActivities TourismActivity[]
+  tourismEvents     TourismEvent[]
 
   @@map("core_admin_areas")
   @@schema("core")
@@ -371,6 +461,394 @@ model CorePlace {
   updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
   deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  tourismProfile           TourismPlaceProfile?
+  tourismCandidateIgnore   TourismPlaceCandidateIgnore?
+  tourismActivities        TourismActivity[]
+  tourismEvents            TourismEvent[]
+  communityPlaceReviews    CommunityPlaceReview[]
+  communityRatingSummary   CommunityPlaceRatingSummary?
+
   @@map("core_places")
   @@schema("core")
+}
+
+// ---------------------------------------------------------------------------
+// community — local news posts, reactions, notifications, moderation history.
+// Source of truth: infrastructure/database/migrations/supabase/
+//   20260917010000_community_production_contract.sql
+// Trust / auto-confirm rules are enforced in the API (not DB triggers).
+// ---------------------------------------------------------------------------
+
+enum CommunityPublicationStatus {
+  published
+  resolved
+  expired
+  rejected
+  removed
+
+  @@map("publication_status")
+  @@schema("community")
+}
+
+enum CommunityVerificationStatus {
+  unverified
+  community_confirmed
+  admin_verified
+
+  @@map("verification_status")
+  @@schema("community")
+}
+
+enum CommunityReactionType {
+  confirm
+  helpful
+  incorrect
+
+  @@map("reaction_type")
+  @@schema("community")
+}
+
+enum CommunityNotificationType {
+  community_confirmed
+  admin_verified
+  rejected
+  resolved
+  expired
+  post_reaction
+  post_community_confirmed
+  post_admin_verified
+  post_admin_unverified
+  post_rejected
+  post_resolved
+  post_expired
+  post_reopened
+  moderation_message
+
+  @@map("notification_type")
+  @@schema("community")
+}
+
+model CommunityPost {
+  id                  BigInt                       @id @default(autoincrement())
+  publicId            String                       @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  authorId            BigInt                       @map("author_id")
+  title               String                       @db.Text
+  description         String                       @db.Text
+  topic               String                       @db.Text
+  publicationStatus   CommunityPublicationStatus   @default(published) @map("publication_status")
+  verificationStatus  CommunityVerificationStatus  @default(unverified) @map("verification_status")
+  trustScore          Int                          @default(0) @map("trust_score")
+  location            Unsupported("geometry(Point, 4326)")?
+  locationLabel       String?                      @map("location_label") @db.Text
+  publishedAt         DateTime                     @default(now()) @map("published_at") @db.Timestamptz(6)
+  createdAt           DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?                    @map("deleted_at") @db.Timestamptz(6)
+
+  author              AuthUser                     @relation("CommunityPostAuthor", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reactions           CommunityPostReaction[]
+  notifications       CommunityNotification[]
+  moderationEvents    CommunityPostModerationEvent[]
+
+  @@index([authorId], map: "community_posts_author_id_idx")
+  @@index([publicationStatus], map: "community_posts_publication_status_idx")
+  @@index([verificationStatus], map: "community_posts_verification_status_idx")
+  @@map("community_posts")
+  @@schema("community")
+}
+
+model CommunityPostReaction {
+  id           BigInt                 @id @default(autoincrement())
+  postId       BigInt                 @map("post_id")
+  userId       BigInt                 @map("user_id")
+  reactionType CommunityReactionType  @map("reaction_type")
+  createdAt    DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime               @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  post         CommunityPost          @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user         AuthUser               @relation("CommunityReactionUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([postId, userId], map: "post_reactions_post_id_user_id_key")
+  @@index([postId], map: "post_reactions_post_id_idx")
+  @@index([userId], map: "post_reactions_user_id_idx")
+  @@map("post_reactions")
+  @@schema("community")
+}
+
+model CommunityNotification {
+  id            BigInt                     @id @default(autoincrement())
+  publicId      String                     @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  userId        BigInt                     @map("user_id")
+  actorUserId   BigInt?                    @map("actor_user_id")
+  type          CommunityNotificationType
+  reactionType  CommunityReactionType?     @map("reaction_type")
+  title         String                     @db.Text
+  message       String                     @db.Text
+  relatedPostId BigInt?                    @map("related_post_id")
+  eventKey      String?                    @map("event_key") @db.Text
+  isRead        Boolean                    @default(false) @map("is_read")
+  createdAt     DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt     DateTime?                  @map("deleted_at") @db.Timestamptz(6)
+
+  user          AuthUser                   @relation("CommunityNotificationRecipient", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  actor         AuthUser?                  @relation("CommunityNotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  relatedPost   CommunityPost?             @relation(fields: [relatedPostId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([userId], map: "notifications_user_id_idx")
+  @@index([isRead], map: "notifications_is_read_idx")
+  @@index([relatedPostId], map: "notifications_related_post_id_idx")
+  @@index([actorUserId], map: "notifications_actor_user_id_idx")
+  @@map("notifications")
+  @@schema("community")
+}
+
+model CommunityPostModerationEvent {
+  id                       BigInt                      @id @default(autoincrement())
+  publicId                 String                      @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  postId                   BigInt                      @map("post_id")
+  actorUserId              BigInt?                     @map("actor_user_id")
+  actionCode               String                      @map("action_code") @db.Text
+  fromPublicationStatus    CommunityPublicationStatus? @map("from_publication_status")
+  toPublicationStatus      CommunityPublicationStatus? @map("to_publication_status")
+  fromVerificationStatus   CommunityVerificationStatus? @map("from_verification_status")
+  toVerificationStatus     CommunityVerificationStatus? @map("to_verification_status")
+  note                     String?                     @db.Text
+  metadata                 Json?
+  createdAt                DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  post                     CommunityPost               @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  actor                    AuthUser?                   @relation("CommunityModerationActor", fields: [actorUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([postId, createdAt(sort: Desc)], map: "post_moderation_events_post_created_idx")
+  @@map("post_moderation_events")
+  @@schema("community")
+}
+
+// ---------------------------------------------------------------------------
+// tourism — place profiles overlay (reviews live in community).
+// Sources:
+//   20260917030000_tourism_reviews_ranking_foundation.sql
+//   20260917024448_tourism_taxonomy_and_ranking_inputs.sql
+// tourism_type_id FK -> ref.ref_tourism_types; season_mode is TEXT + CHECK.
+// ---------------------------------------------------------------------------
+
+model TourismPlaceProfile {
+  placeId            BigInt   @id @map("place_id")
+  tourismTypeId      BigInt   @map("tourism_type_id")
+  shortDescription   String?  @map("short_description") @db.Text
+  priceLevel         Int?     @map("price_level")
+  editorPick         Boolean  @default(false) @map("editor_pick")
+  isPublic           Boolean  @default(true) @map("is_public")
+  editorialScore     Int      @default(50) @map("editorial_score")
+  manualBoost        Int      @default(0) @map("manual_boost")
+  seasonMode         String   @default("all_year") @map("season_mode") @db.Text
+  seasonStartMonth   Int?     @map("season_start_month")
+  seasonEndMonth     Int?     @map("season_end_month")
+  createdBy          BigInt?  @map("created_by")
+  updatedBy          BigInt?  @map("updated_by")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  place              CorePlace      @relation(fields: [placeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  tourismType        RefTourismType @relation(fields: [tourismTypeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdByUser      AuthUser?      @relation("TourismProfileCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedByUser      AuthUser?      @relation("TourismProfileUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([tourismTypeId], map: "place_profiles_tourism_type_id_idx")
+  @@index([createdAt(sort: Desc)], map: "place_profiles_created_at_idx")
+  @@map("place_profiles")
+  @@schema("tourism")
+}
+
+model TourismRankingConfig {
+  id                BigInt   @id @default(autoincrement())
+  scopeType         String   @map("scope_type") @db.Text
+  algorithmVersion  String   @map("algorithm_version") @db.Text
+  editorialWeight   Decimal  @map("editorial_weight") @db.Decimal(6, 4)
+  importanceWeight  Decimal  @map("importance_weight") @db.Decimal(6, 4)
+  reviewWeight      Decimal  @map("review_weight") @db.Decimal(6, 4)
+  popularityWeight  Decimal  @map("popularity_weight") @db.Decimal(6, 4)
+  effectiveFrom     DateTime @default(now()) @map("effective_from") @db.Timestamptz(6)
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([algorithmVersion, scopeType], map: "ranking_configs_version_idx")
+  @@map("ranking_configs")
+  @@schema("tourism")
+}
+
+/** Curator-ignored tourism candidates — prevents reappearance in candidate lists. */
+model TourismPlaceCandidateIgnore {
+  placeId    BigInt    @id @map("place_id")
+  ignoredBy  BigInt?   @map("ignored_by")
+  reason     String?   @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  place         CorePlace @relation(fields: [placeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ignoredByUser AuthUser? @relation("TourismCandidateIgnoredBy", fields: [ignoredBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([createdAt(sort: Desc)], map: "place_candidate_ignores_created_at_idx")
+  @@map("place_candidate_ignores")
+  @@schema("tourism")
+}
+
+// ---------------------------------------------------------------------------
+// tourism activities + events (Phase 1 foundation)
+// Source: 20260917110000_tourism_activities_events_foundation.sql
+// Festival is ref.ref_event_types.code = festival — no tourism.festivals table.
+// ---------------------------------------------------------------------------
+
+model TourismActivity {
+  id                      BigInt    @id @default(autoincrement())
+  publicId                String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  name                    String    @db.Text
+  shortDescription        String?   @map("short_description") @db.Text
+  activityTypeId          BigInt    @map("activity_type_id")
+  primaryPlaceId          BigInt?   @map("primary_place_id")
+  adminAreaId             BigInt    @map("admin_area_id")
+  isActive                Boolean   @default(true) @map("is_active")
+  isVerified              Boolean   @default(false) @map("is_verified")
+  /// Allowed: all_year | best_months | poor_months | temporarily_unavailable
+  seasonMode              String    @default("all_year") @map("season_mode") @db.Text
+  seasonStartMonth        Int?      @map("season_start_month") @db.SmallInt
+  seasonEndMonth          Int?      @map("season_end_month") @db.SmallInt
+  displayPriority         Int       @default(0) @map("display_priority")
+  requiresScheduleReview  Boolean   @default(false) @map("requires_schedule_review")
+  lastScheduleReviewedAt  DateTime? @map("last_schedule_reviewed_at") @db.Timestamptz(6)
+  nextReviewDueAt         DateTime? @map("next_review_due_at") @db.Timestamptz(6)
+  scheduleReviewNote      String?   @map("schedule_review_note") @db.Text
+  createdBy               BigInt?   @map("created_by")
+  updatedBy               BigInt?   @map("updated_by")
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  activityType   RefActivityType @relation(fields: [activityTypeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  primaryPlace   CorePlace?      @relation(fields: [primaryPlaceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  adminArea      CoreAdminArea   @relation(fields: [adminAreaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdByUser  AuthUser?       @relation("TourismActivityCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedByUser  AuthUser?       @relation("TourismActivityUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([adminAreaId], map: "activities_admin_area_id_idx")
+  @@index([activityTypeId], map: "activities_activity_type_id_idx")
+  @@map("activities")
+  @@schema("tourism")
+}
+
+model TourismEvent {
+  id                     BigInt    @id @default(autoincrement())
+  publicId               String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  name                   String    @db.Text
+  shortDescription       String?   @map("short_description") @db.Text
+  eventTypeId            BigInt    @map("event_type_id")
+  primaryPlaceId         BigInt?   @map("primary_place_id")
+  adminAreaId            BigInt    @map("admin_area_id")
+  isActive               Boolean   @default(true) @map("is_active")
+  isVerified             Boolean   @default(false) @map("is_verified")
+  requiresScheduleReview Boolean   @default(false) @map("requires_schedule_review")
+  lastScheduleReviewedAt DateTime? @map("last_schedule_reviewed_at") @db.Timestamptz(6)
+  nextReviewDueAt        DateTime? @map("next_review_due_at") @db.Timestamptz(6)
+  scheduleReviewNote     String?   @map("schedule_review_note") @db.Text
+  createdBy              BigInt?   @map("created_by")
+  updatedBy              BigInt?   @map("updated_by")
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  eventType      RefEventType              @relation(fields: [eventTypeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  primaryPlace   CorePlace?                @relation(fields: [primaryPlaceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  adminArea      CoreAdminArea             @relation(fields: [adminAreaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  occurrences    TourismEventOccurrence[]
+  createdByUser  AuthUser?                 @relation("TourismEventCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedByUser  AuthUser?                 @relation("TourismEventUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([adminAreaId], map: "events_admin_area_id_idx")
+  @@index([eventTypeId], map: "events_event_type_id_idx")
+  @@map("events")
+  @@schema("tourism")
+}
+
+model TourismEventOccurrence {
+  id            BigInt    @id @default(autoincrement())
+  publicId      String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  eventId       BigInt    @map("event_id")
+  startsAt      DateTime  @map("starts_at") @db.Timestamptz(6)
+  endsAt        DateTime  @map("ends_at") @db.Timestamptz(6)
+  /// Allowed: scheduled | confirmed | cancelled | completed
+  status        String    @default("scheduled") @db.Text
+  scheduleNote  String?   @map("schedule_note") @db.Text
+  sourceUrl     String?   @map("source_url") @db.Text
+  verifiedAt    DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdBy     BigInt?   @map("created_by")
+  updatedBy     BigInt?   @map("updated_by")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  event         TourismEvent @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdByUser AuthUser?    @relation("TourismEventOccurrenceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedByUser AuthUser?    @relation("TourismEventOccurrenceUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([eventId], map: "event_occurrences_event_id_idx")
+  @@index([startsAt], map: "event_occurrences_starts_at_idx")
+  @@index([endsAt], map: "event_occurrences_ends_at_idx")
+  @@index([status], map: "event_occurrences_status_idx")
+  @@map("event_occurrences")
+  @@schema("tourism")
+}
+
+model CommunityPlaceReview {
+  id              BigInt    @id @default(autoincrement())
+  publicId        String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  placeId         BigInt    @map("place_id")
+  userId          BigInt    @map("user_id")
+  rating          Int
+  title           String?   @db.Text
+  body            String?   @db.Text
+  /// Allowed: pending | published | rejected | hidden | deleted (DB CHECK).
+  status          String    @default("pending") @db.Text
+  moderationNote  String?   @map("moderation_note") @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  publishedAt     DateTime? @map("published_at") @db.Timestamptz(6)
+
+  place           CorePlace @relation(fields: [placeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user            AuthUser  @relation("CommunityPlaceReviewAuthor", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  moderationEvents CommunityReviewModerationEvent[]
+
+  @@index([placeId], map: "place_reviews_place_id_idx")
+  @@index([userId], map: "place_reviews_user_id_idx")
+  @@index([status], map: "place_reviews_status_idx")
+  @@index([createdAt(sort: Desc)], map: "place_reviews_created_at_idx")
+  @@map("place_reviews")
+  @@schema("community")
+}
+
+model CommunityReviewModerationEvent {
+  id          BigInt    @id @default(autoincrement())
+  reviewId    BigInt    @map("review_id")
+  actorUserId BigInt?   @map("actor_user_id")
+  /// Same allowed set as place_reviews.status (DB CHECK).
+  fromStatus  String    @map("from_status") @db.Text
+  toStatus    String    @map("to_status") @db.Text
+  note        String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  review      CommunityPlaceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  actor       AuthUser?            @relation("CommunityReviewModerationActor", fields: [actorUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([reviewId, createdAt(sort: Desc)], map: "review_moderation_events_review_created_idx")
+  @@index([createdAt(sort: Desc)], map: "review_moderation_events_created_at_idx")
+  @@map("review_moderation_events")
+  @@schema("community")
+}
+
+model CommunityPlaceRatingSummary {
+  placeId               BigInt    @id @map("place_id")
+  publishedReviewCount  Int       @default(0) @map("published_review_count")
+  averageRating         Decimal?  @map("average_rating") @db.Decimal(4, 2)
+  updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  place                 CorePlace @relation(fields: [placeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([updatedAt(sort: Desc)], map: "place_rating_summaries_updated_at_idx")
+  @@map("place_rating_summaries")
+  @@schema("community")
 }

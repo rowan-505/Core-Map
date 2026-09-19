@@ -17,6 +17,7 @@ import {
 } from "@/src/lib/api";
 import { RolePills, VerifiedBadge } from "@/src/features/user-management/ui";
 import { statusLabel } from "@/src/features/user-management/constants";
+import { MfaQrCode } from "@/src/components/auth/MfaQrCode";
 
 const LANGUAGE_LABELS: Record<string, string> = {
     my: "Myanmar",
@@ -136,6 +137,7 @@ function AccountSecurityPanel({ roles }: { roles: string[] }) {
     const [newPassword, setNewPassword] = useState("");
     const [message, setMessage] = useState("");
     const [otpauth, setOtpauth] = useState("");
+    const [mfaSecret, setMfaSecret] = useState("");
     const [mfaCode, setMfaCode] = useState("");
     const [recovery, setRecovery] = useState<string[]>([]);
 
@@ -226,13 +228,35 @@ function AccountSecurityPanel({ roles }: { roles: string[] }) {
                         className="rounded border border-gray-300 px-3 py-1.5 text-sm"
                         onClick={() => {
                             void enrollDashboardMfa()
-                                .then((body) => setOtpauth(body.otpauthUrl))
+                                .then((body) => {
+                                    setOtpauth(body.otpauthUrl);
+                                    setMfaSecret(body.secret);
+                                })
                                 .catch((err) => setMessage(err instanceof Error ? err.message : "Could not start MFA."));
                         }}
                     >
                         Start enrollment
                     </button>
-                    {otpauth ? <p className="break-all text-xs text-gray-600">{otpauth}</p> : null}
+                    {otpauth ? (
+                        <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                            <p className="text-xs text-amber-950">
+                                Scan this QR code with your authenticator app, or enter the secret manually.
+                            </p>
+                            <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
+                                <MfaQrCode otpauthUrl={otpauth} size={160} />
+                                {mfaSecret ? (
+                                    <div className="min-w-0 flex-1 space-y-1">
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900/70">
+                                            Manual secret
+                                        </p>
+                                        <code className="block break-all rounded border border-amber-200 bg-white px-2 py-1.5 font-mono text-[11px] text-gray-800">
+                                            {mfaSecret}
+                                        </code>
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+                    ) : null}
                     {otpauth ? (
                         <form
                             className="space-y-2"

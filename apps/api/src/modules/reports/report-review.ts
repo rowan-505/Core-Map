@@ -138,6 +138,7 @@ const REPORT_TYPE_TO_KIND: Record<string, ReportReviewKind> = {
     wrong_info: "WRONG_DATA",
     transport_issue: "ROUTE_ISSUE",
     other_map_issue: "OTHER",
+    // Tourism-only codes intentionally omitted — no automatic data mutation.
 };
 
 export function reviewKindForReportType(reportTypeCode: string): ReportReviewKind | null {

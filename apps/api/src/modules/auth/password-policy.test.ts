@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { assertPasswordPolicy, isPrivilegedRoleList, PasswordPolicyError, privilegedDashboardOAuthMfaAction } from "./password-policy.js";
+import {
+    assertPasswordPolicy,
+    isMfaRequiredRoleList,
+    isPrivilegedRoleList,
+    PasswordPolicyError,
+    privilegedDashboardOAuthMfaAction,
+} from "./password-policy.js";
 
 describe("password policy", () => {
     it("rejects whitespace-only passwords", () => {
@@ -23,10 +29,18 @@ describe("password policy", () => {
         assert.equal(isPrivilegedRoleList(["super_admin", "user"]), true);
     });
 
-    it("requires TOTP challenge for enrolled dashboard OAuth admins", () => {
+    it("requires MFA only for super_admin", () => {
+        assert.equal(isMfaRequiredRoleList(["admin"]), false);
+        assert.equal(isMfaRequiredRoleList(["viewer"]), false);
+        assert.equal(isMfaRequiredRoleList(["super_admin"]), true);
+        assert.equal(isMfaRequiredRoleList(["admin", "super_admin"]), true);
+    });
+
+    it("requires TOTP challenge for enrolled dashboard OAuth super_admins", () => {
         assert.equal(privilegedDashboardOAuthMfaAction(["viewer"], false), "session");
-        assert.equal(privilegedDashboardOAuthMfaAction(["admin"], false), "enrollment_required");
+        assert.equal(privilegedDashboardOAuthMfaAction(["admin"], false), "session");
         assert.equal(privilegedDashboardOAuthMfaAction(["admin"], true), "mfa");
+        assert.equal(privilegedDashboardOAuthMfaAction(["super_admin"], false), "enrollment_required");
         assert.equal(privilegedDashboardOAuthMfaAction(["super_admin"], true), "mfa");
     });
 });

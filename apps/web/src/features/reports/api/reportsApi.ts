@@ -12,12 +12,17 @@ export const REPORT_TYPE_OPTIONS = [
   { code: 'transport_issue', label: 'Transport issue' },
   { code: 'community_info', label: 'Community info' },
   { code: 'other_map_issue', label: 'Others' },
+  { code: 'tourism_incorrect_type', label: 'Incorrect tourism type' },
+  { code: 'tourism_incorrect_description', label: 'Incorrect tourism description' },
+  { code: 'tourism_incorrect_price', label: 'Incorrect tourism price level' },
+  { code: 'tourism_incorrect_review', label: 'Incorrect tourism rating or review' },
+  { code: 'tourism_other', label: 'Other tourism information' },
 ] as const;
 
 export type ReportTypeCode = (typeof REPORT_TYPE_OPTIONS)[number]['code'];
 
 /** Entity kinds accepted by POST /reports — subset mirrored from API REPORT_TARGET_ENTITY_TYPES. */
-export type ReportTargetEntityType = 'place' | 'map_point' | 'bus_stop';
+export type ReportTargetEntityType = 'place' | 'map_point' | 'bus_stop' | 'tourism_review';
 
 /** What is being reported — supplied by the surface that opens the modal. */
 export type ReportTarget = {
@@ -28,6 +33,10 @@ export type ReportTarget = {
   readonly longitude?: number;
   /** Optional human label shown in the modal header (place name or coordinates). */
   readonly contextLabel?: string;
+  /** When set, the modal only offers these report type codes. */
+  readonly allowedTypeCodes?: readonly ReportTypeCode[];
+  /** Preferred default type when the modal opens. */
+  readonly defaultTypeCode?: ReportTypeCode;
 };
 
 export type SubmitReportInput = ReportTarget & {
@@ -51,7 +60,11 @@ function buildBody(input: SubmitReportInput): Record<string, unknown> {
     description: input.description,
     targetEntityType: input.targetEntityType,
   };
-  if (input.targetEntityType !== 'map_point' && input.targetEntityId != null) {
+  if (
+    input.targetEntityType !== 'map_point' &&
+    input.targetEntityType !== 'tourism_review' &&
+    input.targetEntityId != null
+  ) {
     body.targetEntityId = input.targetEntityId;
   }
   if (input.targetPublicId) body.targetPublicId = input.targetPublicId;

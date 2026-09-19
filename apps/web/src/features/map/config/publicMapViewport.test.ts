@@ -34,11 +34,11 @@ describe('publicMapViewport constants', () => {
       [78.0, 3.0],
       [112.0, 34.0],
     ]);
-    assert.equal(OVERVIEW_STARTUP_PADDING_EXPANDED.left, 560);
+    assert.equal(OVERVIEW_STARTUP_PADDING_EXPANDED.left, 460);
     assert.equal(OVERVIEW_STARTUP_PADDING_EXPANDED.right, 72);
-    assert.equal(OVERVIEW_STARTUP_PADDING_COLLAPSED.left, 120);
-    assert.equal(getPublicMapOverviewStartupFitPadding(true).left, 560);
-    assert.equal(getPublicMapOverviewStartupFitPadding(false).left, 120);
+    assert.equal(OVERVIEW_STARTUP_PADDING_COLLAPSED.left, 88);
+    assert.equal(getPublicMapOverviewStartupFitPadding(true).left, 460);
+    assert.equal(getPublicMapOverviewStartupFitPadding(false).left, 88);
   });
 });
 

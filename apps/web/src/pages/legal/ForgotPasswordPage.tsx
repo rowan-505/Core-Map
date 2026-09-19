@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
         way so accounts cannot be guessed.
       </p>
       {done ? (
-        <p className="rounded-map-card border border-map-border bg-map-surface px-4 py-3">
+        <p className="rounded-map-card border border-map-border bg-map-primary-soft px-4 py-3" role="status">
           If that email is registered, a reset link is on its way. Check your inbox.
         </p>
       ) : (
@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
               className="w-full rounded-map-control border border-map-border bg-map-surface px-3 py-2"
             />
           </label>
-          {error ? <p className="text-map-error">{error}</p> : null}
+          {error ? <p className="text-map-error" role="alert">{error}</p> : null}
           <button
             type="submit"
             disabled={busy}

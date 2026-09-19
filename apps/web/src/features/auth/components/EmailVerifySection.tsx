@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { ApiError } from '../api/http';
 import { useAuth } from '../state/useAuth';
+import { useMapUiText } from '@/features/map/i18n/mapUiText';
 
 type Phase = 'idle' | 'code';
 
 /** Inline email verification: send OTP, enter the 6-digit code, update badge. */
 export function EmailVerifySection() {
+  const t = useMapUiText();
   const { sendEmailOtp, verifyEmailOtp } = useAuth();
   const [phase, setPhase] = useState<Phase>('idle');
   const [code, setCode] = useState('');
@@ -21,13 +23,13 @@ export function EmailVerifySection() {
     try {
       const status = await sendEmailOtp();
       if (status === 'already_verified') {
-        setMessage('Your email is already verified.');
+        setMessage(t('အီးမေးလ် အတည်ပြုပြီးပါပြီ။', 'Your email is already verified.'));
         return;
       }
       setPhase('code');
-      setMessage('We sent a 6-digit code to your email.');
+      setMessage(t('ဂဏန်း ၆ လုံးပါ ကုဒ်ကို အီးမေးလ်သို့ ပို့ပြီးပါပြီ။', 'We sent a 6-digit code to your email.'));
     } catch (err) {
-      setError(toMessage(err, 'Could not send the code. Try again.'));
+      setError(toMessage(err, t('ကုဒ်ပို့၍ မရပါ။ ထပ်ကြိုးစားပါ။', 'Could not send the code. Try again.')));
     } finally {
       setBusy(false);
     }
@@ -41,12 +43,12 @@ export function EmailVerifySection() {
     try {
       const status = await verifyEmailOtp(code.trim());
       if (status === 'verified' || status === 'already_verified') {
-        setMessage('Email verified.');
+        setMessage(t('အီးမေးလ် အတည်ပြုပြီးပါပြီ။', 'Email verified.'));
         setPhase('idle');
         setCode('');
       }
     } catch (err) {
-      setError(toMessage(err, 'Invalid or expired code.'));
+      setError(toMessage(err, t('ကုဒ်မှားနေသည် သို့မဟုတ် သက်တမ်းကုန်သွားပါပြီ။', 'Invalid or expired code.')));
     } finally {
       setBusy(false);
     }
@@ -54,7 +56,7 @@ export function EmailVerifySection() {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold text-map-muted">Verify your email</p>
+      <p className="text-xs font-semibold text-map-muted">{t('အီးမေးလ် အတည်ပြုရန်', 'Verify your email')}</p>
 
       {phase === 'idle' ? (
         <button
@@ -63,7 +65,7 @@ export function EmailVerifySection() {
           disabled={busy}
           onClick={() => void onSend()}
         >
-          {busy ? 'Sending…' : 'Send verification code'}
+          {busy ? t('ပို့နေသည်…', 'Sending…') : t('အတည်ပြုကုဒ် ပို့ရန်', 'Send verification code')}
         </button>
       ) : (
         <div className="space-y-2">
@@ -83,7 +85,7 @@ export function EmailVerifySection() {
               disabled={busy || code.length !== 6}
               onClick={() => void onVerify()}
             >
-              {busy ? 'Verifying…' : 'Verify'}
+              {busy ? t('စစ်နေသည်…', 'Verifying…') : t('အတည်ပြုရန်', 'Verify')}
             </button>
             <button
               type="button"
@@ -91,7 +93,7 @@ export function EmailVerifySection() {
               disabled={busy}
               onClick={() => void onSend()}
             >
-              Resend
+              {t('ပြန်ပို့ရန်', 'Resend')}
             </button>
           </div>
         </div>

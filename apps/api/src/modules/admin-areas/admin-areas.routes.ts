@@ -50,6 +50,7 @@ const adminAreasRoutes: FastifyPluginAsync = async (app) => {
                 limit: parsed.data.limit,
                 q: parsed.data.q,
                 adminLevelCode: parsed.data.admin_level_code,
+                regionAdminAreaId: parsed.data.region_admin_area_id,
             });
             return reply.send(options);
         }

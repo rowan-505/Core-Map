@@ -25,6 +25,11 @@ export const REPORT_TYPE_OPTIONS: { value: ReportTypeCode; label: string }[] = [
     { value: "community_info", label: "Community info" },
     { value: "other_map_issue", label: "Others" },
     { value: "new_stop", label: "New stop" },
+    { value: "tourism_incorrect_type", label: "Incorrect tourism type" },
+    { value: "tourism_incorrect_description", label: "Incorrect tourism description" },
+    { value: "tourism_incorrect_price", label: "Incorrect tourism price level" },
+    { value: "tourism_incorrect_review", label: "Incorrect tourism rating/review" },
+    { value: "tourism_other", label: "Other tourism information" },
 ];
 
 export const TARGET_ENTITY_TYPE_OPTIONS: { value: ReportTargetEntityType; label: string }[] = [
@@ -34,6 +39,7 @@ export const TARGET_ENTITY_TYPE_OPTIONS: { value: ReportTargetEntityType; label:
     { value: "bus_stop", label: "Bus stop" },
     { value: "bus_route", label: "Bus route" },
     { value: "map_point", label: "Map point" },
+    { value: "tourism_review", label: "Tourism review" },
     { value: "stop", label: "Stop" },
     { value: "route", label: "Route" },
     { value: "variant", label: "Variant" },
@@ -88,6 +94,9 @@ export function reportTypeLabel(code: string): string {
 export function reportTypeBadgeClass(code: string): string {
     if (code === "new_stop") {
         return "bg-teal-50 text-teal-800 ring-teal-100";
+    }
+    if (code.startsWith("tourism_")) {
+        return "bg-cyan-50 text-cyan-800 ring-cyan-100";
     }
     return "bg-gray-50 text-gray-700 ring-gray-200";
 }

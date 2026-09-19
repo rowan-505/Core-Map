@@ -22,7 +22,7 @@ import {
 import type { UpdatePlaceInput } from "./places.repo.js";
 import { placeCategoryValidationError } from "./places-category-validation.js";
 import { resolvePlaceAdminAreaForUpdate } from "../../lib/core-review/place-admin-area-write.js";
-import { createPlaceBodySchema, updatePlaceBodySchema } from "./places.schema.js";
+import { createPlaceBodySchema, updatePlaceBodySchema, type PlaceContactBody } from "./places.schema.js";
 import { scheduleUnifiedSearchDocuments } from "../search/unified-search-sync.js";
 
 type PlacesServiceOptions = {
@@ -116,8 +116,65 @@ export class PlacesService {
         return {
             ...this.serializePlace(place),
             plus_code: place.plus_code,
+            verification_note: place.verification_note,
             current_version_id: place.current_version_id?.toString() ?? null,
             deleted_at: place.deleted_at,
+        };
+    }
+
+    private serializeContact(row: {
+        phone: string | null;
+        website: string | null;
+        facebook_url: string | null;
+        email: string | null;
+        opening_hours: string | null;
+    } | null) {
+        if (!row) {
+            return {
+                phone: null,
+                website: null,
+                facebook_url: null,
+                email: null,
+                opening_hours: null,
+            };
+        }
+        return {
+            phone: row.phone,
+            website: row.website,
+            facebook_url: row.facebook_url,
+            email: row.email,
+            opening_hours: row.opening_hours,
+        };
+    }
+
+    private serializePrimaryAddress(
+        row: {
+            public_id: string;
+            full_address: string;
+            house_number: string | null;
+            street_name: string | null;
+            quarter: string | null;
+            suburb: string | null;
+            township: string | null;
+            city: string | null;
+            district: string | null;
+            state_region: string | null;
+            postal_code: string | null;
+        } | null,
+    ) {
+        if (!row) return null;
+        return {
+            public_id: row.public_id,
+            full_address: row.full_address,
+            house_number: row.house_number,
+            street_name: row.street_name,
+            quarter: row.quarter,
+            suburb: row.suburb,
+            township: row.township,
+            city: row.city,
+            district: row.district,
+            state_region: row.state_region,
+            postal_code: row.postal_code,
         };
     }
 
@@ -143,7 +200,33 @@ export class PlacesService {
             throw new PlaceNotFoundError();
         }
 
-        return this.serializePlaceDetail(place);
+        const [contact, primaryAddress] = await Promise.all([
+            this.placesRepo.getPlaceContactByPlaceId(place.id),
+            this.placesRepo.getPrimaryAddressByPlaceId(place.id),
+        ]);
+
+        return {
+            ...this.serializePlaceDetail(place),
+            contact: this.serializeContact(contact),
+            primary_address: this.serializePrimaryAddress(primaryAddress),
+        };
+    }
+
+    async upsertPlaceContact(publicId: string, body: PlaceContactBody) {
+        const place = await this.placesRepo.getPlaceDetailByPublicId(publicId);
+        if (!place) {
+            throw new PlaceNotFoundError();
+        }
+
+        const row = await this.placesRepo.upsertPlaceContact(place.id, {
+            phone: body.phone,
+            website: body.website,
+            facebookUrl: body.facebookUrl,
+            email: body.email,
+            openingHours: body.openingHours,
+        });
+
+        return this.serializeContact(row);
     }
 
     async getPlaceFormOptions() {
@@ -341,7 +424,7 @@ export class PlacesService {
 
             this.schedulePlaceSearchSync(updatedPlace.id);
 
-            return this.serializePlaceDetail(updatedPlace);
+            return this.getPlaceByPublicId(updatedPlace.public_id);
         } catch (error) {
             if (error instanceof Error && error.message === "PLACE_NAMES_REQUIRED") {
                 throw new PlaceValidationError("myanmarName or englishName is required");
@@ -432,9 +515,7 @@ function mapUpdateBodyToRepo(body: UpdatePlaceBody): UpdatePlaceInput {
         patch.importance_score = body.importanceScore;
     }
 
-    if (body.popularityScore !== undefined) {
-        patch.popularity_score = body.popularityScore;
-    }
+    // popularity_score is derived / system-managed — never accept client overwrite on PATCH.
 
     if (body.confidenceScore !== undefined) {
         patch.confidence_score = body.confidenceScore;
@@ -442,6 +523,16 @@ function mapUpdateBodyToRepo(body: UpdatePlaceBody): UpdatePlaceInput {
 
     if (body.isPublic !== undefined) {
         patch.is_public = body.isPublic;
+    }
+
+    const verificationNote =
+        body.verificationNote !== undefined
+            ? body.verificationNote
+            : body.verification_note !== undefined
+              ? body.verification_note
+              : undefined;
+    if (verificationNote !== undefined) {
+        patch.verification_note = verificationNote === "" ? null : verificationNote;
     }
 
     const pickedVerification = pickCoreReviewVerificationWrite(body as unknown as Record<string, unknown>);

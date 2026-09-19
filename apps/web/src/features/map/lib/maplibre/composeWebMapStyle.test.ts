@@ -58,6 +58,18 @@ describe('composeWebMapStyle', () => {
     assert.ok(style.layers?.some((l) => l.id === 'road-major-fill'));
   });
 
+  it('quiets saturated road paint without dropping layers', () => {
+    const style = composeWebMapStyle(BaseMapStyle as never, 'https://cdn.example/overview.pmtiles');
+    const major = style.layers?.find((l) => l.id === 'road-major-fill');
+    const medium = style.layers?.find((l) => l.id === 'road-medium-fill');
+    assert.ok(major);
+    assert.ok(medium);
+    assert.equal((major?.paint as { 'line-color'?: string } | undefined)?.['line-color'], '#e8d089');
+    assert.equal((medium?.paint as { 'line-color'?: string } | undefined)?.['line-color'], '#eee3c4');
+    assert.ok(style.layers?.some((l) => l.id === 'water-polygons'));
+    assert.ok(style.layers?.some((l) => l.id === 'admin-boundaries'));
+  });
+
   it('admin-boundaries paint uses top-level zoom interpolate (no nested zoom)', () => {
     const style = composeWebMapStyle(BaseMapStyle as never, 'https://cdn.example/overview.pmtiles');
     const admin = style.layers?.find((l) => l.id === 'admin-boundaries');

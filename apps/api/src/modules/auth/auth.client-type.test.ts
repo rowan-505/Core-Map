@@ -123,7 +123,7 @@ describe("login session client_type", () => {
         assert.equal(capturedClient, "web");
     });
 
-    it("blocks privileged dashboard login without MFA enrollment", async () => {
+    it("allows admin dashboard login without MFA enrollment", async () => {
         const passwordHash = await hashPassword("correct-password-12");
         let capturedClient: string | undefined;
         const auth = new AuthService(
@@ -151,7 +151,42 @@ describe("login session client_type", () => {
             { clientType: "dashboard" },
             { requireDashboard: true }
         );
-        // Privileged dashboard accounts without MFA cannot receive a full session.
+        assert.equal(outcome.kind, "session");
+        assert.equal(capturedClient, "dashboard");
+    });
+
+    it("blocks super_admin dashboard login without MFA enrollment", async () => {
+        const passwordHash = await hashPassword("correct-password-12");
+        let capturedClient: string | undefined;
+        const auth = new AuthService(
+            repo({
+                findUserByEmail: async () =>
+                    user({
+                        password_hash: passwordHash,
+                        roles: ["super_admin"],
+                        email_verified: true,
+                    }),
+                findActiveTotp: async () => null,
+                touchLastLogin: async () => undefined,
+                cleanupExpiredSessions: async () => undefined,
+                createSession: async (input) => {
+                    capturedClient = input.clientType;
+                    return {
+                        id: 1n,
+                        public_id: "22222222-2222-4222-8222-222222222222",
+                        token_family_id: "33333333-3333-4333-8333-333333333333",
+                        client_type: input.clientType ?? "web",
+                    };
+                },
+                recordSecurityEvent: async () => undefined,
+            })
+        );
+        const outcome = await auth.login(
+            { email: "ada@example.com" },
+            "correct-password-12",
+            { clientType: "dashboard" },
+            { requireDashboard: true }
+        );
         assert.equal(outcome.kind, "mfa_enrollment_required");
         assert.equal(capturedClient, undefined);
     });

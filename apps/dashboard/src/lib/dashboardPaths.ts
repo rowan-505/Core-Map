@@ -12,7 +12,10 @@ export const USERS_PATH = `${DASHBOARD_PATH}/users`;
 export const USER_ANALYTICS_PATH = `${DASHBOARD_PATH}/user-analytics`;
 export const POINT_MANAGEMENT_PATH = `${DASHBOARD_PATH}/point-management`;
 export const REPORTS_PATH = `${DASHBOARD_PATH}/reports`;
+export const REVIEWS_PATH = `${DASHBOARD_PATH}/reviews`;
 export const FIELD_SURVEY_PATH = `${DASHBOARD_PATH}/field-survey`;
+export const COMMUNITY_PATH = `${DASHBOARD_PATH}/community`;
+export const TOURISM_PATH = `${DASHBOARD_PATH}/tourism`;
 export const SEARCH_PATH = `${DASHBOARD_PATH}/search`;
 export const ACCOUNT_PATH = `${DASHBOARD_PATH}/account`;
 
@@ -69,8 +72,20 @@ export function reportsPath(segment?: string): string {
     return joinPath(REPORTS_PATH, segment);
 }
 
+export function reviewsPath(segment?: string): string {
+    return joinPath(REVIEWS_PATH, segment);
+}
+
 export function fieldSurveyPath(segment?: string): string {
     return joinPath(FIELD_SURVEY_PATH, segment);
+}
+
+export function communityPath(segment?: string): string {
+    return joinPath(COMMUNITY_PATH, segment);
+}
+
+export function tourismPath(segment?: string): string {
+    return joinPath(TOURISM_PATH, segment);
 }
 
 export function searchPath(segment?: string): string {

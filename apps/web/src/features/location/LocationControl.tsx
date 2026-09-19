@@ -126,7 +126,7 @@ export function LocationControl({
 
       <button
         type="button"
-        className={`grid h-11 w-11 place-items-center rounded-2xl border shadow-map-control backdrop-blur-xl transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 lg:h-10 lg:w-10 ${
+        className={`relative grid h-11 w-11 place-items-center rounded-map-control border shadow-map-control backdrop-blur-xl transition-colors duration-150 lg:h-10 lg:w-10 ${
           active
             ? 'border-map-primary bg-map-primary text-white shadow-map-control'
             : 'border-white/90 bg-white/95 text-map-ink hover:border-map-primary/25 hover:bg-map-primary-soft hover:text-map-primary'
@@ -143,7 +143,7 @@ export function LocationControl({
       {showStop ? (
         <button
           type="button"
-          className="grid h-11 w-11 place-items-center rounded-2xl border border-white/90 bg-white/95 text-map-ink shadow-map-control backdrop-blur-xl transition-[color,background-color,border-color,box-shadow,opacity,filter] duration-150 hover:border-red-200 hover:bg-red-50 hover:text-red-600 lg:h-10 lg:w-10"
+          className="grid h-11 w-11 place-items-center rounded-map-control border border-white/90 bg-white/96 text-map-ink shadow-map-control backdrop-blur-xl transition-colors duration-150 hover:border-red-200 hover:bg-red-50 hover:text-red-600 lg:h-10 lg:w-10"
           aria-label={t('တည်နေရာခြေရာခံမှု ရပ်ရန်', 'Stop location tracking')}
           title={t('တည်နေရာခြေရာခံမှု ရပ်ရန်', 'Stop location tracking')}
           onClick={onStopClick}

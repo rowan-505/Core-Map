@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
+import { recordPlaceActivityByPublicIdSafe } from "../place-popularity/place-popularity.record.js";
 import { getRoutingPublicProfiles } from "./routing.config.js";
 import type { PostRoutingFeedbackBody, RoutingFeedbackProblemType } from "./routing-feedback.schema.js";
 import { buildRouteRequestStartSummary } from "./routing-request-log.js";
@@ -86,6 +87,10 @@ function envFallbackPublicProfiles(): RoutingPublicProfile[] {
 
 export class RoutingRepository {
     constructor(private readonly prisma: PrismaClient) {}
+
+    recordDirectionsForPlace(placePublicId: string): void {
+        recordPlaceActivityByPublicIdSafe(this.prisma, placePublicId, "directions");
+    }
 
     async listPublicProfiles(): Promise<RoutingPublicProfile[]> {
         try {

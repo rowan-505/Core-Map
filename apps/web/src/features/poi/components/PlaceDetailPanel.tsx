@@ -5,13 +5,17 @@ import { useReverseAddress } from '@/features/map/api/useReverseAddress';
 import { SaveButton } from '@/features/saved-places/components/SaveButton';
 import { ReportEntryButton } from '@/features/reports/components/ReportEntryButton';
 import { ShareCard, type ShareCardTarget } from '@/features/share/components/ShareCard';
-import { ActionButton, MetadataList, MetadataRow } from '@/components/ui/sidebarUi';
-import { sidebarCard } from '@/components/ui/sidebarTokens';
+import { PlaceTourismSection } from '@/features/tourism/components/PlaceTourismSection';
+import { PlaceReviewsPanel } from '@/features/place-reviews/components/PlaceReviewsPanel';
+import { ActionButton, MetadataList, MetadataRow, PanelEmptyState } from '@/components/ui/sidebarUi';
 import type { ReportTarget } from '@/features/reports/api/reportsApi';
 import type { PlaceLanguageMode, PublicSearchResult } from '@/features/poi/api/publicMapApi';
 import type { Poi } from '@/types';
 import { getLocalizedName } from '@local-map/localized-name';
 import { poiCategoryLabel } from '../categoryLabel';
+
+const PLACE_PUBLIC_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type RoutePlacePayload = {
   readonly label: string;
@@ -95,42 +99,29 @@ function PlaceDetailPanelInner({
   const shareTarget = buildShareTarget(detail, addressLine, plusCode);
 
   return (
-    <section className="p-3" aria-label={t('ရွေးထားသောနေရာ အချက်အလက်', 'Selected place details')}>
-      <article className={sidebarCard}>
-        <div className="px-4 pb-3.5 pt-3">
+    <section className="px-4 py-4" aria-label={t('ရွေးထားသောနေရာ အချက်အလက်', 'Selected place details')}>
+      <article>
+        <div className="pb-3">
           <div className="flex items-start gap-2">
             <BackButton onBack={onBack} />
-            <div className="min-w-0 flex-1 pt-1">
-              <h2 className="wrap-break-word text-sm font-semibold leading-5 text-map-ink">
+            <div className="min-w-0 flex-1">
+              <h2 className="wrap-break-word text-[20px] font-semibold leading-[1.45] text-map-ink">
                 {detail.title}
               </h2>
-              <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-map-muted">
-                <span className="shrink-0 rounded-full bg-map-primary-soft px-2 py-0.5 font-medium text-map-primary">
-                  {detail.category}
-                </span>
-                {detail.area ? <span className="truncate">{detail.area}</span> : null}
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-map-muted">
+                <span>{detail.category}</span>
+                {detail.area ? (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className="truncate">{detail.area}</span>
+                  </>
+                ) : null}
+                <StatusBadge verified={detail.verified} />
               </div>
             </div>
-            <StatusBadge verified={detail.verified} />
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <ActionButton
-              primary
-              title={t('လမ်းကြောင်းစတင်ရာ', 'Route start')}
-              disabled={!detail.coordinates}
-              onClick={() => {
-                if (detail.coordinates) {
-                  onRoutePlace('from', {
-                    label: detail.title,
-                    coordinates: detail.coordinates,
-                    placeId: detail.placeId,
-                  });
-                }
-              }}
-            >
-              {t('မှ', 'From')}
-            </ActionButton>
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <ActionButton
               primary
               title={t('သွားမည့်နေရာ', 'Route destination')}
@@ -146,6 +137,21 @@ function PlaceDetailPanelInner({
               }}
             >
               {t('သို့', 'To')}
+            </ActionButton>
+            <ActionButton
+              title={t('လမ်းကြောင်းစတင်ရာ', 'Route start')}
+              disabled={!detail.coordinates}
+              onClick={() => {
+                if (detail.coordinates) {
+                  onRoutePlace('from', {
+                    label: detail.title,
+                    coordinates: detail.coordinates,
+                    placeId: detail.placeId,
+                  });
+                }
+              }}
+            >
+              {t('မှ', 'From')}
             </ActionButton>
             <ActionButton
               title={t('နေရာမျှဝေရန်', 'Share place')}
@@ -177,6 +183,7 @@ function PlaceDetailPanelInner({
           </div>
         </div>
 
+        <div className="-mx-4">
         <MetadataList>
           {addressLine ? (
             <MetadataRow label={t('လိပ်စာ', 'Address')} stacked>
@@ -196,12 +203,25 @@ function PlaceDetailPanelInner({
             </MetadataRow>
           ) : null}
         </MetadataList>
+        </div>
       </article>
 
       {showShare && shareTarget ? (
         <div className="mt-3">
           <ShareCard target={shareTarget} />
         </div>
+      ) : null}
+
+      {detail.placeId && PLACE_PUBLIC_ID_RE.test(detail.placeId) ? (
+        <>
+          <PlaceTourismSection
+            placePublicId={detail.placeId}
+            reportTarget={reportTarget}
+          />
+          <article className="mt-4 border-t border-map-border/80 pt-3">
+            <PlaceReviewsPanel placePublicId={detail.placeId} />
+          </article>
+        </>
       ) : null}
     </section>
   );
@@ -212,7 +232,7 @@ function BackButton({ onBack }: { readonly onBack: () => void }) {
   return (
     <button
       type="button"
-      className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-map-muted transition-colors hover:bg-map-primary-soft hover:text-map-primary"
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-map-muted transition-colors hover:bg-map-primary-soft hover:text-map-primary"
       aria-label={t('ရှာဖွေမှုရလဒ်များသို့ ပြန်ရန်', 'Back to search results')}
       onClick={onBack}
     >
@@ -225,10 +245,10 @@ function StatusBadge({ verified }: { readonly verified: boolean }) {
   const t = useMapUiText();
   return (
     <span
-      className={`mt-1 shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${
+      className={`shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${
         verified
-          ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-          : 'bg-map-bg text-map-muted ring-map-border/70'
+          ? 'bg-teal-50 text-teal-800'
+          : 'bg-map-bg text-map-muted'
       }`}
     >
       {verified ? t('အတည်ပြုပြီး', 'Verified') : t('စစ်ဆေးဆဲ', 'Pending')}
@@ -249,22 +269,11 @@ function StateView({
 }) {
   const t = useMapUiText();
   return (
-    <section className="p-3" aria-label={t('ရွေးထားသောနေရာ အချက်အလက်', 'Selected place details')}>
-      <article className={sidebarCard}>
-        <div className="px-4 pb-4 pt-3">
-          <div className="mb-2">
-            <BackButton onBack={onBack} />
-          </div>
-          <p
-            className={`text-sm font-medium ${
-              tone === 'error' ? 'text-red-700' : 'text-map-ink'
-            }`}
-          >
-            {title}
-          </p>
-          <p className="mt-1 text-xs leading-5 text-map-muted">{body}</p>
-        </div>
-      </article>
+    <section className="px-4 py-4" aria-label={t('ရွေးထားသောနေရာ အချက်အလက်', 'Selected place details')}>
+      <div className="mb-3">
+        <BackButton onBack={onBack} />
+      </div>
+      <PanelEmptyState title={title} body={body} tone={tone} />
     </section>
   );
 }

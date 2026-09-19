@@ -31,7 +31,7 @@ export default function OAuthResultPage() {
   return (
     <article className="space-y-4 text-sm leading-6 text-map-ink">
       <h1 className="text-2xl font-semibold">Sign-in did not finish</h1>
-      <p>{message}</p>
+      <p role="alert">{message}</p>
       {linkRequired ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
           <Link

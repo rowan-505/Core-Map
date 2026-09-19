@@ -62,6 +62,10 @@ const sessionResponseSchema = {
         user: authUserSchema,
         mfaRequired: { type: "boolean" },
         mfaToken: { type: "string" },
+        // Super_admin dashboard login without TOTP returns enrollment instead of a session.
+        // Keep these on the shared 200 schema so Fastify does not strip them.
+        mfaEnrollmentRequired: { type: "boolean" },
+        enrollmentToken: { type: "string" },
     },
     additionalProperties: false,
 } as const;

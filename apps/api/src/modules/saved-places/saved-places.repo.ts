@@ -1,5 +1,7 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
+import { recordPlaceActivitySafe } from "../place-popularity/place-popularity.record.js";
+
 export const SAVED_PLACE_ENTITY_TYPE = "place";
 export const SAVED_MAP_POINT_ENTITY_TYPE = "map_point";
 
@@ -52,6 +54,10 @@ const savedItemSelect = Prisma.sql`
 
 export class SavedPlacesRepository {
     constructor(private readonly prisma: PrismaClient) {}
+
+    recordPlaceSave(placeId: bigint): void {
+        recordPlaceActivitySafe(this.prisma, placeId, "save");
+    }
 
     /**
      * Resolves the internal user id from a JWT subject (public_id uuid).

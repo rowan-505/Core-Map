@@ -18,7 +18,12 @@ export type ReportTypeCode =
     | "transport_issue"
     | "community_info"
     | "other_map_issue"
-    | "new_stop";
+    | "new_stop"
+    | "tourism_incorrect_type"
+    | "tourism_incorrect_description"
+    | "tourism_incorrect_price"
+    | "tourism_incorrect_review"
+    | "tourism_other";
 
 export type ReportTargetEntityType =
     | "place"
@@ -27,6 +32,7 @@ export type ReportTargetEntityType =
     | "bus_stop"
     | "bus_route"
     | "map_point"
+    | "tourism_review"
     | "stop"
     | "route"
     | "variant"

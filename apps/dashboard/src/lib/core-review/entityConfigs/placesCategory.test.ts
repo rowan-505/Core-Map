@@ -4,58 +4,43 @@ import { describe, it } from "node:test";
 import { buildPoiCategoryDropdownOptions } from "../../poi-category/display.js";
 import { PLACES_ENTITY_CONFIG } from "./places.js";
 
+const baseForm = {
+    myanmarName: "မြန်မာ",
+    englishName: "Temple",
+    categoryId: "12",
+    adminAreaId: "",
+    plusCode: "",
+    importanceScore: 0,
+    confidenceScore: 50,
+    isPublic: true,
+    verification_status: "unverified",
+    verification_note: "",
+    sourceTypeId: "1",
+    publishStatusId: "",
+    point_geom: { type: "Point" as const, coordinates: [96.1, 16.8] },
+};
+
 describe("core review places category payload", () => {
     it("save payload includes numeric categoryId not category code", () => {
-        const payload = PLACES_ENTITY_CONFIG.formValuesToUpdatePayload({
-            myanmarName: "မြန်မာ",
-            englishName: "Temple",
-            categoryId: "12",
-            adminAreaId: "",
-            plusCode: "",
-            importanceScore: 0,
-            popularityScore: 0,
-            confidenceScore: 50,
-            isPublic: true,
-            verification_status: "unverified",
-            sourceTypeId: "1",
-            publishStatusId: "",
-            point_geom: { type: "Point", coordinates: [96.1, 16.8] },
-        });
+        const payload = PLACES_ENTITY_CONFIG.formValuesToUpdatePayload(baseForm);
         assert.equal(payload.categoryId, "12");
         assert.equal(typeof payload.categoryId, "string");
         assert.equal(/^\d+$/.test(payload.categoryId ?? ""), true);
+        assert.equal("popularityScore" in payload, false);
     });
 
     it("changing category updates payload categoryId", () => {
         const before = PLACES_ENTITY_CONFIG.formValuesToUpdatePayload({
+            ...baseForm,
             myanmarName: "A",
             englishName: "B",
             categoryId: "1",
-            adminAreaId: "",
-            plusCode: "",
-            importanceScore: 0,
-            popularityScore: 0,
-            confidenceScore: 50,
-            isPublic: true,
-            verification_status: "unverified",
-            sourceTypeId: "1",
-            publishStatusId: "",
-            point_geom: { type: "Point", coordinates: [96.1, 16.8] },
         });
         const after = PLACES_ENTITY_CONFIG.formValuesToUpdatePayload({
+            ...baseForm,
             myanmarName: "A",
             englishName: "B",
             categoryId: "2",
-            adminAreaId: "",
-            plusCode: "",
-            importanceScore: 0,
-            popularityScore: 0,
-            confidenceScore: 50,
-            isPublic: true,
-            verification_status: "unverified",
-            sourceTypeId: "1",
-            publishStatusId: "",
-            point_geom: { type: "Point", coordinates: [96.1, 16.8] },
         });
         assert.equal(before.categoryId, "1");
         assert.equal(after.categoryId, "2");
@@ -65,19 +50,10 @@ describe("core review places category payload", () => {
         assert.throws(
             () =>
                 PLACES_ENTITY_CONFIG.formValuesToUpdatePayload({
+                    ...baseForm,
                     myanmarName: "A",
                     englishName: "B",
                     categoryId: "religion",
-                    adminAreaId: "",
-                    plusCode: "",
-                    importanceScore: 0,
-                    popularityScore: 0,
-                    confidenceScore: 50,
-                    isPublic: true,
-                    verification_status: "unverified",
-                    sourceTypeId: "1",
-                    publishStatusId: "",
-                    point_geom: { type: "Point", coordinates: [96.1, 16.8] },
                 }),
             /numeric id required/i
         );
@@ -107,6 +83,7 @@ describe("core review places category payload", () => {
             confidence_score: 50,
             is_public: true,
             verification_status: "unverified",
+            verification_note: null,
             source_type_id: "1",
             publish_status_id: null,
             lat: 16.8,

@@ -57,6 +57,28 @@ export type Place = {
     updated_at: string;
 };
 
+export type PlaceContact = {
+    phone: string | null;
+    website: string | null;
+    facebook_url: string | null;
+    email: string | null;
+    opening_hours: string | null;
+};
+
+export type PlacePrimaryAddress = {
+    public_id: string;
+    full_address: string;
+    house_number: string | null;
+    street_name: string | null;
+    quarter: string | null;
+    suburb: string | null;
+    township: string | null;
+    city: string | null;
+    district: string | null;
+    state_region: string | null;
+    postal_code: string | null;
+};
+
 export type PlaceDetail = Place & {
     plus_code: string | null;
     importance_score: number | null;
@@ -64,6 +86,9 @@ export type PlaceDetail = Place & {
     confidence_score: number | null;
     source_type_id: string;
     publish_status_id: string | null;
+    verification_note?: string | null;
+    contact?: PlaceContact | null;
+    primary_address?: PlacePrimaryAddress | null;
 };
 
 export type PlaceName = {
@@ -143,6 +168,7 @@ export type CreatePlacePayload = {
     /** @deprecated Send verification_status instead */
     isVerified?: boolean;
     verification_status?: string;
+    verification_note?: string | null;
     sourceTypeId?: string | null;
     publishStatusId?: string | null;
 };
@@ -1429,7 +1455,14 @@ function redirectToLogin(reason: string) {
         readImportReviewAuthDebugState(pathname, false)
     );
 
-    window.location.replace("/login");
+    // Preserve the page the user was opening (e.g. Edit Place in a new tab) so
+    // post-login / session-restore does not dump them on /dashboard/account.
+    const next = `${pathname}${window.location.search}${window.location.hash}`;
+    const loginUrl =
+        next.startsWith("/dashboard")
+            ? `/login?next=${encodeURIComponent(next)}`
+            : "/login";
+    window.location.replace(loginUrl);
 }
 
 /** Formats API `issues` from Zod `.flatten()` or `{ path, message }[]` (e.g. building geometry validation). */
@@ -1604,6 +1637,14 @@ async function apiFetchInternal<T>(
     }
 
     if (!accessToken && !adminHeaderFallbackOk) {
+        // New tabs have an empty memory JWT. Try cookie refresh once before
+        // bouncing to /login (common for "open in new tab" dashboard links).
+        if (allowRefresh) {
+            const refreshed = await refreshSession();
+            if (refreshed) {
+                return apiFetchInternal<T>(path, init, params, false);
+            }
+        }
         redirectToLogin("missing-credentials");
         throw new Error("Authentication required");
     }
@@ -1747,6 +1788,25 @@ export function updatePlace(id: string, payload: UpdatePlacePayload) {
     });
 }
 
+export function upsertPlaceContact(
+    id: string,
+    payload: {
+        phone?: string | null;
+        website?: string | null;
+        facebookUrl?: string | null;
+        email?: string | null;
+        openingHours?: string | null;
+    },
+) {
+    return apiFetch<PlaceContact>(`/places/${id}/contact`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+}
+
 export function createPlace(payload: CreatePlacePayload) {
     return apiFetch<PlaceDetail>("/places", {
         method: "POST",
@@ -1790,6 +1850,13 @@ export function getAdminAreaOptions(params?: {
     q?: string;
     /** Limit picker to township-level areas (place/road/building manual override). */
     townshipOnly?: boolean;
+    /** Limit picker to Region/State (`state_region`) rows. */
+    stateRegionOnly?: boolean;
+    /**
+     * When filtering townships, only return descendants of this Region/State id.
+     * Requires townshipOnly (or admin_level_code=township on the API).
+     */
+    regionAdminAreaId?: string;
 }) {
     const search = new URLSearchParams();
     if (params?.limit !== undefined) {
@@ -1798,8 +1865,13 @@ export function getAdminAreaOptions(params?: {
     if (params?.q?.trim()) {
         search.set("q", params.q.trim());
     }
-    if (params?.townshipOnly) {
+    if (params?.stateRegionOnly) {
+        search.set("admin_level_code", "state_region");
+    } else if (params?.townshipOnly) {
         search.set("admin_level_code", "township");
+    }
+    if (params?.regionAdminAreaId?.trim()) {
+        search.set("region_admin_area_id", params.regionAdminAreaId.trim());
     }
     const qs = search.toString();
     return apiFetch<AdminAreaOption[]>(`/admin-areas/options${qs ? `?${qs}` : ""}`, { method: "GET" });
