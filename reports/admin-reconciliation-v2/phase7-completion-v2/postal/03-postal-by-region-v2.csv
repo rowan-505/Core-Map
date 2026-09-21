@@ -1,0 +1,66 @@
+region_en,status,count
+Ayeyarwady Region,ambiguous_local_area,2
+Ayeyarwady Region,linked_after_review,4
+Ayeyarwady Region,linked_exact_local_area,2116
+Ayeyarwady Region,missing_local_admin_identity,50
+Ayeyarwady Region,non_admin_postal_locality,58
+Bago Region (East),linked_exact_local_area,793
+Bago Region (East),missing_local_admin_identity,99
+Bago Region (East),non_admin_postal_locality,51
+Bago Region (West),linked_exact_local_area,717
+Bago Region (West),missing_local_admin_identity,75
+Bago Region (West),non_admin_postal_locality,31
+Chin State,linked_exact_local_area,482
+Chin State,missing_local_admin_identity,28
+Chin State,non_admin_postal_locality,33
+Kachin State,linked_after_review,1
+Kachin State,linked_exact_local_area,620
+Kachin State,missing_local_admin_identity,108
+Kachin State,non_admin_postal_locality,55
+Kayah state,linked_exact_local_area,86
+Kayah state,missing_local_admin_identity,29
+Kayah state,non_admin_postal_locality,9
+Kayin State,linked_exact_local_area,392
+Kayin State,missing_local_admin_identity,27
+Kayin State,non_admin_postal_locality,44
+Magway Region,linked_after_review,5
+Magway Region,linked_exact_local_area,1631
+Magway Region,missing_local_admin_identity,73
+Magway Region,non_admin_postal_locality,37
+Mandalay Region,linked_exact_local_area,1575
+Mandalay Region,missing_local_admin_identity,109
+Mandalay Region,non_admin_postal_locality,19
+Mon State,linked_after_review,3
+Mon State,linked_exact_local_area,455
+Mon State,missing_local_admin_identity,15
+Mon State,non_admin_postal_locality,21
+Naypyitaw Union Territory,ambiguous_local_area,1
+Naypyitaw Union Territory,linked_after_review,1
+Naypyitaw Union Territory,linked_exact_local_area,223
+Naypyitaw Union Territory,missing_local_admin_identity,23
+Rakhine State,linked_after_review,6
+Rakhine State,linked_exact_local_area,1109
+Rakhine State,missing_local_admin_identity,76
+Rakhine State,non_admin_postal_locality,54
+Sagaing Region,linked_after_review,2
+Sagaing Region,linked_exact_local_area,1846
+Sagaing Region,missing_local_admin_identity,136
+Sagaing Region,non_admin_postal_locality,54
+Shan State (East),linked_exact_local_area,218
+Shan State (East),missing_local_admin_identity,48
+Shan State (East),non_admin_postal_locality,23
+Shan State (North),linked_after_review,5
+Shan State (North),linked_exact_local_area,1002
+Shan State (North),missing_local_admin_identity,174
+Shan State (North),non_admin_postal_locality,39
+Shan State (South),linked_after_review,1
+Shan State (South),linked_exact_local_area,552
+Shan State (South),missing_local_admin_identity,42
+Shan State (South),non_admin_postal_locality,79
+Tanintharyi Region,linked_exact_local_area,330
+Tanintharyi Region,missing_local_admin_identity,5
+Tanintharyi Region,non_admin_postal_locality,23
+Yangon Region,linked_after_review,4
+Yangon Region,linked_exact_local_area,1305
+Yangon Region,missing_local_admin_identity,47
+Yangon Region,non_admin_postal_locality,16

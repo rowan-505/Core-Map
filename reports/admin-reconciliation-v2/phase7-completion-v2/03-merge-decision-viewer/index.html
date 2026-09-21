@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Phase7 merge decision — 4 groups + Ma Har Myaing</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  :root { --bg:#0f1419; --panel:#1a222c; --text:#e7ecf1; --muted:#9aa7b5; --accent:#3d8bfd; --warn:#e6a23c; --ok:#3dbf7f; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.45 system-ui,sans-serif; background:var(--bg); color:var(--text); }
+  header { padding:12px 16px; border-bottom:1px solid #2a3440; }
+  h1 { font-size:16px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; }
+  .layout { display:grid; grid-template-columns: 360px 1fr; height: calc(100vh - 64px); }
+  nav { overflow:auto; border-right:1px solid #2a3440; background:var(--panel); }
+  .item { padding:10px 12px; border-bottom:1px solid #243040; cursor:pointer; }
+  .item:hover, .item.active { background:#243040; }
+  .item .code { font-family: ui-monospace, monospace; font-size:12px; color:var(--accent); }
+  .badge { display:inline-block; padding:1px 6px; border-radius:4px; font-size:11px; background:#2b3848; color:var(--warn); }
+  #map { width:100%; height:100%; }
+  .detail { padding:12px; font-size:12px; color:var(--muted); }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  td,th { border-top:1px solid #2a3440; padding:4px 6px; text-align:left; vertical-align:top; color:var(--text); }
+  th { color:var(--muted); font-weight:600; width:38%; }
+  .ok { color:var(--ok); } .warn { color:var(--warn); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Merge decision page (pending approval)</h1>
+  <div class="sub">Four ward merge groups + Ma Har Myaing source pair · production not modified · v2 manifests blocked</div>
+</header>
+<div class="layout">
+  <nav id="list"></nav>
+  <div>
+    <div id="map"></div>
+    <div class="detail" id="detail"></div>
+  </div>
+</div>
+<script>
+const map = new maplibregl.Map({
+  container:'map',
+  style:{
+    version:8,
+    sources:{
+      osm:{type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize:256, attribution:'© OSM'}
+    },
+    layers:[{id:'osm', type:'raster', source:'osm'}]
+  },
+  center:[96.1,21.9], zoom:5
+});
+map.addControl(new maplibregl.NavigationControl());
+
+let data=null; let current=null;
+function clearOverlay(){
+  if(map.getLayer('ov-fill')) map.removeLayer('ov-fill');
+  if(map.getLayer('ov-line')) map.removeLayer('ov-line');
+  if(map.getSource('ov')) map.removeSource('ov');
+}
+function showOverlay(url){
+  clearOverlay();
+  fetch(url).then(r=>r.json()).then(fc=>{
+    map.addSource('ov',{type:'geojson', data:fc});
+    map.addLayer({id:'ov-fill', type:'fill', source:'ov', paint:{
+      'fill-color':['case',
+        ['==',['get','role'],'source'], '#ff7a1a',
+        ['==',['get','is_proposed_survivor'], true], '#3dbf7f',
+        '#3d8bfd'],
+      'fill-opacity':0.35
+    }});
+    map.addLayer({id:'ov-line', type:'line', source:'ov', paint:{
+      'line-color':['case',
+        ['==',['get','role'],'source'], '#ff7a1a',
+        ['==',['get','is_proposed_survivor'], true], '#3dbf7f',
+        '#3d8bfd'],
+      'line-width':2
+    }});
+    const b=new maplibregl.LngLatBounds();
+    const walk=(g)=>{ if(!g) return; if(g.type==='Point') b.extend(g.coordinates);
+      else if(g.type==='Polygon') g.coordinates[0].forEach(c=>b.extend(c));
+      else if(g.type==='MultiPolygon') g.coordinates.forEach(p=>p[0].forEach(c=>b.extend(c)));
+      else if(g.type==='GeometryCollection') (g.geometries||[]).forEach(walk); };
+    fc.features.forEach(f=>walk(f.geometry));
+    if(!b.isEmpty()) map.fitBounds(b,{padding:40, duration:0, maxZoom:15});
+  });
+}
+function renderList(){
+  const nav=document.getElementById('list');
+  nav.innerHTML='';
+  data.groups.forEach((g,i)=>{
+    const el=document.createElement('div');
+    el.className='item'+(i===0?' active':'');
+    el.innerHTML=`<div class="code">${g.source_pcode}</div>
+      <div>${g.source_name_en} / ${g.source_name_my}</div>
+      <div class="sub">${g.source_township} · survivor ${g.proposed_survivor_id}</div>
+      <span class="badge">${g.status}</span>`;
+    el.onclick=()=>selectGroup(i);
+    nav.appendChild(el);
+  });
+  const el=document.createElement('div');
+  el.className='item';
+  el.innerHTML=`<div class="code">MMR005011701503</div>
+    <div>Ma Har Myaing (source pair)</div>
+    <div class="sub">${data.ma_har_myaing.classification.kind}</div>
+    <span class="badge">${data.ma_har_myaing.status}</span>`;
+  el.onclick=()=>selectMaHar();
+  nav.appendChild(el);
+}
+function selectGroup(i){
+  [...document.querySelectorAll('.item')].forEach((e,idx)=>e.classList.toggle('active', idx===i));
+  const g=data.groups[i]; current=g;
+  const c0=g.candidates[0], c1=g.candidates[1];
+  document.getElementById('detail').innerHTML=`
+    <table>
+      <tr><th>Source</th><td>${g.source_pcode} · ${g.source_name_en} / ${g.source_name_my}<br/>Township: ${g.source_township}</td></tr>
+      <tr><th>A</th><td>${c0.core_id} / ${c0.public_id}<br/>${c0.name_my} · ${c0.name_en||'—'} · type=${c0.entity_type}<br/>
+        srcCoverage=${c0.source_coverage_pct?.toFixed?.(1) ?? c0.source_coverage_pct}% · candCoverage=${c0.candidate_coverage_pct?.toFixed?.(1) ?? c0.candidate_coverage_pct}%<br/>
+        deps child/settle/postal=${c0.dep_child_admins}/${c0.dep_settlements}/${c0.dep_postal}<br/>
+        verify=${c0.verification_status} · geom_source=${c0.geometry_source||'—'} ${c0.is_proposed_survivor?'<span class="ok">SURVIVOR</span>':''}</td></tr>
+      <tr><th>B</th><td>${c1.core_id} / ${c1.public_id}<br/>${c1.name_my} · ${c1.name_en||'—'} · type=${c1.entity_type}<br/>
+        srcCoverage=${c1.source_coverage_pct?.toFixed?.(1) ?? c1.source_coverage_pct}% · candCoverage=${c1.candidate_coverage_pct?.toFixed?.(1) ?? c1.candidate_coverage_pct}%<br/>
+        deps child/settle/postal=${c1.dep_child_admins}/${c1.dep_settlements}/${c1.dep_postal}<br/>
+        verify=${c1.verification_status} · geom_source=${c1.geometry_source||'—'} ${c1.is_proposed_survivor?'<span class="ok">SURVIVOR</span>':''}</td></tr>
+      <tr><th>Cand↔cand overlap</th><td>${g.candidate_to_candidate_overlap_pct}%</td></tr>
+      <tr><th>Proposed survivor</th><td class="ok">${g.proposed_survivor_id} / ${g.proposed_survivor_public_id}</td></tr>
+      <tr><th>Merge reason</th><td>${g.exact_merge_reason}</td></tr>
+    </table>`;
+  showOverlay('previews/'+g.group_id+'_overlay.geojson');
+}
+function selectMaHar(){
+  [...document.querySelectorAll('.item')].forEach((e,idx)=>e.classList.toggle('active', idx===data.groups.length));
+  const m=data.ma_har_myaing;
+  document.getElementById('detail').innerHTML=`
+    <table>
+      <tr><th>PCode</th><td>${m.source_pcode} · ${m.source_name_en} / ${m.source_name_my}</td></tr>
+      <tr><th>Same PCode/name/parent</th><td>${m.same_pcode} / ${m.same_name} / ${m.same_parent}</td></tr>
+      <tr><th>Geom equal</th><td class="${m.geom_equal?'ok':'warn'}">${m.geom_equal} · pair overlap=${(m.source_pair_overlap*100).toFixed(1)}% · centroid ${m.source_centroid_dist_m}m</td></tr>
+      <tr><th>SHA row1589</th><td><code>${m.geom_sha256_row1589.slice(0,16)}…</code></td></tr>
+      <tr><th>SHA row1611</th><td><code>${m.geom_sha256_row1611.slice(0,16)}…</code></td></tr>
+      <tr><th>Classification</th><td class="warn">${m.classification.kind}<br/>${m.classification.note||m.classification.reject_reason||''}</td></tr>
+      <tr><th>Suggested</th><td>row1589 → ${m.classification.row_1589_match_id||m.classification.process_match_id} · row1611 → ${m.classification.row_1611_match_id||m.classification.reject_action}</td></tr>
+    </table>`;
+  showOverlay('previews/ma_har_myaing_overlay.geojson');
+}
+fetch('data.json').then(r=>r.json()).then(d=>{ data=d; renderList(); map.on('load',()=>selectGroup(0)); });
+</script>
+</body>
+</html>

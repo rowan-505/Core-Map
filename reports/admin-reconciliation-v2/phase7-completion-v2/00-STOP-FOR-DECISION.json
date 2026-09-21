@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-09-21T15:13:50Z",
+  "stop_for_user_decision": true,
+  "pangsang_proposed": "manual_review",
+  "rejected_admin_manual_review": 0,
+  "rejected_village_manual_review": 0,
+  "rejected_admin_proposals": {
+    "merge_confirmed_duplicate": 4,
+    "match_existing": 4
+  },
+  "rejected_village_proposals": {
+    "match_existing": 2,
+    "create_new": 7
+  },
+  "next_blocked_steps": [
+    "3 Build revised target manifests",
+    "4 Rebuild postal reconciliation",
+    "5 Generate revised import scripts",
+    "6 Final disposable dry run",
+    "7 Produce approval package v2"
+  ]
+}

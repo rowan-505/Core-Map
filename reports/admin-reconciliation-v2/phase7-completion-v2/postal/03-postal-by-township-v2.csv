@@ -1,0 +1,709 @@
+region_en,township_en,status,count
+Ayeyarwady Region,Ahmar Town,non_admin_postal_locality,4
+Ayeyarwady Region,Ahtaung Town,non_admin_postal_locality,4
+Ayeyarwady Region,Ahthoke Town,linked_exact_local_area,5
+Ayeyarwady Region,Batye Town,linked_exact_local_area,2
+Ayeyarwady Region,Bogale Township,linked_exact_local_area,86
+Ayeyarwady Region,Chaung Thar Town,non_admin_postal_locality,3
+Ayeyarwady Region,Danubyu Township,linked_exact_local_area,81
+Ayeyarwady Region,Dedaye Township,linked_exact_local_area,93
+Ayeyarwady Region,Du Yar Town,linked_exact_local_area,5
+Ayeyarwady Region,Einme Township,linked_exact_local_area,102
+Ayeyarwady Region,Einme Township,missing_local_admin_identity,1
+Ayeyarwady Region,Hainggyikyun Town,non_admin_postal_locality,3
+Ayeyarwady Region,Hinthada Township,linked_after_review,1
+Ayeyarwady Region,Hinthada Township,linked_exact_local_area,120
+Ayeyarwady Region,Hinthada Township,missing_local_admin_identity,3
+Ayeyarwady Region,Htoogyi Town,non_admin_postal_locality,5
+Ayeyarwady Region,In Pin Town,non_admin_postal_locality,4
+Ayeyarwady Region,Ingapu Township,linked_exact_local_area,74
+Ayeyarwady Region,Ingapu Township,missing_local_admin_identity,3
+Ayeyarwady Region,Kanaung Town,non_admin_postal_locality,5
+Ayeyarwady Region,Kangyidaunt Township,linked_exact_local_area,80
+Ayeyarwady Region,Kyaiklat Township,linked_exact_local_area,93
+Ayeyarwady Region,Kyangin Township,linked_exact_local_area,33
+Ayeyarwady Region,Kyaunggon Township,linked_exact_local_area,65
+Ayeyarwady Region,Kyaunggon Township,missing_local_admin_identity,3
+Ayeyarwady Region,Kyonmangae Town,non_admin_postal_locality,5
+Ayeyarwady Region,Kyonpyaw Town Township,linked_exact_local_area,93
+Ayeyarwady Region,Kyonpyaw Town Township,missing_local_admin_identity,1
+Ayeyarwady Region,Labutta (3) Mile Town,non_admin_postal_locality,4
+Ayeyarwady Region,Labutta Township,linked_exact_local_area,75
+Ayeyarwady Region,Lemyethna Township,linked_exact_local_area,48
+Ayeyarwady Region,Maubin Township,linked_exact_local_area,88
+Ayeyarwady Region,Mawlamyinegyun Township,linked_after_review,1
+Ayeyarwady Region,Mawlamyinegyun Township,linked_exact_local_area,120
+Ayeyarwady Region,Me Za Li Kone Town,non_admin_postal_locality,4
+Ayeyarwady Region,Myanaung Township,linked_after_review,2
+Ayeyarwady Region,Myanaung Township,linked_exact_local_area,62
+Ayeyarwady Region,Myaungmya Township,linked_exact_local_area,98
+Ayeyarwady Region,Myaungmya Township,missing_local_admin_identity,16
+Ayeyarwady Region,Ngapudaw Township,linked_exact_local_area,83
+Ayeyarwady Region,Ngapudaw Township,missing_local_admin_identity,4
+Ayeyarwady Region,Ngathaingchaung Town,ambiguous_local_area,1
+Ayeyarwady Region,Ngathaingchaung Town,linked_exact_local_area,5
+Ayeyarwady Region,Ngayokekaung Town,non_admin_postal_locality,2
+Ayeyarwady Region,Ngwesaung Town,non_admin_postal_locality,4
+Ayeyarwady Region,Nyaungdon Township,linked_exact_local_area,54
+Ayeyarwady Region,Pantanaw Township,linked_exact_local_area,56
+Ayeyarwady Region,Pathein Township,linked_exact_local_area,68
+Ayeyarwady Region,Pyapon Township,linked_exact_local_area,71
+Ayeyarwady Region,Pyinsalu Town,non_admin_postal_locality,3
+Ayeyarwady Region,Shwethaungyan Town,non_admin_postal_locality,3
+Ayeyarwady Region,Ta Loke Htaw Town,non_admin_postal_locality,5
+Ayeyarwady Region,Thabaung Township,linked_exact_local_area,67
+Ayeyarwady Region,Thabaung Township,missing_local_admin_identity,3
+Ayeyarwady Region,Wakema Township,linked_exact_local_area,127
+Ayeyarwady Region,Wakema Township,missing_local_admin_identity,15
+Ayeyarwady Region,Yegyi Township,ambiguous_local_area,1
+Ayeyarwady Region,Yegyi Township,linked_exact_local_area,91
+Ayeyarwady Region,Yegyi Township,missing_local_admin_identity,1
+Ayeyarwady Region,Zalun Township,linked_exact_local_area,71
+Bago Region (East),Bago Township,linked_exact_local_area,67
+Bago Region (East),Bago Township,missing_local_admin_identity,33
+Bago Region (East),Daik-U Township,linked_exact_local_area,53
+Bago Region (East),Hpa Do Town,linked_exact_local_area,5
+Bago Region (East),Hpayargyi Town,non_admin_postal_locality,3
+Bago Region (East),Hswar Town,non_admin_postal_locality,2
+Bago Region (East),Htantabin Township,linked_exact_local_area,29
+Bago Region (East),Htantabin Township,missing_local_admin_identity,6
+Bago Region (East),Inntakaw Town,non_admin_postal_locality,6
+Bago Region (East),Kanyutkwin Town,non_admin_postal_locality,4
+Bago Region (East),Kawa Township,linked_exact_local_area,96
+Bago Region (East),Kawa Township,missing_local_admin_identity,2
+Bago Region (East),Kaytumati Town,non_admin_postal_locality,4
+Bago Region (East),Kyaukkyi Township,linked_exact_local_area,32
+Bago Region (East),Kyaukkyi Township,missing_local_admin_identity,21
+Bago Region (East),Kyauktaga Township,linked_exact_local_area,51
+Bago Region (East),Kyauktaga Township,missing_local_admin_identity,1
+Bago Region (East),Kywe Pwe Town,non_admin_postal_locality,5
+Bago Region (East),Madauk Town,non_admin_postal_locality,2
+Bago Region (East),Myo Hla Town,non_admin_postal_locality,5
+Bago Region (East),Nyaunglebin Township,linked_exact_local_area,53
+Bago Region (East),Nyaunglebin Township,missing_local_admin_identity,1
+Bago Region (East),Oktwin Township,linked_exact_local_area,40
+Bago Region (East),Oktwin Township,missing_local_admin_identity,7
+Bago Region (East),Peinzalok Town,non_admin_postal_locality,2
+Bago Region (East),Penwegon Town,linked_exact_local_area,8
+Bago Region (East),Phyu Township,linked_exact_local_area,59
+Bago Region (East),Phyu Township,missing_local_admin_identity,12
+Bago Region (East),Pyuntasa Town,non_admin_postal_locality,4
+Bago Region (East),Shwegyin Township,linked_exact_local_area,62
+Bago Region (East),Shwegyin Township,missing_local_admin_identity,6
+Bago Region (East),Taungoo Township,linked_exact_local_area,60
+Bago Region (East),Thanatpin Township,linked_exact_local_area,66
+Bago Region (East),Thetkala Town,non_admin_postal_locality,6
+Bago Region (East),Waw Township,linked_exact_local_area,64
+Bago Region (East),Yae Ni Town,non_admin_postal_locality,4
+Bago Region (East),Yedashe Township,linked_exact_local_area,48
+Bago Region (East),Yedashe Township,missing_local_admin_identity,10
+Bago Region (East),Zayyawadi Town,non_admin_postal_locality,4
+Bago Region (West),Gyobingauk Township,linked_exact_local_area,49
+Bago Region (West),Gyobingauk Township,missing_local_admin_identity,10
+Bago Region (West),Inn Ma Town,linked_exact_local_area,5
+Bago Region (West),Letpadan Township,linked_exact_local_area,49
+Bago Region (West),Letpadan Township,missing_local_admin_identity,4
+Bago Region (West),Minhla Township,linked_exact_local_area,54
+Bago Region (West),Minhla Township,missing_local_admin_identity,9
+Bago Region (West),Monyo Township,linked_exact_local_area,37
+Bago Region (West),Monyo Township,missing_local_admin_identity,5
+Bago Region (West),Nattalin Township,linked_exact_local_area,76
+Bago Region (West),Nattalin Township,missing_local_admin_identity,6
+Bago Region (West),Oakshitpin Town,linked_exact_local_area,3
+Bago Region (West),Oe Thei Kone Town,non_admin_postal_locality,4
+Bago Region (West),Okpho Township,linked_exact_local_area,53
+Bago Region (West),Okpho Township,missing_local_admin_identity,7
+Bago Region (West),Padaung Township,linked_exact_local_area,45
+Bago Region (West),Padaung Township,missing_local_admin_identity,2
+Bago Region (West),Paukkhaung Township,linked_exact_local_area,57
+Bago Region (West),Paukkhaung Township,missing_local_admin_identity,1
+Bago Region (West),Paungdale Town,non_admin_postal_locality,4
+Bago Region (West),Paungde Township,linked_exact_local_area,44
+Bago Region (West),Paungde Township,missing_local_admin_identity,12
+Bago Region (West),Puteekone Town,linked_exact_local_area,2
+Bago Region (West),Pyay Township,linked_exact_local_area,55
+Bago Region (West),Pyay Township,missing_local_admin_identity,11
+Bago Region (West),Shwedaung Township,linked_exact_local_area,50
+Bago Region (West),Shwedaung Township,missing_local_admin_identity,1
+Bago Region (West),Sin Mee Swea Town,non_admin_postal_locality,3
+Bago Region (West),Sit Kwin Town,non_admin_postal_locality,4
+Bago Region (West),Tar Pun Town,non_admin_postal_locality,3
+Bago Region (West),Thayarwady Township,linked_exact_local_area,56
+Bago Region (West),Thegon Township,linked_exact_local_area,53
+Bago Region (West),Thegon Township,missing_local_admin_identity,2
+Bago Region (West),Thonse Town,non_admin_postal_locality,13
+Bago Region (West),Zigon Township,linked_exact_local_area,29
+Bago Region (West),Zigon Township,missing_local_admin_identity,5
+Chin State,Cikha Town,non_admin_postal_locality,2
+Chin State,Falam Township,linked_exact_local_area,88
+Chin State,Falam Township,missing_local_admin_identity,6
+Chin State,Hakha Township,linked_exact_local_area,29
+Chin State,Hakha Township,missing_local_admin_identity,9
+Chin State,Hnaring Town,non_admin_postal_locality,2
+Chin State,Kanpetlet Township,linked_exact_local_area,26
+Chin State,Kanpetlet Township,missing_local_admin_identity,2
+Chin State,Khaikam Town,non_admin_postal_locality,4
+Chin State,Kyin Dway Town,non_admin_postal_locality,4
+Chin State,Lalengpi Town,non_admin_postal_locality,2
+Chin State,M'kuiimnu Town,non_admin_postal_locality,4
+Chin State,Matupi Township,linked_exact_local_area,66
+Chin State,Matupi Township,missing_local_admin_identity,1
+Chin State,Mindat Township,linked_exact_local_area,49
+Chin State,Mindat Township,missing_local_admin_identity,1
+Chin State,Paletwa Township,linked_exact_local_area,98
+Chin State,Paletwa Township,missing_local_admin_identity,3
+Chin State,Rezua Town,non_admin_postal_locality,4
+Chin State,Rihkhawdar Town,non_admin_postal_locality,2
+Chin State,Samee Town,non_admin_postal_locality,3
+Chin State,Surkhua Town,non_admin_postal_locality,2
+Chin State,Tedim Township,linked_exact_local_area,59
+Chin State,Thantlang Township,linked_exact_local_area,36
+Chin State,Thantlang Township,missing_local_admin_identity,4
+Chin State,Tonzang Township,linked_exact_local_area,31
+Chin State,Tonzang Township,missing_local_admin_identity,2
+Chin State,Webula Town,non_admin_postal_locality,4
+Kachin State,Bhamo Township,linked_exact_local_area,42
+Kachin State,Bhamo Township,missing_local_admin_identity,19
+Kachin State,Chipwi Township,linked_exact_local_area,42
+Kachin State,Chipwi Township,missing_local_admin_identity,4
+Kachin State,Dawthponeyan Town,non_admin_postal_locality,3
+Kachin State,Hopin Town,non_admin_postal_locality,4
+Kachin State,Hpakant Township,linked_exact_local_area,14
+Kachin State,Hpakant Township,missing_local_admin_identity,6
+Kachin State,Injangyang Township,linked_exact_local_area,62
+Kachin State,Injangyang Township,missing_local_admin_identity,5
+Kachin State,Inn Taw Gyi Town,non_admin_postal_locality,4
+Kachin State,Kamaing Town,non_admin_postal_locality,1
+Kachin State,Kan Paik Ti Town,non_admin_postal_locality,3
+Kachin State,Khaunglanhpu Township,linked_exact_local_area,24
+Kachin State,Khaunglanhpu Township,missing_local_admin_identity,4
+Kachin State,Lwegel Town,non_admin_postal_locality,7
+Kachin State,Machanbaw Township,linked_exact_local_area,19
+Kachin State,Machanbaw Township,missing_local_admin_identity,12
+Kachin State,Mansi Township,linked_exact_local_area,44
+Kachin State,Mogaung Township,linked_after_review,1
+Kachin State,Mogaung Township,linked_exact_local_area,47
+Kachin State,Mogaung Township,missing_local_admin_identity,3
+Kachin State,Mohnyin Township,linked_exact_local_area,38
+Kachin State,Mohnyin Township,missing_local_admin_identity,6
+Kachin State,Momauk Township,linked_exact_local_area,56
+Kachin State,Myitkyina Township,linked_exact_local_area,58
+Kachin State,Myo Hla Town,non_admin_postal_locality,4
+Kachin State,Nam Mar Town,non_admin_postal_locality,5
+Kachin State,Nam Mun Town,non_admin_postal_locality,4
+Kachin State,Nammatee Town,non_admin_postal_locality,4
+Kachin State,Nawngmun Township,linked_exact_local_area,13
+Kachin State,Nawngmun Township,missing_local_admin_identity,5
+Kachin State,Pang War Town,non_admin_postal_locality,3
+Kachin State,Pannandin Town,non_admin_postal_locality,1
+Kachin State,Puta-O Township,linked_exact_local_area,14
+Kachin State,Puta-O Township,missing_local_admin_identity,11
+Kachin State,Sadung Town,non_admin_postal_locality,5
+Kachin State,Shin Bway Yang Town,non_admin_postal_locality,4
+Kachin State,Shwegu Township,linked_exact_local_area,29
+Kachin State,Shwegu Township,missing_local_admin_identity,12
+Kachin State,Sinbo Town,non_admin_postal_locality,3
+Kachin State,Sumprabum Township,linked_exact_local_area,40
+Kachin State,Sumprabum Township,missing_local_admin_identity,4
+Kachin State,Tanai Township,linked_exact_local_area,8
+Kachin State,Tanai Township,missing_local_admin_identity,16
+Kachin State,Tsawlaw Township,linked_exact_local_area,25
+Kachin State,Tsawlaw Township,missing_local_admin_identity,1
+Kachin State,Waingmaw Township,linked_exact_local_area,45
+Kayah state,Bawlake Township,linked_exact_local_area,8
+Kayah state,Bawlake Township,missing_local_admin_identity,3
+Kayah state,Demoso Township,linked_exact_local_area,25
+Kayah state,Demoso Township,missing_local_admin_identity,2
+Kayah state,Hpasawng Township,linked_exact_local_area,10
+Kayah state,Hpruso Township,linked_exact_local_area,19
+Kayah state,Loikaw Township,linked_exact_local_area,11
+Kayah state,Loikaw Township,missing_local_admin_identity,21
+Kayah state,Loilen Lay Town,non_admin_postal_locality,3
+Kayah state,Mese Township,linked_exact_local_area,6
+Kayah state,Mese Township,missing_local_admin_identity,2
+Kayah state,Nan Mei Khon Town,non_admin_postal_locality,4
+Kayah state,Shadaw Township,linked_exact_local_area,7
+Kayah state,Shadaw Township,missing_local_admin_identity,1
+Kayah state,Ywarthit Town,non_admin_postal_locality,2
+Kayin State,Baw Ga Li Town,non_admin_postal_locality,4
+Kayin State,Hlaingbwe Township,linked_exact_local_area,72
+Kayin State,Hlaingbwe Township,missing_local_admin_identity,4
+Kayin State,Hpa-An Township,linked_exact_local_area,101
+Kayin State,Hpapun Township,linked_exact_local_area,33
+Kayin State,Hpapun Township,missing_local_admin_identity,4
+Kayin State,Hpayarthonesu Town,non_admin_postal_locality,4
+Kayin State,Kamarmaung Town,non_admin_postal_locality,4
+Kayin State,Kawkareik Township,linked_exact_local_area,53
+Kayin State,Kawkareik Township,missing_local_admin_identity,7
+Kayin State,Kyaikdon Town,non_admin_postal_locality,6
+Kayin State,Kyainseikgyi Township,linked_exact_local_area,57
+Kayin State,Kyondoe Town,non_admin_postal_locality,4
+Kayin State,Leik Tho Town,non_admin_postal_locality,6
+Kayin State,Myawaddy Township,linked_exact_local_area,17
+Kayin State,Myawaddy Township,missing_local_admin_identity,7
+Kayin State,Paingkyon Town,non_admin_postal_locality,5
+Kayin State,Shan Ywar Thit Town,non_admin_postal_locality,4
+Kayin State,Su Ka Li Town,non_admin_postal_locality,1
+Kayin State,Thandaung Town,non_admin_postal_locality,4
+Kayin State,Thandaunggyi Township,linked_exact_local_area,59
+Kayin State,Thandaunggyi Township,missing_local_admin_identity,5
+Kayin State,Waw Lay Myaing (Waw Lay) Town,non_admin_postal_locality,2
+Magway Region,Aunglan Township,linked_exact_local_area,101
+Magway Region,Chauk Township,linked_exact_local_area,51
+Magway Region,Chauk Township,missing_local_admin_identity,15
+Magway Region,Gangaw Township,linked_exact_local_area,74
+Magway Region,Gangaw Township,missing_local_admin_identity,1
+Magway Region,Kamma (PKU) Town,non_admin_postal_locality,12
+Magway Region,Kamma Township,linked_exact_local_area,56
+Magway Region,Kyaukhtu Town,non_admin_postal_locality,3
+Magway Region,Kyaw Town,non_admin_postal_locality,3
+Magway Region,Magway Township,linked_exact_local_area,77
+Magway Region,Magway Township,missing_local_admin_identity,1
+Magway Region,Minbu Township,linked_exact_local_area,67
+Magway Region,Minbu Township,missing_local_admin_identity,4
+Magway Region,Mindon Township,linked_exact_local_area,76
+Magway Region,Minhla Township,linked_after_review,5
+Magway Region,Minhla Township,linked_exact_local_area,64
+Magway Region,Myaing Township,linked_exact_local_area,84
+Magway Region,Myit Chay Town,non_admin_postal_locality,8
+Magway Region,Myothit Township,linked_exact_local_area,52
+Magway Region,Natmauk Township,linked_exact_local_area,80
+Magway Region,Ngape Township,linked_exact_local_area,33
+Magway Region,Pakokku Township,linked_exact_local_area,54
+Magway Region,Pakokku Township,missing_local_admin_identity,16
+Magway Region,Pauk Township,linked_exact_local_area,71
+Magway Region,Pauk Township,missing_local_admin_identity,4
+Magway Region,Pwintbyu Township,linked_exact_local_area,56
+Magway Region,Sa Lay Town,non_admin_postal_locality,5
+Magway Region,Saku Town,non_admin_postal_locality,3
+Magway Region,Salin Township,linked_exact_local_area,105
+Magway Region,Salin Township,missing_local_admin_identity,5
+Magway Region,Saw Township,linked_exact_local_area,65
+Magway Region,Seikphyu Township,linked_exact_local_area,42
+Magway Region,Seikphyu Township,missing_local_admin_identity,5
+Magway Region,Sidoktaya Township,linked_exact_local_area,48
+Magway Region,Sinbaungwe Township,linked_exact_local_area,49
+Magway Region,Sinphyukyun Town,non_admin_postal_locality,3
+Magway Region,Taungdwingyi Township,linked_exact_local_area,82
+Magway Region,Thayet Township,linked_exact_local_area,53
+Magway Region,Thayet Township,missing_local_admin_identity,8
+Magway Region,Tilin Township,linked_exact_local_area,73
+Magway Region,Yenangyaung Township,linked_exact_local_area,29
+Magway Region,Yenangyaung Township,missing_local_admin_identity,14
+Magway Region,Yesagyo Township,linked_exact_local_area,89
+Mandalay Region,Amarapura Township,linked_exact_local_area,42
+Mandalay Region,Amarapura Township,missing_local_admin_identity,8
+Mandalay Region,Aungmyaythazan Township,linked_exact_local_area,19
+Mandalay Region,Bagan Town,non_admin_postal_locality,6
+Mandalay Region,Chanayethazan Township,linked_exact_local_area,20
+Mandalay Region,Chanmyathazi Township,linked_exact_local_area,14
+Mandalay Region,Ku Me Town,non_admin_postal_locality,5
+Mandalay Region,Kyaukpadaung Township,linked_exact_local_area,121
+Mandalay Region,Kyaukse Township,linked_exact_local_area,87
+Mandalay Region,Kyaukse Township,missing_local_admin_identity,10
+Mandalay Region,Madaya Township,linked_exact_local_area,88
+Mandalay Region,Mahaaungmyay Township,linked_exact_local_area,18
+Mandalay Region,Mahlaing Township,linked_exact_local_area,56
+Mandalay Region,Meiktila Township,linked_exact_local_area,58
+Mandalay Region,Meiktila Township,missing_local_admin_identity,14
+Mandalay Region,Mogoke Township,linked_exact_local_area,29
+Mandalay Region,Mogoke Township,missing_local_admin_identity,6
+Mandalay Region,Myingyan Township,linked_exact_local_area,68
+Mandalay Region,Myingyan Township,missing_local_admin_identity,18
+Mandalay Region,Myitnge Town,non_admin_postal_locality,1
+Mandalay Region,Myittha Township,linked_exact_local_area,87
+Mandalay Region,Myittha Township,missing_local_admin_identity,1
+Mandalay Region,Natogyi Township,linked_exact_local_area,72
+Mandalay Region,Ngathayauk Town,non_admin_postal_locality,4
+Mandalay Region,Ngazun Township,linked_exact_local_area,48
+Mandalay Region,Nyaung-U Township,linked_exact_local_area,75
+Mandalay Region,Nyaung-U Township,missing_local_admin_identity,8
+Mandalay Region,Patheingyi Township,linked_exact_local_area,57
+Mandalay Region,Patheingyi Township,missing_local_admin_identity,2
+Mandalay Region,Pyawbwe Township,linked_exact_local_area,83
+Mandalay Region,Pyawbwe Township,missing_local_admin_identity,1
+Mandalay Region,Pyigyitagon Township,linked_exact_local_area,16
+Mandalay Region,Pyigyitagon Township,missing_local_admin_identity,2
+Mandalay Region,Pyinoolwin Township,linked_exact_local_area,37
+Mandalay Region,Pyinoolwin Township,missing_local_admin_identity,22
+Mandalay Region,Si Mee Khon Town,linked_exact_local_area,4
+Mandalay Region,Singu Township,linked_exact_local_area,37
+Mandalay Region,Singu Township,missing_local_admin_identity,2
+Mandalay Region,Sintgaing Township,linked_exact_local_area,48
+Mandalay Region,Sintgaing Township,missing_local_admin_identity,5
+Mandalay Region,Tada-U Township,linked_exact_local_area,61
+Mandalay Region,Tada-U Township,missing_local_admin_identity,3
+Mandalay Region,Takaung Town,non_admin_postal_locality,3
+Mandalay Region,Taungtha Township,linked_exact_local_area,83
+Mandalay Region,Thabeikkyin Township,linked_exact_local_area,22
+Mandalay Region,Thabeikkyin Township,missing_local_admin_identity,2
+Mandalay Region,Thazi Township,linked_exact_local_area,87
+Mandalay Region,Wundwin Township,linked_exact_local_area,75
+Mandalay Region,Yamethin Township,linked_exact_local_area,63
+Mandalay Region,Yamethin Township,missing_local_admin_identity,5
+Mon State,Bilin Township,linked_exact_local_area,56
+Mon State,Chaungzon Township,linked_exact_local_area,46
+Mon State,Kamarwet Town,non_admin_postal_locality,5
+Mon State,Khawzar Town,non_admin_postal_locality,2
+Mon State,Kyaikkhami Town,linked_exact_local_area,6
+Mon State,Kyaikmaraw Township,linked_exact_local_area,46
+Mon State,Kyaikmaraw Township,missing_local_admin_identity,2
+Mon State,Kyaikto Township,linked_exact_local_area,39
+Mon State,Kyaikto Township,missing_local_admin_identity,3
+Mon State,Lamaing Town,non_admin_postal_locality,3
+Mon State,Mawlamyine Township,linked_exact_local_area,48
+Mon State,Mudon Township,linked_exact_local_area,37
+Mon State,Mudon Township,missing_local_admin_identity,5
+Mon State,Paung Township,linked_exact_local_area,54
+Mon State,Paung Township,missing_local_admin_identity,1
+Mon State,Thanbyuzayat Township,linked_after_review,1
+Mon State,Thanbyuzayat Township,linked_exact_local_area,35
+Mon State,Thaton Township,linked_after_review,2
+Mon State,Thaton Township,linked_exact_local_area,49
+Mon State,Thaton Township,missing_local_admin_identity,4
+Mon State,Thein Za Yat Town,non_admin_postal_locality,4
+Mon State,Thuwunnawady Town,non_admin_postal_locality,3
+Mon State,Ye Township,linked_exact_local_area,39
+Mon State,Zinkyaik Town,non_admin_postal_locality,4
+Naypyitaw Union Territory,Det Khi Na Thi Ri Township,linked_exact_local_area,10
+Naypyitaw Union Territory,Lewe Township,linked_exact_local_area,67
+Naypyitaw Union Territory,Oke Ta Ra Thi Ri Township,linked_exact_local_area,10
+Naypyitaw Union Territory,Poke Ba Thi Ri Township,linked_exact_local_area,28
+Naypyitaw Union Territory,Poke Ba Thi Ri Township,missing_local_admin_identity,7
+Naypyitaw Union Territory,Pyinmana Township,linked_exact_local_area,29
+Naypyitaw Union Territory,Pyinmana Township,missing_local_admin_identity,9
+Naypyitaw Union Territory,Tatkon Township,linked_exact_local_area,54
+Naypyitaw Union Territory,Tatkon Township,missing_local_admin_identity,1
+Naypyitaw Union Territory,Za Bu Thi Ri Township,ambiguous_local_area,1
+Naypyitaw Union Territory,Za Bu Thi Ri Township,linked_after_review,1
+Naypyitaw Union Territory,Za Bu Thi Ri Township,linked_exact_local_area,12
+Naypyitaw Union Territory,Za Bu Thi Ri Township,missing_local_admin_identity,1
+Naypyitaw Union Territory,Zay Yar Thi Ri Township,linked_exact_local_area,13
+Naypyitaw Union Territory,Zay Yar Thi Ri Township,missing_local_admin_identity,5
+Rakhine State,Ann Township,linked_after_review,1
+Rakhine State,Ann Township,linked_exact_local_area,35
+Rakhine State,Ann Township,missing_local_admin_identity,2
+Rakhine State,Buthidaung Township,linked_exact_local_area,85
+Rakhine State,Gwa Township,linked_exact_local_area,36
+Rakhine State,Kanhtauntkyi Town,non_admin_postal_locality,5
+Rakhine State,Kha Maung Seik Town,non_admin_postal_locality,5
+Rakhine State,Kyaukpyu Township,linked_exact_local_area,52
+Rakhine State,Kyaukpyu Township,missing_local_admin_identity,19
+Rakhine State,Kyauktaw Township,linked_exact_local_area,80
+Rakhine State,Kyauktaw Township,missing_local_admin_identity,4
+Rakhine State,Kyeintali Town,non_admin_postal_locality,3
+Rakhine State,Lay Taung Town,non_admin_postal_locality,5
+Rakhine State,Ma-Ei Town,non_admin_postal_locality,4
+Rakhine State,Maungdaw Township,linked_exact_local_area,99
+Rakhine State,Maungdaw Township,missing_local_admin_identity,9
+Rakhine State,Minbya Township,linked_exact_local_area,65
+Rakhine State,Minbya Township,missing_local_admin_identity,5
+Rakhine State,Mrauk-U Township,linked_after_review,2
+Rakhine State,Mrauk-U Township,linked_exact_local_area,100
+Rakhine State,Mrauk-U Township,missing_local_admin_identity,1
+Rakhine State,Munaung Township,linked_exact_local_area,36
+Rakhine State,Munaung Township,missing_local_admin_identity,5
+Rakhine State,Myebon Township,linked_exact_local_area,59
+Rakhine State,Myebon Township,missing_local_admin_identity,9
+Rakhine State,Myin Hlut Town,non_admin_postal_locality,8
+Rakhine State,Ngapali Town,non_admin_postal_locality,5
+Rakhine State,Pauktaw Township,linked_exact_local_area,53
+Rakhine State,Pauktaw Township,missing_local_admin_identity,5
+Rakhine State,Ponnagyun Township,linked_exact_local_area,96
+Rakhine State,Ramree Township,linked_exact_local_area,54
+Rakhine State,Ramree Township,missing_local_admin_identity,3
+Rakhine State,Rathedaung Township,linked_after_review,2
+Rakhine State,Rathedaung Township,linked_exact_local_area,90
+Rakhine State,Sa Ne Town,non_admin_postal_locality,5
+Rakhine State,Sittwe Township,linked_after_review,1
+Rakhine State,Sittwe Township,linked_exact_local_area,58
+Rakhine State,Sittwe Township,missing_local_admin_identity,1
+Rakhine State,Tan Hlwe Ywar Ma Town,non_admin_postal_locality,6
+Rakhine State,Tat Taung Town,non_admin_postal_locality,3
+Rakhine State,Taungpyoletwea Town,non_admin_postal_locality,5
+Rakhine State,Thandwe Township,linked_exact_local_area,59
+Rakhine State,Thandwe Township,missing_local_admin_identity,8
+Rakhine State,Toungup Township,linked_exact_local_area,52
+Rakhine State,Toungup Township,missing_local_admin_identity,5
+Sagaing Region,Ayadaw Township,linked_exact_local_area,38
+Sagaing Region,Ayadaw Township,missing_local_admin_identity,3
+Sagaing Region,Banmauk Township,linked_exact_local_area,46
+Sagaing Region,Banmauk Township,missing_local_admin_identity,4
+Sagaing Region,Budalin Township,linked_exact_local_area,57
+Sagaing Region,Chaung-U Township,linked_exact_local_area,32
+Sagaing Region,Don Hee Town Town,non_admin_postal_locality,3
+Sagaing Region,Hkamti Township,linked_exact_local_area,29
+Sagaing Region,Hkamti Township,missing_local_admin_identity,3
+Sagaing Region,Homalin Township,linked_exact_local_area,78
+Sagaing Region,Homalin Township,missing_local_admin_identity,1
+Sagaing Region,Htan Par Kway Town,non_admin_postal_locality,1
+Sagaing Region,Indaw Township,linked_exact_local_area,40
+Sagaing Region,Indaw Township,missing_local_admin_identity,4
+Sagaing Region,Kale Township,linked_exact_local_area,40
+Sagaing Region,Kale Township,missing_local_admin_identity,20
+Sagaing Region,Kalewa Township,linked_exact_local_area,36
+Sagaing Region,Kalewa Township,missing_local_admin_identity,3
+Sagaing Region,Kanbalu Township,linked_exact_local_area,90
+Sagaing Region,Kani Township,linked_exact_local_area,48
+Sagaing Region,Katha Township,linked_exact_local_area,32
+Sagaing Region,Katha Township,missing_local_admin_identity,10
+Sagaing Region,Kawlin Township,linked_exact_local_area,54
+Sagaing Region,Khampat Town,non_admin_postal_locality,5
+Sagaing Region,Khin-U Township,linked_exact_local_area,64
+Sagaing Region,Kyauk Myaung Town,non_admin_postal_locality,4
+Sagaing Region,Kyunhla Township,linked_exact_local_area,34
+Sagaing Region,Kyunhla Township,missing_local_admin_identity,4
+Sagaing Region,Lahe Township,linked_exact_local_area,35
+Sagaing Region,Lahe Township,missing_local_admin_identity,5
+Sagaing Region,Lay Shi Township,linked_exact_local_area,23
+Sagaing Region,Lay Shi Township,missing_local_admin_identity,1
+Sagaing Region,Maw Lu Town,non_admin_postal_locality,6
+Sagaing Region,Mawlaik Township,linked_exact_local_area,28
+Sagaing Region,Mawlaik Township,missing_local_admin_identity,2
+Sagaing Region,Mingin Township,linked_exact_local_area,62
+Sagaing Region,Mingin Township,missing_local_admin_identity,2
+Sagaing Region,Mo Paing Lut Town,non_admin_postal_locality,2
+Sagaing Region,Monywa Township,linked_exact_local_area,55
+Sagaing Region,Monywa Township,missing_local_admin_identity,30
+Sagaing Region,Myaung Township,linked_exact_local_area,48
+Sagaing Region,Myaung Township,missing_local_admin_identity,5
+Sagaing Region,Myinmu Township,linked_exact_local_area,52
+Sagaing Region,Myothit Town,missing_local_admin_identity,3
+Sagaing Region,Nanyun Township,linked_exact_local_area,62
+Sagaing Region,Nanyun Township,missing_local_admin_identity,8
+Sagaing Region,Pale Township,linked_exact_local_area,61
+Sagaing Region,Pansaung Town,non_admin_postal_locality,3
+Sagaing Region,Paungbyin Township,linked_exact_local_area,42
+Sagaing Region,Pinlebu Township,linked_exact_local_area,54
+Sagaing Region,Sagaing Township,linked_exact_local_area,95
+Sagaing Region,Sagaing Township,missing_local_admin_identity,5
+Sagaing Region,Saing Pyin Town,non_admin_postal_locality,5
+Sagaing Region,Salingyi Township,linked_exact_local_area,42
+Sagaing Region,Sar Taung Town,non_admin_postal_locality,11
+Sagaing Region,Shwe Pyi Aye Town,non_admin_postal_locality,11
+Sagaing Region,Shwebo Township,linked_after_review,2
+Sagaing Region,Shwebo Township,linked_exact_local_area,70
+Sagaing Region,Shwebo Township,missing_local_admin_identity,11
+Sagaing Region,Sum Ma Rar Town,non_admin_postal_locality,3
+Sagaing Region,Tabayin Township,linked_exact_local_area,58
+Sagaing Region,Tamu Township,linked_exact_local_area,26
+Sagaing Region,Taze Township,linked_exact_local_area,59
+Sagaing Region,Taze Township,missing_local_admin_identity,2
+Sagaing Region,Tigyaing Township,linked_exact_local_area,29
+Sagaing Region,Tigyaing Township,missing_local_admin_identity,4
+Sagaing Region,Wetlet Township,linked_exact_local_area,72
+Sagaing Region,Wuntho Township,linked_exact_local_area,42
+Sagaing Region,Ye-U Township,linked_exact_local_area,67
+Sagaing Region,Yinmarbin Township,linked_exact_local_area,46
+Sagaing Region,Zee Kone Town,missing_local_admin_identity,6
+Shan State (East),Hmone Hta Town,non_admin_postal_locality,3
+Shan State (East),Ho Tawng (Ho Tao) Township,missing_local_admin_identity,5
+Shan State (East),Kenglat Town,non_admin_postal_locality,3
+Shan State (East),Kengtung Township,linked_exact_local_area,36
+Shan State (East),Mong Pawk Township,missing_local_admin_identity,7
+Shan State (East),Monghpyak Township,linked_exact_local_area,21
+Shan State (East),Monghpyak Township,missing_local_admin_identity,4
+Shan State (East),Monghsat Township,linked_exact_local_area,28
+Shan State (East),Monghsat Township,missing_local_admin_identity,5
+Shan State (East),Mongkhet Township,linked_exact_local_area,17
+Shan State (East),Mongkhet Township,missing_local_admin_identity,1
+Shan State (East),Mongkhoke Town,non_admin_postal_locality,3
+Shan State (East),Mongla Township,linked_exact_local_area,5
+Shan State (East),Mongla Township,missing_local_admin_identity,6
+Shan State (East),Mongping Township,linked_exact_local_area,27
+Shan State (East),Mongping Township,missing_local_admin_identity,5
+Shan State (East),Mongton Township,linked_exact_local_area,16
+Shan State (East),Mongton Township,missing_local_admin_identity,4
+Shan State (East),Mongyang Township,linked_exact_local_area,26
+Shan State (East),Mongyawng Township,linked_exact_local_area,29
+Shan State (East),Mongyu Town,non_admin_postal_locality,1
+Shan State (East),Ponparkyin Town,non_admin_postal_locality,5
+Shan State (East),Tachileik Township,linked_exact_local_area,13
+Shan State (East),Tachileik Township,missing_local_admin_identity,11
+Shan State (East),Tarlay Town,non_admin_postal_locality,4
+Shan State (East),Tontar Town,non_admin_postal_locality,4
+Shan State (North),Chinshwehaw Town,non_admin_postal_locality,6
+Shan State (North),Hopang Township,linked_exact_local_area,61
+Shan State (North),Hopang Township,missing_local_admin_identity,3
+Shan State (North),Hseni Township,linked_exact_local_area,36
+Shan State (North),Hsipaw Township,linked_after_review,2
+Shan State (North),Hsipaw Township,linked_exact_local_area,76
+Shan State (North),Konkyan Township,linked_exact_local_area,14
+Shan State (North),Konkyan Township,missing_local_admin_identity,22
+Shan State (North),Kunlong Township,linked_exact_local_area,31
+Shan State (North),Kutkai Township,linked_exact_local_area,76
+Shan State (North),Kutkai Township,missing_local_admin_identity,5
+Shan State (North),Kyaukme Township,linked_exact_local_area,77
+Shan State (North),Kyaukme Township,missing_local_admin_identity,8
+Shan State (North),Lashio Township,linked_exact_local_area,75
+Shan State (North),Lashio Township,missing_local_admin_identity,15
+Shan State (North),Laukkaing Township,linked_exact_local_area,10
+Shan State (North),Laukkaing Township,missing_local_admin_identity,29
+Shan State (North),Mabein Township,linked_exact_local_area,20
+Shan State (North),Mabein Township,missing_local_admin_identity,4
+Shan State (North),Man Kan Town,non_admin_postal_locality,3
+Shan State (North),Manhlyoe (Manhero) Town,non_admin_postal_locality,3
+Shan State (North),Manton Township,linked_exact_local_area,31
+Shan State (North),Manton Township,missing_local_admin_identity,1
+Shan State (North),Matman Township,linked_exact_local_area,26
+Shan State (North),Matman Township,missing_local_admin_identity,4
+Shan State (North),Maw Hteik Town,non_admin_postal_locality,3
+Shan State (North),Monekoe Town,non_admin_postal_locality,7
+Shan State (North),Monglon Town,non_admin_postal_locality,6
+Shan State (North),Mongmao Township,linked_exact_local_area,36
+Shan State (North),Mongmao Township,missing_local_admin_identity,4
+Shan State (North),Mongmit Township,linked_exact_local_area,27
+Shan State (North),Mongmit Township,missing_local_admin_identity,5
+Shan State (North),Mongngawt Town,non_admin_postal_locality,5
+Shan State (North),Mongyai Township,linked_exact_local_area,28
+Shan State (North),Mongyai Township,missing_local_admin_identity,3
+Shan State (North),Muse Township,linked_after_review,1
+Shan State (North),Muse Township,linked_exact_local_area,69
+Shan State (North),Muse Township,missing_local_admin_identity,3
+Shan State (North),Nam Tit Town,missing_local_admin_identity,5
+Shan State (North),Namhkan Township,linked_exact_local_area,43
+Shan State (North),Namhkan Township,missing_local_admin_identity,15
+Shan State (North),Namhsan Township,linked_exact_local_area,33
+Shan State (North),Namtu Township,linked_exact_local_area,23
+Shan State (North),Namtu Township,missing_local_admin_identity,3
+Shan State (North),Narphan Township,linked_exact_local_area,30
+Shan State (North),Narphan Township,missing_local_admin_identity,4
+Shan State (North),Nawnghkio Township,linked_exact_local_area,41
+Shan State (North),Pan Lon Town,missing_local_admin_identity,8
+Shan State (North),Pang Hseng (Kyu Koke) Town,non_admin_postal_locality,5
+Shan State (North),Pangsang (Panghkam) Township,linked_after_review,2
+Shan State (North),Pangsang (Panghkam) Township,linked_exact_local_area,72
+Shan State (North),Pangsang (Panghkam) Township,missing_local_admin_identity,14
+Shan State (North),Pangwaun Township,linked_exact_local_area,17
+Shan State (North),Pangwaun Township,missing_local_admin_identity,2
+Shan State (North),Tangyan Township,linked_exact_local_area,50
+Shan State (North),Tangyan Township,missing_local_admin_identity,9
+Shan State (North),Tarmoenye Town,missing_local_admin_identity,8
+Shan State (North),Wein Kawn Town,non_admin_postal_locality,1
+Shan State (South),- | Pinlon Town,non_admin_postal_locality,4
+Shan State (South),Aungpan Town,linked_exact_local_area,12
+Shan State (South),Ayetharyar Town,non_admin_postal_locality,12
+Shan State (South),He Hoe Town,non_admin_postal_locality,5
+Shan State (South),Homein Town,linked_exact_local_area,3
+Shan State (South),Hopong Township,linked_exact_local_area,28
+Shan State (South),Hsihseng Township,linked_exact_local_area,19
+Shan State (South),Intaw Town,non_admin_postal_locality,6
+Shan State (South),Kalaw Township,linked_exact_local_area,37
+Shan State (South),Kar Li Town,non_admin_postal_locality,6
+Shan State (South),Kengtawng Town,non_admin_postal_locality,7
+Shan State (South),Kho Lam Town,non_admin_postal_locality,6
+Shan State (South),Kunhing Township,linked_exact_local_area,18
+Shan State (South),Kunhing Township,missing_local_admin_identity,1
+Shan State (South),Kyauktalonegyi Town,non_admin_postal_locality,6
+Shan State (South),Kyethi Township,linked_exact_local_area,38
+Shan State (South),Laihka Township,linked_exact_local_area,23
+Shan State (South),Langkho Township,linked_exact_local_area,22
+Shan State (South),Lawksawk Township,linked_exact_local_area,26
+Shan State (South),Loilen Township,linked_exact_local_area,23
+Shan State (South),Mawkmai Township,linked_exact_local_area,15
+Shan State (South),Monghsu Township,linked_exact_local_area,21
+Shan State (South),Mongkaing Township,linked_exact_local_area,29
+Shan State (South),Mongnai Township,linked_exact_local_area,18
+Shan State (South),Mongnai Township,missing_local_admin_identity,2
+Shan State (South),Mongnawng Town,linked_exact_local_area,5
+Shan State (South),Mongpan Township,linked_exact_local_area,15
+Shan State (South),Mongpan Township,missing_local_admin_identity,1
+Shan State (South),Mongsan (Hmonesan) Town,non_admin_postal_locality,3
+Shan State (South),Nang Pang Town,non_admin_postal_locality,4
+Shan State (South),Nansang Township,linked_exact_local_area,25
+Shan State (South),Naungtayar Town,non_admin_postal_locality,3
+Shan State (South),Nyaungshwe Township,linked_exact_local_area,42
+Shan State (South),Pawng Lawng Town,non_admin_postal_locality,6
+Shan State (South),Pekon Township,linked_exact_local_area,16
+Shan State (South),Pekon Township,missing_local_admin_identity,3
+Shan State (South),Pindaya Township,linked_exact_local_area,27
+Shan State (South),Pindaya Township,missing_local_admin_identity,13
+Shan State (South),Pinlaung Township,linked_after_review,1
+Shan State (South),Pinlaung Township,linked_exact_local_area,34
+Shan State (South),Shwenyaung Town,non_admin_postal_locality,11
+Shan State (South),Taunggyi Township,linked_exact_local_area,24
+Shan State (South),Taunggyi Township,missing_local_admin_identity,22
+Shan State (South),Ywangan Township,linked_exact_local_area,32
+Tanintharyi Region,Bokpyin Township,linked_exact_local_area,18
+Tanintharyi Region,Bokpyin Township,missing_local_admin_identity,4
+Tanintharyi Region,Dawei Township,linked_exact_local_area,40
+Tanintharyi Region,Kaleinaung Town,non_admin_postal_locality,4
+Tanintharyi Region,Karathuri Town,non_admin_postal_locality,3
+Tanintharyi Region,Kawthoung Township,linked_exact_local_area,28
+Tanintharyi Region,Khamaukgyi Town,non_admin_postal_locality,3
+Tanintharyi Region,Kyunsu Township,linked_exact_local_area,24
+Tanintharyi Region,Launglon Township,linked_exact_local_area,45
+Tanintharyi Region,Maw Taung Town,non_admin_postal_locality,3
+Tanintharyi Region,Myeik Township,linked_exact_local_area,34
+Tanintharyi Region,Myitta Town,non_admin_postal_locality,3
+Tanintharyi Region,Pala Town,linked_exact_local_area,4
+Tanintharyi Region,Palauk Town,non_admin_postal_locality,4
+Tanintharyi Region,Palaw Township,linked_exact_local_area,32
+Tanintharyi Region,Pyigyimandaing Town,non_admin_postal_locality,3
+Tanintharyi Region,Tanintharyi Township,linked_exact_local_area,23
+Tanintharyi Region,Thayetchaung Township,linked_exact_local_area,44
+Tanintharyi Region,Yebyu Township,linked_exact_local_area,38
+Tanintharyi Region,Yebyu Township,missing_local_admin_identity,1
+Yangon Region,- | Hlaingtharya (West) Township,linked_exact_local_area,15
+Yangon Region,- | Hlaingtharya(East) Township,linked_exact_local_area,13
+Yangon Region,- | Hlaingtharya(East) Township,missing_local_admin_identity,1
+Yangon Region,Ahlone Township,linked_exact_local_area,11
+Yangon Region,Ahpyauk Town,non_admin_postal_locality,4
+Yangon Region,Bahan Township,linked_exact_local_area,22
+Yangon Region,Botahtaung Township,linked_exact_local_area,12
+Yangon Region,Cocokyun Township,missing_local_admin_identity,2
+Yangon Region,Dagon Myothit (East) Township,linked_exact_local_area,64
+Yangon Region,Dagon Myothit (East) Township,missing_local_admin_identity,1
+Yangon Region,Dagon Myothit (North) Township,linked_exact_local_area,27
+Yangon Region,Dagon Myothit (Seikkan) Township,linked_exact_local_area,35
+Yangon Region,Dagon Myothit (Seikkan) Township,missing_local_admin_identity,4
+Yangon Region,Dagon Myothit (South) Township,linked_exact_local_area,48
+Yangon Region,Dagon Myothit (South) Township,missing_local_admin_identity,1
+Yangon Region,Dagon Township,linked_exact_local_area,5
+Yangon Region,Dala Township,linked_exact_local_area,47
+Yangon Region,Dawbon Township,linked_exact_local_area,14
+Yangon Region,Hlaing Township,linked_exact_local_area,16
+Yangon Region,Hlegu Township,linked_exact_local_area,48
+Yangon Region,Hlegu Township,missing_local_admin_identity,11
+Yangon Region,Hmawbi Township,linked_exact_local_area,41
+Yangon Region,Hmawbi Township,missing_local_admin_identity,2
+Yangon Region,Htantabin Township,linked_exact_local_area,52
+Yangon Region,Htantabin Township,missing_local_admin_identity,7
+Yangon Region,Htaukkyant Town,linked_exact_local_area,13
+Yangon Region,Insein Township,linked_exact_local_area,21
+Yangon Region,Kamayut Township,linked_exact_local_area,10
+Yangon Region,Kawhmu Township,linked_exact_local_area,62
+Yangon Region,Kayan Township,linked_exact_local_area,66
+Yangon Region,Kungyangon Township,linked_after_review,2
+Yangon Region,Kungyangon Township,linked_exact_local_area,46
+Yangon Region,Kungyangon Township,missing_local_admin_identity,2
+Yangon Region,Kyauktada Township,linked_exact_local_area,9
+Yangon Region,Kyauktan Township,linked_exact_local_area,54
+Yangon Region,Kyauktan Township,missing_local_admin_identity,1
+Yangon Region,Kyeemyindaing Township,linked_exact_local_area,22
+Yangon Region,Lanmadaw Township,linked_exact_local_area,13
+Yangon Region,Latha Township,linked_exact_local_area,10
+Yangon Region,Mayangone Township,linked_exact_local_area,10
+Yangon Region,Mingaladon Township,linked_exact_local_area,19
+Yangon Region,Mingalartaungnyunt Township,linked_exact_local_area,20
+Yangon Region,North Okkalapa Township,linked_exact_local_area,19
+Yangon Region,Okekan Town,non_admin_postal_locality,8
+Yangon Region,Pabedan Township,linked_exact_local_area,11
+Yangon Region,Pazundaung Township,linked_exact_local_area,10
+Yangon Region,Sanchaung Township,linked_exact_local_area,18
+Yangon Region,Seikgyikanaungto Township,linked_exact_local_area,9
+Yangon Region,Shwepyithar Township,linked_exact_local_area,27
+Yangon Region,South Okkalapa Township,linked_exact_local_area,13
+Yangon Region,Tadar Town,non_admin_postal_locality,4
+Yangon Region,Taikkyi Township,linked_exact_local_area,81
+Yangon Region,Taikkyi Township,missing_local_admin_identity,2
+Yangon Region,Tamwe Township,linked_after_review,2
+Yangon Region,Tamwe Township,linked_exact_local_area,18
+Yangon Region,Thaketa Township,linked_exact_local_area,19
+Yangon Region,Thanlyin Township,linked_exact_local_area,45
+Yangon Region,Thingangyun Township,linked_exact_local_area,38
+Yangon Region,Thingangyun Township,missing_local_admin_identity,1
+Yangon Region,Thongwa Township,linked_exact_local_area,64
+Yangon Region,Thongwa Township,missing_local_admin_identity,12
+Yangon Region,Twantay Township,linked_exact_local_area,73
+Yangon Region,Yankin Township,linked_exact_local_area,15

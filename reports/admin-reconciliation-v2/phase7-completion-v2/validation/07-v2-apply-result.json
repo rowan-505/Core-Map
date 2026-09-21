@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-09-21T15:57:39Z",
+  "database_url_host": "127.0.0.1",
+  "outcomes": {
+    "created": 1,
+    "wvt_keep_existing": 1850,
+    "wvt_update_names": 36,
+    "wvt_created": 14279,
+    "wvt_merge_pending": 4,
+    "wvt_update_type": 4,
+    "wvt_skip_no_geom": 3,
+    "merge_merged": 4,
+    "settle_keep_existing": 48719,
+    "settle_merged": 2124,
+    "settle_skip_missing_public_id": 3571,
+    "settle_update_names": 825,
+    "settle_update_type": 14
+  },
+  "postal_stats": {
+    "linked_exact_local_area": 15452,
+    "missing_local_area": 1164,
+    "linked_after_review": 32,
+    "linked_missing_fk": 13,
+    "non_admin_postal_locality": 646,
+    "ambiguous_local_area": 3
+  },
+  "snapshot": {
+    "admin_active": 16790,
+    "admin_placeholders": 14280,
+    "settle_active": 55864,
+    "settle_v2_placeholders": 0,
+    "postal": 17297,
+    "pangsang_exists": 1
+  },
+  "id_map_size": 31074
+}

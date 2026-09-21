@@ -1,0 +1,137 @@
+{
+  "generated_at": "2026-09-21T15:38:06Z",
+  "admin": {
+    "admin_rows": 16177,
+    "township_creates": 1,
+    "wvt_creates": 14282,
+    "merges": 4,
+    "rejects": 0,
+    "pangsang_children": 88
+  },
+  "villages": {
+    "village_rows": 54602,
+    "creates": 3571,
+    "rejects": 0,
+    "reopened_match": 3,
+    "reopened_create": 6
+  },
+  "postal": {
+    "unique_valid_codes": 17297,
+    "status_counts": {
+      "linked_exact_local_area": 15452,
+      "missing_local_admin_identity": 1164,
+      "linked_after_review": 32,
+      "non_admin_postal_locality": 646,
+      "ambiguous_local_area": 3
+    },
+    "gates": {
+      "unique_codes_17297": true,
+      "status_sum_17297": true,
+      "exact_pending_create_0": true,
+      "township_unresolved_method_0": true,
+      "missing_township_status": 0,
+      "linked_exact": 15452
+    }
+  },
+  "approvals": {
+    "approved_at": "2026-09-21T15:38:00Z",
+    "pangsang": {
+      "decision": "create_missing_township_placeholder",
+      "target_public_id": "7c8315d4-ab5a-4b41-974a-fb3cbe249fc9",
+      "target_slug": "pangsang-panghkam-township",
+      "parent_public_id": "bc2fbbdc-556b-42e4-9dad-8ed33617e99c"
+    },
+    "merges_approved": [
+      {
+        "source_pcode": "MMR013018701526",
+        "survivor": 5182,
+        "loser": 5183
+      },
+      {
+        "source_pcode": "MMR013018701525",
+        "survivor": 5185,
+        "loser": 5186
+      },
+      {
+        "source_pcode": "MMR007008701505",
+        "survivor": 5891,
+        "loser": 5897
+      },
+      {
+        "source_pcode": "MMR010018701504",
+        "survivor": 6907,
+        "loser": 6908
+      }
+    ],
+    "ward_match_existing": [
+      {
+        "source_pcode": "MMR018002701509",
+        "source_row": "1574",
+        "match_id": 6023
+      },
+      {
+        "source_pcode": "MMR013029701504",
+        "source_row": "1840",
+        "match_id": 5119
+      },
+      {
+        "source_pcode": "MMR005011701503",
+        "source_row": "1589",
+        "match_id": 6797
+      },
+      {
+        "source_pcode": "MMR005011701503",
+        "source_row": "1611",
+        "match_id": 6794
+      }
+    ],
+    "village_match_existing": [
+      {
+        "source_pcode": "189255",
+        "match_id": 170019
+      },
+      {
+        "source_pcode": "189131",
+        "match_id": 169993
+      },
+      {
+        "source_pcode": "189128",
+        "match_id": 169991,
+        "note": "flipped from create_new after hard-check safe match"
+      }
+    ],
+    "village_create_new": [
+      "189254",
+      "176854",
+      "219883",
+      "209771",
+      "209638",
+      "201878"
+    ],
+    "ma_har_myaing": "potentially_distinct_wards_shared_pcode"
+  },
+  "checksums": {
+    "frozen-v2/03-approved-local-admin.v2.csv": {
+      "sha256": "429b4be6aa8a9a397157ef8fc420ec06b575e469cc8367faedb3e3540f05caa4",
+      "bytes": 10963793
+    },
+    "frozen-v2/03-approved-villages.v2.csv": {
+      "sha256": "45f5329769e16c146c56bf120dbc0460094050b4383698e6d007cb0090e05d98",
+      "bytes": 28140330
+    },
+    "postal/03-postal-actions-v2.csv": {
+      "sha256": "528f4ac0298dcbaeb9ef01ab7611165e7cca507098c22630ff343ed0bc56129e",
+      "bytes": 11557576
+    },
+    "decisions/01-pangsang-township-freeze.json": {
+      "sha256": "dcda48e7a54ea85c516a21ecaede0ede25c0120415fae2f5c9fc3eb19b3e6729",
+      "bytes": 3503
+    },
+    "decisions/04-approvals.json": {
+      "sha256": "3d0641454eeffbc7c8fc47a463b24c9c41a045a33c04b4019fdbd85b492e0f7b",
+      "bytes": 1654
+    },
+    "git_commit_at_build": "8862bf16fbacd6a4c084b20e1fd1022e4850243e",
+    "generated_at": "2026-09-21T15:38:06Z"
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "generated_at": "2026-09-21T15:58:57.610283Z",
+  "snapshot": {
+    "admin_active": 16790,
+    "admin_placeholders": 14280,
+    "settle_active": 59435,
+    "settle_placeholders": 3571,
+    "postal": 17297,
+    "wards": 2066,
+    "village_tracts": 14167,
+    "baseline_admin": 2516,
+    "baseline_settle": 57590
+  },
+  "postal_manifest_status": {
+    "linked_exact_local_area": 15452,
+    "missing_local_admin_identity": 1177,
+    "non_admin_postal_locality": 646,
+    "linked_after_review": 19,
+    "ambiguous_local_area": 3
+  },
+  "postal_db_status": {
+    "linked_exact_local_area": 15452,
+    "missing_local_area": 1164,
+    "non_admin_postal_locality": 646,
+    "linked_after_review": 32,
+    "ambiguous_local_area": 3
+  },
+  "gates": {
+    "township_parent_missing": 0,
+    "manual_review_defer_blank": 0,
+    "changed_existing_admin_geom": 0,
+    "changed_existing_settlement_point": 0,
+    "changed_matched_public_id": 0,
+    "existing_rows_tagged_mimu_placeholder": 0,
+    "unexpected_placeholder_on_baseline_ids": 0,
+    "postal_rows": 17297,
+    "postal_status_sum": 17297,
+    "exact_pending_create_method": 0,
+    "township_unresolved_method": 0,
+    "linked_without_local_admin_area_id": 0,
+    "local_without_township": 0,
+    "local_township_mismatch": 0,
+    "invalid_placeholder_geom": 0,
+    "invalid_village_points": 0,
+    "pangsang_exists": 1,
+    "pangsang_children": 87,
+    "pangsang_invalid_source_rejected": 1
+  },
+  "gate_results": {
+    "township_parent_missing": "PASS",
+    "manual_review_defer_blank": "PASS",
+    "changed_existing_admin_geom": "PASS",
+    "changed_existing_settlement_point": "PASS",
+    "changed_matched_public_id": "PASS",
+    "existing_rows_tagged_mimu_placeholder": "PASS",
+    "unexpected_placeholder_on_baseline_ids": "PASS",
+    "postal_rows": "PASS",
+    "postal_status_sum": "PASS",
+    "exact_pending_create_method": "PASS",
+    "township_unresolved_method": "PASS",
+    "linked_without_local_admin_area_id": "PASS",
+    "local_without_township": "PASS",
+    "local_township_mismatch": "PASS",
+    "invalid_placeholder_geom": "PASS",
+    "invalid_village_points": "PASS",
+    "pangsang_exists": "PASS",
+    "pangsang_children": "PASS_WITH_EXPLICIT_EXCEPTION"
+  },
+  "pangsang": {
+    "id": 7530,
+    "public_id": "7c8315d4-ab5a-4b41-974a-fb3cbe249fc9",
+    "parent_id": 6474,
+    "is_public_usable": false
+  },
+  "git_commit": "8862bf16fbacd6a4c084b20e1fd1022e4850243e",
+  "checksums": {
+    "frozen-v2/03-approved-local-admin.v2.csv": {
+      "sha256": "661d18e9c6b2594df39a4a88f860ee971beec873dc20da1a836193f8b939b902",
+      "bytes": 10963756
+    },
+    "frozen-v2/03-approved-villages.v2.csv": {
+      "sha256": "e1e1a1663c9f9fa2446835190c63c481d2ed4ae69edbe322acff7d878dd11677",
+      "bytes": 28958329
+    },
+    "postal/03-postal-actions-v2.csv": {
+      "sha256": "d7c4c530b53afaf9d9e108a503b3754b09ce793f6a82453c82217362aad21d77",
+      "bytes": 11558005
+    },
+    "decisions/01-pangsang-township-freeze.json": {
+      "sha256": "dcda48e7a54ea85c516a21ecaede0ede25c0120415fae2f5c9fc3eb19b3e6729",
+      "bytes": 3503
+    },
+    "decisions/04-approvals.json": {
+      "sha256": "3d0641454eeffbc7c8fc47a463b24c9c41a045a33c04b4019fdbd85b492e0f7b",
+      "bytes": 1654
+    },
+    "git_commit_at_build": "8862bf16fbacd6a4c084b20e1fd1022e4850243e",
+    "generated_at": "2026-09-21T16:00:18Z"
+  },
+  "decisions": {
+    "A": "PASS",
+    "B": "FAIL",
+    "C": "FAIL",
+    "licence": "PASS_DATABASE_ONLY"
+  }
+}

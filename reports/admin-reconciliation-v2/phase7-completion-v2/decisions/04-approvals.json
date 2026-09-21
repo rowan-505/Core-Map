@@ -1,0 +1,77 @@
+{
+  "approved_at": "2026-09-21T15:38:00Z",
+  "pangsang": {
+    "decision": "create_missing_township_placeholder",
+    "target_public_id": "7c8315d4-ab5a-4b41-974a-fb3cbe249fc9",
+    "target_slug": "pangsang-panghkam-township",
+    "parent_public_id": "bc2fbbdc-556b-42e4-9dad-8ed33617e99c"
+  },
+  "merges_approved": [
+    {
+      "source_pcode": "MMR013018701526",
+      "survivor": 5182,
+      "loser": 5183
+    },
+    {
+      "source_pcode": "MMR013018701525",
+      "survivor": 5185,
+      "loser": 5186
+    },
+    {
+      "source_pcode": "MMR007008701505",
+      "survivor": 5891,
+      "loser": 5897
+    },
+    {
+      "source_pcode": "MMR010018701504",
+      "survivor": 6907,
+      "loser": 6908
+    }
+  ],
+  "ward_match_existing": [
+    {
+      "source_pcode": "MMR018002701509",
+      "source_row": "1574",
+      "match_id": 6023
+    },
+    {
+      "source_pcode": "MMR013029701504",
+      "source_row": "1840",
+      "match_id": 5119
+    },
+    {
+      "source_pcode": "MMR005011701503",
+      "source_row": "1589",
+      "match_id": 6797
+    },
+    {
+      "source_pcode": "MMR005011701503",
+      "source_row": "1611",
+      "match_id": 6794
+    }
+  ],
+  "village_match_existing": [
+    {
+      "source_pcode": "189255",
+      "match_id": 170019
+    },
+    {
+      "source_pcode": "189131",
+      "match_id": 169993
+    },
+    {
+      "source_pcode": "189128",
+      "match_id": 169991,
+      "note": "flipped from create_new after hard-check safe match"
+    }
+  ],
+  "village_create_new": [
+    "189254",
+    "176854",
+    "219883",
+    "209771",
+    "209638",
+    "201878"
+  ],
+  "ma_har_myaing": "potentially_distinct_wards_shared_pcode"
+}

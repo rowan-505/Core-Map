@@ -1,0 +1,570 @@
+{
+  "generated_at": "2026-09-21T15:24:10Z",
+  "production_touched": false,
+  "v2_manifests_generated": false,
+  "pangsang": {
+    "decision": "create_missing_township_placeholder",
+    "target_public_id": "7c8315d4-ab5a-4b41-974a-fb3cbe249fc9",
+    "target_slug": "pangsang-panghkam-township",
+    "parent_public_id": "bc2fbbdc-556b-42e4-9dad-8ed33617e99c",
+    "child_vt_count": 88,
+    "preserve_6484": true
+  },
+  "match_wards": [
+    {
+      "source_pcode": "MMR018002701509",
+      "source_row": "1574",
+      "match_id": 6023,
+      "match_public_id": "dda8330a-acd9-4e72-a9a5-d6786c100cca",
+      "checks": {
+        "approved_township_matches": true,
+        "entity_type_matches": true,
+        "strong_my_or_bilingual_identity": true,
+        "geometry_supports_identity": true,
+        "one_to_one_source_assignment": true,
+        "existing_geometry_unchanged_policy": true,
+        "pre_match_geom_sha256": "4020c56d3bd3d2d6dcb1cd908be04d9da58ed94a02c22e1be3b580b8b6b12ff3"
+      },
+      "metrics": {
+        "source_coverage_pct": 98.44000000000001,
+        "candidate_coverage_pct": 99.25,
+        "centroid_dist_m": 9.4
+      },
+      "township": {
+        "id": 6029,
+        "name": "ဇမ္ဗူသီရိ"
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "MMR013029701504",
+      "source_row": "1840",
+      "match_id": 5119,
+      "match_public_id": "4eccfe61-d04c-46d4-bc2f-0fd6ce3bcad2",
+      "checks": {
+        "approved_township_matches": true,
+        "entity_type_matches": true,
+        "strong_my_or_bilingual_identity": true,
+        "geometry_supports_identity": true,
+        "one_to_one_source_assignment": true,
+        "existing_geometry_unchanged_policy": true,
+        "pre_match_geom_sha256": "d99a2fb29eede47d274055042c0333721b842f283e802f8fa710248e1676a310"
+      },
+      "metrics": {
+        "source_coverage_pct": 98.75,
+        "candidate_coverage_pct": 98.37,
+        "centroid_dist_m": 3.1
+      },
+      "township": {
+        "id": 5112,
+        "name": "ကွမ်းခြံကုန်း"
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "MMR005011701503",
+      "source_row": "1589",
+      "match_id": 6797,
+      "match_public_id": "30309448-fabf-4601-ae5c-48a8ed285394",
+      "checks": {
+        "approved_township_matches": true,
+        "entity_type_matches": true,
+        "strong_my_or_bilingual_identity": true,
+        "geometry_supports_identity": true,
+        "one_to_one_source_assignment": true,
+        "existing_geometry_unchanged_policy": true,
+        "pre_match_geom_sha256": "1200f4fbb55252edd440182ff56ba6a81a337a678e327663b934279e5a6464cc"
+      },
+      "metrics": {
+        "source_coverage_pct": 98.4,
+        "candidate_coverage_pct": 99.38,
+        "centroid_dist_m": 5.0
+      },
+      "township": {
+        "id": 6766,
+        "name": "တန့်ဆည်"
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "MMR005011701503",
+      "source_row": "1611",
+      "match_id": 6794,
+      "match_public_id": "78361f3d-1c68-4771-9960-71409026dbc6",
+      "checks": {
+        "approved_township_matches": true,
+        "entity_type_matches": true,
+        "strong_my_or_bilingual_identity": true,
+        "geometry_supports_identity": true,
+        "one_to_one_source_assignment": true,
+        "existing_geometry_unchanged_policy": true,
+        "pre_match_geom_sha256": "1e47f02bbbeaf305740c3670d88c53dd46fc9803aab9037fd593626948055c50"
+      },
+      "metrics": {
+        "source_coverage_pct": 99.26,
+        "candidate_coverage_pct": 99.22,
+        "centroid_dist_m": 5.5
+      },
+      "township": {
+        "id": 6766,
+        "name": "တန့်ဆည်"
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    }
+  ],
+  "match_villages": [
+    {
+      "source_pcode": "189255",
+      "match_id": 170019,
+      "match_public_id": "1f45b0f5-1694-4125-bc55-725ce7e3bb0b",
+      "match_canonical_name": "ကျဲရွာ",
+      "checks": {
+        "approved_township_matches": true,
+        "entity_type_matches": true,
+        "strong_my_or_bilingual_identity": true,
+        "geometry_supports_identity": true,
+        "one_to_one_source_assignment": true,
+        "existing_geometry_unchanged_policy": true,
+        "pre_match_point_sha256": "1c72e7d807b0d1df90566b6d95399a9758e4f76780198c802d8d6b8294e20239",
+        "settlement_type": "village",
+        "distance_m": 63.2,
+        "my_hit": true,
+        "en_hit": true
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "189131",
+      "match_id": 169993,
+      "match_public_id": "9bc2a458-fe62-48ba-a2b0-4a6314e29366",
+      "match_canonical_name": "ကျောင်းရွာ",
+      "checks": {
+        "approved_township_matches": true,
+        "entity_type_matches": true,
+        "strong_my_or_bilingual_identity": true,
+        "geometry_supports_identity": true,
+        "one_to_one_source_assignment": true,
+        "existing_geometry_unchanged_policy": true,
+        "pre_match_point_sha256": "b8d06a93e3af394565d2031e15d97bb240a42d1901222f21ca3deb5c5fbe43bf",
+        "settlement_type": "village",
+        "distance_m": 40.3,
+        "my_hit": true,
+        "en_hit": true
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    }
+  ],
+  "create_villages": [
+    {
+      "source_pcode": "189254",
+      "source_name_en": "Sa Kar",
+      "source_name_my": "စကား",
+      "approved_township_id": "6809",
+      "township_name": "ဂန့်ဂေါ",
+      "nearest": [
+        {
+          "id": 170018,
+          "name": "စံကား",
+          "dist_m": 93.1
+        },
+        {
+          "id": 170019,
+          "name": "ကျဲရွာ",
+          "dist_m": 2423.8
+        },
+        {
+          "id": 170020,
+          "name": "နုံးကြီး",
+          "dist_m": 4311.8
+        },
+        {
+          "id": 172102,
+          "name": "ရွှေပင်",
+          "dist_m": 7398.1
+        },
+        {
+          "id": 170021,
+          "name": "ကန့်သတ်",
+          "dist_m": 7744.4
+        }
+      ],
+      "safe_match_found": null,
+      "checks": {
+        "valid_geometry": true,
+        "valid_approved_township": true,
+        "genuine_entity_type": true,
+        "unique_source_identity": true,
+        "no_safe_existing_match": true,
+        "no_unresolved_ambiguity": true
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "189128",
+      "source_name_en": "Kone",
+      "source_name_my": "ကုန်း",
+      "approved_township_id": "6916",
+      "township_name": "ဆိပ်ဖြူ",
+      "nearest": [
+        {
+          "id": 169991,
+          "name": "ကုန်းရွာ",
+          "dist_m": 59.9
+        },
+        {
+          "id": 169992,
+          "name": "ငါးချဉ်ချောင်း",
+          "dist_m": 1658.3
+        },
+        {
+          "id": 169990,
+          "name": "ကျစ်ပြင်",
+          "dist_m": 2046.3
+        },
+        {
+          "id": 171854,
+          "name": "ညောင်နီချောင်း",
+          "dist_m": 2497.8
+        },
+        {
+          "id": 169993,
+          "name": "ကျောင်းရွာ",
+          "dist_m": 2881.5
+        }
+      ],
+      "safe_match_found": {
+        "id": 169991,
+        "name": "ကုန်းရွာ",
+        "dist": 59.9
+      },
+      "checks": {
+        "valid_geometry": true,
+        "valid_approved_township": true,
+        "genuine_entity_type": true,
+        "unique_source_identity": true,
+        "no_safe_existing_match": false,
+        "no_unresolved_ambiguity": false
+      },
+      "hard_check_pass": false,
+      "conditional_status": "HELD_FAILED_HARD_CHECK"
+    },
+    {
+      "source_pcode": "176854",
+      "source_name_en": "Welang",
+      "source_name_my": "ဝေလံ",
+      "approved_township_id": "6692",
+      "township_name": "လဟယ်",
+      "nearest": [
+        {
+          "id": 167114,
+          "name": "ဝေးလံကိင်ဖုရွာ",
+          "dist_m": 39.2
+        },
+        {
+          "id": 115612,
+          "name": "ဝေးလံနောက်ကုန်း",
+          "dist_m": 2459.4
+        },
+        {
+          "id": 167115,
+          "name": "ပုံညိုနောက်ကုန်း",
+          "dist_m": 4122.0
+        },
+        {
+          "id": 167116,
+          "name": "ဆော်လော်",
+          "dist_m": 7841.1
+        },
+        {
+          "id": 166083,
+          "name": "ပုံညိုနောက်အင်း",
+          "dist_m": 12518.2
+        }
+      ],
+      "safe_match_found": null,
+      "checks": {
+        "valid_geometry": true,
+        "valid_approved_township": true,
+        "genuine_entity_type": true,
+        "unique_source_identity": true,
+        "no_safe_existing_match": true,
+        "no_unresolved_ambiguity": true
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "219883",
+      "source_name_en": "Ya Da Nar Thein Gi",
+      "source_name_my": "ရတနာသင်္ဂီ",
+      "approved_township_id": "6524",
+      "township_name": "နောင်ချို",
+      "nearest": [
+        {
+          "id": 172052,
+          "name": "ရတနာသိင်္ဂီ",
+          "dist_m": 36.1
+        },
+        {
+          "id": 173097,
+          "name": "နားကျိုင်း",
+          "dist_m": 2603.2
+        },
+        {
+          "id": 172923,
+          "name": "နားခါး",
+          "dist_m": 3097.2
+        },
+        {
+          "id": 172924,
+          "name": "ခဲမွန်",
+          "dist_m": 3546.3
+        },
+        {
+          "id": 172929,
+          "name": "ကုန်းတမော့",
+          "dist_m": 4086.8
+        }
+      ],
+      "safe_match_found": null,
+      "checks": {
+        "valid_geometry": true,
+        "valid_approved_township": true,
+        "genuine_entity_type": true,
+        "unique_source_identity": true,
+        "no_safe_existing_match": true,
+        "no_unresolved_ambiguity": true
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "209771",
+      "source_name_en": "Loke Lawng",
+      "source_name_my": "လုပ်လောင်",
+      "approved_township_id": "6524",
+      "township_name": "နောင်ချို",
+      "nearest": [
+        {
+          "id": 172629,
+          "name": "လုတ်လောင်",
+          "dist_m": 105.8
+        },
+        {
+          "id": 172627,
+          "name": "ဘန့်ဘွေးကျင်း",
+          "dist_m": 4080.6
+        },
+        {
+          "id": 172918,
+          "name": "ကျောက်ကြီး",
+          "dist_m": 4585.4
+        },
+        {
+          "id": 172628,
+          "name": "လုံခုတ်",
+          "dist_m": 4854.1
+        },
+        {
+          "id": 172921,
+          "name": "သဲခေါ်",
+          "dist_m": 5011.0
+        }
+      ],
+      "safe_match_found": null,
+      "checks": {
+        "valid_geometry": true,
+        "valid_approved_township": true,
+        "genuine_entity_type": true,
+        "unique_source_identity": true,
+        "no_safe_existing_match": true,
+        "no_unresolved_ambiguity": true
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "209638",
+      "source_name_en": "Ma Gyi Yae",
+      "source_name_my": "မကျီးရေ",
+      "approved_township_id": "6524",
+      "township_name": "နောင်ချို",
+      "nearest": [
+        {
+          "id": 172987,
+          "name": "မန်ကျည်းရေ",
+          "dist_m": 135.9
+        },
+        {
+          "id": 172979,
+          "name": "နောင်ချိုကုန်း",
+          "dist_m": 5294.5
+        },
+        {
+          "id": 116468,
+          "name": "နားရှိုး",
+          "dist_m": 5179.9
+        },
+        {
+          "id": 157940,
+          "name": "ဈေးကုန်း (မြောက်)",
+          "dist_m": 5623.0
+        },
+        {
+          "id": 116536,
+          "name": "ဈေးကုန်း",
+          "dist_m": 5914.3
+        }
+      ],
+      "safe_match_found": null,
+      "checks": {
+        "valid_geometry": true,
+        "valid_approved_township": true,
+        "genuine_entity_type": true,
+        "unique_source_identity": true,
+        "no_safe_existing_match": true,
+        "no_unresolved_ambiguity": true
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    },
+    {
+      "source_pcode": "201878",
+      "source_name_en": "Kyun Gyi",
+      "source_name_my": "ကျွန်းကြီး",
+      "approved_township_id": "6187",
+      "township_name": "ရွာငံ",
+      "nearest": [
+        {
+          "id": 169759,
+          "name": "ကျွန်းသာယာ (ကျွန်းကြီရွာသစ်)",
+          "dist_m": 126.5
+        },
+        {
+          "id": 168079,
+          "name": "ဆည်",
+          "dist_m": 1524.8
+        },
+        {
+          "id": 171746,
+          "name": "ဆည်ရွာ",
+          "dist_m": 1546.7
+        },
+        {
+          "id": 157194,
+          "name": "ကင်းတက်",
+          "dist_m": 2949.2
+        },
+        {
+          "id": 160538,
+          "name": "မြို့ကြီး",
+          "dist_m": 3595.1
+        }
+      ],
+      "safe_match_found": null,
+      "checks": {
+        "valid_geometry": true,
+        "valid_approved_township": true,
+        "genuine_entity_type": true,
+        "unique_source_identity": true,
+        "no_safe_existing_match": true,
+        "no_unresolved_ambiguity": true
+      },
+      "hard_check_pass": true,
+      "conditional_status": "ACCEPTED"
+    }
+  ],
+  "merge_groups_pending": [
+    {
+      "source_pcode": "MMR013018701526",
+      "survivor": 5182,
+      "loser": 5183,
+      "cand_overlap_pct": 100.0
+    },
+    {
+      "source_pcode": "MMR013018701525",
+      "survivor": 5185,
+      "loser": 5186,
+      "cand_overlap_pct": 100.0
+    },
+    {
+      "source_pcode": "MMR007008701505",
+      "survivor": 5891,
+      "loser": 5897,
+      "cand_overlap_pct": 100.0
+    },
+    {
+      "source_pcode": "MMR010018701504",
+      "survivor": 6907,
+      "loser": 6908,
+      "cand_overlap_pct": 100.0
+    }
+  ],
+  "ma_har_myaing": {
+    "source_pcode": "MMR005011701503",
+    "source_name_en": "Ma Har Myaing Ward",
+    "source_name_my": "မဟာမြိုင်ရပ်ကွက်",
+    "source_township": "Taze",
+    "same_pcode": true,
+    "same_name": true,
+    "same_parent": true,
+    "geom_equal": false,
+    "geom_sha256_row1589": "49dbf60fbc210eee446f8fbeb6a69ff307df121882c6221c4fefec8eae020fcf",
+    "geom_sha256_row1611": "4b8294b80b1ce93c01feef43fc60d0a1b3435867afde965f83e8edfacb61ec4b",
+    "source_pair_overlap": 0.002,
+    "source_centroid_dist_m": 598.7,
+    "exact_duplicate_source_row": false,
+    "row1589_vs_6797": {
+      "source_coverage_pct": 98.4,
+      "candidate_coverage_pct": 99.38,
+      "centroid_dist_m": 5.0
+    },
+    "row1611_vs_6794": {
+      "source_coverage_pct": 99.26,
+      "candidate_coverage_pct": 99.22,
+      "centroid_dist_m": 5.5
+    },
+    "row1589_vs_6794": {
+      "source_coverage_pct": 0.6799999999999999,
+      "candidate_coverage_pct": 0.33999999999999997,
+      "centroid_dist_m": 597.6
+    },
+    "row1611_vs_6797": {
+      "source_coverage_pct": 0.24,
+      "candidate_coverage_pct": 0.49,
+      "centroid_dist_m": 597.5
+    },
+    "core_6794": {
+      "public_id": "78361f3d-1c68-4771-9960-71409026dbc6",
+      "names_my": "မဟာမြိုင်ရပ်ကွက်",
+      "names_en": "Ma Har Myaing Ward",
+      "geom_sha256": "1e47f02bbbeaf305740c3670d88c53dd46fc9803aab9037fd593626948055c50"
+    },
+    "core_6797": {
+      "public_id": "30309448-fabf-4601-ae5c-48a8ed285394",
+      "names_my": "မဟာမြိုင်ရပ်ကွက်",
+      "names_en": "Ma Har Myaing Ward",
+      "geom_sha256": "1200f4fbb55252edd440182ff56ba6a81a337a678e327663b934279e5a6464cc"
+    },
+    "classification": {
+      "kind": "potentially_distinct_wards_shared_pcode",
+      "note": "Same PCode/name/parent but different geometries. Treat as potentially distinct wards: row1589→6797, row1611→6794 (each has unique strong overlap). Shared PCode is a source-data defect to record.",
+      "row_1589_action": "match_existing",
+      "row_1589_match_id": 6797,
+      "row_1611_action": "match_existing",
+      "row_1611_match_id": 6794,
+      "shared_pcode_defect": true
+    },
+    "overlay_path": "03-merge-decision-previews/ma_har_myaing_overlay.geojson",
+    "status": "CLASSIFIED_AWAITING_ACK"
+  },
+  "viewer_dir": "reports/admin-reconciliation-v2/phase7-completion-v2/03-merge-decision-viewer",
+  "blocked": "Awaiting approval of 4 merge decisions before final v2 manifests"
+}

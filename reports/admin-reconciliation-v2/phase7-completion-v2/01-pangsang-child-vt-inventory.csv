@@ -1,0 +1,89 @@
+source_entity_type,source_pcode,source_name_en,source_name_my,source_ts_pcode,source_ts_name,frozen_action,frozen_approved_township_id,parent_decision_depends_on,proposed_parent_decision,preview
+village_tract,MMR015005039,Hpan Htu,ဖန်ထူ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005039.geojson
+village_tract,,,,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,
+village_tract,MMR015005058,Aum Long,အွမ်လုံ,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005058.geojson
+village_tract,MMR015005071,Ba Yin,ဗယင်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005071.geojson
+village_tract,MMR015317003,Dein Aw,ဒိန်း အော,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015317003.geojson
+village_tract,MMR015005073,Hlei Pawng,လှယ်ပေါင်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005073.geojson
+village_tract,MMR015005033,Ho Kyet,ဟိုကျက်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005033.geojson
+village_tract,MMR015005026,Ho Nam Mar,ဟိုနမ့်မာ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005026.geojson
+village_tract,MMR015005082,Hsa Lar,ဆလား,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005082.geojson
+village_tract,MMR015005064,Hsan Lu,ဆန်လု,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005064.geojson
+village_tract,MMR015005084,Hson Hpoet,ဆုံဖို့,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005084.geojson
+village_tract,MMR015005060,Hta Mon,ထမုံ,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005060.geojson
+village_tract,MMR015005054,Hu Ngeit,ဟူးငဲ့,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005054.geojson
+village_tract,MMR015005081,Huong Kut,ဟုန်းကွတ်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005081.geojson
+village_tract,MMR015005079,Huong Put,ဟုန်းပွတ်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005079.geojson
+village_tract,MMR015005051,Hway Waun,ဟွေဝိုင်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005051.geojson
+village_tract,MMR015005010,Ka Hsint,ကဆင့်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005010.geojson
+village_tract,MMR015005072,Ka Long,ကလုံ,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005072.geojson
+village_tract,MMR015317005,Kawng Huong,ကောင်းဟုန်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015317005.geojson
+village_tract,MMR015005005,Kawng Par,ကောင်ပါ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005005.geojson
+village_tract,MMR015005009,Kawng Ta,ကောင်းတ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005009.geojson
+village_tract,MMR015005067,Kone Hkar,ကုန်းခါး,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005067.geojson
+village_tract,MMR015005061,Kun Ka,ကွန်က,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005061.geojson
+village_tract,MMR015005015,Kun Pei,ကွမ်ပါယ်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005015.geojson
+village_tract,MMR015005046,Kun Yay,ကွန်ရေး,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005046.geojson
+village_tract,MMR015005012,Loi Hsin,လွယ်ဆင်(မ်),MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005012.geojson
+village_tract,MMR015005038,Long Lat Hsin,လုံလတ်ဆင်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005038.geojson
+village_tract,MMR015005023,Man An,မန်အန်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005023.geojson
+village_tract,MMR015005011,Man Hkar,မန်ခါး,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005011.geojson
+village_tract,MMR015005001,Man Hpant,မန်ဖန့်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005001.geojson
+village_tract,MMR015005042,Man Htan,မန်ထန်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005042.geojson
+village_tract,MMR015005047,Man Htan,မန်ထန်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005047.geojson
+village_tract,MMR015005076,Man Mai,မန်မိုင်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005076.geojson
+village_tract,MMR015005018,Man Mann Hseng,မန်မန်းဆိုင်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005018.geojson
+village_tract,MMR015317004,Man Maw,မန်း မော,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015317004.geojson
+village_tract,MMR015005014,Man Nwet,မန်နွဲ့,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005014.geojson
+village_tract,MMR015005024,Man San (Mut Ngar),မန်စန် (မွတ်ငါး),MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005024.geojson
+village_tract,MMR015005017,Mar Teit,မာတဲ့,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005017.geojson
+village_tract,MMR015005041,Maw Hpyaik (Nawng Chan),မော်ဖြိုက် (နောင်ချမ်),MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005041.geojson
+village_tract,MMR015005040,Maw Pa Long,မော်ပလုံ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005040.geojson
+village_tract,MMR015005078,Mong Hto,မိုင်းထို,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005078.geojson
+village_tract,MMR015005019,Mong Pat,မိုင်းပတ်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005019.geojson
+village_tract,MMR015005002,Mut Hai,မွတ်ဟိုင်း,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005002.geojson
+village_tract,MMR015005007,Mut Pa Lawt,မွတ်ပလော့,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005007.geojson
+village_tract,MMR015005037,Mut Sa Moet,မွတ်စမို့,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005037.geojson
+village_tract,MMR015005031,Nam Hint,နမ့်ဟင့်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005031.geojson
+village_tract,MMR015317006,Nam Hpat,နမ့် ဖတ်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015317006.geojson
+village_tract,MMR015005059,Nam Kat,နမ့်ကတ်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005059.geojson
+village_tract,MMR015005052,Nam Kit,နမ့်ကစ်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005052.geojson
+village_tract,MMR015005032,Nam Kyet,နမ့်ကျက်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005032.geojson
+village_tract,MMR015005025,Nam Noke,နမ့်နုတ်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005025.geojson
+village_tract,MMR015005045,Nam Put,နမ့်ပွတ်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005045.geojson
+village_tract,MMR015005085,Nam Tawng,နမ့်တောင်း,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005085.geojson
+village_tract,MMR015005029,Nar Aw,နားအော်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005029.geojson
+village_tract,MMR015005030,Nar Hkar Hseng,နားခါးဆိုင်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005030.geojson
+village_tract,MMR015005013,Nar Hnyi,နားညှိ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005013.geojson
+village_tract,MMR015005028,Nar Kawng,နားကောင်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005028.geojson
+village_tract,MMR015316001,Nar Kawng,နား ကောင်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015316001.geojson
+village_tract,MMR015317001,Nar Lawt,နာ လော့,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015317001.geojson
+village_tract,MMR015005016,Nawng Hkam,နောင်ခမ်း,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005016.geojson
+village_tract,MMR015314002,Nawng Hkit,နောင် ခေတ်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015314002.geojson
+village_tract,MMR015005004,Nawng Hsaw,နောင်ဆော်,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005004.geojson
+village_tract,MMR015005022,Nyet Kar,ညက်ကာ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005022.geojson
+village_tract,MMR015005035,Ong Long,အုံလုံ,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005035.geojson
+village_tract,MMR015316002,Ong Long,အုံး လုံ,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015316002.geojson
+village_tract,MMR015005020,Pang Hpein,ပန်ဖိန်း,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005020.geojson
+village_tract,MMR015005080,Pang Hpein,ပန်ဖိန်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005080.geojson
+village_tract,MMR015005021,Pang Kaw (Lower),ပန်ကော် (အောက်),MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005021.geojson
+village_tract,MMR015005036,Pang Kaw (Upper),ပန်ကော် (ထက်),MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005036.geojson
+village_tract,MMR015005068,Pang Ku,ပန်ကူ,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005068.geojson
+village_tract,MMR015005063,Pang Lawng,ပန်လောင်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005063.geojson
+village_tract,MMR015005056,Pang Win,ပန်ဝင်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005056.geojson
+village_tract,MMR015005053,Pang Yawng,ပန်ယောင်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005053.geojson
+village_tract,MMR015314004,Sa Lu,စ လူ,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015314004.geojson
+village_tract,MMR015005083,Ta Aw Aun,တအော်အွန်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005083.geojson
+village_tract,MMR015005075,Ta Aw Long,တအော်လုံ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005075.geojson
+village_tract,MMR015005050,To Lar,တိုလာ,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005050.geojson
+village_tract,MMR015005048,Ton Nauk,တုံနောက်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005048.geojson
+village_tract,MMR015005701,Urban,,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005701.geojson
+village_tract,MMR015005702,Urban,,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005702.geojson
+village_tract,MMR015316003,Wein Hki,ဝိန် ခီး,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015316003.geojson
+village_tract,MMR015314001,Wein Kawng,ဝိန်း ကောင်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015314001.geojson
+village_tract,MMR015005027,Yawng Au (Pang Leik),ယောင်အူ (ပန်လိပ်),MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005027.geojson
+village_tract,MMR015005034,Yawng Lan,ယောင်လန်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005034.geojson
+village_tract,MMR015005074,Yawng Tein,ယောင်တိမ်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005074.geojson
+village_tract,MMR015317002,Yawng Tin,ယောင် တင်း,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015317002.geojson
+village_tract,MMR015005003,Yay Hson,ယေးဆုံ,MMR015005,Pangsang,create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005003.geojson
+village_tract,MMR015005057,Yon Kat,ယုံကတ်,MMR015005,Pangsang (Panghkam),create_mimu_placeholder,,MMR015005,manual_review,01-pangsang-map-preview/children/MMR015005057.geojson

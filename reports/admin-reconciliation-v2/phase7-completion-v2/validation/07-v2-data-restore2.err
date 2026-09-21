@@ -1,0 +1,5 @@
+pg_restore: error: could not execute query: ERROR:  unrecognized configuration parameter "transaction_timeout"
+Command was: SET transaction_timeout = 0;
+pg_restore: error: could not execute query: ERROR:  column "region_name_my" of relation "ref_postal_codes" does not exist
+Command was: COPY ref.ref_postal_codes (id, postal_code, region_name_en, region_name_my, township_name_en, township_name_my, locality_name_en, locality_name_my, locality_type, township_admin_area_id, local_admin_area_id, match_status, match_method, source_name, source_version, created_at, updated_at) FROM stdin;
+pg_restore: warning: errors ignored on restore: 2
