@@ -4,12 +4,7 @@ import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import { Prisma } from "@prisma/client";
 
-import { disconnectImportReviewPrisma } from "./db/import-review-prisma.js";
 import { prisma } from "./db/prisma.js";
-import {
-    getImportReviewReadiness,
-    getImportReviewReadinessSnapshot,
-} from "./modules/import-review/import-review-readiness.js";
 import authPlugin from "./plugins/auth.js";
 import prismaPlugin from "./plugins/prisma.js";
 import { swaggerCorePlugin, swaggerUiPlugin } from "./plugins/swagger.js";
@@ -39,7 +34,6 @@ import streetsRoutes from "./modules/streets/streets.routes.js";
 import buildingsRoutes from "./modules/buildings/buildings.routes.js";
 import placeBuildingRoutes from "./modules/place-buildings/place-buildings.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
-import importReviewRoutes from "./modules/import-review/import-review.routes.js";
 import coreVerificationCompatRoutes from "./modules/core-verification-compat/core-verification-compat.routes.js";
 import coreReviewRoutes from "./modules/core-review/core-review.routes.js";
 import localBasemapRoutes from "./modules/local-basemap/local-basemap.routes.js";
@@ -51,8 +45,6 @@ import mediaRoutes from "./modules/media/media.routes.js";
 import mediaAdminRoutes from "./modules/media/media.admin.routes.js";
 import refRoutes from "./modules/ref/ref.routes.js";
 import addressesRoutes from "./modules/addresses/addresses.routes.js";
-import { IMPORT_REVIEW_ADMIN_TOKEN_HEADER } from "./modules/import-review/import-review-admin.guard.js";
-import { buildApiErrorResponse } from "./lib/api-error-response.js";
 import { apiFastifyOptions, REQUEST_ID_HEADER } from "./lib/http-server.js";
 import { healthGetSchema } from "./lib/openapi/health.openapi.js";
 import { publicErrorCode } from "./lib/public-error-code.js";
@@ -94,11 +86,6 @@ function getCorsOrigins() {
 export async function buildApp() {
     const app = Fastify(apiFastifyOptions());
 
-    // NOTE: the import-review DB bootstrap (a Supabase round-trip) intentionally does
-    // NOT run here. buildApp() must only build/register routes + plugins and return
-    // fast so app.listen() binds the port immediately (Render port scan). The
-    // bootstrap runs non-blockingly AFTER listen in server.ts.
-
     registerPublicErrorHandler(app);
 
     const corsOrigins = getCorsOrigins();
@@ -118,7 +105,6 @@ export async function buildApp() {
         allowedHeaders: [
             "Content-Type",
             "Authorization",
-            IMPORT_REVIEW_ADMIN_TOKEN_HEADER,
             // Guests submit reports with a persisted anonymous id via this header.
             "x-anonymous-id",
             REQUEST_ID_HEADER,
@@ -151,7 +137,6 @@ export async function buildApp() {
     await app.register(cookie);
     await app.register(prismaPlugin);
     app.addHook("onClose", async () => {
-        await disconnectImportReviewPrisma();
         await prisma.$disconnect();
     });
     await app.register(authPlugin);
@@ -171,22 +156,11 @@ export async function buildApp() {
     app.get("/health/db", async (_request, reply) => {
         try {
             await app.prisma.$queryRaw`SELECT 1`;
-            return { ok: true, importReview: getImportReviewReadiness() };
+            return { ok: true };
         } catch (error) {
             app.log.error({ err: error }, "[api] /health/db check failed");
-            return reply.code(503).send({ ok: false, importReview: getImportReviewReadiness() });
+            return reply.code(503).send({ ok: false });
         }
-    });
-
-    // Observability for the (time-boxed, after-listen) import-review DB bootstrap.
-    // DB-free: reports the in-memory status only — never queries Supabase. Returns
-    // 503 while pending/failed so external probes can distinguish readiness.
-    app.get("/health/import-review", async (_request, reply) => {
-        const snapshot = getImportReviewReadinessSnapshot();
-        if (snapshot.status !== "ready") {
-            return reply.code(503).send(snapshot);
-        }
-        return snapshot;
     });
 
     await app.register(authRoutes);
@@ -216,7 +190,6 @@ export async function buildApp() {
     await app.register(buildingsRoutes);
     await app.register(placeBuildingRoutes);
     await app.register(dashboardRoutes);
-    await app.register(importReviewRoutes, { prefix: "/api/import-review" });
     await app.register(coreVerificationCompatRoutes, { prefix: "/api/core-verification" });
     await app.register(routingRoutes, { prefix: "/api/routing" });
     await app.register(routingAdminRoutes, { prefix: "/admin/routing" });
@@ -277,29 +250,6 @@ function registerPublicErrorHandler(app: FastifyInstance) {
         });
 
         const url = request.url.split("?")[0] ?? request.url;
-        if (url.startsWith("/api/import-review")) {
-            const fastifyValidation = fastifyErr.validation;
-            const errorCode =
-                statusCode === 400
-                    ? "VALIDATION_ERROR"
-                    : statusCode === 404
-                      ? "NOT_FOUND"
-                      : statusCode === 401
-                        ? "UNAUTHORIZED"
-                        : statusCode === 403
-                          ? "FORBIDDEN"
-                          : "INTERNAL_ERROR";
-            return reply
-                .code(statusCode)
-                .send(
-                    buildApiErrorResponse(
-                        errorCode,
-                        message,
-                        fastifyValidation === undefined ? null : { issues: fastifyValidation }
-                    )
-                );
-        }
-
         const code = publicErrorCode({
             urlPath: url,
             statusCode,

@@ -1,14 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
 
-import type { PromotionFamilyItemCounts } from "../import-review/import-review-promotion-promote-api.js";
 import {
     rebuildSearchFamilies,
     type SearchFamilyRebuildLog,
     type SearchFamilyRebuildOutcome,
 } from "./search-family-rebuild.js";
 
-/** Import-review publish entity family → unified search source view keys. */
-export const IMPORT_REVIEW_ENTITY_FAMILY_SEARCH_VIEWS: Readonly<Record<string, readonly string[]>> = {
+/** Entity family → unified search source view keys (used by promotion rebuild helpers). */
+export const ENTITY_FAMILY_SEARCH_VIEWS: Readonly<Record<string, readonly string[]>> = {
     places: ["places"],
     roads: ["street_groups"],
     admin_areas: ["admin_areas"],
@@ -22,9 +21,11 @@ export const IMPORT_REVIEW_ENTITY_FAMILY_SEARCH_VIEWS: Readonly<Record<string, r
 
 export const TRANSPORT_BULK_IMPORT_SEARCH_VIEWS = ["bus_stops", "bus_routes"] as const;
 
+type FamilySuccessCounts = Readonly<Record<string, { success?: number } | undefined>>;
+
 export function resolveSearchViewsForPromotedFamilies(args: {
     promotedFamilies: Iterable<string>;
-    countsByFamily?: Readonly<Record<string, Pick<PromotionFamilyItemCounts, "success"> | undefined>>;
+    countsByFamily?: FamilySuccessCounts;
 }): string[] {
     const views = new Set<string>();
 
@@ -36,7 +37,7 @@ export function resolveSearchViewsForPromotedFamilies(args: {
             }
         }
 
-        const mapped = IMPORT_REVIEW_ENTITY_FAMILY_SEARCH_VIEWS[family];
+        const mapped = ENTITY_FAMILY_SEARCH_VIEWS[family];
         if (!mapped) {
             continue;
         }
@@ -49,16 +50,16 @@ export function resolveSearchViewsForPromotedFamilies(args: {
 }
 
 /**
- * After a successful import-review bulk promotion, rebuild only the affected
- * unified search families in one SQL call.
+ * After a successful bulk promotion, rebuild only the affected unified search
+ * families in one SQL call.
  */
-export async function rebuildSearchAfterImportReviewBulkPromotion(
+export async function rebuildSearchAfterBulkPromotion(
     prisma: PrismaClient,
     args: {
         workflow: string;
         promotedCount: number;
         promotedFamilies: Iterable<string>;
-        countsByFamily?: Readonly<Record<string, Pick<PromotionFamilyItemCounts, "success"> | undefined>>;
+        countsByFamily?: FamilySuccessCounts;
         batchId?: bigint;
     },
     log?: SearchFamilyRebuildLog,

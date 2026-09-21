@@ -9,10 +9,6 @@ import {
     requireDashboardWrite,
 } from "./auth.js";
 import { registerBodySchema } from "../modules/auth/auth.schema.js";
-import {
-    authenticateImportReview,
-    importReviewRouteAccess,
-} from "../modules/import-review/import-review-admin.guard.js";
 
 test("dashboard role capabilities keep viewer read-only", () => {
     assert.equal(hasDashboardAccess(["user"]), false);
@@ -85,50 +81,11 @@ test("surveyor cannot read or write dashboard or canonical transport APIs", asyn
     });
 });
 
-test("import-review access classifies real read-only POST routes explicitly", () => {
-    assert.equal(importReviewRouteAccess("GET", "/api/import-review/history/publish-batches"), "read");
-    assert.equal(importReviewRouteAccess("POST", "/api/import-review/cleanup/promoted/dry-run"), "read");
-    assert.equal(importReviewRouteAccess("POST", "/api/import-review/places/promote-dry-run"), "read");
-
-    assert.equal(importReviewRouteAccess("POST", "/api/import-review/places/validate"), "write");
-    assert.equal(importReviewRouteAccess("POST", "/api/import-review/promotion/batches/42/dry-run"), "write");
-    assert.equal(importReviewRouteAccess("PATCH", "/api/import-review/buildings/42/decision"), "write");
-});
-
-test("import-review prefers a viewer JWT over the temporary admin header mode", async () => {
-    const previousToken = process.env.IMPORT_REVIEW_ADMIN_TOKEN;
-    process.env.IMPORT_REVIEW_ADMIN_TOKEN = "temporary-test-token";
-
-    try {
-        let jwtVerifyCalls = 0;
-        const rawRequest: {
-            method: string;
-            headers: { authorization: string };
-            user?: { sub: string; email: string; roles: string[] };
-            jwtVerify: () => Promise<void>;
-        } = {
-            method: "GET",
-            headers: { authorization: "Bearer viewer.jwt.token" },
-            async jwtVerify() {
-                jwtVerifyCalls += 1;
-                rawRequest.user = { sub: "viewer", email: "viewer@example.com", roles: ["viewer"] };
-            },
-        };
-        const request = rawRequest as unknown as FastifyRequest;
-        const { captured, reply } = captureReply();
-
-        await authenticateImportReview(request, reply);
-
-        assert.equal(jwtVerifyCalls, 1);
-        assert.deepEqual(request.user?.roles, ["viewer"]);
-        assert.equal(captured.statusCode, undefined);
-    } finally {
-        if (previousToken === undefined) {
-            delete process.env.IMPORT_REVIEW_ADMIN_TOKEN;
-        } else {
-            process.env.IMPORT_REVIEW_ADMIN_TOKEN = previousToken;
-        }
-    }
+test("admin can pass dashboard write guard", async () => {
+    const { captured, reply } = captureReply();
+    await requireDashboardWrite(requestWithRoles(["admin"]), reply);
+    assert.equal(captured.statusCode, undefined);
+    assert.equal(captured.body, undefined);
 });
 
 test("public registration ignores submitted role fields", () => {

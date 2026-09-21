@@ -79,11 +79,6 @@ export const swaggerCorePlugin = fp(
                         description:
                             "User report / contribution flow (signed-in and anonymous), admin review, status lifecycle, follow-ups, and manual point rewards.",
                     },
-                    {
-                        name: "Import Review",
-                        description:
-                            "Admin-only Supabase `import_review` workspace. **`AUTH_BYPASS` is ignored.** Configure `IMPORT_REVIEW_ADMIN_TOKEN` to require header `x-import-review-admin-token` (401 missing, 403 mismatch; Bearer not required). Omit that env to require Bearer JWT whose payload includes `\"roles\": [\"admin\"]`."
-                    },
                 ],
                 components: {
                     securitySchemes: {
@@ -92,7 +87,7 @@ export const swaggerCorePlugin = fp(
                             scheme: "bearer",
                             bearerFormat: "JWT",
                             description:
-                                "When **`IMPORT_REVIEW_ADMIN_TOKEN` is unset**, Import Review requires `Authorization: Bearer <accessToken>` from `/auth/login` and JWT payload `roles` must include `\"admin\"` (**401** if missing or invalid JWT; **403** if not admin). When **`IMPORT_REVIEW_ADMIN_TOKEN` is set**, every Import Review request must send header **`x-import-review-admin-token: <exact token>`**; omitting/closing whitespace-only → **401**, wrong secret → **403** (Bearer JWT is **not needed** there — temporary shared-secret shim).",
+                                "Send `Authorization: Bearer <accessToken>` from POST `/auth/login`. Routes marked with a lock require a valid JWT.",
                         },
                     },
                 },

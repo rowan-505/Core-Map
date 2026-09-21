@@ -4,9 +4,9 @@ import test from "node:test";
 import type { PrismaClient } from "@prisma/client";
 
 import {
-    IMPORT_REVIEW_ENTITY_FAMILY_SEARCH_VIEWS,
+    ENTITY_FAMILY_SEARCH_VIEWS,
     resolveSearchViewsForPromotedFamilies,
-    rebuildSearchAfterImportReviewBulkPromotion,
+    rebuildSearchAfterBulkPromotion,
     rebuildSearchAfterSplitPromotion,
 } from "./bulk-promotion-search-rebuild.js";
 import {
@@ -87,7 +87,7 @@ test("rebuildSearchFamilies makes one SQL call for multiple views", async () => 
     assert.equal(outcome?.run_id, 42);
 });
 
-test("rebuildSearchAfterImportReviewBulkPromotion skips dry-run style zero promoted count", async () => {
+test("rebuildSearchAfterBulkPromotion skips dry-run style zero promoted count", async () => {
     let called = false;
     const prisma = {
         $transaction: async () => {
@@ -96,7 +96,7 @@ test("rebuildSearchAfterImportReviewBulkPromotion skips dry-run style zero promo
         },
     } as unknown as PrismaClient;
 
-    const outcome = await rebuildSearchAfterImportReviewBulkPromotion(prisma, {
+    const outcome = await rebuildSearchAfterBulkPromotion(prisma, {
         workflow: "test",
         promotedCount: 0,
         promotedFamilies: ["places"],
@@ -130,9 +130,9 @@ test("rebuildSearchAfterSplitPromotion rebuilds only requested family views", as
     } as unknown as PrismaClient;
 
     await rebuildSearchAfterSplitPromotion(prisma, {
-        workflow: "import-review-place-promotion",
+        workflow: "bulk-place-promotion",
         promotedCount: 2,
-        views: IMPORT_REVIEW_ENTITY_FAMILY_SEARCH_VIEWS.places ?? [],
+        views: ENTITY_FAMILY_SEARCH_VIEWS.places ?? [],
     });
 
     assert.deepEqual(viewsSeen, [["places"]]);

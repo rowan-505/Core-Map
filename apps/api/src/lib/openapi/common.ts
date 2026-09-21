@@ -12,7 +12,6 @@ export const Tags = {
     Stats: "Stats",
     Transit: "Transit",
     Search: "Search",
-    ImportReview: "Import Review",
     Ref: "Reference Data",
     Routing: "Routing",
     Transport: "Transport",

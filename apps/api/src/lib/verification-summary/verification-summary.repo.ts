@@ -1,6 +1,6 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
-import { ImportReviewSchemaCapabilityRegistry } from "../../modules/import-review/import-review-schema-capabilities.js";
+import { VerificationSummarySchemaCapabilityRegistry } from "./verification-summary-schema-capabilities.js";
 import type {
     VerificationSummaryCaps,
     VerificationSummaryEntityConfig,
@@ -10,14 +10,11 @@ import type {
 } from "./verification-summary.types.js";
 import { VERIFICATION_SUMMARY_STATUSES } from "./verification-summary.types.js";
 
-type Caps = VerificationSummaryCaps &
-    Awaited<ReturnType<ImportReviewSchemaCapabilityRegistry["getTargetColumnCapabilities"]>>;
-
 function qtable(qualifiedTable: string): Prisma.Sql {
     return Prisma.raw(qualifiedTable);
 }
 
-function hasAll(caps: Caps, columns: readonly string[]): boolean {
+function hasAll(caps: VerificationSummaryCaps, columns: readonly string[]): boolean {
     return columns.every((column) => caps.hasColumn(column));
 }
 
@@ -80,7 +77,7 @@ export async function buildVerificationSummary(
     prisma: PrismaClient,
     configs: readonly VerificationSummaryEntityConfig[]
 ): Promise<VerificationSummaryResponse> {
-    const registry = new ImportReviewSchemaCapabilityRegistry(prisma);
+    const registry = new VerificationSummarySchemaCapabilityRegistry(prisma);
     const families: VerificationSummaryFamilyRow[] = [];
     const totals = Object.fromEntries(VERIFICATION_SUMMARY_STATUSES.map((status) => [status, 0])) as Record<
         string,

@@ -40,20 +40,21 @@ function createPrismaClient() {
 
 /**
  * Effective Prisma `connection_limit` when the URL does not already set one.
- * Default is `"1"` (safe for tight poolers). Production transport target: `3`
- * via `PRISMA_CONNECTION_LIMIT` (see apps/api/.env.example).
+ * Default is `"8"` for map/API concurrency (reverse layers capped at 2).
+ * Override with `PRISMA_CONNECTION_LIMIT` for tight poolers (e.g. `3`).
+ * See apps/api/.env.example.
  */
 export function resolvePrismaConnectionLimitValue(): string {
     const fromEnv = process.env.PRISMA_CONNECTION_LIMIT?.trim();
-    return fromEnv && fromEnv.length > 0 ? fromEnv : "1";
+    return fromEnv && fromEnv.length > 0 ? fromEnv : "8";
 }
 
 /**
  * When the URL has no `connection_limit`, append one so Supabase / poolers with a small
  * `pool_size` are not exhausted by Prisma's default pool (especially in production).
  *
- * Override with `PRISMA_CONNECTION_LIMIT` (e.g. `1` for tight session poolers;
- * production transport target `3`). Safe to reuse for secondary Prisma clients.
+ * Override with `PRISMA_CONNECTION_LIMIT` (e.g. `3` for tight session poolers;
+ * default `8` for normal API/map traffic). Safe to reuse for secondary Prisma clients.
  */
 export function applyPrismaConnectionLimit(databaseUrl: string | undefined): string | undefined {
     if (!databaseUrl) {
@@ -121,8 +122,6 @@ function registerPrismaShutdownHooks() {
     for (const signal of ["SIGINT", "SIGTERM"] as const) {
         process.once(signal, async () => {
             await prisma.$disconnect();
-            const { disconnectImportReviewPrisma } = await import("./import-review-prisma.js");
-            await disconnectImportReviewPrisma();
             process.kill(process.pid, signal);
         });
     }

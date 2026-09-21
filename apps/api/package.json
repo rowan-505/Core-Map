@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test 'src/db/prisma-connection-limit.test.ts' 'src/modules/transport/**/*.test.ts' 'src/modules/transport/regression/*.test.ts' 'src/modules/reports/*.test.ts'",
     "test:community": "node --import tsx --test 'src/modules/community/*.test.ts'",
-    "test:tourism": "node --import tsx --test 'src/modules/tourism/tourism.ranking.test.ts' 'src/modules/tourism/tourism.geo-ranking.test.ts' 'src/modules/tourism/tourism.geo-ranking.service.test.ts' 'src/modules/tourism/tourism.reports-isolation.test.ts' 'src/modules/tourism/tourism.schema.test.ts' 'src/modules/tourism/tourism.service.test.ts' 'src/modules/tourism/tourism.service.candidates.test.ts' 'src/modules/tourism/tourism.candidates.test.ts' 'src/modules/tourism/tourism.routes.integration.test.ts' 'src/modules/tourism/tourism.event-occurrences.test.ts' 'src/modules/tourism/tourism.schedule-review.test.ts' 'src/modules/tourism/tourism.catalog.routes.integration.test.ts' 'src/modules/tourism/tourism.discover.public.test.ts' 'src/modules/tourism/tourism.place-search.test.ts'",
+    "test:tourism": "node --import tsx --test 'src/modules/tourism/tourism.ranking.test.ts' 'src/modules/tourism/tourism.geo-ranking.test.ts' 'src/modules/tourism/tourism.geo-ranking.service.test.ts' 'src/modules/tourism/tourism.reports-isolation.test.ts' 'src/modules/tourism/tourism.schema.test.ts' 'src/modules/tourism/tourism.service.test.ts' 'src/modules/tourism/tourism.service.candidates.test.ts' 'src/modules/tourism/tourism.candidates.test.ts' 'src/modules/tourism/tourism.routes.integration.test.ts' 'src/modules/tourism/tourism.event-occurrences.test.ts' 'src/modules/tourism/tourism.schedule-review.test.ts' 'src/modules/tourism/tourism.catalog.routes.integration.test.ts' 'src/modules/tourism/tourism.discover.public.test.ts' 'src/modules/tourism/tourism.place-search.test.ts' 'src/modules/tourism/tourism.visitor.schema.test.ts' 'src/modules/tourism/tourism.visitor.routes.integration.test.ts' 'src/modules/tourism/tourism.research.routes.integration.test.ts'",
     "test:food-ranking": "node --import tsx --test 'src/modules/food-ranking/*.test.ts'",
     "test:place-reviews": "node --import tsx --test 'src/modules/place-reviews/*.test.ts'",
     "test:place-popularity": "node --import tsx --test 'src/modules/place-popularity/*.test.ts'",
@@ -71,7 +71,6 @@
     "search:reconcile": "tsx src/scripts/reconcile-search-index.ts",
     "build:routing-graph": "tsx src/scripts/build-routing-graph.ts",
     "docs:api": "tsx scripts/generate-api-docs.ts",
-    "curl-examples:import-review-auth": "bash scripts/import-review-admin-curl-examples.sh",
     "curl-examples:share": "bash scripts/share-links-curl-examples.sh",
     "prisma:generate": "prisma generate"
   },
