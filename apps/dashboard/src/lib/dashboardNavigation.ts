@@ -3,7 +3,6 @@ import {
     BarChart3,
     Bus,
     CircleUser,
-    ClipboardList,
     Coins,
     Flag,
     Library,
@@ -19,13 +18,10 @@ import {
     type LucideIcon,
 } from "lucide-react";
 
-import { listImportReviewNavEntityConfigs } from "@/src/features/import-review/config";
-
 import {
     accountPath,
     communityPath,
     coreReviewPath,
-    importReviewPath,
     localBasemapPath,
     devMapPath,
     pointManagementPath,
@@ -48,7 +44,6 @@ export {
     CORE_REVIEW_PATH,
     DASHBOARD_PATH,
     DEV_MAP_PATH,
-    IMPORT_REVIEW_PATH,
     LOCAL_BASEMAP_PATH,
     POINT_MANAGEMENT_PATH,
     REFERENCES_PATH,
@@ -64,7 +59,6 @@ export {
     accountPath,
     communityPath,
     coreReviewPath,
-    importReviewPath,
     localBasemapPath,
     devMapPath,
     pointManagementPath,
@@ -82,7 +76,6 @@ export {
 
 export type DashboardSidebarModuleKey =
     | "core-review"
-    | "import-review"
     | "references"
     | "routing"
     | "local-basemap"
@@ -116,7 +109,6 @@ export type DashboardSidebarItem = {
 /** Non-sensitive dashboard modules exposed to read-only dashboard viewers. */
 export const viewerDashboardModules: ReadonlySet<DashboardSidebarModuleKey> = new Set([
     "core-review",
-    "import-review",
     "references",
     "routing",
     "stats",
@@ -133,7 +125,6 @@ export function sidebarModuleFromPathname(pathname: string): DashboardSidebarMod
     }
     if (
         key === "core-review" ||
-        key === "import-review" ||
         key === "references" ||
         key === "routing" ||
         key === "local-basemap" ||
@@ -162,12 +153,6 @@ export const dashboardSidebarItems: readonly DashboardSidebarItem[] = [
         href: coreReviewPath(),
         label: "Core review",
         Icon: ScanSearch,
-    },
-    {
-        moduleKey: "import-review",
-        href: importReviewPath(),
-        label: "Import review",
-        Icon: ClipboardList,
     },
     {
         moduleKey: "references",
@@ -288,20 +273,6 @@ export const coreReviewTabs: readonly FamilyNavTab[] = [
     { label: "Admin areas", segment: "admin-areas" },
 ];
 
-/** Entity slugs/labels for import review top nav (order from entity configs). */
-export function importReviewEntityNavTabs(): readonly FamilyNavTab[] {
-    return listImportReviewNavEntityConfigs().map((config) => ({
-        label: config.pluralLabel,
-        segment: config.slug,
-    }));
-}
-
-export const importReviewTabs: readonly FamilyNavTab[] = [
-    { label: "Overview", segment: "", match: "exact" },
-    ...importReviewEntityNavTabs(),
-    { label: "Apply", segment: "promotion" },
-    { label: "History", segment: "history" },
-];
 
 export const referencesTabs: readonly FamilyNavTab[] = [
     { label: "Overview", segment: "", match: "exact" },
@@ -349,6 +320,10 @@ export const tourismTabs: readonly FamilyNavTab[] = [
     { label: "Attractions", segment: "places" },
     { label: "Activities", segment: "activities" },
     { label: "Events", segment: "events" },
+    { label: "Foods", segment: "foods" },
+    { label: "Guides", segment: "guides" },
+    { label: "Advisories", segment: "advisories" },
+    { label: "Research", segment: "research" },
     { label: "Candidates", segment: "candidates" },
     { label: "Ranking", segment: "ranking" },
 ];

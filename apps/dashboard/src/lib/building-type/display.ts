@@ -1,4 +1,3 @@
-import type { ImportReviewBuildingListItem } from "@/src/lib/api";
 import type { RefBuildingType } from "@/src/lib/api";
 
 export type BuildingTypeSelectOption = {
@@ -76,16 +75,6 @@ export function formatBuildingTypeDisplay(args: {
     }
 
     return "";
-}
-
-export function formatImportReviewBuildingTypeLabel(row: ImportReviewBuildingListItem): string {
-    return formatBuildingTypeDisplay({
-        buildingTypeCode: row.building_type_code,
-        buildingTypeName: row.building_type_name,
-        legacyBuildingType: row.building_type,
-        buildingTypeId: row.building_type_id,
-        normalizedData: row.normalized_data,
-    });
 }
 
 /** Keep select usable when a row still references an inactive/deleted type id. */

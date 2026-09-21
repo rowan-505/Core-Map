@@ -1,4 +1,4 @@
-import type { AddressComponentEditorRow } from "@/src/features/import-review/utils/importReviewAddressComponentRows";
+import type { AddressComponentEditorRow } from "@/src/features/addresses/addressComponentRows";
 import type { ReverseAddressDebugComponent } from "./reverseAddress.types";
 
 let rowKeyCounter = 0;

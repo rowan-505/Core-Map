@@ -1,7 +1,31 @@
-import type {
-    ImportReviewAddressComponentDto,
-    PatchImportReviewAddressComponentsBody,
-} from "@/src/lib/api";
+export type AddressComponentDto = {
+    id?: string | null;
+    component_type_code: string | null;
+    component_value: string | null;
+    language_code: string | null;
+    sort_order?: number | null;
+    confidence_score?: number | null;
+    match_type?: string | null;
+    source_tag?: string | null;
+    is_inferred?: boolean | null;
+    is_reviewed?: boolean | null;
+    source_admin_area_id?: string | null;
+    boundary_status?: string | null;
+    address_usage?: string | null;
+};
+
+export type AddressComponentsPatchBody = {
+    upsert: Array<{
+        id?: string;
+        component_type_code: string;
+        component_value: string;
+        language_code: string;
+        confidence_score: number | null;
+        match_type: string | null;
+        is_reviewed?: boolean;
+    }>;
+    delete_ids?: string[];
+};
 
 export type AddressComponentEditorRow = {
     rowKey: string;
@@ -23,7 +47,7 @@ function newRowKey(type: string): string {
 }
 
 export function flatComponentsToEditorRows(
-    flat: readonly ImportReviewAddressComponentDto[] | undefined
+    flat: readonly AddressComponentDto[] | undefined
 ): AddressComponentEditorRow[] {
     if (!flat?.length) {
         return [];
@@ -31,11 +55,12 @@ export function flatComponentsToEditorRows(
     const byType = new Map<string, AddressComponentEditorRow>();
 
     for (const c of flat) {
-        let row = byType.get(c.component_type_code);
+        const typeCode = (c.component_type_code ?? "").trim() || "unknown";
+        let row = byType.get(typeCode);
         if (!row) {
             row = {
-                rowKey: newRowKey(c.component_type_code),
-                component_type_code: c.component_type_code,
+                rowKey: newRowKey(typeCode),
+                component_type_code: typeCode,
                 en: "",
                 my: "",
                 und: "",
@@ -46,19 +71,21 @@ export function flatComponentsToEditorRows(
                         : "",
                 source_summary: summarizeSource(c),
                 component_ids: {},
-                is_reviewed: c.is_reviewed,
+                is_reviewed: Boolean(c.is_reviewed),
             };
-            byType.set(c.component_type_code, row);
+            byType.set(typeCode, row);
         }
+        const value = c.component_value ?? "";
+        const id = c.id ?? undefined;
         if (c.language_code === "en") {
-            row.en = c.component_value;
-            row.component_ids.en = c.id;
+            row.en = value;
+            row.component_ids.en = id;
         } else if (c.language_code === "my") {
-            row.my = c.component_value;
-            row.component_ids.my = c.id;
+            row.my = value;
+            row.component_ids.my = id;
         } else {
-            row.und = c.component_value;
-            row.component_ids.und = c.id;
+            row.und = value;
+            row.component_ids.und = id;
         }
         if (c.is_reviewed) {
             row.is_reviewed = true;
@@ -66,7 +93,7 @@ export function flatComponentsToEditorRows(
         if (!row.match_type && c.match_type) {
             row.match_type = c.match_type;
         }
-        if (!row.confidence_score && c.confidence_score !== null) {
+        if (!row.confidence_score && c.confidence_score !== null && c.confidence_score !== undefined) {
             row.confidence_score = String(c.confidence_score);
         }
         row.source_summary = summarizeSource(c);
@@ -75,7 +102,7 @@ export function flatComponentsToEditorRows(
     return [...byType.values()].sort((a, b) => a.component_type_code.localeCompare(b.component_type_code));
 }
 
-function summarizeSource(c: ImportReviewAddressComponentDto): string {
+function summarizeSource(c: AddressComponentDto): string {
     const parts: string[] = [];
     if (c.match_type) {
         parts.push(c.match_type);
@@ -95,8 +122,8 @@ function summarizeSource(c: ImportReviewAddressComponentDto): string {
 export function editorRowsToPatchBody(
     rows: readonly AddressComponentEditorRow[],
     deletedIds: readonly string[]
-): PatchImportReviewAddressComponentsBody {
-    const upsert: PatchImportReviewAddressComponentsBody["upsert"] = [];
+): AddressComponentsPatchBody {
+    const upsert: AddressComponentsPatchBody["upsert"] = [];
 
     for (const row of rows) {
         const confidence =

@@ -1,16 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 
-import {
-    consumeImportReviewApiAuthFailed,
-    isImportReviewDevRouteBypassActive,
-    logImportReviewAuthDecision,
-    readImportReviewAuthDebugState,
-} from "@/src/lib/importReviewDevAccess";
 import { hasDashboardAccess, rolesFromJwtAccessToken } from "@/src/lib/jwtRoles";
 import { accountPath } from "@/src/lib/dashboardPaths";
 import { getAccessToken, setAccessToken, tryRestoreDashboardSession } from "@/src/lib/api";
@@ -204,7 +197,6 @@ export default function LoginPageClient() {
 
     useEffect(() => {
         const pathname = window.location.pathname;
-        const state = readImportReviewAuthDebugState(pathname, true);
         const postLoginPath = resolvePostLoginPath(searchParams.get("next"));
         const queryError = searchParams.get("error");
         if (queryError === "dashboard_forbidden") {
@@ -228,26 +220,12 @@ export default function LoginPageClient() {
             return;
         }
 
-        if (consumeImportReviewApiAuthFailed()) {
-            logImportReviewAuthDecision(
-                "LoginPageClient",
-                "stay-on-login-after-import-review-api-401",
-                { ...state, authLoading: false, importReviewApiAuthFailedFlag: true }
-            );
-            setAuthChecked(true);
-            return;
-        }
-
         const finishWithToken = (accessToken: string) => {
             if (!hasDashboardAccess(rolesFromJwtAccessToken(accessToken))) {
                 setError("This account does not have dashboard access.");
                 setAuthChecked(true);
                 return;
             }
-            logImportReviewAuthDecision("LoginPageClient", "redirect-after-login", {
-                ...readImportReviewAuthDebugState(pathname, false),
-                hasAccessToken: true,
-            });
             router.replace(postLoginPath);
         };
 
@@ -263,10 +241,6 @@ export default function LoginPageClient() {
                 finishWithToken(restored);
                 return;
             }
-            logImportReviewAuthDecision("LoginPageClient", "show-login-form", {
-                ...state,
-                authLoading: false,
-            });
             setAuthChecked(true);
         });
     }, [router, searchParams]);
@@ -568,18 +542,6 @@ export default function LoginPageClient() {
                                 : "Sign in"}
                     </button>
                 </form>
-
-                {isImportReviewDevRouteBypassActive("/dashboard/import-review") ? (
-                    <div className="border-t border-amber-100 bg-amber-50 px-6 py-3 text-xs leading-relaxed text-amber-900">
-                        Development: you can open{" "}
-                        <Link href="/dashboard/import-review" className="font-medium underline underline-offset-2">
-                            Import review
-                        </Link>{" "}
-                        without signing in when{" "}
-                        <code className="rounded bg-amber-100 px-1 py-0.5">NEXT_PUBLIC_IMPORT_REVIEW_ADMIN_TOKEN</code>{" "}
-                        is set.
-                    </div>
-                ) : null}
             </div>
         </AuthShell>
     );

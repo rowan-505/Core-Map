@@ -35,20 +35,6 @@ declare namespace NodeJS {
     NEXT_PUBLIC_LOAD_ALL_LOCAL_REGION_PMTILES?: string;
     /** Optional base URL for local region `.pmtiles` archives (default `http://localhost:8080/regions`). */
     NEXT_PUBLIC_LOCAL_REGION_PMTILES_BASE_URL?: string;
-    /** Default source snapshot version string for `/import-review` (maps to API `source_snapshot_version`). */
-    NEXT_PUBLIC_IMPORT_REVIEW_SNAPSHOT_VERSION?: string;
-    /** Optional comma-separated source snapshot presets for `/import-review`. */
-    NEXT_PUBLIC_IMPORT_REVIEW_SNAPSHOT_OPTIONS?: string;
-    /**
-     * @deprecated No longer required — development bypass uses NEXT_PUBLIC_IMPORT_REVIEW_ADMIN_TOKEN alone.
-     */
-    NEXT_PUBLIC_ALLOW_IMPORT_REVIEW_ADMIN_TOKEN_HEADER?: string;
-    /**
-     * DEV ONLY symmetric secret echoed as `x-import-review-admin-token` on `/api/import-review/*` and for
-     * `/import-review` route bypass when NODE_ENV=development. Must equal API IMPORT_REVIEW_ADMIN_TOKEN.
-     * ⚠ Compiled into browser bundle via NEXT_PUBLIC_ — prototyping only.
-     */
-    NEXT_PUBLIC_IMPORT_REVIEW_ADMIN_TOKEN?: string;
     /**
      * DEV ONLY flag ("true"/"1"). Enables Local Basemap admin UI (Windows/WSL hybrid
      * building/land lifecycle). Ignored in production builds. Requires matching API

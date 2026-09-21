@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Best-effort JWT payload peek for UX only. The API remains the authorization boundary for import_review.
+ * Best-effort JWT payload peek for UX only. The API remains the authorization boundary.
  */
 
 function base64UrlToJson(raw: string): unknown {

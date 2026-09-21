@@ -1,6 +1,6 @@
 "use client";
 
-import ImportReviewInlineSpinner from "@/src/features/import-review/components/ImportReviewInlineSpinner";
+import InlineSpinner from "@/src/features/addresses/components/InlineSpinner";
 import type { ReverseAddressDebugResponse } from "./reverseAddress.types";
 import {
     confidencePercentLabel,
@@ -57,7 +57,7 @@ export default function ReverseAddressSuggestionPanel({
     if (loading) {
         return (
             <section className="rounded-xl border border-gray-200 bg-white p-4">
-                <ImportReviewInlineSpinner label="Resolving possible address…" />
+                <InlineSpinner label="Resolving possible address…" />
             </section>
         );
     }

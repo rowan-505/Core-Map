@@ -1,6 +1,6 @@
 "use client";
 
-export default function ImportReviewInlineSpinner({
+export default function InlineSpinner({
     label,
     size = "sm",
     className = "",

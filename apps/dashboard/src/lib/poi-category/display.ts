@@ -191,27 +191,6 @@ export function buildPoiCategoryDropdownOptions(
     return withMissingPoiCategorySelection(deduped, args?.selectedValue);
 }
 
-export function importReviewFormOptionToPoiCategory(row: {
-    id?: string;
-    value: string | number;
-    code?: string | null;
-    name?: string | null;
-    name_mm?: string | null;
-    parent_id?: string | null;
-}): PoiCategoryDropdownOption {
-    const payload: Parameters<typeof normalizePoiCategoryDropdownOption>[0] = {
-        id: row.id ?? String(row.value),
-        value: row.value,
-        code: row.code,
-        name: row.name,
-        name_mm: row.name_mm,
-    };
-    if (Object.prototype.hasOwnProperty.call(row, "parent_id")) {
-        payload.parent_id = row.parent_id ?? null;
-    }
-    return normalizePoiCategoryDropdownOption(payload);
-}
-
 export function placeFormOptionToPoiCategory(row: {
     id: string;
     code?: string;

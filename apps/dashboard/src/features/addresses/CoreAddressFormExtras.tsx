@@ -8,8 +8,8 @@ import {
     flatComponentsToEditorRows,
     editorRowsToPatchBody,
     type AddressComponentEditorRow,
-} from "@/src/features/import-review/utils/importReviewAddressComponentRows";
-import ImportReviewInlineSpinner from "@/src/features/import-review/components/ImportReviewInlineSpinner";
+} from "@/src/features/addresses/addressComponentRows";
+import InlineSpinner from "@/src/features/addresses/components/InlineSpinner";
 import {
     getCoreReviewReferenceOptions,
     type CoreReviewReferenceOptionDto,
@@ -173,7 +173,7 @@ export default function CoreAddressFormExtras({
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-violet-900">
                     Location & reverse lookup
                 </h3>
-                {locationSaving ? <ImportReviewInlineSpinner label="Updating location…" /> : null}
+                {locationSaving ? <InlineSpinner label="Updating location…" /> : null}
                 <AddressLocationMapPicker
                     value={pointGeom}
                     onPick={({ point, lat, lng }) => void handleMapPick({ point, lat, lng })}
