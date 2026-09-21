@@ -1,23 +1,6 @@
 #!/usr/bin/env bash
 # Local-first OSM import pipeline. Core promotion stays disabled.
-#
-# After Stage 10, optional outbound review tooling:
-#   11_prepare_remote_review_package.sql  (stage J — local system.* tables)
-#   12_upload_remote_review_package.ts    (stage K — Supabase import_review.* only)
-#   13_verify_remote_review_upload.sql    (stage L — local linkage summary)
-#
-# Optional:
-#   14_verify_lineage_alignment.sql — after J/L when REMOTE_LINEAGE_ALIGNMENT_VERIFY=true
-#     (staging ↔ package lineage + payload mirrors; FAIL stops the runner if checks fail).
-#   15_entity_coverage_report.sql — final read-only staging/package health report
-#     when LOCAL_ENTITY_COVERAGE_REPORT_ENABLED=true.
-#
-# Modes:
-#   REMOTE_REVIEW_UPLOAD_ENABLED=true     → runs J → K → L (requires SUPABASE_WRITE_DATABASE_URL;
-#                                           legacy SUPABASE_DATABASE_URL ok; never DATABASE_URL).
-#   REMOTE_REVIEW_PREPARE_VERIFY_ONLY=true→ runs J → L only (no Supabase).
-#   REMOTE_LINEAGE_ALIGNMENT_VERIFY=true  → optional 14_verify_lineage_alignment.sql after Stage L when J/K/L path runs
-#   LOCAL_ENTITY_COVERAGE_REPORT_ENABLED=true → optional Stage 15 after Stage 14/final verification
+# Orchestrates stages 00–10 (plus optional 18 classification report). Stops after Stage 10.
 #
 # Usage:
 #   ./run_local_osm_pipeline.sh imports/kyauktan_2026_07_v4.env
@@ -38,17 +21,7 @@ usage: $(basename "$0") <import-env-file>
 Copy and edit the template:
   cp imports/template.full.env imports/kyauktan_2026_07_v4.env
 
-  Stages 11–13 after stage 10 when enabled in the env file:
-  REMOTE_REVIEW_UPLOAD_ENABLED=true        → 11_prepare_remote_review_package.sql → 12_upload_remote_review_package.ts → 13_verify_remote_review_upload.sql
-  REMOTE_REVIEW_PREPARE_VERIFY_ONLY=true   → 11 → 13 (local only; skips Supabase Stage 12)
-
-See README.md / README_REMOTE_REVIEW.md for lineage fields and REMOTE_LINEAGE_ALIGNMENT_VERIFY (optional Stage 14 local SQL).
-
-Optional after 11→13 completes (same env gated flags above):
-  REMOTE_LINEAGE_ALIGNMENT_VERIFY=true → 14_verify_lineage_alignment.sql after Stage L (local staging + package payload lineage).
-
-Optional final read-only report:
-  LOCAL_ENTITY_COVERAGE_REPORT_ENABLED=true → 15_entity_coverage_report.sql after Stage 14/final verification.
+See README.md for stage list and resume (PIPELINE_FROM_STAGE).
 EOF
 }
 
@@ -80,9 +53,6 @@ fi
 
 # shellcheck source=/dev/null
 source "${IMPORT_ENV_FILE}"
-
-# shellcheck source=../lib/database_target_safety.sh
-source "${SCRIPT_DIR}/../lib/database_target_safety.sh"
 
 require_var() {
   local name="$1"
@@ -139,7 +109,6 @@ TMP_IMPORT_SCHEMA="${TMP_IMPORT_SCHEMA:-tmp_import}"
 RAW_SCHEMA="${RAW_SCHEMA:-raw}"
 STAGING_SCHEMA="${STAGING_SCHEMA:-staging}"
 SYSTEM_SCHEMA="${SYSTEM_SCHEMA:-system}"
-IMPORT_REVIEW_SCHEMA="${IMPORT_REVIEW_SCHEMA:-import_review}"
 
 # ENTITY_FAMILIES: all | comma-separated pipeline slugs (default all).
 PIPELINE_ENTITY_FAMILIES_ALLOWED=(
@@ -253,11 +222,6 @@ pipeline_stage_order() {
     18) printf '%d' 85 ;;
     09|9) printf '%d' 90 ;;
     10) printf '%d' 95 ;;
-    11) printf '%d' 100 ;;
-    12) printf '%d' 110 ;;
-    13) printf '%d' 120 ;;
-    14) printf '%d' 130 ;;
-    15) printf '%d' 140 ;;
     *) printf '%d' "$(pipeline_stage_num "$1")" ;;
   esac
 }
@@ -312,15 +276,6 @@ pipeline_count_planned_stages() {
       n=$((n + 1))
     fi
   done
-  if is_remote_review_upload_requested || is_remote_review_prepare_verify_only_requested; then
-    if pipeline_should_run_stage "11"; then n=$((n + 1)); fi
-    if is_remote_review_upload_requested && pipeline_should_run_stage "12"; then n=$((n + 1)); fi
-    if pipeline_should_run_stage "13"; then n=$((n + 1)); fi
-    if is_remote_lineage_alignment_verify_requested && pipeline_should_run_stage "14"; then n=$((n + 1)); fi
-  fi
-  if is_entity_coverage_report_requested && pipeline_should_run_stage "15"; then
-    n=$((n + 1))
-  fi
   printf '%d' "${n}"
 }
 
@@ -389,275 +344,12 @@ print_resolved_config() {
   log "RAW_SCHEMA=${RAW_SCHEMA}"
   log "STAGING_SCHEMA=${STAGING_SCHEMA}"
   log "SYSTEM_SCHEMA=${SYSTEM_SCHEMA}"
-  log "IMPORT_REVIEW_SCHEMA=${IMPORT_REVIEW_SCHEMA}"
   log "ENTITY_FAMILIES=${ENTITY_FAMILIES}"
   log "PIPELINE_FROM_STAGE=${PIPELINE_FROM_STAGE:-<full run>}"
   log "PIPELINE_TO_STAGE=${PIPELINE_TO_STAGE:-<end>}"
   log "PIPELINE_PSQL_WORK_MEM=${PIPELINE_PSQL_WORK_MEM}"
   log "PIPELINE_PSQL_MAINTENANCE_WORK_MEM=${PIPELINE_PSQL_MAINTENANCE_WORK_MEM}"
   log "PIPELINE_STATEMENT_TIMEOUT=${PIPELINE_STATEMENT_TIMEOUT}"
-  if [[ -n "${REMOTE_REVIEW_UPLOAD_ENABLED:-}" || -n "${REMOTE_REVIEW_PREPARE_VERIFY_ONLY:-}" || -n "${REMOTE_REVIEW_PACKAGE_NAME:-}" || -n "${REMOTE_LINEAGE_ALIGNMENT_VERIFY:-}" || -n "${LOCAL_ENTITY_COVERAGE_REPORT_ENABLED:-}" ]]; then
-    log "REMOTE_REVIEW_UPLOAD_ENABLED=${REMOTE_REVIEW_UPLOAD_ENABLED:-}"
-    log "REMOTE_REVIEW_PREPARE_VERIFY_ONLY=${REMOTE_REVIEW_PREPARE_VERIFY_ONLY:-}"
-    log "REMOTE_REVIEW_PACKAGE_NAME=${REMOTE_REVIEW_PACKAGE_NAME:-}"
-    log "REMOTE_REVIEW_ENTITY_FAMILY=${REMOTE_REVIEW_ENTITY_FAMILY:-}"
-    log "REMOTE_REVIEW_MAX_ROWS_PER_FAMILY=${REMOTE_REVIEW_MAX_ROWS_PER_FAMILY:-}"
-    log "REMOTE_REVIEW_BATCH_ID=${REMOTE_REVIEW_BATCH_ID:-}"
-    log "REMOTE_LINEAGE_ALIGNMENT_VERIFY=${REMOTE_LINEAGE_ALIGNMENT_VERIFY:-}"
-    log "LOCAL_ENTITY_COVERAGE_REPORT_ENABLED=${LOCAL_ENTITY_COVERAGE_REPORT_ENABLED:-}"
-    if is_remote_review_upload_requested; then
-      if [[ -n "${SUPABASE_WRITE_DATABASE_URL:-}" ]]; then
-        log "SUPABASE_WRITE_DATABASE_URL=$(mask_database_url "${SUPABASE_WRITE_DATABASE_URL}")"
-      elif [[ -n "${SUPABASE_DATABASE_URL:-}" ]]; then
-        log "SUPABASE_DATABASE_URL=$(mask_database_url "${SUPABASE_DATABASE_URL}") (legacy write)"
-      fi
-    fi
-  fi
-}
-
-is_remote_review_upload_requested() {
-  case "$(printf '%s' "${REMOTE_REVIEW_UPLOAD_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')" in
-    1|true|yes)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-is_remote_review_prepare_verify_only_requested() {
-  case "$(printf '%s' "${REMOTE_REVIEW_PREPARE_VERIFY_ONLY:-false}" | tr '[:upper:]' '[:lower:]')" in
-    1|true|yes)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-is_remote_lineage_alignment_verify_requested() {
-  case "$(printf '%s' "${REMOTE_LINEAGE_ALIGNMENT_VERIFY:-false}" | tr '[:upper:]' '[:lower:]')" in
-    1|true|yes)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-is_entity_coverage_report_requested() {
-  case "$(printf '%s' "${LOCAL_ENTITY_COVERAGE_REPORT_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')" in
-    1|true|yes)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-require_remote_review_stage_files() {
-  local f
-  for f in \
-    "${SCRIPT_DIR}/11_prepare_remote_review_package.sql" \
-    "${SCRIPT_DIR}/12_upload_remote_review_package.ts" \
-    "${SCRIPT_DIR}/13_verify_remote_review_upload.sql"
-  do
-    if [[ ! -f "${f}" ]]; then
-      echo "error: remote review stage file missing: ${f}" >&2
-      exit 1
-    fi
-  done
-}
-
-run_stage_11_prepare_remote_review_j() {
-  run_stage "11_prepare_remote_review_package (stage J)"
-  case "$(printf '%s' "${REMOTE_REVIEW_CONFLICT_ONLY:-true}" | tr '[:upper:]' '[:lower:]')" in
-    true|t|1|yes) ;;
-    *)
-      echo "error: full-candidate Import Review packages are retired." >&2
-      echo "       REMOTE_REVIEW_CONFLICT_ONLY must be true." >&2
-      exit 1
-      ;;
-  esac
-  REMOTE_REVIEW_PACKAGE_NAME="${REMOTE_REVIEW_PACKAGE_NAME:-remote_review_conflicts_${SNAPSHOT_VERSION}}"
-  export REMOTE_REVIEW_PACKAGE_NAME
-  run_psql \
-    -v ON_ERROR_STOP=1 \
-    -v snapshot_version="${SNAPSHOT_VERSION}" \
-    -v staging_schema="${STAGING_SCHEMA}" \
-    -v entity_families="${ENTITY_FAMILIES}" \
-    -v entity_family="${REMOTE_REVIEW_ENTITY_FAMILY:-}" \
-    -v max_rows_per_family="${REMOTE_REVIEW_MAX_ROWS_PER_FAMILY:-}" \
-    -v package_name="${REMOTE_REVIEW_PACKAGE_NAME}" \
-    -v replace_package=false \
-    -v conflict_only=true \
-    -v settlements_only="${REMOTE_REVIEW_SETTLEMENTS_ONLY:-false}" \
-    -v exclude_settlements="${REMOTE_REVIEW_EXCLUDE_SETTLEMENTS:-false}" \
-    ${PSQL_EXTRA_ARGS:-} \
-    -f "${SCRIPT_DIR}/11_prepare_remote_review_package.sql"
-}
-
-run_stage_12_upload_remote_review_k() {
-  run_stage "12_upload_remote_review_package (stage K)"
-  local repo_root
-  repo_root="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-  local tsx_bin="${repo_root}/node_modules/.bin/tsx"
-  local confirmation_expected="UPLOAD remote_review ${REMOTE_REVIEW_PACKAGE_NAME}"
-  local confirmation_got="${REMOTE_REVIEW_UPLOAD_CONFIRMATION:-}"
-
-  if [[ "${confirmation_got}" != "${confirmation_expected}" ]]; then
-    echo "error: Stage K production upload refused." >&2
-    echo "       Set REMOTE_REVIEW_UPLOAD_CONFIRMATION exactly to:" >&2
-    echo "       ${confirmation_expected}" >&2
-    echo "       (REMOTE_REVIEW_UPLOAD_ENABLED alone is not enough)." >&2
-    exit 1
-  fi
-
-  (
-    cd "${repo_root}"
-    export REMOTE_REVIEW_UPLOAD_ENABLED="true"
-    export LOCAL_DATABASE_URL
-    export SUPABASE_WRITE_DATABASE_URL
-    # Legacy bridge for older tooling; Stage K TS resolves write via resolveDbTarget.
-    export SUPABASE_DATABASE_URL="${SUPABASE_DATABASE_URL:-${SUPABASE_WRITE_DATABASE_URL}}"
-    export REMOTE_REVIEW_PACKAGE_NAME
-    export REMOTE_REVIEW_ENTITY_FAMILY="${REMOTE_REVIEW_ENTITY_FAMILY:-}"
-    export REMOTE_REVIEW_MAX_ROWS_PER_FAMILY="${REMOTE_REVIEW_MAX_ROWS_PER_FAMILY:-}"
-    export SUPABASE_DB_SSL_VERIFY_SERVER_CERT="${SUPABASE_DB_SSL_VERIFY_SERVER_CERT:-}"
-    if [[ -x "${tsx_bin}" ]]; then
-      "${tsx_bin}" "${SCRIPT_DIR}/12_upload_remote_review_package.ts" \
-        --target=production \
-        --apply \
-        --confirmation="${confirmation_expected}" \
-        --package-name="${REMOTE_REVIEW_PACKAGE_NAME}"
-    else
-      npx tsx "${SCRIPT_DIR}/12_upload_remote_review_package.ts" \
-        --target=production \
-        --apply \
-        --confirmation="${confirmation_expected}" \
-        --package-name="${REMOTE_REVIEW_PACKAGE_NAME}"
-    fi
-  ) 2>&1 | tee -a "${LOG_FILE}"
-}
-
-run_stage_13_verify_remote_review_l() {
-  run_stage "13_verify_remote_review_upload (stage L)"
-  run_psql \
-    -v ON_ERROR_STOP=1 \
-    -v package_name="${REMOTE_REVIEW_PACKAGE_NAME}" \
-    -v snapshot_version="${SNAPSHOT_VERSION}" \
-    -v staging_schema="${STAGING_SCHEMA}" \
-    -v import_review_schema="${IMPORT_REVIEW_SCHEMA}" \
-    -v entity_families="${ENTITY_FAMILIES}" \
-    -v entity_family="${REMOTE_REVIEW_ENTITY_FAMILY:-}" \
-    ${PSQL_EXTRA_ARGS:-} \
-    -f "${SCRIPT_DIR}/13_verify_remote_review_upload.sql"
-}
-
-run_stage_14_verify_lineage_alignment() {
-  run_stage "14_verify_lineage_alignment (remote-review lineage QA)"
-  run_psql \
-    -v ON_ERROR_STOP=1 \
-    -v package_name="${REMOTE_REVIEW_PACKAGE_NAME}" \
-    -v staging_schema="${STAGING_SCHEMA}" \
-    -v snapshot_version="${SNAPSHOT_VERSION}" \
-    -v entity_families="${ENTITY_FAMILIES}" \
-    ${PSQL_EXTRA_ARGS:-} \
-    -f "${SCRIPT_DIR}/14_verify_lineage_alignment.sql"
-}
-
-run_stage_15_entity_coverage_report() {
-  run_stage "15_entity_coverage_report"
-  run_psql \
-    -v ON_ERROR_STOP=1 \
-    -v snapshot_version="${SNAPSHOT_VERSION}" \
-    -v region_code="${REGION_CODE}" \
-    -v staging_schema="${STAGING_SCHEMA}" \
-    -v import_review_schema="${IMPORT_REVIEW_SCHEMA}" \
-    -v review_batch_id="${REMOTE_REVIEW_BATCH_ID:-}" \
-    -v package_name="${REMOTE_REVIEW_PACKAGE_NAME:-}" \
-    -v entity_families="${ENTITY_FAMILIES}" \
-    -v entity_family="${REMOTE_REVIEW_ENTITY_FAMILY:-}" \
-    ${PSQL_EXTRA_ARGS:-} \
-    -f "${SCRIPT_DIR}/15_entity_coverage_report.sql"
-}
-
-finalize_remote_review_stages() {
-  if is_remote_review_upload_requested && is_remote_review_prepare_verify_only_requested; then
-    log ""
-    log "Both REMOTE_REVIEW_UPLOAD_ENABLED and REMOTE_REVIEW_PREPARE_VERIFY_ONLY are true — using full upload path (J → K → L)."
-  fi
-
-  if ! is_remote_review_upload_requested && ! is_remote_review_prepare_verify_only_requested; then
-    log ""
-    log "REMOTE_REVIEW_UPLOAD_ENABLED / REMOTE_REVIEW_PREPARE_VERIFY_ONLY not set to true — skipping Stages 11–13."
-    return 0
-  fi
-
-  require_remote_review_stage_files
-  require_var REMOTE_REVIEW_PACKAGE_NAME
-
-  log ""
-  log "REMOTE_REVIEW_PACKAGE_NAME=${REMOTE_REVIEW_PACKAGE_NAME}"
-  log "REMOTE_REVIEW_CONFLICT_ONLY=true (fixed architecture)"
-  log "Stage J conflict packages auto-replace the same name + same snapshot."
-  if [[ -n "${REMOTE_REVIEW_ENTITY_FAMILY:-}" ]]; then
-    log "REMOTE_REVIEW_ENTITY_FAMILY=${REMOTE_REVIEW_ENTITY_FAMILY}"
-  fi
-  if [[ -n "${REMOTE_REVIEW_MAX_ROWS_PER_FAMILY:-}" ]]; then
-    log "REMOTE_REVIEW_MAX_ROWS_PER_FAMILY=${REMOTE_REVIEW_MAX_ROWS_PER_FAMILY}"
-  fi
-
-  if pipeline_should_run_stage "11"; then
-    run_stage_11_prepare_remote_review_j
-  else
-    pipeline_skip_stage_log "11_prepare_remote_review_package (stage J)"
-  fi
-
-  if is_remote_review_upload_requested; then
-    if pipeline_should_run_stage "12"; then
-      SUPABASE_WRITE_DATABASE_URL="$(resolve_supabase_write_database_url)"
-      export SUPABASE_WRITE_DATABASE_URL
-      # Back-compat bridge only; Stage K prefers SUPABASE_WRITE_DATABASE_URL.
-      SUPABASE_DATABASE_URL="${SUPABASE_WRITE_DATABASE_URL}"
-      export SUPABASE_DATABASE_URL
-      local write_ref
-      write_ref="$(db_target_extract_project_ref "${SUPABASE_WRITE_DATABASE_URL}")"
-      log "REMOTE_REVIEW_UPLOAD_ENABLED=true — running Stage K (Supabase import_review only)."
-      log "SUPABASE_WRITE_DATABASE_URL=$(mask_database_url "${SUPABASE_WRITE_DATABASE_URL}")"
-      log "production_project_ref=${write_ref:-<none>}"
-      if [[ -n "${SUPABASE_READ_DATABASE_URL:-}" ]]; then
-        log "SUPABASE_READ_DATABASE_URL=$(mask_database_url "${SUPABASE_READ_DATABASE_URL}") (not used by Stage K)"
-      fi
-      run_stage_12_upload_remote_review_k
-    else
-      pipeline_skip_stage_log "12_upload_remote_review_package (stage K)"
-    fi
-  else
-    log "REMOTE_REVIEW_PREPARE_VERIFY_ONLY=true — skipping Stage K (no Supabase upload)."
-  fi
-
-  if pipeline_should_run_stage "13"; then
-    run_stage_13_verify_remote_review_l
-  else
-    pipeline_skip_stage_log "13_verify_remote_review_upload (stage L)"
-  fi
-
-  if is_remote_lineage_alignment_verify_requested; then
-    if [[ ! -f "${SCRIPT_DIR}/14_verify_lineage_alignment.sql" ]]; then
-      echo "error: REMOTE_LINEAGE_ALIGNMENT_VERIFY set but missing: ${SCRIPT_DIR}/14_verify_lineage_alignment.sql" >&2
-      exit 1
-    fi
-    if pipeline_should_run_stage "14"; then
-      run_stage_14_verify_lineage_alignment
-    else
-      pipeline_skip_stage_log "14_verify_lineage_alignment"
-    fi
-  fi
 }
 
 run_stage() {
@@ -753,15 +445,6 @@ run_preflight_prod_mirror() {
     -f "${preflight_sql}"
 }
 
-resolve_supabase_write_database_url() {
-  # Stage K / remote write ops only. Never use DATABASE_URL.
-  # Prefer SUPABASE_WRITE_DATABASE_URL; legacy SUPABASE_DATABASE_URL allowed via shared lib.
-  db_target_refuse_ambiguous_local_vs_production
-  db_target_resolve production write
-  db_target_verify_production_identity "${DB_TARGET_DATABASE_URL}" >/dev/null
-  printf '%s' "${DB_TARGET_DATABASE_URL}"
-}
-
 PROGRESS_LOG_FILE="${LOG_FILE}"
 PIPELINE_PLANNED_STAGES="$(pipeline_count_planned_stages)"
 if [[ "${PIPELINE_PLANNED_STAGES}" -le 0 ]]; then
@@ -773,13 +456,6 @@ log "local-osm pipeline started at ${RUN_TS}"
 log "log file: ${LOG_FILE}"
 log "progress: planned stages=${PIPELINE_PLANNED_STAGES} FROM=${PIPELINE_FROM_STAGE:-start} TO=${PIPELINE_TO_STAGE:-end}"
 print_resolved_config
-
-if is_remote_lineage_alignment_verify_requested &&
-  ! is_remote_review_upload_requested &&
-  ! is_remote_review_prepare_verify_only_requested; then
-  log ""
-  log "REMOTE_LINEAGE_ALIGNMENT_VERIFY=true has no effect until Stages 11–13 run — set REMOTE_REVIEW_UPLOAD_ENABLED or REMOTE_REVIEW_PREPARE_VERIFY_ONLY."
-fi
 
 if pipeline_should_run_stage "00"; then
   run_preflight_schema_compatibility
@@ -984,27 +660,6 @@ if pipeline_should_run_stage "10"; then
     -f "${SCRIPT_DIR}/10_summary_report.sql"
 else
   pipeline_skip_stage_log "10_summary_report"
-fi
-
-if is_remote_review_upload_requested || is_remote_review_prepare_verify_only_requested; then
-  if pipeline_should_run_stage "11" \
-    || pipeline_should_run_stage "12" \
-    || pipeline_should_run_stage "13" \
-    || pipeline_should_run_stage "14"; then
-    finalize_remote_review_stages
-  else
-    pipeline_skip_stage_log "11-14_remote_review"
-  fi
-else
-  if ! pipeline_should_run_stage "11"; then
-    pipeline_skip_stage_log "11-14_remote_review (REMOTE_REVIEW_UPLOAD_ENABLED not set)"
-  fi
-fi
-
-if is_entity_coverage_report_requested && pipeline_should_run_stage "15"; then
-  run_stage_15_entity_coverage_report
-elif is_entity_coverage_report_requested; then
-  pipeline_skip_stage_log "15_entity_coverage_report"
 fi
 
 progress_finish "local-osm pipeline complete"
