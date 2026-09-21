@@ -910,34 +910,6 @@ export class CoreReviewLandAreasRepository {
         `);
     }
 
-    async countImportReviewLandAreaLinks(landAreaId: bigint): Promise<number> {
-        const renamed = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
-            SELECT to_regclass('import_review.land_area_candidates')::text AS rel
-        `);
-        if (renamed[0]?.rel) {
-            const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
-                SELECT COUNT(*)::bigint AS count
-                FROM import_review.land_area_candidates AS c
-                WHERE c.matched_core_id = ${landAreaId}
-                   OR c.promoted_core_id = ${landAreaId}
-            `);
-            return Number(rows[0]?.count ?? 0n);
-        }
-        const legacy = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
-            SELECT to_regclass('import_review.landuse_candidates')::text AS rel
-        `);
-        if (!legacy[0]?.rel) {
-            return 0;
-        }
-        const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
-            SELECT COUNT(*)::bigint AS count
-            FROM import_review.landuse_candidates AS c
-            WHERE c.matched_core_id = ${landAreaId}
-               OR c.promoted_core_id = ${landAreaId}
-        `);
-        return Number(rows[0]?.count ?? 0n);
-    }
-
     async countOpenLandAreaReports(landAreaId: bigint, publicId: string): Promise<number> {
         const present = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
             SELECT to_regclass('feedback.user_reports')::text AS rel

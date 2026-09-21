@@ -1,4 +1,4 @@
-import type { ImportReviewGeoJson } from "@/src/lib/api";
+import type { DataReviewGeoJson } from "@/src/lib/api";
 
 import {
     isVerifiedFromStatus,
@@ -26,11 +26,11 @@ export function numOrNull(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function geometryOrNull(value: unknown): ImportReviewGeoJson | null {
+export function geometryOrNull(value: unknown): DataReviewGeoJson | null {
     if (!value || typeof value !== "object" || !("type" in value)) {
         return null;
     }
-    return value as ImportReviewGeoJson;
+    return value as DataReviewGeoJson;
 }
 
 export function verificationFieldsFromDetail(

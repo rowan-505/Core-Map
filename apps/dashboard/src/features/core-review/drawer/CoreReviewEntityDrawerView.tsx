@@ -5,12 +5,12 @@ import { useEffect, useState } from "react";
 import CoreReviewMapPreview from "@/src/components/core-review/CoreReviewMapPreview";
 import { CoreReviewDetailField } from "@/src/components/core-review/CoreReviewStateCard";
 import type { DataReviewGeometryKind } from "@/src/components/map/DataReviewCandidateMap";
-import type { ImportReviewEntityType } from "@/src/components/map/DataReviewCandidateMap";
+import type { DataReviewEntityType } from "@/src/components/map/DataReviewCandidateMap";
 import {
     getCoreReviewDetail,
     isAbortError,
     type CoreReviewEntitySlug,
-    type ImportReviewGeoJson,
+    type DataReviewGeoJson,
 } from "@/src/lib/api";
 
 import type { CoreReviewIdKind } from "../config/entity-config-types";
@@ -20,8 +20,8 @@ export type CoreReviewEntityDrawerViewProps = {
     idKind: CoreReviewIdKind;
     rowId: string;
     geometryKind: DataReviewGeometryKind | "none";
-    mapEntityType: ImportReviewEntityType;
-    listGeometry: ImportReviewGeoJson | null;
+    mapEntityType: DataReviewEntityType;
+    listGeometry: DataReviewGeoJson | null;
     detailFields: { label: string; value: React.ReactNode }[];
     successMessage?: string | null;
 };
@@ -36,7 +36,7 @@ export default function CoreReviewEntityDrawerView({
     detailFields,
     successMessage,
 }: CoreReviewEntityDrawerViewProps) {
-    const [detailGeometry, setDetailGeometry] = useState<ImportReviewGeoJson | null>(null);
+    const [detailGeometry, setDetailGeometry] = useState<DataReviewGeoJson | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState("");
 
@@ -72,7 +72,7 @@ export default function CoreReviewEntityDrawerView({
                     }
                     const g = res.data.geometry;
                     setDetailGeometry(
-                        g && typeof g === "object" && "type" in g ? (g as ImportReviewGeoJson) : null,
+                        g && typeof g === "object" && "type" in g ? (g as DataReviewGeoJson) : null,
                     );
                 })
                 .catch((err) => {

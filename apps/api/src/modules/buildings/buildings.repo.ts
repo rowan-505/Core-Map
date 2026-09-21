@@ -1336,21 +1336,6 @@ export class BuildingsRepository {
         return Number(rows[0]?.count ?? 0n);
     }
 
-    async countMatchedAddressCandidates(buildingId: bigint): Promise<number> {
-        const present = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
-            SELECT to_regclass('import_review.address_candidates')::text AS rel
-        `);
-        if (!present[0]?.rel) {
-            return 0;
-        }
-        const rows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
-            SELECT COUNT(*)::bigint AS count
-            FROM import_review.address_candidates AS c
-            WHERE c.matched_building_id = ${buildingId}
-        `);
-        return Number(rows[0]?.count ?? 0n);
-    }
-
     async countOpenBuildingReports(buildingId: bigint, publicId: string): Promise<number> {
         const present = await this.prisma.$queryRaw<{ rel: string | null }[]>(Prisma.sql`
             SELECT to_regclass('feedback.user_reports')::text AS rel

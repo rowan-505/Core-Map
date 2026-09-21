@@ -3,7 +3,7 @@ import type { Point } from "geojson";
 import type { DataReviewGeometryKind } from "@/src/components/map/DataReviewCandidateMap";
 import type {
     BuildingGeometry,
-    ImportReviewGeoJson,
+    DataReviewGeoJson,
     StreetGeometry,
 } from "@/src/lib/api";
 
@@ -41,18 +41,18 @@ export function placeCoordinatesToGeoJson(
 
 export function buildingGeometryToGeoJson(
     geometry: BuildingGeometry | null | undefined,
-): ImportReviewGeoJson | null {
+): DataReviewGeoJson | null {
     if (!geometry) {
         return null;
     }
-    return geometry as ImportReviewGeoJson;
+    return geometry as DataReviewGeoJson;
 }
 
 export function streetGeometryToGeoJson(
     geometry: StreetGeometry | null | undefined,
-): ImportReviewGeoJson | null {
+): DataReviewGeoJson | null {
     if (!geometry) {
         return null;
     }
-    return geometry as ImportReviewGeoJson;
+    return geometry as DataReviewGeoJson;
 }

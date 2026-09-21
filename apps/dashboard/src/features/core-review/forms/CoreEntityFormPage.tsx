@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Resolver } from "react-hook-form";
 import type { Map as MaplibreMap } from "maplibre-gl";
+import { useQuery } from "@tanstack/react-query";
 
 import type { CoreGeometryValidationResult } from "@/src/components/core-review/geometry";
 import { CoreReviewErrorCard, CoreReviewLoadingCard } from "@/src/components/core-review/CoreReviewStateCard";
@@ -32,6 +33,11 @@ import { getFormGeometry } from "@/src/lib/core-review/geometryFieldUtils";
 import { confirmSettlementCreateDespiteDuplicates } from "@/src/lib/core-review/settlementDuplicateWarning";
 import { dashDevLog } from "@/src/lib/dashDevLog";
 import { summarizeCoreReviewSavePayload } from "@/src/lib/core-review/savePayloadUtils";
+import {
+    getAdminTourismResearchPrefill,
+    markAdminTourismResearchAdded,
+} from "@/src/features/tourism-research/api";
+import ResearchEvidenceBanner from "@/src/features/tourism-research/ResearchEvidenceBanner";
 
 import { CORE_REVIEW_FORM_VALIDATION_SAVE_ERROR } from "@/src/features/core-review/save/coreReviewSaveStage";
 
@@ -76,10 +82,21 @@ function CoreEntityFormPageContent({ entityKey, mode, id }: CoreEntityFormPagePr
     const config = getCoreEntityConfig(entityKey);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const fromResearch =
+        mode === "create" && entityKey === "places"
+            ? searchParams.get("from_research")?.trim() || null
+            : null;
     const { bumpPlaceTileVersion, bumpStreetTileVersion, bumpRoadLabelTileVersion } = useDashboardTileVersions();
     const { bumpBuildingTileVersion } = useBuildingTileVersion();
 
     const isEdit = mode === "edit" && Boolean(id);
+
+    const prefillQuery = useQuery({
+        queryKey: ["tourism-research", "prefill", fromResearch],
+        queryFn: ({ signal }) => getAdminTourismResearchPrefill(fromResearch!, { signal }),
+        enabled: Boolean(fromResearch),
+    });
+    const [prefillApplied, setPrefillApplied] = useState(false);
 
     const editForm = useCoreEntityEditForm({
         entityKey,
@@ -169,6 +186,29 @@ function CoreEntityFormPageContent({ entityKey, mode, id }: CoreEntityFormPagePr
         if (!adminAreaId) return;
         createForm.setValue("adminAreaId", adminAreaId);
     }, [entityKey, mode, searchParams, createForm]);
+
+    useEffect(() => {
+        if (!fromResearch || prefillApplied || !prefillQuery.data?.prefill) return;
+        const p = prefillQuery.data.prefill;
+        const english =
+            typeof p.name_en === "string"
+                ? p.name_en
+                : typeof p.name === "string"
+                  ? p.name
+                  : prefillQuery.data.candidate.name;
+        const myanmar =
+            typeof p.name_mm === "string"
+                ? p.name_mm
+                : typeof p.name === "string"
+                  ? p.name
+                  : "";
+        if (english) createForm.setValue("englishName", english);
+        if (myanmar) createForm.setValue("myanmarName", myanmar);
+        if (typeof p.admin_area_id === "string") {
+            createForm.setValue("adminAreaId", p.admin_area_id);
+        }
+        setPrefillApplied(true);
+    }, [fromResearch, prefillApplied, prefillQuery.data, createForm]);
 
     useEffect(() => {
         if (mode !== "create") {
@@ -266,6 +306,21 @@ function CoreEntityFormPageContent({ entityKey, mode, id }: CoreEntityFormPagePr
 
             if (entityKey === "places") {
                 bumpPlaceTileVersion();
+                if (fromResearch) {
+                    try {
+                        await markAdminTourismResearchAdded(fromResearch, {
+                            created_entity_type: "food_place",
+                            created_entity_public_id: config.getDetailId(created),
+                        });
+                    } catch (linkErr) {
+                        dashDevLog("places:create:research-link-error", linkErr);
+                        setCreateSaveError(
+                            linkErr instanceof Error
+                                ? `Place created, but research link failed: ${linkErr.message}`
+                                : "Place created, but research link failed",
+                        );
+                    }
+                }
                 try {
                     sessionStorage.setItem(
                         "placeCreateSuccess",
@@ -415,6 +470,9 @@ function CoreEntityFormPageContent({ entityKey, mode, id }: CoreEntityFormPagePr
                 <>
                     {!config.writeApiAvailable ? <CoreEntityWriteApiBanner /> : null}
                     {config.formNotice ?? null}
+                    {fromResearch && prefillQuery.data ? (
+                        <ResearchEvidenceBanner prefill={prefillQuery.data} />
+                    ) : null}
                     {isRecordDeleted ? (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
                             This record is soft-deleted. Restore it to edit fields or save changes again.

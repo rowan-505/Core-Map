@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import {
-    CoreReviewDemoteBlockedError,
-    CoreReviewNotFoundError,
-} from "../core-review-write.errors.js";
+import { CoreReviewNotFoundError } from "../core-review-write.errors.js";
 import { LandAreasDemoteService } from "./land-areas-demote.service.js";
 import type {
     CoreReviewLandAreasRepository,
@@ -86,7 +83,6 @@ describe("LandAreasDemoteService demote OSM land area", () => {
             findOsmLandAreaByIdentity: async () => identity,
             getLandAreaDemoteSnapshot: async () => snapshot(),
             listLandAreaNamesForDemote: async () => [],
-            countImportReviewLandAreaLinks: async () => 0,
             countOpenLandAreaReports: async () => 0,
         });
         const result = await service.preflightDemoteOsmLandArea(body);
@@ -104,30 +100,12 @@ describe("LandAreasDemoteService demote OSM land area", () => {
         await assert.rejects(() => service.preflightDemoteOsmLandArea(body), CoreReviewNotFoundError);
     });
 
-    it("blocks import-review links without deleting", async () => {
-        let removed = false;
-        const service = makeService({
-            findOsmLandAreaByIdentity: async () => identity,
-            getLandAreaDemoteSnapshot: async () => snapshot(),
-            countImportReviewLandAreaLinks: async () => 2,
-            countOpenLandAreaReports: async () => 0,
-            removeActiveLandAreaForDemote: async () => {
-                removed = true;
-                return { id: "21", public_id: identity.public_id };
-            },
-        });
-        await assert.rejects(() => service.preflightDemoteOsmLandArea(body), CoreReviewDemoteBlockedError);
-        await assert.rejects(() => service.removeDemotedOsmLandArea(body, testUser), CoreReviewDemoteBlockedError);
-        assert.equal(removed, false);
-    });
-
     it("hard-removes Core after a clean preflight", async () => {
         let removed = 0;
         const service = makeService({
             findOsmLandAreaByIdentity: async () => identity,
             getLandAreaDemoteSnapshot: async () => snapshot(),
             listLandAreaNamesForDemote: async () => [],
-            countImportReviewLandAreaLinks: async () => 0,
             countOpenLandAreaReports: async () => 0,
             removeActiveLandAreaForDemote: async (args) => {
                 removed += 1;

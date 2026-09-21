@@ -6,18 +6,18 @@ import type { Map as MaplibreMap } from "maplibre-gl";
 
 import DataReviewCandidateMap, {
     type DataReviewGeometryKind,
-    type ImportReviewEntityType,
+    type DataReviewEntityType,
 } from "@/src/components/map/DataReviewCandidateMap";
 import { useClientMounted } from "@/src/hooks/useClientMounted";
-import type { ImportReviewGeoJson } from "@/src/lib/api";
-import { normalizeImportReviewGeoJson } from "@/src/lib/importReviewDrawerMapGeometry";
+import type { DataReviewGeoJson } from "@/src/lib/api";
+import { normalizeDataReviewGeoJson } from "@/src/lib/dataReviewDrawerMapGeometry";
 
 import { coreReviewFitButtonLabel } from "./coreReviewMapGeometry";
 
 export type CoreReviewMapPreviewProps = {
-    geometry: ImportReviewGeoJson | null | undefined;
+    geometry: DataReviewGeoJson | null | undefined;
     geometryKind: DataReviewGeometryKind;
-    entityType: ImportReviewEntityType;
+    entityType: DataReviewEntityType;
     externalId?: string | null;
     title?: string;
     emptyHint?: string;
@@ -72,7 +72,7 @@ export default function CoreReviewMapPreview({
 }: CoreReviewMapPreviewProps) {
     const clientMounted = useClientMounted();
 
-    const parsed = useMemo(() => normalizeImportReviewGeoJson(geometry ?? null), [geometry]);
+    const parsed = useMemo(() => normalizeDataReviewGeoJson(geometry ?? null), [geometry]);
 
     const hasRenderable = useMemo(() => {
         if (!parsed) {

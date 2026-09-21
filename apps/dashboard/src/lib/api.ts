@@ -789,8 +789,10 @@ export type ImportReviewSummaryResponse = ImportReviewEnvelopeFields & {
     total_rejected_count: number;
 };
 
-/** GeoJSON geometry for import-review rows when include_geometry=true. */
-export type ImportReviewGeoJson = Record<string, unknown>;
+/** GeoJSON geometry for data-review / core-review map previews. */
+export type DataReviewGeoJson = Record<string, unknown>;
+/** @deprecated Use DataReviewGeoJson */
+export type ImportReviewGeoJson = DataReviewGeoJson;
 
 export type ImportReviewBuildingListItem = {
     id: string;
@@ -2099,22 +2101,28 @@ export function patchImportReviewBuildingColumns(id: string, body: PatchImportRe
     });
 }
 
-export type ImportReviewReferenceOptionDto = {
+export type CoreReviewReferenceOptionDto = {
     id: string;
     code: string | null;
     name: string | null;
 };
 
-export type ImportReviewReferenceOptionsResponse = {
-    ref_poi_categories: ImportReviewReferenceOptionDto[];
-    ref_road_classes: ImportReviewReferenceOptionDto[];
-    ref_building_types: ImportReviewReferenceOptionDto[];
-    ref_land_area_classes: ImportReviewReferenceOptionDto[];
-    ref_admin_levels: ImportReviewReferenceOptionDto[];
-    ref_address_component_types: ImportReviewReferenceOptionDto[];
-    ref_source_types: ImportReviewReferenceOptionDto[];
-    core_admin_areas: ImportReviewReferenceOptionDto[];
+/** @deprecated Use CoreReviewReferenceOptionDto */
+export type ImportReviewReferenceOptionDto = CoreReviewReferenceOptionDto;
+
+export type CoreReviewReferenceOptionsResponse = {
+    ref_poi_categories: CoreReviewReferenceOptionDto[];
+    ref_road_classes: CoreReviewReferenceOptionDto[];
+    ref_building_types: CoreReviewReferenceOptionDto[];
+    ref_land_area_classes?: CoreReviewReferenceOptionDto[];
+    ref_admin_levels: CoreReviewReferenceOptionDto[];
+    ref_address_component_types: CoreReviewReferenceOptionDto[];
+    ref_source_types: CoreReviewReferenceOptionDto[];
+    core_admin_areas: CoreReviewReferenceOptionDto[];
 };
+
+/** @deprecated Use CoreReviewReferenceOptionsResponse */
+export type ImportReviewReferenceOptionsResponse = CoreReviewReferenceOptionsResponse;
 
 export type ImportReviewFormOption = {
     id?: string;
@@ -2154,11 +2162,16 @@ export function getImportReviewFormOptions(fetchInit?: Pick<RequestInit, "signal
     });
 }
 
-export function getImportReviewReferenceOptions(fetchInit?: Pick<RequestInit, "signal">) {
-    return apiFetch<ImportReviewReferenceOptionsResponse>("/api/import-review/reference-options", {
+export function getCoreReviewReferenceOptions(fetchInit?: Pick<RequestInit, "signal">) {
+    return apiFetch<CoreReviewReferenceOptionsResponse>("/core-review/reference-options", {
         method: "GET",
         ...fetchInit,
     });
+}
+
+/** @deprecated Use getCoreReviewReferenceOptions */
+export function getImportReviewReferenceOptions(fetchInit?: Pick<RequestInit, "signal">) {
+    return getCoreReviewReferenceOptions(fetchInit);
 }
 
 export function patchImportReviewFamilyOverrides(

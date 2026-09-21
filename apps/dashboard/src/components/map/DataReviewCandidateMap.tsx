@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Read-only MapLibre preview for import-review candidates (buildings / places / roads).
+ * Read-only MapLibre preview for core-review / data-review geometries.
  * Uses geometry-type filters so line data never draws as polygon fill; vertex dots are optional (separate source).
  */
 import type {
@@ -34,13 +34,13 @@ import { PLACE_MAP_DEFAULT_CENTER } from "./placeMapConfig";
 export type { DataReviewBasemapMode } from "./dataReviewBasemap";
 import { useClientMounted } from "@/src/hooks/useClientMounted";
 import { addOrUpdateGeoJsonSource, clearLiveOverlay } from "@/src/lib/map/liveOverlays";
-import { normalizeImportReviewGeoJson } from "@/src/lib/importReviewDrawerMapGeometry";
-import type { ImportReviewGeoJson } from "@/src/lib/api";
+import { normalizeDataReviewGeoJson } from "@/src/lib/dataReviewDrawerMapGeometry";
+import type { DataReviewGeoJson } from "@/src/lib/api";
 import { extractVerticesFromGeometry } from "./mapVertexPreview";
 
 export type DataReviewGeometryKind = "point" | "polygon" | "line";
 
-export type ImportReviewEntityType =
+export type DataReviewEntityType =
     | "building"
     | "place"
     | "road"
@@ -48,6 +48,9 @@ export type ImportReviewEntityType =
     | "water_line"
     | "water_polygon"
     | "generic";
+
+/** @deprecated Use DataReviewEntityType */
+export type ImportReviewEntityType = DataReviewEntityType;
 
 const DEFAULT_ZOOM = 12;
 
@@ -91,7 +94,7 @@ function setLayerVisibility(map: maplibregl.Map, layerId: string, visible: boole
     map.setLayoutProperty(layerId, "visibility", visible ? "visible" : "none");
 }
 
-function defaultEntityType(kind: DataReviewGeometryKind): ImportReviewEntityType {
+function defaultEntityType(kind: DataReviewGeometryKind): DataReviewEntityType {
     if (kind === "polygon") {
         return "building";
     }
@@ -101,12 +104,12 @@ function defaultEntityType(kind: DataReviewGeometryKind): ImportReviewEntityType
     return "road";
 }
 
-function asGeoJsonGeometry(raw: ImportReviewGeoJson | null | undefined): Geometry | null {
-    return normalizeImportReviewGeoJson(raw ?? null);
+function asGeoJsonGeometry(raw: DataReviewGeoJson | null | undefined): Geometry | null {
+    return normalizeDataReviewGeoJson(raw ?? null);
 }
 
 function debugRoadPreview(
-    entity: ImportReviewEntityType,
+    entity: DataReviewEntityType,
     externalId: string | null,
     g: Geometry | null,
     mainFc: FeatureCollection<Geometry>,
@@ -266,19 +269,19 @@ function raiseImportReviewLayers(map: maplibregl.Map) {
     }
 }
 
-function usesPolygonLayers(entity: ImportReviewEntityType): boolean {
+function usesPolygonLayers(entity: DataReviewEntityType): boolean {
     return entity === "building" || entity === "land_area" || entity === "water_polygon";
 }
 
-function usesLineLayers(entity: ImportReviewEntityType): boolean {
+function usesLineLayers(entity: DataReviewEntityType): boolean {
     return entity === "road" || entity === "water_line";
 }
 
-function usesPointMainLayer(entity: ImportReviewEntityType): boolean {
+function usesPointMainLayer(entity: DataReviewEntityType): boolean {
     return entity === "place";
 }
 
-function applyEntityVisibility(map: maplibregl.Map, entity: ImportReviewEntityType, showVertices: boolean) {
+function applyEntityVisibility(map: maplibregl.Map, entity: DataReviewEntityType, showVertices: boolean) {
     let showFill = false;
     let showLine = false;
     let showPoint = false;
@@ -302,7 +305,7 @@ function applyEntityVisibility(map: maplibregl.Map, entity: ImportReviewEntityTy
     setLayerVisibility(map, LAYER_VERTEX_ID, vertexOn);
 }
 
-function applyEntityPaint(map: maplibregl.Map, entity: ImportReviewEntityType, roadHighlight: boolean) {
+function applyEntityPaint(map: maplibregl.Map, entity: DataReviewEntityType, roadHighlight: boolean) {
     if (map.getLayer(LAYER_FILL_ID)) {
         if (entity === "water_polygon") {
             map.setPaintProperty(LAYER_FILL_ID, "fill-color", "#0284c7");
@@ -360,7 +363,7 @@ function pushPreviewData(
     map: maplibregl.Map,
     mainFc: FeatureCollection<Geometry>,
     vertexFc: FeatureCollection<Geometry>,
-    entity: ImportReviewEntityType,
+    entity: DataReviewEntityType,
     showVertices: boolean,
     roadHighlight: boolean,
 ) {
@@ -373,9 +376,9 @@ function pushPreviewData(
 }
 
 export type DataReviewCandidateMapProps = {
-    geometry: ImportReviewGeoJson | null | undefined;
+    geometry: DataReviewGeoJson | null | undefined;
     geometryKind: DataReviewGeometryKind;
-    entityType?: ImportReviewEntityType;
+    entityType?: DataReviewEntityType;
     /** When set, renders all features (mixed point/line/polygon) instead of single-geometry mode. */
     previewFeatureCollection?: FeatureCollection<Geometry> | null;
     /** Shown under title (e.g. external_id). */

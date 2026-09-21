@@ -9,7 +9,7 @@ import BuildingEditorMap, {
 } from "@/src/components/buildings/BuildingEditorMap";
 import { coreReviewFitButtonLabel } from "@/src/components/core-review/coreReviewMapGeometry";
 import DataReviewCandidateMap, {
-    type ImportReviewEntityType,
+    type DataReviewEntityType,
 } from "@/src/components/map/DataReviewCandidateMap";
 import DataReviewMapCard from "@/src/components/map/DataReviewMapCard";
 import {
@@ -25,7 +25,7 @@ import {
     mapEditorBtnPrimary,
 } from "@/src/components/map/mapPreviewUi";
 import StreetEditorMap from "@/src/components/streets/StreetEditorMap";
-import type { StreetLineStringGeoJson, ImportReviewGeoJson } from "@/src/lib/api";
+import type { StreetLineStringGeoJson, DataReviewGeoJson } from "@/src/lib/api";
 
 import {
     coreGeometryTypeToPreviewKind,
@@ -82,7 +82,7 @@ export type CoreGeometryEditorProps = {
     autoEnterVertexEdit?: boolean;
 };
 
-function previewEntityType(geometryType: CoreGeometryType): ImportReviewEntityType {
+function previewEntityType(geometryType: CoreGeometryType): DataReviewEntityType {
     if (geometryType === "point") {
         return "place";
     }
@@ -373,7 +373,7 @@ export default function CoreGeometryEditor({
     if (readonly) {
         return (
             <DataReviewCandidateMap
-                geometry={value as ImportReviewGeoJson | null}
+                geometry={value as DataReviewGeoJson | null}
                 geometryKind={previewKind}
                 entityType={previewEntityType(geometryType)}
                 externalId={externalId}

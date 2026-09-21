@@ -9,11 +9,11 @@ import type {
     RefWaterClass,
     RoadClassOption,
     Street,
-    ImportReviewReferenceOptionDto,
+    CoreReviewReferenceOptionDto,
 } from "@/src/lib/api";
 import { mapRefBuildingTypesToSelectOptions } from "@/src/lib/building-type/display";
 import {
-    getImportReviewReferenceOptions,
+    getCoreReviewReferenceOptions,
     getPlaceFormOptions,
     type PlaceFormOptions,
 } from "@/src/lib/api";
@@ -66,7 +66,7 @@ function mapPlaceFormCategoryOptions(items: PlaceFormOption[]): CoreRefOption[] 
     }));
 }
 
-function mapReferenceOptions(items: ImportReviewReferenceOptionDto[]): CoreRefOption[] {
+function mapReferenceOptions(items: CoreReviewReferenceOptionDto[]): CoreRefOption[] {
     return items.map((item) => ({
         value: item.id,
         label: item.name
@@ -78,7 +78,7 @@ function mapReferenceOptions(items: ImportReviewReferenceOptionDto[]): CoreRefOp
     }));
 }
 
-function mapAdminLevelOptions(items: ImportReviewReferenceOptionDto[]): CoreRefOption[] {
+function mapAdminLevelOptions(items: CoreReviewReferenceOptionDto[]): CoreRefOption[] {
     return items.map((item) => {
         const code = item.code?.trim() ?? "";
         const name = item.name?.trim() ?? "";
@@ -154,7 +154,7 @@ export function useCoreEntityRefs(sources: CoreRefSourceKind[]): Record<CoreRefS
     const [placeFormError, setPlaceFormError] = useState<string | null>(null);
 
     const [referenceOptions, setReferenceOptions] = useState<Awaited<
-        ReturnType<typeof getImportReviewReferenceOptions>
+        ReturnType<typeof getCoreReviewReferenceOptions>
     > | null>(null);
     const [referenceLoading, setReferenceLoading] = useState(false);
     const [referenceError, setReferenceError] = useState<string | null>(null);
@@ -206,7 +206,7 @@ export function useCoreEntityRefs(sources: CoreRefSourceKind[]): Record<CoreRefS
         setReferenceLoading(true);
         setReferenceError(null);
         try {
-            const data = await getImportReviewReferenceOptions();
+            const data = await getCoreReviewReferenceOptions();
             setReferenceOptions(data);
         } catch (err) {
             setReferenceOptions(null);

@@ -564,14 +564,6 @@ export class BuildingsService {
                 message: `${placeLinks} place–building link(s) would be removed by cascade.`,
             });
         }
-        const addressMatches = await this.buildingsRepo.countMatchedAddressCandidates(buildingId);
-        if (addressMatches > 0) {
-            dependencies.push({
-                code: "address_candidate_matches",
-                count: addressMatches,
-                message: `${addressMatches} import-review address candidate(s) still reference this building.`,
-            });
-        }
         const openReports = await this.buildingsRepo.countOpenBuildingReports(buildingId, publicId);
         if (openReports > 0) {
             dependencies.push({
@@ -697,15 +689,6 @@ export class BuildingsService {
                 code: "place_building_links",
                 count: placeLinks,
                 message: `${placeLinks} place–building link(s) would be removed by cascade.`,
-            });
-        }
-
-        const addressMatches = await this.buildingsRepo.countMatchedAddressCandidates(buildingId);
-        if (addressMatches > 0) {
-            dependencies.push({
-                code: "address_candidate_matches",
-                count: addressMatches,
-                message: `${addressMatches} import-review address candidate(s) still reference this building.`,
             });
         }
 

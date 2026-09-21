@@ -346,3 +346,45 @@ export const patchCoreReviewEntitySchema = {
     body: coreReviewWriteBodySchema,
     response: coreReviewWriteDetailResponse,
 };
+
+const coreReviewReferenceOptionItemSchema = {
+    type: "object",
+    required: ["id", "code", "name"],
+    properties: {
+        id: { type: "string" },
+        code: { type: ["string", "null"] },
+        name: { type: ["string", "null"] },
+    },
+    additionalProperties: false,
+};
+
+export const getCoreReviewReferenceOptionsSchema = {
+    tags: ["core-review"],
+    summary: "Reference dropdown options for Core Review forms",
+    response: {
+        200: {
+            type: "object",
+            required: [
+                "ref_poi_categories",
+                "ref_road_classes",
+                "ref_building_types",
+                "ref_admin_levels",
+                "ref_address_component_types",
+                "ref_source_types",
+                "core_admin_areas",
+            ],
+            properties: {
+                ref_poi_categories: { type: "array", items: coreReviewReferenceOptionItemSchema },
+                ref_road_classes: { type: "array", items: coreReviewReferenceOptionItemSchema },
+                ref_building_types: { type: "array", items: coreReviewReferenceOptionItemSchema },
+                ref_admin_levels: { type: "array", items: coreReviewReferenceOptionItemSchema },
+                ref_address_component_types: { type: "array", items: coreReviewReferenceOptionItemSchema },
+                ref_source_types: { type: "array", items: coreReviewReferenceOptionItemSchema },
+                core_admin_areas: { type: "array", items: coreReviewReferenceOptionItemSchema },
+            },
+            additionalProperties: false,
+        },
+        401: messageSchema,
+        500: messageSchema,
+    },
+};

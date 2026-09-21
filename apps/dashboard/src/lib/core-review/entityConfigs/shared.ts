@@ -1,7 +1,7 @@
 import type { Geometry } from "geojson";
 import { z } from "zod";
 
-import type { ImportReviewGeoJson } from "@/src/lib/api";
+import type { DataReviewGeoJson } from "@/src/lib/api";
 import {
     normalizeVerificationStatus,
     verificationStatusOptions,
@@ -180,7 +180,7 @@ export function createPendingWriteMutations<TDetail>() {
     };
 }
 
-export function geometryFromDetail(value: ImportReviewGeoJson | null | undefined): Geometry | null {
+export function geometryFromDetail(value: DataReviewGeoJson | null | undefined): Geometry | null {
     if (!value || typeof value !== "object" || !("type" in value)) {
         return null;
     }
@@ -188,7 +188,7 @@ export function geometryFromDetail(value: ImportReviewGeoJson | null | undefined
 }
 
 export function pointFromDetailGeometry(
-    value: ImportReviewGeoJson | null | undefined,
+    value: DataReviewGeoJson | null | undefined,
 ): Geometry | null {
     const geom = geometryFromDetail(value);
     if (geom?.type === "Point") {
@@ -197,7 +197,7 @@ export function pointFromDetailGeometry(
     return null;
 }
 
-export function lineFromDetailGeometry(value: ImportReviewGeoJson | null | undefined): Geometry | null {
+export function lineFromDetailGeometry(value: DataReviewGeoJson | null | undefined): Geometry | null {
     const geom = geometryFromDetail(value);
     if (!geom) {
         return null;
@@ -211,7 +211,7 @@ export function lineFromDetailGeometry(value: ImportReviewGeoJson | null | undef
     return null;
 }
 
-export function polygonFromDetailGeometry(value: ImportReviewGeoJson | null | undefined): Geometry | null {
+export function polygonFromDetailGeometry(value: DataReviewGeoJson | null | undefined): Geometry | null {
     const geom = geometryFromDetail(value);
     if (!geom) {
         return null;

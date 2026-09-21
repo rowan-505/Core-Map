@@ -114,14 +114,6 @@ export class LandAreasDeleteService {
     ): Promise<CoreReviewDemoteDependency[]> {
         const dependencies: CoreReviewDemoteDependency[] = [];
         const landAreaId = BigInt(landAreaIdText);
-        const importReviewLinks = await this.landAreasRepo.countImportReviewLandAreaLinks(landAreaId);
-        if (importReviewLinks > 0) {
-            dependencies.push({
-                code: "import_review_candidates",
-                count: importReviewLinks,
-                message: `${importReviewLinks} import-review land candidate(s) still reference this land area.`,
-            });
-        }
         const openReports = await this.landAreasRepo.countOpenLandAreaReports(landAreaId, publicId);
         if (openReports > 0) {
             dependencies.push({

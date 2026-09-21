@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 import type { DataReviewGeometryKind } from "@/src/components/map/DataReviewCandidateMap";
-import type { ImportReviewEntityType } from "@/src/components/map/DataReviewCandidateMap";
+import type { DataReviewEntityType } from "@/src/components/map/DataReviewCandidateMap";
 import type { DataTableSortOption } from "@/src/components/dashboard/DataTableToolbar";
 import type { CoreReviewEntitySlug } from "@/src/lib/api";
-import type { ImportReviewGeoJson } from "@/src/lib/api";
+import type { DataReviewGeoJson } from "@/src/lib/api";
 import type { CoreEntityKey } from "@/src/lib/core-review/entityConfigs";
 import type { useCoreEntityEditForm } from "../drawer/useCoreEntityEditForm";
 
@@ -76,7 +76,7 @@ export type CoreReviewEntityConfig<T extends Record<string, unknown> = Record<st
     overviewStatus: CoreReviewOverviewStatus;
     idKind: CoreReviewIdKind;
     geometryKind: DataReviewGeometryKind | "none";
-    mapEntityType: ImportReviewEntityType;
+    mapEntityType: DataReviewEntityType;
     defaultSortBy: string;
     sortOptions: DataTableSortOption[];
     filterSupport: CoreReviewFilterSupport;
@@ -84,7 +84,7 @@ export type CoreReviewEntityConfig<T extends Record<string, unknown> = Record<st
     getRowId: (row: T) => string;
     getRowTitle: (row: T) => string;
     getRowSubtitle?: (row: T) => string | null;
-    getGeometry: (row: T) => ImportReviewGeoJson | null;
+    getGeometry: (row: T) => DataReviewGeoJson | null;
     detailFields: (row: T) => { label: string; value: ReactNode }[];
     searchPlaceholder: string;
     newPath?: string;

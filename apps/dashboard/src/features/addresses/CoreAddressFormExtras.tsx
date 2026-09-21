@@ -11,8 +11,8 @@ import {
 } from "@/src/features/import-review/utils/importReviewAddressComponentRows";
 import ImportReviewInlineSpinner from "@/src/features/import-review/components/ImportReviewInlineSpinner";
 import {
-    getImportReviewReferenceOptions,
-    type ImportReviewReferenceOptionDto,
+    getCoreReviewReferenceOptions,
+    type CoreReviewReferenceOptionDto,
 } from "@/src/lib/api";
 import { pointGeometryToLatLng } from "@/src/components/core-review/geometry/coreGeometryUtils";
 import type { CoreReviewAddressComponent } from "@/src/features/core-review/config/types";
@@ -65,7 +65,7 @@ export default function CoreAddressFormExtras({
     const [componentRows, setComponentRows] = useState<AddressComponentEditorRow[]>(() =>
         coreComponentsToEditorRows(initialComponents)
     );
-    const [componentTypeOptions, setComponentTypeOptions] = useState<ImportReviewReferenceOptionDto[]>([]);
+    const [componentTypeOptions, setComponentTypeOptions] = useState<CoreReviewReferenceOptionDto[]>([]);
     const [locationSaving, setLocationSaving] = useState(false);
 
     const reverse = useReverseAddressSuggestion(!disabled);
@@ -82,7 +82,7 @@ export default function CoreAddressFormExtras({
 
     useEffect(() => {
         let cancelled = false;
-        void getImportReviewReferenceOptions()
+        void getCoreReviewReferenceOptions()
             .then((bundle) => {
                 if (!cancelled) {
                     setComponentTypeOptions(bundle.ref_address_component_types ?? []);

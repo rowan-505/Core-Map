@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { CoreReviewDemoteBlockedError, CoreReviewSuppressedError } from "../core-review-write.errors.js";
+import { CoreReviewSuppressedError } from "../core-review-write.errors.js";
 import { LandAreasDeleteService } from "./land-areas-delete.service.js";
 import { LandAreasPromoteService } from "./land-areas-promote.service.js";
 import type { CoreReviewLandAreasRepository } from "./land-areas.repo.js";
@@ -18,16 +18,6 @@ const geometry = {
             [96.1, 16.8],
         ],
     ] as [number, number][][],
-};
-
-const identity = {
-    id: "21",
-    public_id: "22222222-2222-2222-2222-222222222222",
-    external_id: "osm:way:9200000001",
-    source_feature_type: "way",
-    source_feature_id: "9200000001",
-    is_active: true,
-    deleted_at: null,
 };
 
 describe("LandAreasDeleteService", () => {
@@ -47,21 +37,6 @@ describe("LandAreasDeleteService", () => {
         assert.equal(first.created, true);
         assert.equal(second.created, false);
         assert.equal(first.core_removed, false);
-    });
-
-    it("blocks import-review links before writing suppression", async () => {
-        let upserts = 0;
-        const service = new LandAreasDeleteService({
-            findOsmLandAreaByIdentity: async () => identity,
-            countImportReviewLandAreaLinks: async () => 2,
-            countOpenLandAreaReports: async () => 0,
-            upsertLandAreaRenderSuppression: async () => {
-                upserts += 1;
-                return { feature_key: "osm:way:9200000001", created: true };
-            },
-        } as unknown as CoreReviewLandAreasRepository);
-        await assert.rejects(() => service.deleteOsmLandAreaFromTiles(body, testUser), CoreReviewDemoteBlockedError);
-        assert.equal(upserts, 0);
     });
 });
 

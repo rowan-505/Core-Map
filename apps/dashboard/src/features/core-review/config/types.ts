@@ -1,4 +1,4 @@
-import type { ImportReviewGeoJson } from "@/src/lib/api";
+import type { DataReviewGeoJson } from "@/src/lib/api";
 import type { CoreReviewEntitySlug } from "@/src/lib/api";
 
 export type { CoreReviewEntitySlug };
@@ -34,7 +34,7 @@ export type CoreReviewBuildingRow = {
     deletedAt?: string | null;
     createdAt: string | null;
     updatedAt: string | null;
-    geometry: ImportReviewGeoJson | null;
+    geometry: DataReviewGeoJson | null;
 };
 
 export type CoreReviewPlaceRow = {
@@ -48,7 +48,7 @@ export type CoreReviewPlaceRow = {
     adminAreaName: string | null;
     lat: number;
     lng: number;
-    geometry: ImportReviewGeoJson | null;
+    geometry: DataReviewGeoJson | null;
     importanceScore: number | null;
     popularityScore: number | null;
     confidenceScore: number | null;
@@ -86,7 +86,7 @@ export type CoreReviewSettlementRow = {
     deletedAt?: string | null;
     createdAt: string | null;
     updatedAt: string | null;
-    geometry: ImportReviewGeoJson | null;
+    geometry: DataReviewGeoJson | null;
     lat: number | null;
     lng: number | null;
 };
@@ -110,7 +110,7 @@ export type CoreReviewStreetRow = {
     deletedAt: string | null;
     createdAt: string | null;
     updatedAt: string | null;
-    geometry: ImportReviewGeoJson | null;
+    geometry: DataReviewGeoJson | null;
     myanmarName: string | null;
     englishName: string | null;
 };
@@ -130,7 +130,7 @@ export type CoreReviewMapFeatureRow = {
     deletedAt?: string | null;
     createdAt: string | null;
     updatedAt: string | null;
-    geometry: ImportReviewGeoJson | null;
+    geometry: DataReviewGeoJson | null;
 };
 
 export type CoreReviewLandAreaRow = {
@@ -161,8 +161,8 @@ export type CoreReviewLandAreaRow = {
     deletedAt?: string | null;
     createdAt: string | null;
     updatedAt: string | null;
-    geometry: ImportReviewGeoJson | null;
-    centroid?: ImportReviewGeoJson | null;
+    geometry: DataReviewGeoJson | null;
+    centroid?: DataReviewGeoJson | null;
     sourceTags?: unknown;
     normalizedData?: unknown;
     sourceRefs?: unknown;
@@ -213,8 +213,8 @@ export type CoreReviewAddressRow = {
     deletedAt?: string | null;
     createdAt: string | null;
     updatedAt: string | null;
-    geometry: ImportReviewGeoJson | null;
-    entranceGeometry?: ImportReviewGeoJson | null;
+    geometry: DataReviewGeoJson | null;
+    entranceGeometry?: DataReviewGeoJson | null;
     compositionWarnings?: string[];
 };
 
@@ -251,8 +251,8 @@ export type CoreReviewAdminAreaRow = {
     deletedAt?: string | null;
     createdAt: string | null;
     updatedAt: string | null;
-    geometry: ImportReviewGeoJson | null;
-    centroid: ImportReviewGeoJson | null;
+    geometry: DataReviewGeoJson | null;
+    centroid: DataReviewGeoJson | null;
 };
 
 export type CoreReviewRowBySlug = {

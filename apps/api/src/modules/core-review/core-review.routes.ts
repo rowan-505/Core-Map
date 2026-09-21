@@ -20,6 +20,7 @@ import {
     patchCoreReviewEntitySchema,
     patchCoreReviewSoftDeleteSchema,
     patchCoreReviewRestoreSchema,
+    getCoreReviewReferenceOptionsSchema,
 } from "./core-review.openapi.js";
 import {
     getCoreReviewCreateSchema,
@@ -44,6 +45,7 @@ import { mapDatabaseWriteError, sanitizeDevWriteErrorMessage } from "./core-revi
 import { CORE_REVIEW_VERIFICATION_SUMMARY_CONFIGS } from "./core-review-verification-summary.config.js";
 import { buildVerificationSummary } from "../../lib/verification-summary/verification-summary.repo.js";
 import { replyCoreReviewReadError } from "./core-review-read.errors.js";
+import { CoreReviewReferenceOptionsRepository } from "./core-review-reference-options.repo.js";
 
 function replyCoreReviewValidationError(reply: FastifyReply, error: CoreReviewValidationError) {
     return reply.code(400).send({
@@ -155,6 +157,22 @@ async function handleCoreReviewLifecycle(
 
 const coreReviewRoutes: FastifyPluginAsync = async (app) => {
     const service = new CoreReviewService(app.prisma);
+    const referenceOptionsRepo = new CoreReviewReferenceOptionsRepository(app.prisma);
+
+    app.get(
+        "/reference-options",
+        {
+            preHandler: [app.authenticate, app.requireDashboardAccess],
+            schema: getCoreReviewReferenceOptionsSchema,
+        },
+        async (_request, reply) => {
+            try {
+                return reply.send(await referenceOptionsRepo.fetchAll());
+            } catch (error) {
+                return replyCoreReviewReadError(_request, reply, error, "core-review reference options failed");
+            }
+        },
+    );
 
     app.get(
         "/verification-summary",

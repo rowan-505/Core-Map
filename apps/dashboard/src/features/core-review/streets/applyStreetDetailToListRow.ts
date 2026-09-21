@@ -1,4 +1,4 @@
-import type { ImportReviewGeoJson, Street } from "@/src/lib/api";
+import type { DataReviewGeoJson, Street } from "@/src/lib/api";
 
 import type { CoreReviewStreetRow } from "../config/types";
 import { verificationFieldsFromDetail } from "../config/detailListRowUtils";
@@ -20,11 +20,11 @@ function boolOrNull(value: unknown): boolean | null {
     return typeof value === "boolean" ? value : null;
 }
 
-function geometryOrNull(value: unknown): ImportReviewGeoJson | null {
+function geometryOrNull(value: unknown): DataReviewGeoJson | null {
     if (!value || typeof value !== "object" || !("type" in value)) {
         return null;
     }
-    return value as ImportReviewGeoJson;
+    return value as DataReviewGeoJson;
 }
 
 function adminAreaFieldsFromStreetDetail(

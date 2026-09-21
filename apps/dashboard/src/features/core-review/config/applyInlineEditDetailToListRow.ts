@@ -1,4 +1,4 @@
-import type { Building, ImportReviewGeoJson, PlaceDetail } from "@/src/lib/api";
+import type { Building, DataReviewGeoJson, PlaceDetail } from "@/src/lib/api";
 
 import type {
     CoreReviewAddressRow,
@@ -14,8 +14,8 @@ import { boolOrNull, geometryOrNull, numOrNull, strOrNull, verificationFieldsFro
 function pointGeometryFromLatLng(
     lat: number | null | undefined,
     lng: number | null | undefined,
-    fallback: ImportReviewGeoJson | null,
-): ImportReviewGeoJson | null {
+    fallback: DataReviewGeoJson | null,
+): DataReviewGeoJson | null {
     if (lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)) {
         return { type: "Point", coordinates: [lng, lat] };
     }
@@ -227,7 +227,7 @@ export function applyAddressDetailToListRow(
         cached_full_address?: string | null;
         is_public?: boolean;
         is_verified?: boolean;
-        entrance_geometry?: ImportReviewGeoJson | null;
+        entrance_geometry?: DataReviewGeoJson | null;
         deleted_at?: string | null;
         created_at?: string | null;
         updated_at?: string | null;

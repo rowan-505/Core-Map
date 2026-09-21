@@ -1,6 +1,6 @@
 import type { DataReviewGeometryKind } from "@/src/components/map/DataReviewCandidateMap";
-import type { ImportReviewEntityType } from "@/src/components/map/DataReviewCandidateMap";
-import type { ImportReviewGeoJson } from "@/src/lib/api";
+import type { DataReviewEntityType } from "@/src/components/map/DataReviewCandidateMap";
+import type { DataReviewGeoJson } from "@/src/lib/api";
 
 import type {
     CoreReviewBuildingRow,
@@ -12,13 +12,13 @@ import { dash } from "./formatters";
 export function geometryFromRow(
     row: Record<string, unknown>,
     geometryKind: DataReviewGeometryKind | "none"
-): ImportReviewGeoJson | null {
+): DataReviewGeoJson | null {
     if (geometryKind === "none") {
         return null;
     }
     const g = row.geometry;
     if (g && typeof g === "object" && "type" in g) {
-        return g as ImportReviewGeoJson;
+        return g as DataReviewGeoJson;
     }
     if (geometryKind === "point" && typeof row.lat === "number" && typeof row.lng === "number") {
         return { type: "Point", coordinates: [row.lng, row.lat] };
@@ -39,7 +39,7 @@ export function rowId(
 
 export function mapEntityTypeForKind(
     kind: DataReviewGeometryKind | "none"
-): ImportReviewEntityType {
+): DataReviewEntityType {
     if (kind === "polygon") {
         return "building";
     }

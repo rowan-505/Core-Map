@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import CoreReviewMapPreview from "@/src/components/core-review/CoreReviewMapPreview";
 import { CoreReviewDetailField } from "@/src/components/core-review/CoreReviewStateCard";
 import type { DataReviewGeometryKind } from "@/src/components/map/DataReviewCandidateMap";
-import type { ImportReviewEntityType } from "@/src/components/map/DataReviewCandidateMap";
-import { getCoreReviewDetail, isAbortError, type ImportReviewGeoJson } from "@/src/lib/api";
+import type { DataReviewEntityType } from "@/src/components/map/DataReviewCandidateMap";
+import { getCoreReviewDetail, isAbortError, type DataReviewGeoJson } from "@/src/lib/api";
 
 import CoreReviewVerificationStatusCell from "../components/CoreReviewVerificationStatusCell";
 import type { CoreReviewAddressDetail, CoreReviewAddressRow } from "../config/types";
@@ -39,10 +39,10 @@ function groupComponentsForTable(
 export type CoreReviewAddressDrawerViewProps = {
     rowId: string;
     listRow: CoreReviewAddressRow;
-    listGeometry: ImportReviewGeoJson | null;
+    listGeometry: DataReviewGeoJson | null;
     listRowUpdatedAt: string | null;
     geometryKind: DataReviewGeometryKind | "none";
-    mapEntityType: ImportReviewEntityType;
+    mapEntityType: DataReviewEntityType;
     successMessage?: string | null;
 };
 
@@ -99,8 +99,8 @@ function AddressDrawerViewContent({
     }, [rowId]);
 
     const pointGeom =
-        (detail?.geometry as ImportReviewGeoJson | null | undefined) ?? listGeometry;
-    const entranceGeom = detail?.entranceGeometry as ImportReviewGeoJson | null | undefined;
+        (detail?.geometry as DataReviewGeoJson | null | undefined) ?? listGeometry;
+    const entranceGeom = detail?.entranceGeometry as DataReviewGeoJson | null | undefined;
     const mapEnabled = geometryKind !== "none";
     const mapGeometryKind: DataReviewGeometryKind =
         geometryKind === "none" ? "point" : geometryKind;
