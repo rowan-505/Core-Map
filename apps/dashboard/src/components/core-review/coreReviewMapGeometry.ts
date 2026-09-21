@@ -7,7 +7,7 @@ import type {
     StreetGeometry,
 } from "@/src/lib/api";
 
-/** Label for the fit control — matches import-review / building-editor wording per kind. */
+/** Label for the fit control — matches building-editor wording per kind. */
 export function coreReviewFitButtonLabel(geometryKind: DataReviewGeometryKind): string {
     if (geometryKind === "polygon") {
         return "Fit to polygon";

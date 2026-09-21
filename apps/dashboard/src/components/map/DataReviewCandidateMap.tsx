@@ -118,7 +118,7 @@ function debugRoadPreview(
     if (process.env.NODE_ENV !== "development" || entity !== "road") {
         return;
     }
-    console.debug("[import-review road preview]", {
+    console.debug("[data-review road preview]", {
         selectedId: externalId,
         geometryType: g?.type ?? null,
         featureCount: mainFc.features.length,
@@ -391,7 +391,7 @@ export type DataReviewCandidateMapProps = {
     fitButtonLabel?: string;
     /** Parent can refresh PMTiles / clear overlays after mutations. */
     mapSurfaceRef?: MutableRefObject<MaplibreMap | null>;
-    /** Click map to pick a point (e.g. import-review address location). */
+    /** Click map to pick a point (e.g. address location). */
     onPointPick?: (coords: { lat: number; lng: number }) => void;
     pointPickDisabled?: boolean;
 };

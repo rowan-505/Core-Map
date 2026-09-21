@@ -1,5 +1,8 @@
 # Database
 
+
+> **Note:** The Import Review product (`import_review` schema, dashboard `/import-review`, and `/api/import-review`) was permanently removed. Production data is managed through Core Review / direct editing and dedicated one-time migrations/scripts (for example `tools/data-pipeline/direct-core`).
+
 PostgreSQL + PostGIS is the source of truth. Only `apps/api` connects.
 
 ## Folders
@@ -24,7 +27,6 @@ Do not assume numeric IDs match across envs. Prefer `public_id`, `external_id`, 
 
 ```text
 raw → staging → core → tiles views → PMTiles
-              ↘ import_review → promote → core
 ```
 
 - **raw** — source dump (do not normalize here)

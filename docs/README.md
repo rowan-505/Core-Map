@@ -1,5 +1,8 @@
 # CoreMap docs
 
+
+> **Note:** The Import Review product (`import_review` schema, dashboard `/import-review`, and `/api/import-review`) was permanently removed. Production data is managed through Core Review / direct editing and dedicated one-time migrations/scripts (for example `tools/data-pipeline/direct-core`).
+
 Product README is at the [repo root](../README.md). Short guides start here.
 
 ## Read in this order
@@ -36,7 +39,7 @@ Start with a small module, not the largest files.
 | Public map UI | `apps/web/src/features/map/` |
 | Architecture rules | [`AGENTS.md`](../AGENTS.md) |
 
-Skip on a first pass: `apps/api/src/modules/transport/transport.repo.ts` and `apps/api/src/modules/import-review/` (large, domain-heavy). Generated route list: [`apps/api/docs/API.md`](../apps/api/docs/API.md).
+Skip on a first pass: `apps/api/src/modules/transport/transport.repo.ts`  . Generated route list: [`apps/api/docs/API.md`](../apps/api/docs/API.md).
 
 ## Folder layout
 

@@ -4,7 +4,7 @@
 
 This file is the tool-neutral operating guide for AI assistants working on this repository.
 
-The project is now moving from V1 to **V2 production readiness**. V1 already has a deployed public web map, MapLibre rendering, POI markers, Myanmar labels, dashboard core-review pages, import-review flows, and core database entities. Do **not** restart the architecture. V2 must harden, extend, and productionize the existing system.
+The project is now moving from V1 to **V2 production readiness**. The obsolete **Import Review** product was permanently removed; production data is managed through **Core Review / direct editing** and dedicated one-time migrations/scripts. V1 already has a deployed public web map, MapLibre rendering, POI markers, Myanmar labels, dashboard core-review pages and core database entities. Do **not** restart the architecture. V2 must harden, extend, and productionize the existing system.
 
 ---
 
@@ -196,7 +196,6 @@ Internal admin dashboard.
 Responsibilities:
 
 - core-review pages
-- import-review/promotion pages
 - data verification
 - map preview/edit forms
 - reference management
@@ -583,7 +582,7 @@ When implementing changes, add or run appropriate checks:
 - unit tests where existing patterns exist
 - route/schema validation
 - OpenAPI update if needed
-- regression script if touching core-review/import-review
+- regression script if touching core-review
 
 ### Dashboard
 

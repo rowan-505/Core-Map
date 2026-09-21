@@ -251,7 +251,7 @@ export function roadDrawerMapInput(row: DataReviewMapRow): {
     return { geometry: null, geometryKind: "line", fallbackNote: null };
 }
 
-/** Config-driven map input for generic import-review entity drawer. */
+/** Config-driven map input for generic data-review entity drawer. */
 export function entityDrawerMapInput(
     row: DataReviewMapRow,
     geometryType: DataReviewGeometryKind

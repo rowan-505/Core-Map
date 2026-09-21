@@ -18,7 +18,7 @@ export type AdminAreaComboboxProps = {
     placeholder?: string;
     className?: string;
     id?: string;
-    /** When provided, skips internal fetch (e.g. from GET /import-review/options). */
+    /** When provided, skips internal fetch (e.g. from form options API). */
     options?: AdminAreaOption[];
     optionsLoading?: boolean;
 };

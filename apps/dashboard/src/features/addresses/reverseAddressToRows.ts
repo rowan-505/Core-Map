@@ -40,7 +40,7 @@ function summarizeReverseSource(c: ReverseAddressDebugComponent): string {
     return parts.join(" · ");
 }
 
-/** Group API reverse components into import-review editor rows (one row per type). */
+/** Group API reverse components into address editor rows (one row per type). */
 export function reverseComponentsToImportReviewRows(
     components: readonly ReverseAddressDebugComponent[]
 ): AddressComponentEditorRow[] {

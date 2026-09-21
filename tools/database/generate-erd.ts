@@ -20,7 +20,8 @@ const defaultInspectedSchemas = [
   "routing",
   "transport",
   "transit_export",
-  "import_review",
+  "search",
+  "system",
 ];
 const missingDatabaseUrlMessage = "Missing DATABASE_URL. Add it to root .env.";
 const connectionFailureMessage = "Failed to connect to database. Check DATABASE_URL.";

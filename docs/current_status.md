@@ -1,5 +1,8 @@
 # CoreMap current status
 
+
+> **Note:** The Import Review product (`import_review` schema, dashboard `/import-review`, and `/api/import-review`) was permanently removed. Production data is managed through Core Review / direct editing and dedicated one-time migrations/scripts (for example `tools/data-pipeline/direct-core`).
+
 Read-only repo inspection, 2026-08-20. Code and migrations beat old docs.
 
 Status: **WORKING** = usable end-to-end · **IMPLEMENTED** = built, not production-proven · **PARTIAL** = real but incomplete · **FOUNDATION** = schema/scaffold only · **MISSING** / **LEGACY** / **UNKNOWN**
@@ -134,7 +137,7 @@ User report → stored → admin status/note → optional points → STOP
 
 ## Data / pipeline
 
-Schemas in prod ERD: `core`, `ref`, `search`, `routing`, `tiles`, `import_review`, `system`, `app_auth`, `app`, `feedback`, `contrib`, `share`, `transport`, `transit_export`. `community` exists and is unused (conflicts with “no social feed”).
+Schemas in prod ERD: `core`, `ref`, `search`, `routing`, `tiles`, `system`, `app_auth`, `app`, `feedback`, `contrib`, `share`, `transport`, `transit_export`. `community` exists and is unused (conflicts with “no social feed”).
 
 **Active writes**
 
@@ -170,7 +173,7 @@ Kyauktan bbox still in `apps/web/src/config/regionScope.ts`. Overpass/local POI 
 
 | Live | Stub / missing | Legacy redirect |
 |---|---|---|
-| Core review (8 entities + geom) | References | `/data-review` → import-review |
+| Core review (8 entities + geom) | References |
 | Import review + promote + history | Stats sub-tabs | `/core-verification` → core-review |
 | Transport routes/stops/imports | Tile packages | landuse → land-areas |
 | Search ops | System health, global audit | terminals list → stops |
@@ -193,7 +196,7 @@ CI:             .github/workflows/generate-glyphs.yml only
 Monitoring:     no Sentry
 ```
 
-API `npm test` = Prisma limit + transport. Search/import-review tests exist as extra scripts. Auth/reports/points have **no** module tests. Dashboard has tests but no npm test script.
+API `npm test` = Prisma limit + transport. Search tests exist as extra scripts. Auth/reports/points have **no** module tests. Dashboard has tests but no npm test script.
 
 ---
 

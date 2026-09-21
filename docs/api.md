@@ -1,5 +1,8 @@
 # API
 
+
+> **Note:** The Import Review product (`import_review` schema, dashboard `/import-review`, and `/api/import-review`) was permanently removed. Production data is managed through Core Review / direct editing and dedicated one-time migrations/scripts (for example `tools/data-pipeline/direct-core`).
+
 Fastify + TypeScript + Zod. This is the only app that accesses the database.
 
 ## Run
@@ -21,7 +24,7 @@ apps/api/src/modules/<domain>/
 
 Keep route handlers thin. Use raw SQL for geospatial and search-heavy work.
 
-A good first module is [`places`](../apps/api/src/modules/places/). Transport and import-review are much larger; read them after the pattern is clear.
+A good first module is [`places`](../apps/api/src/modules/places/). Transport is larger; read it after the pattern is clear.
 
 ## Main route groups
 
@@ -31,7 +34,6 @@ A good first module is [`places`](../apps/api/src/modules/places/). Transport an
 | `/auth/*` | Sessions / accounts |
 | `/public/*` | Public map search and details |
 | `/core-review/*` | Dashboard entity review |
-| `/api/import-review/*` | Import review |
 | `/api/routing/*` | Directions (Valhalla adapter) |
 
 ## Auth rule

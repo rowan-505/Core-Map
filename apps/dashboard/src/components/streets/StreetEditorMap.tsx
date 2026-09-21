@@ -464,7 +464,7 @@ export type StreetEditorMapProps = {
     onSplitPointClicked?: (lng: number, lat: number) => void;
     /** Marker shown after the user picks a split point (dashboard split flow). */
     splitPreviewLngLat?: { lng: number; lat: number } | null;
-    /** When set, enables Map / Sat / Hyb raster overlay (import-review road editor). */
+    /** When set, enables Map / Sat / Hyb raster overlay (road editor). */
     dataReviewBasemapMode?: DataReviewBasemapMode;
     /** Fired once when the MapLibre instance is ready (for Fit-to-geometry controls). */
     onMapInstance?: (map: maplibregl.Map | null) => void;
@@ -478,7 +478,7 @@ export type StreetEditorMapProps = {
     showContextOverlays?: boolean;
     /**
      * How to populate the API-backed editable-streets GeoJSON overlay.
-     * - `global-recent`: fetch viewport-bounded streets after map bounds are known (import-review default).
+     * - `global-recent`: fetch viewport-bounded streets after map bounds are known (default).
      * - `selected-only`: keep overlay empty; selected centerline uses {@link SELECTED_STREET_SOURCE_ID}.
      *   Snap-to-roads uses {@link getNearestStreetPoint} and does not need nearby streets.
      */

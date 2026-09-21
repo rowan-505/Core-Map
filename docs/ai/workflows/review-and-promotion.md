@@ -1,24 +1,23 @@
-# Review and promotion workflow (agent outline)
+# Review workflow (agent outline)
 
-> Placeholder — points agents at human docs. Do not duplicate full promotion logic here.
+> **Note:** The Import Review product (`import_review` schema, dashboard `/import-review`, and `/api/import-review`) was permanently removed. Production data is managed through Core Review / direct editing and dedicated one-time migrations/scripts (for example `tools/data-pipeline/direct-core`).
 
-## Import review → core promotion (high level)
+## Current production path
 
 ```text
-staging / import tables
-→ dashboard import-review UI
-→ human or agent-assisted verification
-→ promotion API (authorized)
-→ core PostGIS tables
-→ search index / tile builds as needed
+Core / PostGIS tables (source of truth)
+→ Core Review dashboard (API-backed CRUD)
+→ optional one-time direct-core / migration scripts
+→ search index / tile / routing builds as needed
 ```
 
 ## Rules for agents
 
 - Database is source of truth; tiles are rendering only.
 - Dashboard calls API only; never connect dashboard to PostgreSQL directly.
-- Promotion and destructive actions must go through API with authorization and audit.
+- Destructive actions must go through API with authorization and audit.
 - Schema changes require migration SQL under `infrastructure/database/migrations/`.
+- Do not recreate Import Review.
 
 ## Human documentation
 

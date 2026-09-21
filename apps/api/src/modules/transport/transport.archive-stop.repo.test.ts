@@ -43,7 +43,7 @@ type TerminalRow = {
 
 /**
  * Builds a mock PrismaClient that routes archive queries by SQL keyword. The
- * `$transaction` runs its callback with the same client (matching the import-review
+ * `$transaction` runs its callback with the same client (matching the
  * repo test pattern), so tagged-template `$queryRaw` / `$executeRaw` and the
  * Prisma.sql audit inserts all hit these handlers.
  */

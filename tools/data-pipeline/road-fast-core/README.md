@@ -1,6 +1,6 @@
 # Road fast-core pipeline
 
-Fast, **road-only** import path for routing lab work on Myanmar OSM data. It loads highway ways from a `.osm.pbf`, lightly validates them, and **promotes directly into `core.core_streets`** so you can build Valhalla or OpenTripPlanner routing tests without waiting on the full import-review workflow.
+Fast, **road-only** import path for routing lab work on Myanmar OSM data. It loads highway ways from a `.osm.pbf`, lightly validates them, and **promotes directly into `core.core_streets`** so you can build Valhalla or OpenTripPlanner routing tests without a review queue.
 
 ## Purpose
 
@@ -16,8 +16,7 @@ This is **not** a production data-quality or dashboard review flow. All promoted
 
 | Topic | Behavior |
 |-------|----------|
-| **`tools/data-pipeline/local-osm`** | Separate all-entity pipeline with diff, review views, and optional Supabase `import_review` upload. **Do not run both for the same goal.** |
-| **`import_review`** | Never written. No review batches, no remote review package. |
+| **`tools/data-pipeline/local-osm`** | Separate all-entity pipeline with diff, review views, . **Do not run both for the same goal.** |
 | **Other entities** | Does not import or promote places, buildings, admin areas, water, landuse, addresses, bus routes, or routing barriers. |
 | **Deleting core data** | Does not delete or soft-delete existing `core.core_streets` rows that are missing from the new import. |
 | **Supabase** | No upload. Local/lab Postgres only (unless you point `LOCAL_DATABASE_URL` elsewhere on purpose). |

@@ -1,5 +1,8 @@
 # Overview
 
+
+> **Note:** The Import Review product (`import_review` schema, dashboard `/import-review`, and `/api/import-review`) was permanently removed. Production data is managed through Core Review / direct editing and dedicated one-time migrations/scripts (for example `tools/data-pipeline/direct-core`).
+
 CoreMap is a web-first Myanmar map platform. V1 shipped the public map and review tools. V2 hardens that system — do not restart the architecture.
 
 ## Layers

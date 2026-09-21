@@ -1,5 +1,8 @@
 # Data pipeline
 
+
+> **Note:** The Import Review product (`import_review` schema, dashboard `/import-review`, and `/api/import-review`) was permanently removed. Production data is managed through Core Review / direct editing and dedicated one-time migrations/scripts (for example `tools/data-pipeline/direct-core`).
+
 OSM and related imports run under `tools/data-pipeline/`. Local work first; production writes are explicit and guarded.
 
 ## Flow

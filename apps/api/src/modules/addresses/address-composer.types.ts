@@ -5,7 +5,7 @@ export type AddressDisplayLanguage = "en" | "my";
 export type AddressComposerFallbackMode = "any" | "en_first" | "my_first";
 
 /**
- * One structured address line (import_review / core address_components shape).
+ * One structured address line (core address_components shape).
  * Full address text is composed from these rows — never the other way around.
  */
 export type AddressComposerComponent = {
