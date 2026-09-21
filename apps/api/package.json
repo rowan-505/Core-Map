@@ -40,6 +40,7 @@
     "test:failed-searches": "node --import tsx --test src/modules/search/failed-searches.test.ts",
     "test:unified-search-sync": "node --import tsx --test src/modules/search/unified-search-sync.test.ts",
     "test:search-aliases": "node --import tsx --test src/modules/search/search-aliases.test.ts src/modules/search/search-aliases.service.test.ts",
+    "test:references": "node --import tsx --test src/modules/ref/references.test.ts src/modules/ref/references.routes.test.ts",
     "test:search-documents": "node --import tsx --test src/modules/search/search-documents.test.ts",
     "test:search-overview": "node --import tsx --test src/modules/search/search-overview.test.ts",
     "test:search-family-rebuild": "node --import tsx --test src/modules/search/bulk-promotion-search-rebuild.test.ts",

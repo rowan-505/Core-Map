@@ -157,7 +157,7 @@ export const dashboardSidebarItems: readonly DashboardSidebarItem[] = [
     {
         moduleKey: "references",
         href: referencesPath(),
-        label: "References",
+        label: "Reference data",
         Icon: Library,
     },
     {
@@ -276,19 +276,6 @@ export const coreReviewTabs: readonly FamilyNavTab[] = [
 
 export const referencesTabs: readonly FamilyNavTab[] = [
     { label: "Overview", segment: "", match: "exact" },
-    { label: "POI categories", segment: "poi-categories" },
-    { label: "Road classes", segment: "road-classes" },
-    { label: "Place classes", segment: "place-classes" },
-    { label: "Building types", segment: "building-types" },
-    { label: "Admin levels", segment: "admin-levels" },
-    { label: "Source types", segment: "source-types" },
-    { label: "Address component types", segment: "address-component-types" },
-    { label: "Languages", segment: "languages" },
-    { label: "Publish statuses", segment: "publish-statuses" },
-    { label: "Report statuses", segment: "report-statuses" },
-    { label: "Report types", segment: "report-types" },
-    { label: "Validation statuses", segment: "validation-statuses" },
-    { label: "Validation task types", segment: "validation-task-types" },
 ];
 
 export const statsTabs: readonly FamilyNavTab[] = [

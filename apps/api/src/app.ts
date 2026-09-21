@@ -44,6 +44,7 @@ import fieldRoutes from "./modules/field/field.routes.js";
 import mediaRoutes from "./modules/media/media.routes.js";
 import mediaAdminRoutes from "./modules/media/media.admin.routes.js";
 import refRoutes from "./modules/ref/ref.routes.js";
+import referencesRoutes from "./modules/ref/references.routes.js";
 import addressesRoutes from "./modules/addresses/addresses.routes.js";
 import { apiFastifyOptions, REQUEST_ID_HEADER } from "./lib/http-server.js";
 import { healthGetSchema } from "./lib/openapi/health.openapi.js";
@@ -198,6 +199,7 @@ export async function buildApp() {
     await app.register(mediaRoutes, { prefix: "/media" });
     await app.register(mediaAdminRoutes, { prefix: "/admin/media" });
     await app.register(refRoutes, { prefix: "/admin/ref" });
+    await app.register(referencesRoutes, { prefix: "/admin/references" });
     await app.register(coreReviewRoutes, { prefix: "/core-review" });
     if (isLocalBasemapAdminEnabled()) {
         await app.register(localBasemapRoutes, { prefix: "/local-basemap" });
