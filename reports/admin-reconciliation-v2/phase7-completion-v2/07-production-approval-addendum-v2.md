@@ -1,7 +1,7 @@
 # 07 production approval addendum v2
 
 Generated: `2026-09-21T16:00:18Z`  
-Git commit that would be authorized: `8862bf16fbacd6a4c084b20e1fd1022e4850243e`  
+Git commit that would be authorized: `4ae6e32472ddd9522c6cb0d1b43c603748aa0092`  
 Frozen manifest checksums: `checksums/07-v2-frozen-manifest.checksums.json`
 
 **Production was not modified. Production runbook was not executed.**
@@ -59,7 +59,7 @@ Do **not** authorize public search, tiles, or map publication.
     "sha256": "3d0641454eeffbc7c8fc47a463b24c9c41a045a33c04b4019fdbd85b492e0f7b",
     "bytes": 1654
   },
-  "git_commit_at_build": "8862bf16fbacd6a4c084b20e1fd1022e4850243e",
+  "git_commit_at_build": "4ae6e32472ddd9522c6cb0d1b43c603748aa0092",
   "generated_at": "2026-09-21T16:00:18Z"
 }
 ```
