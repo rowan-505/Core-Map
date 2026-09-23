@@ -1,0 +1,21 @@
+{
+  "group_id": "8db644acd20e",
+  "postal_codes": [
+    "0706002"
+  ],
+  "locality_mm": "မြို့သစ် ရပ်ကွက်",
+  "locality_en": "Myo Thit Quarter",
+  "township_en": "Kyauktaw Township",
+  "township_mm": "ကျောက်တော် မြို့နယ်",
+  "township_public_id": "9ad7c7bd-8c9d-48ce-85a4-72b48a60c052",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

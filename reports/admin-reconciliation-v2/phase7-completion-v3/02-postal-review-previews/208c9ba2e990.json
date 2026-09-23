@@ -1,0 +1,21 @@
+{
+  "group_id": "208c9ba2e990",
+  "postal_codes": [
+    "0421258"
+  ],
+  "locality_mm": "ကျော ကျေးရွာအုပ်စု",
+  "locality_en": "Kyaw Village Tract",
+  "township_en": "Gangaw Township",
+  "township_mm": "ဂန့်ဂေါ မြို့နယ်",
+  "township_public_id": "4f99f426-002f-415d-a1a2-f1c42d36394c",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

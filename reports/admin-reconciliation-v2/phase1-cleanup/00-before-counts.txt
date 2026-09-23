@@ -1,0 +1,8 @@
+              metric               | value 
+-----------------------------------+-------
+ official_first_level_state_region |    17
+ wa_as_first_level                 |     2
+ saz_wrong_parent                  |     3
+ duplicate_primary_my_affected     |    17
+(4 rows)
+

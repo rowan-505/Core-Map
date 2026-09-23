@@ -1,0 +1,67 @@
+{
+  "group_id": "200764a84d7b",
+  "postal_codes": [
+    "1614242"
+  ],
+  "locality_mm": "နားလေ (လီ) ကျေးရွာအုပ်စု",
+  "locality_en": "Nar Lay Village Tract",
+  "township_en": "Hsipaw Township",
+  "township_mm": "သီပေါ မြို့နယ်",
+  "township_public_id": "19f6b48b-fdae-4a77-b5ca-2b5db453543e",
+  "expected_locality_type": "village_tract",
+  "candidates": [
+    {
+      "core_id": "19629",
+      "public_id": "a0daa25f-dfc4-401c-b09f-70a9d1f09ef7",
+      "type": "village_tract",
+      "parent_public_id": "19f6b48b-fdae-4a77-b5ca-2b5db453543e",
+      "name_mm": "နားလေ (လီ)",
+      "name_en": "Nar Lay (Li)",
+      "aliases_mm": [],
+      "aliases_en": []
+    },
+    {
+      "core_id": "19621",
+      "public_id": "b3fb2fb4-a40d-4565-aa48-937e029b61c5",
+      "type": "village_tract",
+      "parent_public_id": "19f6b48b-fdae-4a77-b5ca-2b5db453543e",
+      "name_mm": "နားလေ",
+      "name_en": "Nar Lay",
+      "aliases_mm": [],
+      "aliases_en": []
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR015014051",
+      "name_en": "Nar Lay",
+      "name_my": "နားလေ",
+      "norm_en": "narlay",
+      "norm_my": "နားလေ",
+      "ts_pcode": "MMR015014",
+      "ts_name": "Hsipaw",
+      "source_row": 11984,
+      "source_file": "village_tract_boundary_Shan_v94.zip:mmr_shn_polbnda_adm4_250k_mimu_1.shp"
+    },
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR015014043",
+      "name_en": "Nar Lay (Li)",
+      "name_my": "နားလေ (လီ)",
+      "norm_en": "narlayli",
+      "norm_my": "နားလေလီ",
+      "ts_pcode": "MMR015014",
+      "ts_name": "Hsipaw",
+      "source_row": 11992,
+      "source_file": "village_tract_boundary_Shan_v94.zip:mmr_shn_polbnda_adm4_250k_mimu_1.shp"
+    }
+  ],
+  "name_evidence": "conflict_mm_vs_en",
+  "recommendation": "source_error",
+  "review_decision": "source_error",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "inconsistent bilingual postal row: MY→a0daa25f-dfc4-401c-b09f-70a9d1f09ef7 (နားလေ (လီ)/Nar Lay (Li)) but EN→b3fb2fb4-a40d-4565-aa48-937e029b61c5 (နားလေ/Nar Lay)"
+}

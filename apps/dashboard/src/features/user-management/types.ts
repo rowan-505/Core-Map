@@ -1,4 +1,5 @@
 export type AccountStatus = "active" | "disabled" | "deleted";
+export type ManagedRoleCode = "user" | "viewer" | "surveyor" | "admin" | "super_admin";
 export type PointReasonCode =
     | "admin_adjustment"
     | "valid_contribution"
@@ -30,6 +31,22 @@ export type AdminUserDetail = AdminUserListItem & {
     saved_places_count: number;
     updated_at: string;
     deleted_at: string | null;
+};
+
+export type CreateAdminUserBody = {
+    email: string;
+    displayName: string;
+    password: string;
+    roleCode: ManagedRoleCode;
+};
+
+export type UpdateAdminUserProfileBody = {
+    email?: string;
+    displayName?: string;
+    phone?: string | null;
+    preferredLanguage?: "my" | "en";
+    primaryRegionId?: number | null;
+    emailVerified?: boolean;
 };
 
 export type AdminUserList = {

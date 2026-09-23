@@ -1,0 +1,21 @@
+{
+  "group_id": "cd2f51b5cac2",
+  "postal_codes": [
+    "1303003"
+  ],
+  "locality_mm": "အမှတ် (၃) ရပ်ကွက်",
+  "locality_en": "No (3) Quarter",
+  "township_en": "Hpapun Township",
+  "township_mm": "ဖာပွန် မြို့နယ်",
+  "township_public_id": "f646fae8-f401-4af2-a4e3-a3adfb6b798d",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

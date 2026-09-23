@@ -3,6 +3,7 @@ import { afterEach, describe, it } from "node:test";
 
 import {
     applyPrismaConnectionLimit,
+    applyPrismaDatabaseUrl,
     resolveEffectivePrismaConnectionLimit,
     resolvePrismaConnectionLimitValue,
 } from "./prisma.js";
@@ -18,9 +19,9 @@ afterEach(() => {
 });
 
 describe("resolvePrismaConnectionLimitValue", () => {
-    it("defaults to 1 when unset", () => {
+    it("defaults to 8 when unset", () => {
         delete process.env.PRISMA_CONNECTION_LIMIT;
-        assert.equal(resolvePrismaConnectionLimitValue(), "1");
+        assert.equal(resolvePrismaConnectionLimitValue(), "8");
     });
 
     it("uses PRISMA_CONNECTION_LIMIT when set", () => {
@@ -28,9 +29,9 @@ describe("resolvePrismaConnectionLimitValue", () => {
         assert.equal(resolvePrismaConnectionLimitValue(), "3");
     });
 
-    it("treats blank env as default 1", () => {
+    it("treats blank env as default 8", () => {
         process.env.PRISMA_CONNECTION_LIMIT = "  ";
-        assert.equal(resolvePrismaConnectionLimitValue(), "1");
+        assert.equal(resolvePrismaConnectionLimitValue(), "8");
     });
 });
 
@@ -58,6 +59,25 @@ describe("applyPrismaConnectionLimit", () => {
     it("returns undefined for empty input", () => {
         assert.equal(applyPrismaConnectionLimit(undefined), undefined);
         assert.equal(applyPrismaConnectionLimit("  "), undefined);
+    });
+});
+
+describe("applyPrismaDatabaseUrl", () => {
+    it("adds a 20s connect_timeout when the URL has none", () => {
+        const result = applyPrismaDatabaseUrl(
+            "postgresql://user:pass@db.example:6543/postgres?pgbouncer=true&connection_limit=5",
+        );
+        assert.ok(result);
+        assert.equal(new URL(result).searchParams.get("connect_timeout"), "20");
+        assert.equal(new URL(result).searchParams.get("connection_limit"), "5");
+    });
+
+    it("preserves an explicit connect_timeout", () => {
+        const result = applyPrismaDatabaseUrl(
+            "postgresql://user:pass@db.example:6543/postgres?connect_timeout=8&connection_limit=5",
+        );
+        assert.ok(result);
+        assert.equal(new URL(result).searchParams.get("connect_timeout"), "8");
     });
 });
 

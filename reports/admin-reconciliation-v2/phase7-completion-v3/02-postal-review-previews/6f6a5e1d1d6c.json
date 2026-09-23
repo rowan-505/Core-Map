@@ -1,0 +1,21 @@
+{
+  "group_id": "6f6a5e1d1d6c",
+  "postal_codes": [
+    "0508018"
+  ],
+  "locality_mm": "ရပ်ကွက်ကြီး (၁၈) ရပ်ကွက်",
+  "locality_en": "Yat Kwet Gyi (18) Ward Quarter",
+  "township_en": "Pyinoolwin Township",
+  "township_mm": "ပြင်ဦးလွင် မြို့နယ်",
+  "township_public_id": "776f0afa-d089-4aeb-84cf-9d1c24d95100",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

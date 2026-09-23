@@ -4,6 +4,9 @@ import { AddressIndexRepository } from "./address-index.repo.js";
 import { AddressSearchService } from "./address-search.service.js";
 import { getAddressSearchSchema } from "./address-search.openapi.js";
 import { addressSearchQuerySchema } from "./address-search.schema.js";
+import { getPostalCodeSchema } from "./postal-codes.openapi.js";
+import { PostalCodesRepository } from "./postal-codes.repo.js";
+import { postalCodeParamSchema } from "./postal-codes.schema.js";
 import { ReverseAddressRepository } from "./reverse-address.repo.js";
 import { ReverseAddressResolver } from "./reverse-address.resolver.js";
 import { getReverseAddressDebugSchema, getReverseAddressSchema } from "./reverse-address.openapi.js";
@@ -19,6 +22,48 @@ const addressesRoutes: FastifyPluginAsync = async (app) => {
     const indexRepo = new AddressIndexRepository(app.prisma);
     const searchService = new AddressSearchService(indexRepo);
     const reverseSearchService = new ReverseSearchService(new ReverseSearchRepository(app.prisma));
+    const postalRepo = new PostalCodesRepository(app.prisma);
+
+    app.get(
+        "/postal-codes/:postalCode",
+        {
+            preHandler: [app.authenticate, app.requireDashboardAccess],
+            schema: getPostalCodeSchema,
+        },
+        async (request, reply) => {
+            const parsed = postalCodeParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                return reply.code(400).send({
+                    message: "Invalid postal code",
+                    issues: parsed.error.flatten(),
+                });
+            }
+
+            const row = await postalRepo.findByPostalCode(parsed.data.postalCode);
+            if (!row) {
+                return reply.code(404).send({ message: "Postal code not found" });
+            }
+
+            return reply.send({
+                postal_code: row.postal_code,
+                region_name_en: row.region_name_en,
+                region_name_my: row.region_name_my,
+                township_name_en: row.township_name_en,
+                township_name_my: row.township_name_my,
+                locality_name_en: row.locality_name_en,
+                locality_name_my: row.locality_name_my,
+                locality_type: row.locality_type,
+                township_admin_area_id:
+                    row.township_admin_area_id == null ? null : String(row.township_admin_area_id),
+                local_admin_area_id:
+                    row.local_admin_area_id == null ? null : String(row.local_admin_area_id),
+                match_status: row.match_status,
+                match_method: row.match_method,
+                source_name: row.source_name,
+                source_version: row.source_version,
+            });
+        }
+    );
 
     app.get("/addresses/search", { schema: getAddressSearchSchema }, async (request, reply) => {
         const parsed = addressSearchQuerySchema.safeParse(request.query);

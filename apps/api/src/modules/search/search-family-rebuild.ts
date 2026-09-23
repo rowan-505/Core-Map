@@ -8,6 +8,7 @@ export type SearchFamilyRebuildResult = {
     status: string;
     requested_views: string[];
     entity_counts: Record<string, unknown>;
+    view_results?: Record<string, unknown>;
 };
 
 export type SearchFamilyRebuildLog = {
@@ -22,6 +23,7 @@ export type SearchFamilyRebuildOutcome = {
     run_id: number | null;
     status: string;
     entity_counts: Record<string, unknown>;
+    view_results: Record<string, unknown>;
     success: boolean;
 };
 
@@ -56,7 +58,24 @@ function isRebuildStatusSuccessful(status: string): boolean {
     return !normalized.includes("error") && !normalized.includes("fail");
 }
 
-export function summarizeSearchFamilyRebuildRows(entityCounts: Record<string, unknown>): number {
+export function summarizeSearchFamilyRebuildRows(
+    entityCounts: Record<string, unknown>,
+    viewResults?: Record<string, unknown>,
+): number {
+    let rebuiltTotal = 0;
+    for (const value of Object.values(viewResults ?? {})) {
+        if (!value || typeof value !== "object") continue;
+        const documents = (value as Record<string, unknown>).documents;
+        if (typeof documents === "number" && Number.isFinite(documents)) {
+            rebuiltTotal += documents;
+        } else if (typeof documents === "bigint") {
+            rebuiltTotal += Number(documents);
+        }
+    }
+    if (rebuiltTotal > 0) {
+        return rebuiltTotal;
+    }
+
     let total = 0;
     for (const value of Object.values(entityCounts)) {
         if (typeof value === "number" && Number.isFinite(value)) {
@@ -100,8 +119,8 @@ async function executeSearchFamilyRebuild(
 /**
  * Rebuild one or more unified search source families in a single
  * `search.rebuild_search_documents` call.
- * Uses a 90-minute Prisma transaction timeout so large families (places)
- * can finish; the SQL function already sets statement_timeout = 0.
+ * Uses a 4-hour Prisma transaction timeout so large families (settlements /
+ * street_groups) can finish; the SQL function already sets statement_timeout = 0.
  */
 export async function rebuildSearchFamilies(
     prisma: SearchFamilyRebuildDbClient,
@@ -120,7 +139,7 @@ export async function rebuildSearchFamilies(
         const rows = isPrismaRootClient(prisma)
             ? await prisma.$transaction(
                   async (tx) => executeSearchFamilyRebuild(tx, safeViews),
-                  { timeout: 90 * 60 * 1000, maxWait: 60 * 1000 },
+                  { timeout: 4 * 60 * 60 * 1000, maxWait: 60 * 1000 },
               )
             : await executeSearchFamilyRebuild(prisma, safeViews);
 
@@ -128,8 +147,9 @@ export async function rebuildSearchFamilies(
         const duration_ms = Date.now() - startedAt;
         const status = result?.status ?? "unknown";
         const entity_counts = result?.entity_counts ?? {};
+        const view_results = result?.view_results ?? {};
         const success = isRebuildStatusSuccessful(status);
-        const rows_indexed = summarizeSearchFamilyRebuildRows(entity_counts);
+        const rows_indexed = summarizeSearchFamilyRebuildRows(entity_counts, view_results);
 
         log?.info?.(
             {
@@ -150,6 +170,7 @@ export async function rebuildSearchFamilies(
             run_id: result?.run_id ?? null,
             status,
             entity_counts,
+            view_results,
             success,
         };
     } catch (err) {
@@ -161,6 +182,7 @@ export async function rebuildSearchFamilies(
             run_id: null,
             status: "error",
             entity_counts: {},
+            view_results: {},
             success: false,
         };
     }

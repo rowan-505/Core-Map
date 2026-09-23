@@ -1,0 +1,21 @@
+{
+  "group_id": "2a7808a94d0f",
+  "postal_codes": [
+    "0525020"
+  ],
+  "locality_mm": "အမှတ် (၂၀) ရပ်ကွက်",
+  "locality_en": "No (20) Quarter",
+  "township_en": "Myingyan Township",
+  "township_mm": "မြင်းခြံ မြို့နယ်",
+  "township_public_id": "21bf0318-9035-4e18-b876-068b00439e2d",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

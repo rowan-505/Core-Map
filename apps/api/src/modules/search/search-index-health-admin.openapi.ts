@@ -63,6 +63,7 @@ const healthReportSchema = {
         "overall_severity_reasons",
         "health_query_ok",
         "health_query_error",
+        "report_mode",
         "totals",
         "families",
         "last_rebuild_run",
@@ -74,6 +75,7 @@ const healthReportSchema = {
         overall_severity_reasons: { type: "array", items: { type: "string" } },
         health_query_ok: { type: "boolean" },
         health_query_error: { type: "string", nullable: true },
+        report_mode: { type: "string", enum: ["full", "snapshot"] },
         totals: {
             type: "object",
             required: [
@@ -175,6 +177,7 @@ export const postSearchIndexReindexFamilySchema: FastifySchema = {
         required: ["entity_family"],
         properties: {
             entity_family: { type: "string" },
+            skip_health_refresh: { type: "boolean" },
         },
         additionalProperties: false,
     },
@@ -189,8 +192,9 @@ export const postSearchIndexReindexFamilySchema: FastifySchema = {
 
 export const postSearchIndexRepairSchema: FastifySchema = {
     tags: [Tags.Search, Tags.Dashboard],
-    summary: "Repair all unhealthy search index families",
-    description: "Super_admin only. Rebuilds only unhealthy families (same logic as search:reconcile --repair).",
+    summary: "Repair critical search index gaps",
+    description:
+        "Super_admin only. Auto-repairs missing/ghost gaps only. Skips heavy families (settlements, street_groups) unless missing+ghost ≥ 100. Use Reindex family for stale-only or heavy rebuilds.",
     security: bearerAuth,
     response: {
         200: maintenanceOperationSchema,

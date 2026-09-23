@@ -1,10 +1,10 @@
 import {
     Activity,
-    BarChart3,
     Bus,
     CircleUser,
     Coins,
     Flag,
+    Globe2,
     Library,
     LineChart,
     MapPinned,
@@ -31,15 +31,16 @@ import {
     fieldSurveyPath,
     routingAdminPath,
     searchPath,
-    statsPath,
     tourismPath,
     transportPath,
     userAnalyticsPath,
     usersPath,
+    adminGeographyPath,
 } from "@/src/lib/dashboardPaths";
 
 export {
     ACCOUNT_PATH,
+    ADMIN_GEOGRAPHY_PATH,
     COMMUNITY_PATH,
     CORE_REVIEW_PATH,
     DASHBOARD_PATH,
@@ -51,12 +52,12 @@ export {
     REVIEWS_PATH,
     FIELD_SURVEY_PATH,
     SEARCH_PATH,
-    STATS_PATH,
     TOURISM_PATH,
     TRANSPORT_PATH,
     USERS_PATH,
     USER_ANALYTICS_PATH,
     accountPath,
+    adminGeographyPath,
     communityPath,
     coreReviewPath,
     localBasemapPath,
@@ -67,7 +68,6 @@ export {
     reviewsPath,
     fieldSurveyPath,
     searchPath,
-    statsPath,
     tourismPath,
     transportPath,
     userAnalyticsPath,
@@ -76,11 +76,11 @@ export {
 
 export type DashboardSidebarModuleKey =
     | "core-review"
+    | "admin-geography"
     | "references"
     | "routing"
     | "local-basemap"
     | "dev-map"
-    | "stats"
     | "transport"
     | "search"
     | "reports"
@@ -109,9 +109,9 @@ export type DashboardSidebarItem = {
 /** Non-sensitive dashboard modules exposed to read-only dashboard viewers. */
 export const viewerDashboardModules: ReadonlySet<DashboardSidebarModuleKey> = new Set([
     "core-review",
+    "admin-geography",
     "references",
     "routing",
-    "stats",
     "transport",
     "search",
     "account",
@@ -125,11 +125,11 @@ export function sidebarModuleFromPathname(pathname: string): DashboardSidebarMod
     }
     if (
         key === "core-review" ||
+        key === "admin-geography" ||
         key === "references" ||
         key === "routing" ||
         key === "local-basemap" ||
         key === "dev-map" ||
-        key === "stats" ||
         key === "transport" ||
         key === "search" ||
         key === "reports" ||
@@ -155,6 +155,12 @@ export const dashboardSidebarItems: readonly DashboardSidebarItem[] = [
         Icon: ScanSearch,
     },
     {
+        moduleKey: "admin-geography",
+        href: adminGeographyPath(),
+        label: "Admin geography",
+        Icon: Globe2,
+    },
+    {
         moduleKey: "references",
         href: referencesPath(),
         label: "Reference data",
@@ -177,12 +183,6 @@ export const dashboardSidebarItems: readonly DashboardSidebarItem[] = [
         href: devMapPath(),
         label: "Dev Map",
         Icon: MapPinned,
-    },
-    {
-        moduleKey: "stats",
-        href: statsPath(),
-        label: "Stats",
-        Icon: BarChart3,
     },
     {
         moduleKey: "transport",
@@ -278,14 +278,6 @@ export const referencesTabs: readonly FamilyNavTab[] = [
     { label: "Overview", segment: "", match: "exact" },
 ];
 
-export const statsTabs: readonly FamilyNavTab[] = [
-    { label: "Overview", segment: "", match: "exact" },
-    { label: "Core stats", segment: "core" },
-    { label: "Import stats", segment: "import" },
-    { label: "Promotion stats", segment: "promotion" },
-    { label: "Data quality", segment: "data-quality" },
-];
-
 export const transportTabs: readonly FamilyNavTab[] = [
     { label: "Overview", segment: "", match: "exact" },
     { label: "Routes", segment: "routes" },
@@ -299,6 +291,7 @@ export const searchTabs: readonly FamilyNavTab[] = [
     { label: "Documents", segment: "documents" },
     { label: "Aliases", segment: "aliases" },
     { label: "Failed Searches", segment: "failed-searches" },
+    { label: "Name Pairs", segment: "name-pairs" },
     { label: "Analytics", segment: "analytics" },
     { label: "Index Health", segment: "index-health" },
 ];

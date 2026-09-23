@@ -56,6 +56,7 @@
     "test:media": "node --import tsx --test src/modules/media/*.test.ts src/config/env.test.ts",
     "smoke:media-private-upload": "tsx src/scripts/smoke-media-private-upload.ts",
     "test:reports": "node --import tsx --test src/modules/reports/*.test.ts",
+    "test:admin-geography": "node --import tsx --test src/modules/admin-areas/admin-areas.geography.test.ts src/modules/admin-areas/admin-areas.geography.routes.test.ts src/modules/admin-areas/admin-areas.geometry.test.ts src/modules/admin-areas/admin-areas.boundary-review.test.ts src/modules/admin-areas/admin-areas.options.schema.test.ts src/modules/addresses/postal-codes.test.ts",
     "verify:reports-apply-db": "tsx src/scripts/reports-apply-db-verify.ts",
     "verify:reports-permanent-delete-db": "tsx src/scripts/reports-permanent-delete-db-verify.ts",
     "check:streets-names": "tsx scripts/check-street-name-normalization.ts",

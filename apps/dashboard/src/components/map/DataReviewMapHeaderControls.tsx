@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import type { DataReviewBasemapMode } from "./dataReviewBasemap";
 import MapBasemapToggle from "./MapBasemapToggle";
 import {
@@ -25,6 +27,8 @@ export type DataReviewMapHeaderControlsProps = {
     showVerticesToggle?: boolean;
     showVertices?: boolean;
     onShowVerticesChange?: (on: boolean) => void;
+    /** Extra controls rendered beside Show vertices (e.g. admin-area boundary toggles). */
+    trailingControls?: ReactNode;
     palette?: MapHeaderPalette;
 };
 
@@ -41,6 +45,7 @@ export default function DataReviewMapHeaderControls({
     showVerticesToggle = false,
     showVertices = false,
     onShowVerticesChange,
+    trailingControls = null,
     palette = "import",
 }: DataReviewMapHeaderControlsProps) {
     const idLine = externalId?.trim() ? externalId.trim() : null;
@@ -99,6 +104,7 @@ export default function DataReviewMapHeaderControls({
                         Show vertices
                     </label>
                 ) : null}
+                {trailingControls}
                 <MapBasemapToggle
                     value={basemapMode}
                     onChange={onBasemapModeChange}

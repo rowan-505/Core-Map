@@ -1,0 +1,21 @@
+{
+  "group_id": "d906fc1df786",
+  "postal_codes": [
+    "0812005"
+  ],
+  "locality_mm": "ကြက်သွန်ခင်း (၁) ရပ်ကွက်",
+  "locality_en": "Kyet Thun Khin (1) Quarter",
+  "township_en": "Oktwin Township",
+  "township_mm": "အုတ်တွင်း မြို့နယ်",
+  "township_public_id": "d62af6d8-d8cd-47e9-9efe-0963fa8f07d8",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

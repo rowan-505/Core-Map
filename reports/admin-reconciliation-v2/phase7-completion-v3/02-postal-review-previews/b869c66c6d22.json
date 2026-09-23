@@ -1,0 +1,21 @@
+{
+  "group_id": "b869c66c6d22",
+  "postal_codes": [
+    "1501202"
+  ],
+  "locality_mm": "ပြန့်ကပြေး ကျေးရွာအုပ်စု",
+  "locality_en": "Pyant Ka Pyay Village Tract",
+  "township_en": "Za Bu Thi Ri Township",
+  "township_mm": "ဇမ္ဗူသီရိ မြို့နယ်",
+  "township_public_id": "0a007cb6-42ca-4887-8528-30777e3cb976",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

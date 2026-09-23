@@ -53,10 +53,14 @@ export type ReferenceTableConfig = {
     createSchema: z.ZodType<Record<string, unknown>>;
     patchSchema: z.ZodType<Record<string, unknown>>;
     /**
-     * Optional SQL returning bigint usage count for a row.
-     * Use $1 for id (bigint) and $2 for code (text).
+     * Optional one-shot aggregate usage query.
+     * Must return rows `{ k: text, n: bigint }` for all used keys.
+     * `key` chooses whether `k` matches reference `id` or `code`.
      */
-    usageSql?: string;
+    usageAggregate?: {
+        key: "id" | "code";
+        sql: string;
+    };
 };
 
 function fields(
@@ -273,7 +277,14 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name ASC"],
         hasUpdatedAt: false,
         hierarchical: true,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_places WHERE category_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT r.id::text AS k, 1::bigint AS n
+                  FROM ref.ref_poi_categories r
+                  WHERE EXISTS (
+                    SELECT 1 FROM core.core_places p WHERE p.category_id = r.id
+                  )`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -308,7 +319,14 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["rank ASC", "name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_streets WHERE road_class_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT r.id::text AS k, 1::bigint AS n
+                  FROM ref.ref_road_classes r
+                  WHERE EXISTS (
+                    SELECT 1 FROM core.core_streets s WHERE s.road_class_id = r.id
+                  )`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -339,7 +357,14 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name ASC"],
         hasUpdatedAt: true,
         hierarchical: true,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_buildings WHERE building_type_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT r.id::text AS k, 1::bigint AS n
+                  FROM ref.ref_building_types r
+                  WHERE EXISTS (
+                    SELECT 1 FROM core.core_buildings b WHERE b.building_type_id = r.id
+                  )`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -370,7 +395,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["rank ASC", "name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_admin_areas WHERE admin_level_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT admin_level_id::text AS k, count(*)::bigint AS n
+                  FROM core.core_admin_areas
+                  WHERE admin_level_id IS NOT NULL
+                  GROUP BY admin_level_id`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -406,7 +437,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_admin_areas WHERE admin_area_type_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT admin_area_type_id::text AS k, count(*)::bigint AS n
+                  FROM core.core_admin_areas
+                  WHERE admin_area_type_id IS NOT NULL
+                  GROUP BY admin_area_type_id`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -441,7 +478,14 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_settlements WHERE settlement_type_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT r.id::text AS k, 1::bigint AS n
+                  FROM ref.ref_settlement_types r
+                  WHERE EXISTS (
+                    SELECT 1 FROM core.core_settlements s WHERE s.settlement_type_id = r.id
+                  )`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -466,13 +510,16 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT (
-            (SELECT count(*) FROM core.core_places WHERE source_type_id = $1::bigint) +
-            (SELECT count(*) FROM core.core_streets WHERE source_type_id = $1::bigint) +
-            (SELECT count(*) FROM core.core_admin_areas WHERE source_type_id = $1::bigint) +
-            (SELECT count(*) FROM core.core_settlements WHERE source_type_id = $1::bigint) +
-            (SELECT count(*) FROM core.core_addresses WHERE source_type_id = $1::bigint)
-          )::bigint AS n`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT r.id::text AS k, 1::bigint AS n
+                  FROM ref.ref_source_types r
+                  WHERE EXISTS (SELECT 1 FROM core.core_places p WHERE p.source_type_id = r.id)
+                     OR EXISTS (SELECT 1 FROM core.core_streets s WHERE s.source_type_id = r.id)
+                     OR EXISTS (SELECT 1 FROM core.core_admin_areas a WHERE a.source_type_id = r.id)
+                     OR EXISTS (SELECT 1 FROM core.core_settlements st WHERE st.source_type_id = r.id)
+                     OR EXISTS (SELECT 1 FROM core.core_addresses ad WHERE ad.source_type_id = r.id)`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             { code: CODE_SNAKE, name: requiredText(200) },
@@ -501,7 +548,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["rank ASC", "name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_address_components WHERE component_type_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT component_type_id::text AS k, count(*)::bigint AS n
+                  FROM core.core_address_components
+                  WHERE component_type_id IS NOT NULL
+                  GROUP BY component_type_id`,
+        },
         ...makeSchemas(
             CODE_SEGMENT,
             {
@@ -538,10 +591,15 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT (
-            (SELECT count(*) FROM core.core_places WHERE publish_status_id = $1::bigint) +
-            (SELECT count(*) FROM core.core_place_versions WHERE publish_status_id = $1::bigint)
-          )::bigint AS n`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT publish_status_id::text AS k, sum(n)::bigint AS n FROM (
+                    SELECT publish_status_id, count(*)::bigint AS n FROM core.core_places WHERE publish_status_id IS NOT NULL GROUP BY 1
+                    UNION ALL
+                    SELECT publish_status_id, count(*)::bigint AS n FROM core.core_place_versions WHERE publish_status_id IS NOT NULL GROUP BY 1
+                  ) s
+                  GROUP BY publish_status_id`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             { code: CODE_SNAKE, name: requiredText(200) },
@@ -559,7 +617,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM feedback.user_reports WHERE report_type_code = $2`,
+        usageAggregate: {
+            key: "code",
+            sql: `SELECT report_type_code AS k, count(*)::bigint AS n
+                  FROM feedback.user_reports
+                  WHERE report_type_code IS NOT NULL
+                  GROUP BY report_type_code`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             { code: CODE_SNAKE, name: requiredText(200) },
@@ -577,10 +641,15 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["name ASC"],
         hasUpdatedAt: false,
         hierarchical: false,
-        usageSql: `SELECT (
-            (SELECT count(*) FROM feedback.user_reports WHERE status_code = $2) +
-            (SELECT count(*) FROM feedback.report_status_events WHERE new_status_code = $2)
-          )::bigint AS n`,
+        usageAggregate: {
+            key: "code",
+            sql: `SELECT k, sum(n)::bigint AS n FROM (
+                    SELECT status_code AS k, count(*)::bigint AS n FROM feedback.user_reports WHERE status_code IS NOT NULL GROUP BY 1
+                    UNION ALL
+                    SELECT new_status_code AS k, count(*)::bigint AS n FROM feedback.report_status_events WHERE new_status_code IS NOT NULL GROUP BY 1
+                  ) s
+                  GROUP BY k`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             { code: CODE_SNAKE, name: requiredText(200) },
@@ -611,7 +680,14 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name_en ASC"],
         hasUpdatedAt: true,
         hierarchical: true,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_land_areas WHERE land_area_class_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT r.id::text AS k, 1::bigint AS n
+                  FROM ref.ref_land_area_classes r
+                  WHERE EXISTS (
+                    SELECT 1 FROM core.core_land_areas l WHERE l.land_area_class_id = r.id
+                  )`,
+        },
         ...makeSchemas(
             CODE_SEGMENT,
             {
@@ -660,10 +736,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name_en ASC"],
         hasUpdatedAt: true,
         hierarchical: true,
-        usageSql: `SELECT (
-            (SELECT count(*) FROM core.core_water_polygons WHERE water_class_id = $1::bigint) +
-            (SELECT count(*) FROM core.core_water_lines WHERE water_class_id = $1::bigint)
-          )::bigint AS n`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT r.id::text AS k, 1::bigint AS n
+                  FROM ref.ref_water_classes r
+                  WHERE EXISTS (SELECT 1 FROM core.core_water_polygons p WHERE p.water_class_id = r.id)
+                     OR EXISTS (SELECT 1 FROM core.core_water_lines l WHERE l.water_class_id = r.id)`,
+        },
         ...makeSchemas(
             CODE_SEGMENT,
             {
@@ -761,7 +840,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name_en ASC"],
         hasUpdatedAt: true,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM ref.ref_boundary_statuses WHERE default_address_usage_code = $2`,
+        usageAggregate: {
+            key: "code",
+            sql: `SELECT default_address_usage_code AS k, count(*)::bigint AS n
+                  FROM ref.ref_boundary_statuses
+                  WHERE default_address_usage_code IS NOT NULL
+                  GROUP BY default_address_usage_code`,
+        },
         ...makeSchemas(
             CODE_SEGMENT,
             {
@@ -804,7 +889,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name_en ASC"],
         hasUpdatedAt: true,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM core.core_protected_areas WHERE protected_area_class_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT protected_area_class_id::text AS k, count(*)::bigint AS n
+                  FROM core.core_protected_areas
+                  WHERE protected_area_class_id IS NOT NULL
+                  GROUP BY protected_area_class_id`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -845,7 +936,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name_en ASC"],
         hasUpdatedAt: true,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM tourism.place_profiles WHERE tourism_type_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT tourism_type_id::text AS k, count(*)::bigint AS n
+                  FROM tourism.place_profiles
+                  WHERE tourism_type_id IS NOT NULL
+                  GROUP BY tourism_type_id`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -886,7 +983,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name_en ASC"],
         hasUpdatedAt: true,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM tourism.activities WHERE activity_type_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT activity_type_id::text AS k, count(*)::bigint AS n
+                  FROM tourism.activities
+                  WHERE activity_type_id IS NOT NULL
+                  GROUP BY activity_type_id`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {
@@ -927,7 +1030,13 @@ const REGISTRY: Record<ReferenceTypeKey, ReferenceTableConfig> = {
         orderBy: ["sort_order ASC", "name_en ASC"],
         hasUpdatedAt: true,
         hierarchical: false,
-        usageSql: `SELECT count(*)::bigint AS n FROM tourism.events WHERE event_type_id = $1::bigint`,
+        usageAggregate: {
+            key: "id",
+            sql: `SELECT event_type_id::text AS k, count(*)::bigint AS n
+                  FROM tourism.events
+                  WHERE event_type_id IS NOT NULL
+                  GROUP BY event_type_id`,
+        },
         ...makeSchemas(
             CODE_SNAKE,
             {

@@ -1,0 +1,21 @@
+{
+  "group_id": "646884a55755",
+  "postal_codes": [
+    "0102220"
+  ],
+  "locality_mm": "အင်တျိန်ခရမ် ကျေးရွာအုပ်စု",
+  "locality_en": "In Trein Hka Yam Village Tract",
+  "township_en": "Injangyang Township",
+  "township_mm": "အင်ဂျန်းယန် မြို့နယ်",
+  "township_public_id": "95a2ca52-9e38-4045-9e00-334771a534ae",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

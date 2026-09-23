@@ -1,0 +1,21 @@
+{
+  "group_id": "c254ce2441ad",
+  "postal_codes": [
+    "0712015"
+  ],
+  "locality_mm": "ကုလားဘာတောင် ရပ်ကွက်",
+  "locality_en": "Ku Lar Bar Taung Quarter",
+  "township_en": "Kyaukpyu Township",
+  "township_mm": "ကျောက်ဖြူ မြို့နယ်",
+  "township_public_id": "c25fa666-5a35-4e95-af46-319665641346",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

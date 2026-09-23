@@ -1,0 +1,34 @@
+{
+  "group_id": "a13cd743789d",
+  "postal_codes": [
+    "1022013"
+  ],
+  "locality_mm": "ချမ်းမြေ့သာယာ ရပ်ကွက်",
+  "locality_en": "Chan Myayt Thar Yar Quarter",
+  "township_en": "Mawlamyinegyun Township",
+  "township_mm": "မော်လမြိုင်ကျွန်း မြို့နယ်",
+  "township_public_id": "51773fa5-fde7-4c90-8c7b-b20a7b4c5cf6",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR017018701513",
+      "name_en": "Chan Myae Thar Yar Ward / No (13) Ward",
+      "name_my": "ချမ်းမြေ့သာယာရပ်ကွက်",
+      "norm_en": "chanmyaetharyar13",
+      "norm_my": "ချမ်းမြေ့သာယာ",
+      "ts_pcode": "MMR017018",
+      "ts_name": "Mawlamyinegyun",
+      "source_row": 31,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    }
+  ],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "MIMU source exists (MMR017018701513) but no CoreMap ward/VT to link; do not invent admin from postal text"
+}

@@ -6,8 +6,15 @@ import type {
 } from './publicSearchConstants.js';
 import { PublicMapApiError } from './publicMapApiError.js';
 import type { PublicSearchApiLang } from './publicSearchLang.js';
+import {
+  adaptAddressesReverseResponse,
+  buildAddressesReversePath,
+  type ReverseAddressConfidence,
+  type ReverseAddressResult,
+} from './reverseAddressClient.js';
 
 export { PublicMapApiError };
+export type { ReverseAddressConfidence, ReverseAddressResult };
 
 export type { PublicSearchCategory, PublicSearchTransportMode, PublicSearchTransportType };
 
@@ -325,6 +332,8 @@ export type SearchResultGeometry = {
   readonly feature: GeoJSON.Feature;
   /** Route-preview stop points shown with the selected path; absent for normal geometry. */
   readonly importantStops?: readonly TransportRouteMapPreviewStop[];
+  /** Lightweight route metadata carried by map-preview; avoids a second route-detail request. */
+  readonly routeVariants?: readonly TransportRouteMapPreviewVariant[];
 };
 
 export type TransportRouteMapPreviewVariant = {
@@ -699,6 +708,7 @@ function mapPreviewToSearchResultGeometry(
     bbox: preview.bbox,
     feature: preview.path,
     importantStops: preview.importantStops,
+    routeVariants: preview.variants,
   };
 }
 
@@ -725,7 +735,8 @@ export function searchResultOverlayQueryKey(
 }
 
 export function searchResultOverlayZoomBucket(zoom: number): number {
-  return Math.max(0, Math.min(24, Math.round(zoom)));
+  const clamped = Math.max(0, Math.min(20, zoom));
+  return Math.floor(clamped / 2) * 2;
 }
 
 export async function fetchPublicMapGeoJson(
@@ -734,36 +745,9 @@ export async function fetchPublicMapGeoJson(
   return fetchJson<GeoJSON.FeatureCollection>(`/public/map/geo/${layer}`);
 }
 
-export type ReverseAddressConfidence =
-  | 'exact_nearby'
-  | 'street_nearby'
-  | 'area_based'
-  | 'unknown';
-
-export type ReverseAddressResult = {
-  readonly address_line: string;
-  readonly plus_code: string | null;
-  readonly lat: number;
-  readonly lng: number;
-  readonly confidence: ReverseAddressConfidence;
-};
-
-const REVERSE_ADDRESS_CONFIDENCES: readonly ReverseAddressConfidence[] = [
-  'exact_nearby',
-  'street_nearby',
-  'area_based',
-  'unknown',
-];
-
-function normalizeReverseConfidence(value: unknown): ReverseAddressConfidence {
-  return typeof value === 'string' &&
-    (REVERSE_ADDRESS_CONFIDENCES as readonly string[]).includes(value)
-    ? (value as ReverseAddressConfidence)
-    : 'unknown';
-}
-
 /**
- * Reverse geocode a single point via GET /search/reverse.
+ * Reverse geocode a single point via GET /addresses/reverse.
+ * One HTTP request per click (legacy dual /search/reverse call removed).
  * Throws on network/HTTP failure (catch at the call site); response fields are
  * defensively normalized so the shape is always valid.
  */
@@ -773,53 +757,13 @@ export async function getReverseAddress(
   languageMode: PlaceLanguageMode = 'my',
   signal?: AbortSignal,
 ): Promise<ReverseAddressResult> {
-  const search = new URLSearchParams({ lat: String(lat), lng: String(lng) });
-  const localizedSearch = new URLSearchParams({
-    lat: String(lat),
-    lng: String(lng),
-    lang: languageMode === 'en' ? 'en' : 'my',
-  });
+  const path = buildAddressesReversePath(lat, lng, languageMode);
   const requestOptions = signal ? { signal } : undefined;
-
-  const [legacyResult, localizedResult] = await Promise.allSettled([
-    fetchJson<Partial<ReverseAddressResult>>(
-      `/search/reverse?${search.toString()}`,
-      requestOptions,
-    ),
-    fetchJson<{
-      readonly display_address?: string | null;
-      readonly full_address_en?: string | null;
-      readonly full_address_my?: string | null;
-    }>(
-      `/addresses/reverse?${localizedSearch.toString()}`,
-      requestOptions,
-    ),
-  ]);
-
-  if (legacyResult.status === 'rejected' && localizedResult.status === 'rejected') {
-    throw legacyResult.reason;
-  }
-
-  const legacy = legacyResult.status === 'fulfilled' ? legacyResult.value : {};
-  const localized = localizedResult.status === 'fulfilled' ? localizedResult.value : {};
-  const localizedAddress =
-    localized.display_address ??
-    (languageMode === 'en' ? localized.full_address_en : localized.full_address_my);
-
-  return {
-    address_line:
-      typeof localizedAddress === 'string'
-        ? localizedAddress
-        : typeof legacy.address_line === 'string'
-          ? legacy.address_line
-          : languageMode === 'en'
-            ? 'Myanmar'
-            : 'မြန်မာ',
-    plus_code: typeof legacy.plus_code === 'string' ? legacy.plus_code : null,
-    lat: typeof legacy.lat === 'number' ? legacy.lat : lat,
-    lng: typeof legacy.lng === 'number' ? legacy.lng : lng,
-    confidence: normalizeReverseConfidence(legacy.confidence),
-  };
+  const body = await fetchJson<Parameters<typeof adaptAddressesReverseResponse>[0]>(
+    path,
+    requestOptions,
+  );
+  return adaptAddressesReverseResponse(body, lat, lng, languageMode);
 }
 
 function trimOpt(value: string | null | undefined): string | undefined {

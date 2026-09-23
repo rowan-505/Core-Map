@@ -1,0 +1,21 @@
+{
+  "group_id": "6435d4ddc148",
+  "postal_codes": [
+    "0702012"
+  ],
+  "locality_mm": "လက်သာ ရပ်ကွက်",
+  "locality_en": "Let Thar Quarter",
+  "township_en": "Maungdaw Township",
+  "township_mm": "မောင်တော မြို့နယ်",
+  "township_public_id": "6620e7fe-f387-484d-8ebb-58f02975674e",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

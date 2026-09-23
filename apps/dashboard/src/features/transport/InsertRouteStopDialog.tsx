@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type MutableRefObject } from "react";
+import type maplibregl from "maplibre-gl";
 
 import { isAbortError } from "@/src/lib/api";
 import {
@@ -14,6 +15,11 @@ import {
     transportModeLabel,
     transportReviewStatusLabel,
 } from "./constants";
+import {
+    cameraPaddingForOverlay,
+    candidateFocusZoom,
+    finiteLngLat,
+} from "./existingStopSearchPreview";
 import type {
     CreateAndInsertRouteStopBody,
     InsertExistingRouteStopBody,
@@ -49,6 +55,12 @@ export type InsertStopContext = {
     readonly previousStop: InsertStopRef | null;
     readonly nextStop: InsertStopRef | null;
     readonly near: InsertStopLngLat | null;
+};
+
+export type ExistingStopSearchPreviewState = {
+    readonly items: readonly TransportStopSearchItem[];
+    readonly selectedCandidateStopId: string | null;
+    readonly active: boolean;
 };
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -101,6 +113,9 @@ export default function InsertRouteStopDialog({
     onCancel,
     onInserted,
     getFallbackPlaceholderPoint,
+    mapInstanceRef,
+    onExistingStopPreviewChange,
+    selectCandidateFromMapRef,
 }: {
     readonly open: boolean;
     readonly context: InsertStopContext | null;
@@ -115,9 +130,17 @@ export default function InsertRouteStopDialog({
     readonly onInserted: (result: TransportRouteStopMutationResult) => void | Promise<void>;
     /** Review map center when the variant has no neighbour geometry. */
     readonly getFallbackPlaceholderPoint?: () => InsertStopLngLat | null;
+    /** Live MapLibre instance from the review map (camera focus only). */
+    readonly mapInstanceRef?: MutableRefObject<maplibregl.Map | null>;
+    /** Publish current search hits so the review map can draw temporary markers. */
+    readonly onExistingStopPreviewChange?: (state: ExistingStopSearchPreviewState) => void;
+    /** Parent assigns map-marker clicks through this ref. */
+    readonly selectCandidateFromMapRef?: MutableRefObject<(publicId: string) => void>;
 }) {
     const titleId = useId();
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
+    const focusedCandidateIdRef = useRef<string | null>(null);
 
     const [tab, setTab] = useState<Tab>("existing");
 
@@ -126,7 +149,8 @@ export default function InsertRouteStopDialog({
     const [results, setResults] = useState<readonly TransportStopSearchItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchError, setSearchError] = useState("");
-    const [selected, setSelected] = useState<TransportStopSearchItem | null>(null);
+    const [selectedCandidateStopId, setSelectedCandidateStopId] = useState<string | null>(null);
+    const [confirming, setConfirming] = useState(false);
 
     // --- Create-stop form state. ----------------------------------------------
     const [nameMm, setNameMm] = useState("");
@@ -137,6 +161,23 @@ export default function InsertRouteStopDialog({
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
 
+    const selectCandidate = useCallback((publicId: string | null) => {
+        setSubmitError("");
+        setSelectedCandidateStopId(publicId);
+    }, []);
+
+    useEffect(() => {
+        if (!selectCandidateFromMapRef) {
+            return;
+        }
+        selectCandidateFromMapRef.current = (publicId: string) => {
+            selectCandidate(publicId);
+        };
+        return () => {
+            selectCandidateFromMapRef.current = () => {};
+        };
+    }, [selectCandidate, selectCandidateFromMapRef]);
+
     // Reset everything whenever the modal opens (or the insert position changes).
     useEffect(() => {
         if (!open) {
@@ -146,7 +187,9 @@ export default function InsertRouteStopDialog({
         setSearch("");
         setResults([]);
         setSearchError("");
-        setSelected(null);
+        setSelectedCandidateStopId(null);
+        setConfirming(false);
+        focusedCandidateIdRef.current = null;
         setNameMm("");
         setNameEn("");
         setMode(routeMode ?? "bus");
@@ -187,6 +230,8 @@ export default function InsertRouteStopDialog({
             setResults([]);
             setSearchError("");
             setLoading(false);
+            setSelectedCandidateStopId(null);
+            focusedCandidateIdRef.current = null;
             return;
         }
         const controller = new AbortController();
@@ -213,9 +258,22 @@ export default function InsertRouteStopDialog({
                         { signal: controller.signal }
                     );
                     setResults(res.items);
+                    setSelectedCandidateStopId((current) =>
+                        current && res.items.some((item) => item.public_id === current)
+                            ? current
+                            : null,
+                    );
+                    if (
+                        focusedCandidateIdRef.current &&
+                        !res.items.some((item) => item.public_id === focusedCandidateIdRef.current)
+                    ) {
+                        focusedCandidateIdRef.current = null;
+                    }
                 } catch (err) {
                     if (isAbortError(err)) return;
                     setResults([]);
+                    setSelectedCandidateStopId(null);
+                    focusedCandidateIdRef.current = null;
                     setSearchError(err instanceof Error ? err.message : "Search failed.");
                 } finally {
                     setLoading(false);
@@ -229,15 +287,85 @@ export default function InsertRouteStopDialog({
         };
     }, [open, context, tab, canSearch, hasQuery, trimmedSearch, near, variantPublicId]);
 
+    const selectedItem =
+        results.find((item) => item.public_id === selectedCandidateStopId) ?? null;
+
+    useEffect(() => {
+        if (!open || tab !== "existing") {
+            onExistingStopPreviewChange?.({
+                items: [],
+                selectedCandidateStopId: null,
+                active: false,
+            });
+            return;
+        }
+        onExistingStopPreviewChange?.({
+            items: results,
+            selectedCandidateStopId,
+            active: true,
+        });
+    }, [open, tab, results, selectedCandidateStopId, onExistingStopPreviewChange]);
+
+    useEffect(() => {
+        return () => {
+            onExistingStopPreviewChange?.({
+                items: [],
+                selectedCandidateStopId: null,
+                active: false,
+            });
+        };
+    }, [onExistingStopPreviewChange]);
+
+    useEffect(() => {
+        if (!open || tab !== "existing" || !selectedCandidateStopId) {
+            if (!selectedCandidateStopId) {
+                focusedCandidateIdRef.current = null;
+            }
+            return;
+        }
+        if (focusedCandidateIdRef.current === selectedCandidateStopId) {
+            return;
+        }
+        const item = results.find((row) => row.public_id === selectedCandidateStopId);
+        const point = item ? finiteLngLat(item.lon, item.lat) : null;
+        if (!point) {
+            return;
+        }
+        const map = mapInstanceRef?.current;
+        const panel = panelRef.current;
+        if (!map || !panel) {
+            return;
+        }
+        focusedCandidateIdRef.current = selectedCandidateStopId;
+        map.easeTo({
+            center: [point.lng, point.lat],
+            zoom: candidateFocusZoom(map.getZoom()),
+            padding: cameraPaddingForOverlay(
+                map.getContainer().getBoundingClientRect(),
+                panel.getBoundingClientRect(),
+            ),
+            duration: 450,
+        });
+    }, [open, tab, selectedCandidateStopId, results, mapInstanceRef]);
+
+    useEffect(() => {
+        if (!selectedCandidateStopId) {
+            return;
+        }
+        document
+            .getElementById(`existing-stop-result-${selectedCandidateStopId}`)
+            ?.scrollIntoView({ block: "nearest" });
+    }, [selectedCandidateStopId]);
+
     const confirmInsertExisting = useCallback(async () => {
-        if (!context || !variantPublicId || !selected) {
+        if (!context || !variantPublicId || !selectedItem) {
             return;
         }
         setSubmitting(true);
         setSubmitError("");
         try {
             const body: InsertExistingRouteStopBody = {
-                stopPublicId: selected.public_id,
+                stopPublicId: selectedItem.public_id,
                 position: context.apiPosition,
                 ...(context.anchorRouteStopId
                     ? { anchorRouteStopId: context.anchorRouteStopId }
@@ -251,7 +379,7 @@ export default function InsertRouteStopDialog({
             setSubmitError(err instanceof Error ? err.message : "Failed to insert stop.");
             setSubmitting(false);
         }
-    }, [context, variantPublicId, selected, onInserted, onCancel]);
+    }, [context, variantPublicId, selectedItem, onInserted, onCancel]);
 
     const trimmedMm = nameMm.trim();
     const trimmedEn = nameEn.trim();
@@ -309,21 +437,13 @@ export default function InsertRouteStopDialog({
     }
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-            role="presentation"
-            onClick={() => {
-                if (!submitting) {
-                    onCancel();
-                }
-            }}
-        >
+        <div className="pointer-events-none fixed inset-0 z-[60] flex items-stretch justify-start">
             <div
+                ref={panelRef}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
-                className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-xl border border-slate-200 bg-white shadow-xl"
-                onClick={(e) => e.stopPropagation()}
+                className="pointer-events-auto flex h-full w-[min(100%,22rem)] max-w-lg flex-col border-r border-slate-200 bg-white shadow-xl sm:w-[min(100%,28rem)]"
             >
                 <div className="border-b border-slate-100 px-5 py-4">
                     <h2 id={titleId} className="text-lg font-semibold text-slate-900">
@@ -350,7 +470,9 @@ export default function InsertRouteStopDialog({
                             disabled={submitting}
                             onClick={() => {
                                 setSubmitError("");
-                                setSelected(null);
+                                setSelectedCandidateStopId(null);
+                                setConfirming(false);
+                                focusedCandidateIdRef.current = null;
                                 setTab("create");
                             }}
                             className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
@@ -371,14 +493,14 @@ export default function InsertRouteStopDialog({
                 </div>
 
                 {/* ── EXISTING-STOP: confirm step ──────────────────────────── */}
-                {tab === "existing" && selected ? (
+                {tab === "existing" && confirming && selectedItem ? (
                     <div className="flex flex-1 flex-col gap-4 px-5 py-5">
                         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                             <p className="text-sm font-medium text-slate-900">
-                                {selected.display_name}
+                                {selectedItem.display_name}
                             </p>
                             <p className="mt-0.5 text-xs text-slate-500">
-                                {transportModeLabel(selected.mode)} · {selected.stop_type}
+                                {transportModeLabel(selectedItem.mode)} · {selectedItem.stop_type}
                             </p>
                         </div>
                         <p className="text-sm text-slate-700">
@@ -394,7 +516,7 @@ export default function InsertRouteStopDialog({
                                 type="button"
                                 disabled={submitting}
                                 onClick={() => {
-                                    setSelected(null);
+                                    setConfirming(false);
                                     setSubmitError("");
                                 }}
                                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-60"
@@ -414,7 +536,7 @@ export default function InsertRouteStopDialog({
                 ) : null}
 
                 {/* ── EXISTING-STOP: search step ───────────────────────────── */}
-                {tab === "existing" && !selected ? (
+                {tab === "existing" && !(confirming && selectedItem) ? (
                     <div className="flex flex-1 flex-col overflow-hidden px-5 py-4">
                         <input
                             ref={searchInputRef}
@@ -456,15 +578,17 @@ export default function InsertRouteStopDialog({
                                 <ul className="divide-y divide-gray-100">
                                     {results.map((r) => {
                                         const distance = formatDistance(r.distance_m);
+                                        const selected = r.public_id === selectedCandidateStopId;
                                         return (
-                                            <li key={r.public_id}>
+                                            <li key={r.public_id} id={`existing-stop-result-${r.public_id}`}>
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        setSubmitError("");
-                                                        setSelected(r);
-                                                    }}
-                                                    className="flex w-full items-start justify-between gap-3 px-1 py-2.5 text-left hover:bg-gray-50"
+                                                    onClick={() => selectCandidate(r.public_id)}
+                                                    className={`flex w-full items-start justify-between gap-3 px-1 py-2.5 text-left ${
+                                                        selected
+                                                            ? "rounded-md bg-teal-50 ring-1 ring-inset ring-teal-400"
+                                                            : "hover:bg-gray-50"
+                                                    }`}
                                                 >
                                                     <span className="min-w-0 flex-1">
                                                         <span className="block truncate text-sm font-medium text-gray-900">
@@ -495,13 +619,24 @@ export default function InsertRouteStopDialog({
                             )}
                         </div>
 
-                        <div className="mt-4 flex justify-end">
+                        <div className="mt-4 flex justify-end gap-2">
                             <button
                                 type="button"
                                 onClick={onCancel}
                                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
                             >
                                 Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={!selectedItem || !variantPublicId}
+                                onClick={() => {
+                                    setSubmitError("");
+                                    setConfirming(true);
+                                }}
+                                className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-60"
+                            >
+                                Insert stop
                             </button>
                         </div>
                     </div>

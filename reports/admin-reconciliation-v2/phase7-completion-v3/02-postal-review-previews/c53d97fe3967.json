@@ -1,0 +1,21 @@
+{
+  "group_id": "c53d97fe3967",
+  "postal_codes": [
+    "0425001"
+  ],
+  "locality_mm": "အနောက်ပိုင်း ရပ်ကွက်",
+  "locality_en": "Ah Nauk Paing Quarter",
+  "township_en": "Seikphyu Township",
+  "township_mm": "ဆိပ်ဖြူ မြို့နယ်",
+  "township_public_id": "f415d4d3-7d66-47ad-bbae-10e388fd10fa",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

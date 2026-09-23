@@ -1,7 +1,9 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+
+import { ensureAuthChannel } from "@/src/lib/authTokenStorage";
 
 function createDashboardQueryClient(): QueryClient {
     return new QueryClient({
@@ -16,6 +18,10 @@ function createDashboardQueryClient(): QueryClient {
 
 export default function DashboardQueryProvider({ children }: { children: ReactNode }) {
     const [queryClient] = useState(() => createDashboardQueryClient());
+
+    useEffect(() => {
+        ensureAuthChannel();
+    }, []);
 
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

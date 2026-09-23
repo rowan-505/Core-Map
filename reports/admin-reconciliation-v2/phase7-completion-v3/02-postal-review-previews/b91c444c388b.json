@@ -1,0 +1,21 @@
+{
+  "group_id": "b91c444c388b",
+  "postal_codes": [
+    "1402234"
+  ],
+  "locality_mm": "ထိန်ကြီး ကျေးရွာအုပ်စု",
+  "locality_en": "Htein Gyi Village Tract",
+  "township_en": "Yebyu Township",
+  "township_mm": "ရေဖြူ မြို့နယ်",
+  "township_public_id": "884fab3e-92ce-4c37-ba27-b1ad2bc2f24c",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

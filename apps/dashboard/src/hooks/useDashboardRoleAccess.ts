@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { getAccessToken } from "@/src/lib/authTokenStorage";
+import { DASHBOARD_AUTH_CHANGED_EVENT, getAccessToken } from "@/src/lib/authTokenStorage";
 import {
     canDashboardWrite,
     hasDashboardAccess,
@@ -27,15 +27,15 @@ export function useDashboardRoleAccess() {
             setReady(true);
         };
         refreshRoles();
-        // Memory tokens do not fire storage events; refresh on focus/pageshow.
+        // Memory tokens do not fire storage events; refresh on focus/pageshow
+        // and when another tab shares a token over BroadcastChannel.
         window.addEventListener("focus", refreshRoles);
-        const onPageShow = () => {
-            refreshRoles();
-        };
-        window.addEventListener("pageshow", onPageShow);
+        window.addEventListener("pageshow", refreshRoles);
+        window.addEventListener(DASHBOARD_AUTH_CHANGED_EVENT, refreshRoles);
         return () => {
             window.removeEventListener("focus", refreshRoles);
-            window.removeEventListener("pageshow", onPageShow);
+            window.removeEventListener("pageshow", refreshRoles);
+            window.removeEventListener(DASHBOARD_AUTH_CHANGED_EVENT, refreshRoles);
         };
     }, []);
 

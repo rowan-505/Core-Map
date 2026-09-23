@@ -1,0 +1,21 @@
+{
+  "group_id": "7c99383052d3",
+  "postal_codes": [
+    "1806242"
+  ],
+  "locality_mm": "သောင်ပြင်ကုန်း ကျေးရွာအုပ်စု",
+  "locality_en": "Thaung Pyin Kone Village Tract",
+  "township_en": "Shwedaung Township",
+  "township_mm": "ရွှေတောင် မြို့နယ်",
+  "township_public_id": "2f844ca1-4eb2-4911-b80b-2987d884fddd",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

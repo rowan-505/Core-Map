@@ -14,13 +14,19 @@ import {
     hasSearchIndexHealthIssues,
     isAllowlistedSearchIndexHealthFamily,
     isSearchIndexFamilyUnhealthy,
+    isSearchIndexHeavyRebuildFamily,
     loadSearchIndexHealthReportUncached,
     resolveRebuildViewForHealthFamily,
     resolveRebuildViewsForHealthFamilies,
     runSearchIndexHealthCheck,
+    shouldQueueFamilyForAutoRepair,
+    SEARCH_INDEX_HEAVY_REBUILD_CRITICAL_GAP_MIN,
     type SearchIndexHealthReport,
 } from "./search-index-health.js";
-import { seedSearchIndexHealthCache } from "./search-index-health-cache.js";
+import {
+    peekSearchIndexHealthCache,
+    seedSearchIndexHealthCache,
+} from "./search-index-health-cache.js";
 import {
     SearchIndexRebuildLockError,
     withSearchIndexRebuildLocks,
@@ -192,7 +198,12 @@ export class SearchIndexMaintenanceService {
         }
 
         const startedAt = Date.now();
-        const healthBefore = await loadHealthReport(this.prisma);
+        const skipHealthRefresh = body.skip_health_refresh === true;
+        const cached = peekSearchIndexHealthCache();
+        const healthBefore =
+            skipHealthRefresh
+                ? (cached ?? (await getSearchIndexHealthReport(this.prisma, { refresh: false })))
+                : await loadHealthReport(this.prisma);
 
         let rebuild: SearchFamilyRebuildOutcome | null = null;
         let status: SearchIndexMaintenanceOperationStatus = "failed";
@@ -211,13 +222,18 @@ export class SearchIndexMaintenanceService {
             }
         }
 
-        const healthAfter = await loadHealthReport(this.prisma);
+        const healthAfter = skipHealthRefresh
+            ? healthBefore
+            : await loadHealthReport(this.prisma);
         const familyAfter = healthAfter.families.find((row) => row.entity_family === body.entity_family);
 
         if (status !== "conflict") {
             status = deriveOperationStatus({
                 rebuild,
-                healthAfterUnhealthy: familyAfter?.status === "unhealthy",
+                // When health refresh is skipped, trust rebuild success for status.
+                healthAfterUnhealthy: skipHealthRefresh
+                    ? false
+                    : familyAfter?.status === "unhealthy",
             });
         }
 
@@ -231,29 +247,72 @@ export class SearchIndexMaintenanceService {
             entity_id: null,
             rebuild_views: rebuild?.views ?? [rebuildView],
             rebuild_run_id: rebuild?.run_id != null ? String(rebuild.run_id) : null,
-            rows_rebuilt: rebuild ? summarizeSearchFamilyRebuildRows(rebuild.entity_counts) : 0,
-            message,
+            rows_rebuilt: rebuild
+                ? summarizeSearchFamilyRebuildRows(rebuild.entity_counts, rebuild.view_results)
+                : 0,
+            message: skipHealthRefresh
+                ? [message, "Health report not refreshed (sequential repair)."].filter(Boolean).join(" ")
+                : message,
             health_before: healthBefore,
             health_after: healthAfter,
         };
         await this.writeAudit(actor, "search_index.reindex_family", null, null, result);
-        publishFreshHealthReport(healthAfter);
+        if (!skipHealthRefresh) {
+            publishFreshHealthReport(healthAfter);
+        }
         return result;
     }
 
     async repairUnhealthyFamilies(
         actor: SearchIndexMaintenanceActor,
         log?: MaintenanceLog,
+        options?: Pick<RepairUnhealthySearchIndexOptions, "criticalOnly" | "includeHeavy">,
     ): Promise<SearchIndexMaintenanceOperationResult> {
         const startedAt = Date.now();
-        const beforeRows = await runSearchIndexHealthCheck(this.prisma);
+        const criticalOnly = options?.criticalOnly !== false;
+        const includeHeavy = options?.includeHeavy === true;
+
+        let outcome: Awaited<ReturnType<typeof repairUnhealthySearchIndexFamilies>>;
+        try {
+            outcome = await repairUnhealthySearchIndexFamilies(this.prisma, log, {
+                criticalOnly,
+                includeHeavy,
+            });
+        } catch (err) {
+            if (err instanceof SearchIndexRebuildLockError) {
+                const health = await loadHealthReport(this.prisma);
+                const result: SearchIndexMaintenanceOperationResult = {
+                    operation: "repair_unhealthy",
+                    status: "conflict",
+                    duration_ms: Date.now() - startedAt,
+                    affected_families: [],
+                    entity_family: null,
+                    entity_type: null,
+                    entity_id: null,
+                    rebuild_views: [],
+                    rebuild_run_id: null,
+                    rows_rebuilt: 0,
+                    message: err.message,
+                    health_before: health,
+                    health_after: health,
+                };
+                await this.writeAudit(actor, "search_index.repair_unhealthy", null, null, result);
+                publishFreshHealthReport(health);
+                return result;
+            }
+            throw err;
+        }
+
         const healthBefore = buildSearchIndexHealthReport(
-            beforeRows,
+            outcome.before,
             await fetchSearchIndexRunMetadata(this.prisma),
         );
+        const heavyNote =
+            outcome.skippedHeavyFamilies.length > 0
+                ? ` Skipped heavy families (use Reindex family): ${outcome.skippedHeavyFamilies.join(", ")}.`
+                : "";
 
-        const unhealthy = beforeRows.filter(isSearchIndexFamilyUnhealthy);
-        if (unhealthy.length === 0) {
+        if (outcome.skipped) {
             const result: SearchIndexMaintenanceOperationResult = {
                 operation: "repair_unhealthy",
                 status: "skipped",
@@ -265,7 +324,8 @@ export class SearchIndexMaintenanceService {
                 rebuild_views: [],
                 rebuild_run_id: null,
                 rows_rebuilt: 0,
-                message: "All search index families are already healthy.",
+                message:
+                    `No critical missing/ghost gaps queued for auto-repair.${heavyNote}`.trim(),
                 health_before: healthBefore,
                 health_after: healthBefore,
             };
@@ -274,78 +334,50 @@ export class SearchIndexMaintenanceService {
             return result;
         }
 
-        const rebuildViews = resolveRebuildViewsForHealthFamilies(unhealthy.map((row) => row.entity_family));
-        if (rebuildViews.length === 0) {
-            throw new SearchIndexMaintenanceError(
-                "No rebuild views resolved for unhealthy families.",
-                400,
-            );
-        }
-
-        let rebuild: SearchFamilyRebuildOutcome | null = null;
-        let status: SearchIndexMaintenanceOperationStatus = "failed";
-        let message: string | null = null;
-
-        try {
-            rebuild = await withSearchIndexRebuildLocks(this.prisma, rebuildViews, (tx) =>
-                rebuildSearchFamilies(tx, rebuildViews, log),
-            );
-        } catch (err) {
-            if (err instanceof SearchIndexRebuildLockError) {
-                message = err.message;
-                status = "conflict";
-                const healthAfter = await loadHealthReport(this.prisma);
-                const result: SearchIndexMaintenanceOperationResult = {
-                    operation: "repair_unhealthy",
-                    status,
-                    duration_ms: Date.now() - startedAt,
-                    affected_families: unhealthy.map((row) => row.entity_family),
-                    entity_family: null,
-                    entity_type: null,
-                    entity_id: null,
-                    rebuild_views: rebuildViews,
-                    rebuild_run_id: null,
-                    rows_rebuilt: 0,
-                    message,
-                    health_before: healthBefore,
-                    health_after: healthAfter,
-                };
-                await this.writeAudit(actor, "search_index.repair_unhealthy", null, null, result);
-                publishFreshHealthReport(healthAfter);
-                return result;
-            }
-            throw err;
-        }
-
-        const afterRows = await runSearchIndexHealthCheck(this.prisma);
-        const repairedByFamily = buildRepairedByFamily(beforeRows, afterRows);
-        const repairedCount = [...repairedByFamily.values()].filter(Boolean).length;
         const healthAfter = buildSearchIndexHealthReport(
-            afterRows,
+            outcome.after,
             await fetchSearchIndexRunMetadata(this.prisma),
         );
+        const repairedCount = [...outcome.repairedByFamily.values()].filter(Boolean).length;
+        const queuedCount = outcome.before.filter((row) =>
+            shouldQueueFamilyForAutoRepair(row, { criticalOnly, includeHeavy }),
+        ).length;
 
-        status = deriveOperationStatus({
-            rebuild,
-            healthAfterUnhealthy: hasSearchIndexHealthIssues(afterRows),
-            partialRepair: repairedCount > 0 && repairedCount < unhealthy.length,
+        const status = deriveOperationStatus({
+            rebuild: outcome.rebuild,
+            healthAfterUnhealthy: hasSearchIndexHealthIssues(outcome.after),
+            partialRepair: repairedCount > 0 && repairedCount < queuedCount,
         });
 
         const result: SearchIndexMaintenanceOperationResult = {
             operation: "repair_unhealthy",
             status,
             duration_ms: Date.now() - startedAt,
-            affected_families: unhealthy.map((row) => row.entity_family),
+            affected_families: outcome.before
+                .filter((row) => outcome.repairedByFamily.get(row.entity_family))
+                .map((row) => row.entity_family),
             entity_family: null,
             entity_type: null,
             entity_id: null,
-            rebuild_views: rebuildViews,
-            rebuild_run_id: rebuild?.run_id != null ? String(rebuild.run_id) : null,
-            rows_rebuilt: rebuild ? summarizeSearchFamilyRebuildRows(rebuild.entity_counts) : 0,
-            message:
-                repairedCount < unhealthy.length
-                    ? `Repaired ${repairedCount}/${unhealthy.length} unhealthy families.`
-                    : null,
+            rebuild_views: outcome.rebuildViews,
+            rebuild_run_id:
+                outcome.rebuild?.run_id != null ? String(outcome.rebuild.run_id) : null,
+            rows_rebuilt: outcome.rebuild
+                ? summarizeSearchFamilyRebuildRows(
+                      outcome.rebuild.entity_counts,
+                      outcome.rebuild.view_results,
+                  )
+                : 0,
+            message: [
+                outcome.rebuild && !outcome.rebuild.success
+                    ? `Rebuild finished with status ${outcome.rebuild.status}.`
+                    : repairedCount < queuedCount
+                      ? `Repaired ${repairedCount}/${queuedCount} queued families.`
+                      : null,
+                heavyNote.trim() || null,
+            ]
+                .filter(Boolean)
+                .join(" ") || null,
             health_before: healthBefore,
             health_after: healthAfter,
         };
@@ -404,10 +436,27 @@ export class SearchIndexMaintenanceService {
     }
 }
 
+export type RepairUnhealthySearchIndexOptions = {
+    /** When set, only rebuild these health families (e.g. `admin_areas`). */
+    families?: readonly string[];
+    /**
+     * Rebuild only families with missing/ghost; skip stale-only.
+     * Defaults to true for auto-repair so stale drift cannot queue multi-hour
+     * street/settlement rebuilds.
+     */
+    criticalOnly?: boolean;
+    /**
+     * Allow auto-repair to queue settlements/street_groups even for smaller gaps.
+     * Explicit single-family reindex always works regardless of this flag.
+     */
+    includeHeavy?: boolean;
+};
+
 /** Shared repair flow for CLI reconcile script and admin API. */
 export async function repairUnhealthySearchIndexFamilies(
     prisma: PrismaClient,
     log?: MaintenanceLog,
+    options?: RepairUnhealthySearchIndexOptions,
 ): Promise<{
     before: Awaited<ReturnType<typeof runSearchIndexHealthCheck>>;
     after: Awaited<ReturnType<typeof runSearchIndexHealthCheck>>;
@@ -415,11 +464,48 @@ export async function repairUnhealthySearchIndexFamilies(
     rebuildViews: string[];
     skipped: boolean;
     repairedByFamily: Map<string, boolean>;
+    skippedHeavyFamilies: string[];
 }> {
     const before = await runSearchIndexHealthCheck(prisma);
-    const unhealthy = before.filter(isSearchIndexFamilyUnhealthy);
+    const familyFilter =
+        options?.families != null && options.families.length > 0
+            ? new Set(options.families)
+            : null;
+    const criticalOnly = options?.criticalOnly !== false;
+    const includeHeavy = options?.includeHeavy === true;
 
-    if (unhealthy.length === 0) {
+    const candidates = before
+        .filter((row) => familyFilter == null || familyFilter.has(row.entity_family))
+        .filter((row) =>
+            shouldQueueFamilyForAutoRepair(row, {
+                criticalOnly,
+                // Explicit --families=street_groups opts that family in.
+                includeHeavy: includeHeavy || familyFilter?.has(row.entity_family) === true,
+            }),
+        )
+        .slice()
+        .sort(
+            (a, b) =>
+                Number(a.canonical_count) - Number(b.canonical_count) ||
+                a.entity_family.localeCompare(b.entity_family),
+        );
+
+    const skippedHeavyFamilies = before
+        .filter((row) => familyFilter == null || familyFilter.has(row.entity_family))
+        .filter((row) => isSearchIndexHeavyRebuildFamily(row.entity_family))
+        .filter((row) => {
+            const gap = row.missing + row.ghost;
+            if (criticalOnly && gap <= 0) return false;
+            if (!criticalOnly && !isSearchIndexFamilyUnhealthy(row)) return false;
+            return (
+                !includeHeavy &&
+                familyFilter?.has(row.entity_family) !== true &&
+                gap < SEARCH_INDEX_HEAVY_REBUILD_CRITICAL_GAP_MIN
+            );
+        })
+        .map((row) => row.entity_family);
+
+    if (candidates.length === 0) {
         return {
             before,
             after: before,
@@ -427,17 +513,30 @@ export async function repairUnhealthySearchIndexFamilies(
             rebuildViews: [],
             skipped: true,
             repairedByFamily: buildRepairedByFamily(before, before),
+            skippedHeavyFamilies,
         };
     }
 
-    const rebuildViews = resolveRebuildViewsForHealthFamilies(unhealthy.map((row) => row.entity_family));
+    const rebuildViews = resolveRebuildViewsForHealthFamilies(
+        candidates.map((row) => row.entity_family),
+    );
     if (rebuildViews.length === 0) {
         throw new Error("No rebuild views resolved for unhealthy families.");
     }
 
-    const rebuild = await withSearchIndexRebuildLocks(prisma, rebuildViews, (tx) =>
-        rebuildSearchFamilies(tx, rebuildViews, log),
-    );
+    let rebuild: SearchFamilyRebuildOutcome | null = null;
+    for (const view of rebuildViews) {
+        const part = await withSearchIndexRebuildLocks(prisma, [view], (tx) =>
+            rebuildSearchFamilies(tx, [view], log),
+        );
+        if (!part) {
+            break;
+        }
+        rebuild = part;
+        if (!part.success) {
+            break;
+        }
+    }
     const after = await runSearchIndexHealthCheck(prisma);
 
     return {
@@ -447,5 +546,6 @@ export async function repairUnhealthySearchIndexFamilies(
         rebuildViews,
         skipped: false,
         repairedByFamily: buildRepairedByFamily(before, after),
+        skippedHeavyFamilies,
     };
 }

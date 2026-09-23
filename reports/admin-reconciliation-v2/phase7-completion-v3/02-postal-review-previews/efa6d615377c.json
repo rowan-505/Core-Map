@@ -1,0 +1,21 @@
+{
+  "group_id": "efa6d615377c",
+  "postal_codes": [
+    "1668005"
+  ],
+  "locality_mm": "အမှတ် (၅) ရပ်ကွက်",
+  "locality_en": "No (5) Quarter",
+  "township_en": "Pan Lon Town",
+  "township_mm": "ပန်လုံ မြို့",
+  "township_public_id": "3800aee1-2c3d-463a-9fda-a88ae37aaacd",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

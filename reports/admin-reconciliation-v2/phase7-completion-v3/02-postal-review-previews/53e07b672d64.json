@@ -1,0 +1,21 @@
+{
+  "group_id": "53e07b672d64",
+  "postal_codes": [
+    "1664004"
+  ],
+  "locality_mm": "အမှတ် (၄) ရပ်ကွက်",
+  "locality_en": "No (4) Quarter",
+  "township_en": "Tarmoenye Town",
+  "township_mm": "တာမိုးညဲ မြို့",
+  "township_public_id": "ad475a0c-859e-4a55-841a-c08c1b832fb7",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

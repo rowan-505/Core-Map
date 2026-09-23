@@ -1,0 +1,21 @@
+{
+  "group_id": "95374e800207",
+  "postal_codes": [
+    "1804009"
+  ],
+  "locality_mm": "မင်းကွက် (၃) ရပ်ကွက်",
+  "locality_en": "Min Kwet (3) Quarter",
+  "township_en": "Paungde Township",
+  "township_mm": "ပေါင်းတည် မြို့နယ်",
+  "township_public_id": "964c827f-a171-4b04-b1a7-02b6c2198bde",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "811d03d0e21c",
+  "postal_codes": [
+    "0210001"
+  ],
+  "locality_mm": "အမှတ် (၁) ရွာသစ် ရပ်ကွက်",
+  "locality_en": "No (1) Ywar Thit Quarter",
+  "township_en": "Kalewa Township",
+  "township_mm": "ကလေးဝ မြို့နယ်",
+  "township_public_id": "e888b32b-b200-4e60-9779-35125d286ab0",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

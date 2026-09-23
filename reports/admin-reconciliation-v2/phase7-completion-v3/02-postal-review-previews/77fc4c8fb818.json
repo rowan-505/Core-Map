@@ -1,0 +1,21 @@
+{
+  "group_id": "77fc4c8fb818",
+  "postal_codes": [
+    "1615221"
+  ],
+  "locality_mm": "ပန်ယန်း ကျေးရွာအုပ်စု",
+  "locality_en": "Pang Yang Village Tract",
+  "township_en": "Namtu Township",
+  "township_mm": "နမ္မတူ မြို့နယ်",
+  "township_public_id": "83d6611b-afc3-49dd-bb6b-83d91b09cc37",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

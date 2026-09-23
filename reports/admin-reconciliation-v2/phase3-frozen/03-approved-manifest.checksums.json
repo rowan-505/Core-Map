@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-09-21T13:43:04Z",
+  "production_writes": false,
+  "validation": "passed_with_decision_csvs",
+  "error_count": 0,
+  "files": {
+    "phase3-frozen/03-approved-local-admin.csv": {
+      "sha256": "6a0f8fc2841f5a446b5066296837c0b108a907fe67a52aa4b93512cfd5a369a8",
+      "rows": 16176
+    },
+    "phase3-frozen/03-approved-villages.csv": {
+      "sha256": "adf6498a2b7e3f776d806ad5ace36723ecd56ca9fc609acab65a8452b548f9e2",
+      "rows": 54602
+    },
+    "phase3-frozen/04-postal-actions.frozen.csv": {
+      "sha256": "5f40c130e7eacdb5a9ab1418b74030447cf5285d73f233ee8b80ad8a1bc8224d",
+      "rows": 17299
+    }
+  },
+  "counts": {
+    "local_by_action": {
+      "keep_existing": 1846,
+      "update_names": 36,
+      "create_mimu_placeholder": 14282,
+      "reject_source_error": 8,
+      "update_type": 4
+    },
+    "village_by_action": {
+      "keep_existing": 48716,
+      "merge_duplicate_candidate": 1473,
+      "create_mimu_placeholder": 3565,
+      "update_names": 825,
+      "reject_source_error": 9,
+      "update_type": 14
+    },
+    "wards": 2001,
+    "village_tracts": 14175,
+    "villages": 54602,
+    "merge_decisions": 1487
+  }
+}

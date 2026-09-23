@@ -1,0 +1,24 @@
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=1377.68..1377.69 rows=1 width=46) (actual time=11.078..11.192 rows=7 loops=1)
+   Buffers: shared hit=3343
+   ->  Sort  (cost=1377.68..1377.69 rows=1 width=46) (actual time=10.930..10.947 rows=7 loops=1)
+         Sort Key: a.canonical_name, a.id
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=3343
+         ->  Nested Loop  (cost=0.00..1377.67 rows=1 width=46) (actual time=0.660..8.850 rows=7 loops=1)
+               Join Filter: (al.id = a.admin_level_id)
+               Rows Removed by Join Filter: 16
+               Buffers: shared hit=3307
+               ->  Seq Scan on core_admin_areas a  (cost=0.00..1376.51 rows=1 width=54) (actual time=0.391..8.539 rows=7 loops=1)
+                     Filter: ((deleted_at IS NULL) AND (canonical_name ~~* '%ရန်ကုန်%'::text))
+                     Rows Removed by Filter: 2514
+                     Buffers: shared hit=3300
+               ->  Seq Scan on ref_admin_levels al  (cost=0.00..1.07 rows=7 width=8) (actual time=0.002..0.002 rows=3 loops=7)
+                     Buffers: shared hit=7
+ Planning:
+   Buffers: shared hit=535
+ Planning Time: 32.521 ms
+ Execution Time: 12.932 ms
+(20 rows)
+

@@ -1,0 +1,21 @@
+{
+  "group_id": "d3db320630e7",
+  "postal_codes": [
+    "0715009"
+  ],
+  "locality_mm": "ဈေးတောင် ရပ်ကွက်",
+  "locality_en": "Zay Taung Quarter",
+  "township_en": "Ann Township",
+  "township_mm": "အမ်း မြို့နယ်",
+  "township_public_id": "23fcc105-16fc-44f9-9a18-71955d34e0f2",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,33 @@
+        k         |   v   
+------------------+-------
+ postal_count     | 17297
+ official_sr      | 15
+ invalid_geom     | 0
+ orphans          | 0
+ mimu_placeholder | 0
+ settlements      | 57590
+(6 rows)
+
+     match_status     | count 
+----------------------+-------
+ linked_township_only | 12298
+ unmatched            |  3361
+ linked_local_area    |  1638
+(3 rows)
+
+          code          | count 
+------------------------+-------
+ country                |     1
+ district               |   116
+ self_administered_zone |     8
+ state_region           |    15
+ town                   |    20
+ township               |   364
+ ward_village_tract     |  1995
+(7 rows)
+
+ foreign_disabled 
+------------------
+                5
+(1 row)
+

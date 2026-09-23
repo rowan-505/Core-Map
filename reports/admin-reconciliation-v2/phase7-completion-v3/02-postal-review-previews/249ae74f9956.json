@@ -1,0 +1,21 @@
+{
+  "group_id": "249ae74f9956",
+  "postal_codes": [
+    "1608232"
+  ],
+  "locality_mm": "ကန်ဆေး ကျေးရွာအုပ်စု",
+  "locality_en": "Kan Hsay Village Tract",
+  "township_en": "Mongmao Township",
+  "township_mm": "မိုင်းမော မြို့နယ်",
+  "township_public_id": "2f14598f-2ead-4f31-bba4-5f6f83bf3a04",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

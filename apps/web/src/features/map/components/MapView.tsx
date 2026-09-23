@@ -131,6 +131,10 @@ function MapViewInner({
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapEngine | null>(null);
+  const lastSearchHighlightCameraRef = useRef<{
+    readonly map: MapEngine;
+    readonly key: string;
+  } | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [localPmtilesQaError, setLocalPmtilesQaError] = useState<string | null>(null);
   const [localPmtilesQaErrorCount, setLocalPmtilesQaErrorCount] = useState(0);
@@ -765,13 +769,21 @@ function MapViewInner({
 
     if (!searchHighlight) {
       clearSearchHighlight(map);
+      lastSearchHighlightCameraRef.current = null;
       return;
     }
+
+    const selectionKey = `${searchHighlight.entityType}:${searchHighlight.entityId}`;
+    const previousCamera = lastSearchHighlightCameraRef.current;
+    const fitCamera =
+      previousCamera?.map !== map || previousCamera.key !== selectionKey;
+    lastSearchHighlightCameraRef.current = { map, key: selectionKey };
 
     let cancelled = false;
     void fitSearchResult(map, searchHighlight, {
       padding: visibleMapCameraPadding(cameraLayoutRef.current, containerRef.current),
       geometry: searchHighlightGeometry,
+      fitCamera,
     }).finally(() => {
       if (cancelled || mapRef.current !== map) return;
       applyMapOverlayStackOrder(map);

@@ -1,0 +1,21 @@
+{
+  "group_id": "11053feb08fe",
+  "postal_codes": [
+    "0305001"
+  ],
+  "locality_mm": "ခေါဝုန် / လေးဆန် ရပ်ကွက်",
+  "locality_en": "Khuavung (Laysan) Quarter",
+  "township_en": "Tonzang Township",
+  "township_mm": "တွန်းဇန် မြို့နယ်",
+  "township_public_id": "f3446bb2-ea07-4eb5-9bf0-8f33131827c2",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

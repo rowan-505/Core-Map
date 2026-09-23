@@ -45,19 +45,15 @@ export class ReferencesService {
     }
 
     async catalog(): Promise<ReferenceCatalogItem[]> {
-        const items: ReferenceCatalogItem[] = [];
-        for (const config of listReferenceConfigs()) {
-            const row_count = await this.repo.countRows(config);
-            items.push({
-                type: config.key,
-                label: config.label,
-                singular_label: config.singularLabel,
-                description: config.description,
-                row_count,
-                hierarchical: config.hierarchical,
-            });
-        }
-        return items;
+        const counts = await this.repo.countAllRows();
+        return listReferenceConfigs().map((config) => ({
+            type: config.key,
+            label: config.label,
+            singular_label: config.singularLabel,
+            description: config.description,
+            row_count: counts.get(config.key) ?? 0,
+            hierarchical: config.hierarchical,
+        }));
     }
 
     async list(type: string): Promise<ReferenceListResponse> {
@@ -93,10 +89,8 @@ export class ReferencesService {
 
         try {
             const row = await this.repo.create(config, data);
-            const usage_count = config.usageSql
-                ? await this.repo.countUsage(config, String(row.id), String(row.code))
-                : null;
-            return { ...row, usage_count };
+            // New rows are unused; avoid a heavy usage scan on write.
+            return { ...row, usage_count: config.usageAggregate ? 0 : null };
         } catch (error) {
             if (isUniqueViolation(error)) {
                 throw new ReferencesError("A reference with this code or unique value already exists.", 409);
@@ -164,10 +158,8 @@ export class ReferencesService {
 
         try {
             const row = await this.repo.update(config, id, data);
-            const usage_count = config.usageSql
-                ? await this.repo.countUsage(config, String(row.id), String(row.code))
-                : null;
-            return { ...row, usage_count };
+            // Name/flag edits do not change FK usage; list refresh has accurate values.
+            return { ...row, usage_count: null };
         } catch (error) {
             if (isUniqueViolation(error)) {
                 throw new ReferencesError("A reference with this unique value already exists.", 409);

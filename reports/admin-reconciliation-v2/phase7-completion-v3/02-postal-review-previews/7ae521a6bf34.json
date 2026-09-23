@@ -1,0 +1,21 @@
+{
+  "group_id": "7ae521a6bf34",
+  "postal_codes": [
+    "0814010"
+  ],
+  "locality_mm": "ဆေးရုံ ရပ်ကွက်",
+  "locality_en": "Say Yon Quarter",
+  "township_en": "Phyu Township",
+  "township_mm": "ဖြူး မြို့နယ်",
+  "township_public_id": "1790b109-65f8-40a5-9506-e15d542b247f",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

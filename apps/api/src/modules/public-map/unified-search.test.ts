@@ -13,6 +13,7 @@ import {
 import {
     clampUnifiedSearchLimit,
     coordinatePinResult,
+    isShortMyanmarPrefixQuery,
     parseCoordinate,
     planPublicSearch,
     serializePublicSearchHit,
@@ -94,6 +95,31 @@ describe("numeric transport query planning", () => {
         for (const query of ["ybs-13", "YBS 13", "YBS 13 D0"]) {
             assert.deepEqual(planPublicSearch(query), { allowed: true, mode: "full" });
         }
+    });
+
+    it("uses the prefix plan for short Myanmar terms without counting combining marks", () => {
+        for (const query of ["မိုင်း", "မြို့"]) {
+            assert.equal(isShortMyanmarPrefixQuery(query), true);
+            assert.deepEqual(planPublicSearch(query), { allowed: true, mode: "prefix" });
+        }
+
+        for (const query of ["မြန်မာ", "ရန်ကုန်", "အင်းစိန် ဘုရင့်နောင်"]) {
+            assert.equal(isShortMyanmarPrefixQuery(query), false);
+            assert.deepEqual(planPublicSearch(query), { allowed: true, mode: "full" });
+        }
+    });
+
+    it("keeps short Myanmar candidate generation on index-backed prefixes", async () => {
+        const sql = await captureUnifiedSearchSql("မိုင်း");
+        assert.doesNotMatch(sql, /plainto_tsquery/);
+        assert.doesNotMatch(sql, /d\.trigram_text %/);
+        assert.match(sql, /d\.trigram_text LIKE/);
+    });
+
+    it("skips ineffective simple FTS but keeps bounded trigram search for longer Myanmar terms", async () => {
+        const sql = await captureUnifiedSearchSql("မြန်မာ");
+        assert.doesNotMatch(sql, /plainto_tsquery/);
+        assert.match(sql, /d\.trigram_text %/);
     });
 
     it("adds the exact-number candidate branch only for numeric transport intent", async () => {

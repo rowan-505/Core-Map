@@ -1,0 +1,21 @@
+{
+  "group_id": "e936fb99d4fa",
+  "postal_codes": [
+    "0112003"
+  ],
+  "locality_mm": "အမှတ် (၃) ရပ်ကွက်",
+  "locality_en": "No (3) Quarter",
+  "township_en": "Shwegu Township",
+  "township_mm": "ရွှေကူ မြို့နယ်",
+  "township_public_id": "ea3b5bf4-dfea-43ee-8561-3db7758b098e",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

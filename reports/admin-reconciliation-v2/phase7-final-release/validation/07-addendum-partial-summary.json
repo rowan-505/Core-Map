@@ -1,0 +1,52 @@
+{
+  "postal": {
+    "total": 17297,
+    "categories": {
+      "linked_exact_local_area": 1851,
+      "missing_local_admin_identity": 14784,
+      "linked_after_review": 13,
+      "missing_township": 646,
+      "ambiguous_local_area": 3,
+      "non_admin_postal_locality": 0,
+      "rejected_source_error": 0
+    },
+    "township_present": 16651,
+    "township_null": 646,
+    "local_null": 15446,
+    "without_exact": 15446,
+    "goal": "FAIL"
+  },
+  "rows": {
+    "admin_reconciles": true,
+    "settle_reconciles": true,
+    "admin_baseline": 2516,
+    "admin_created": 14192,
+    "admin_disabled": 4,
+    "admin_final": 16704,
+    "settle_baseline": 57590,
+    "settle_created": 3592,
+    "settle_disabled": 1727,
+    "settle_final": 59455,
+    "settle_net": 1865,
+    "admin_ph": 14192,
+    "village_ph": 3592
+  },
+  "geometry": {
+    "pass": true,
+    "changed_admin": 0,
+    "changed_settle": 0,
+    "changed_pid": 0,
+    "wrong_tag": 0,
+    "checked_admin": 1864,
+    "checked_settle": 50563
+  },
+  "provenance": {
+    "pass": true,
+    "unexpected": 0,
+    "admin_ok": 14192,
+    "admin_fail": 0,
+    "village_ok": 3592,
+    "village_fail": 0
+  },
+  "generated_at": "2026-09-21T14:39:01.867316+00:00"
+}

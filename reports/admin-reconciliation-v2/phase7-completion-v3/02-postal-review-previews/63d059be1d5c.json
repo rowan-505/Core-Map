@@ -1,0 +1,21 @@
+{
+  "group_id": "63d059be1d5c",
+  "postal_codes": [
+    "0404007"
+  ],
+  "locality_mm": "မြေမိကုန်း ရပ်ကွက်",
+  "locality_en": "Myay Mi Kone Quarter",
+  "township_en": "Salin Township",
+  "township_mm": "စလင်း မြို့နယ်",
+  "township_public_id": "e56e0039-0795-4131-8298-43d0fc96bbc4",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

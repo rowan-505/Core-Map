@@ -1,0 +1,21 @@
+{
+  "group_id": "2df16c77221b",
+  "postal_codes": [
+    "1702201"
+  ],
+  "locality_mm": "နမ့်ဆော် ကျေးရွာအုပ်စု",
+  "locality_en": "Nam Hsaw Village Tract",
+  "township_en": "Mongkhet Township",
+  "township_mm": "မိုင်းခတ် မြို့နယ်",
+  "township_public_id": "946c6529-d6ec-414d-ba51-0a494d775522",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

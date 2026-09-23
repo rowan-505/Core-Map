@@ -1,0 +1,21 @@
+{
+  "group_id": "2a324b5209da",
+  "postal_codes": [
+    "1609224"
+  ],
+  "locality_mm": "နမ့်မြဲကချင် ကျေးရွာအုပ်စု",
+  "locality_en": "Nam Mye Kachin Village Tract",
+  "township_en": "Muse Township",
+  "township_mm": "မူဆယ် မြို့နယ်",
+  "township_public_id": "3cfd5b12-9bbb-485c-94ac-35016a790171",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

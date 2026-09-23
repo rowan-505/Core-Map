@@ -1,0 +1,67 @@
+{
+  "group_id": "b499eed2cb47",
+  "postal_codes": [
+    "1204245"
+  ],
+  "locality_mm": "ဈေးမသွယ် (အောက်) ကျေးရွာအုပ်စု",
+  "locality_en": "Zay Ma Thwei (Upper) Village Tract",
+  "township_en": "Thaton Township",
+  "township_mm": "သထုံ မြို့နယ်",
+  "township_public_id": "85b93da2-27e7-4d45-8e83-8a3539776f8f",
+  "expected_locality_type": "village_tract",
+  "candidates": [
+    {
+      "core_id": "16138",
+      "public_id": "9bb0d6de-26dc-490a-b989-bfb043ec0dfb",
+      "type": "village_tract",
+      "parent_public_id": "85b93da2-27e7-4d45-8e83-8a3539776f8f",
+      "name_mm": "ဈေးမသွယ် (အောက်)",
+      "name_en": "Zay Ma Thwei (Lower)",
+      "aliases_mm": [],
+      "aliases_en": []
+    },
+    {
+      "core_id": "16139",
+      "public_id": "270e6e24-8e4a-4db5-b8bf-e872a59717b3",
+      "type": "village_tract",
+      "parent_public_id": "85b93da2-27e7-4d45-8e83-8a3539776f8f",
+      "name_mm": "ဈေးမသွယ် (အထက်)",
+      "name_en": "Zay Ma Thwei (Upper)",
+      "aliases_mm": [],
+      "aliases_en": []
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR011007046",
+      "name_en": "Zay Ma Thwei (Lower)",
+      "name_my": "ဈေးမသွယ် (အောက်)",
+      "norm_en": "zaymathweilower",
+      "norm_my": "ဈေးမသွယ်အောက်",
+      "ts_pcode": "MMR011007",
+      "ts_name": "Thaton",
+      "source_row": 8497,
+      "source_file": "village_tract_boundary_Mon_v94.zip:mmr_mon_polbnda_adm4_unicef_mimu_250k.shp"
+    },
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR011007045",
+      "name_en": "Zay Ma Thwei (Upper)",
+      "name_my": "ဈေးမသွယ် (အထက်)",
+      "norm_en": "zaymathweiupper",
+      "norm_my": "ဈေးမသွယ်အထက်",
+      "ts_pcode": "MMR011007",
+      "ts_name": "Thaton",
+      "source_row": 8498,
+      "source_file": "village_tract_boundary_Mon_v94.zip:mmr_mon_polbnda_adm4_unicef_mimu_250k.shp"
+    }
+  ],
+  "name_evidence": "conflict_mm_vs_en",
+  "recommendation": "source_error",
+  "review_decision": "source_error",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "inconsistent bilingual postal row: MY→9bb0d6de-26dc-490a-b989-bfb043ec0dfb (ဈေးမသွယ် (အောက်)/Zay Ma Thwei (Lower)) but EN→270e6e24-8e4a-4db5-b8bf-e872a59717b3 (ဈေးမသွယ် (အထက်)/Zay Ma Thwei (Upper))"
+}

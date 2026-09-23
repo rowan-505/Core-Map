@@ -1,0 +1,21 @@
+{
+  "group_id": "b5d4df9eabd8",
+  "postal_codes": [
+    "1137001"
+  ],
+  "locality_mm": "အောင်မင်္ဂလာ ရပ်ကွက်",
+  "locality_en": "Aung Min Ga Lar Quarter",
+  "township_en": "Hlegu Township",
+  "township_mm": "လှည်းကူး မြို့နယ်",
+  "township_public_id": "1e3bc9ba-d0f3-4a7b-bf4f-8f1f931fafe5",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

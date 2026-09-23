@@ -1,0 +1,59 @@
+{
+  "group_id": "b00e2592722a",
+  "postal_codes": [
+    "0222003"
+  ],
+  "locality_mm": "မဟာမြိုင် ရပ်ကွက်",
+  "locality_en": "Ma Har Myaing Quarter",
+  "township_en": "Taze Township",
+  "township_mm": "တန့်ဆည် မြို့နယ်",
+  "township_public_id": "0c37fbaa-de5f-444d-ab2a-ab13e6524ed7",
+  "expected_locality_type": "ward",
+  "candidates": [
+    {
+      "core_id": "6794",
+      "public_id": "78361f3d-1c68-4771-9960-71409026dbc6",
+      "type": "ward",
+      "parent_public_id": "0c37fbaa-de5f-444d-ab2a-ab13e6524ed7",
+      "name_mm": "မဟာမြိုင်ရပ်ကွက်",
+      "name_en": "",
+      "aliases_mm": [],
+      "aliases_en": [
+        "Ma Har Myaing Ward"
+      ]
+    },
+    {
+      "core_id": "6797",
+      "public_id": "30309448-fabf-4601-ae5c-48a8ed285394",
+      "type": "ward",
+      "parent_public_id": "0c37fbaa-de5f-444d-ab2a-ab13e6524ed7",
+      "name_mm": "မဟာမြိုင်ရပ်ကွက်",
+      "name_en": "",
+      "aliases_mm": [],
+      "aliases_en": [
+        "Ma Har Myaing Ward"
+      ]
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR005011701503",
+      "name_en": "Ma Har Myaing Ward",
+      "name_my": "မဟာမြိုင်ရပ်ကွက်",
+      "norm_en": "maharmyaing",
+      "norm_my": "မဟာမြိုင်",
+      "ts_pcode": "MMR005011",
+      "ts_name": "Taze",
+      "source_row": 1611,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    }
+  ],
+  "name_evidence": "multiple_candidates",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "multiple CoreMap candidates; cannot auto-match without unique bilingual proof"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "a3f6b25a9a8b",
+  "postal_codes": [
+    "0805233"
+  ],
+  "locality_mm": "ထီးသပြု ကျေးရွာအုပ်စု",
+  "locality_en": "Htee Tha Pyu Village Tract",
+  "township_en": "Shwegyin Township",
+  "township_mm": "ရွှေကျင် မြို့နယ်",
+  "township_public_id": "621f4278-37c9-4248-95f9-3359b576560a",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

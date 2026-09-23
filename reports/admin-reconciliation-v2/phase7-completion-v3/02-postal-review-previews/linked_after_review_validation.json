@@ -1,0 +1,113 @@
+{
+  "generated_at": "2026-09-21T16:42:21Z",
+  "input_count": 19,
+  "valid_count": 5,
+  "invalid_count": 14,
+  "valid_postal_codes": [
+    "0605204",
+    "1006280",
+    "1605227",
+    "1605234",
+    "1609250"
+  ],
+  "invalid": [
+    {
+      "postal_code": "0226253",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "66289506-9513-4a50-8bb4-1abde9fa123d",
+      "locality_en": "Tei Pin Village Tract",
+      "locality_mm": "တယ်ပင် ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "0226272",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "66289506-9513-4a50-8bb4-1abde9fa123d",
+      "locality_en": "Tei Pin Village Tract",
+      "locality_mm": "တည်ပင် ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "0704256",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "7d141387-6ece-450f-87a3-ca2a613277c3",
+      "locality_en": "Nga Tauk Tu Chay Village Tract",
+      "locality_mm": "ငတောက်တူကြီး ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "0704258",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "7d141387-6ece-450f-87a3-ca2a613277c3",
+      "locality_en": "Nga Tauk Tu Gyi Village Tract",
+      "locality_mm": "ငတောက်တူချေ ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "0710217",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "b138e1b2-f276-4392-bae5-95042af8c640",
+      "locality_en": "Kone Baung Village Tract",
+      "locality_mm": "ကုန်ဘောင် ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "0710276",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "b138e1b2-f276-4392-bae5-95042af8c640",
+      "locality_en": "Kon Baung Village Tract",
+      "locality_mm": "ကုန်ဘောင် ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "1004201",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "98f46372-8ff3-4b6e-9e78-7c1853b21ab1",
+      "locality_en": "ha Pyay Kone Village Tract",
+      "locality_mm": "သပြေကုန်း ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "1004238",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "98f46372-8ff3-4b6e-9e78-7c1853b21ab1",
+      "locality_en": "Tha Pyay Kone (2)/ Tha Pyay Kone Village Tract",
+      "locality_mm": "သပြေကုန်း ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "1134216",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "66d91f8e-2e34-43b7-8d9d-db72b1a79a08",
+      "locality_en": "Taung Kone 1 Village Tract",
+      "locality_mm": "တောင်ကုန်း ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "1134241",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "66d91f8e-2e34-43b7-8d9d-db72b1a79a08",
+      "locality_en": "Taung Kone 2 Village Tract",
+      "locality_mm": "တောင်ကုန်း ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "1204244",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "270e6e24-8e4a-4db5-b8bf-e872a59717b3",
+      "locality_en": "Zay Ma Thwei (Lower) Village Tract",
+      "locality_mm": "ဈေးမသွယ် (အထက်) ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "1204245",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "270e6e24-8e4a-4db5-b8bf-e872a59717b3",
+      "locality_en": "Zay Ma Thwei (Upper) Village Tract",
+      "locality_mm": "ဈေးမသွယ် (အောက်) ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "1614242",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "a0daa25f-dfc4-401c-b09f-70a9d1f09ef7",
+      "locality_en": "Nar Lay Village Tract",
+      "locality_mm": "နားလေ (လီ) ကျေးရွာအုပ်စု"
+    },
+    {
+      "postal_code": "1614250",
+      "note": "shared public_id across distinct locality norms",
+      "public_id": "a0daa25f-dfc4-401c-b09f-70a9d1f09ef7",
+      "locality_en": "Nar Lay (Li) Village Tract",
+      "locality_mm": "နားလေ ကျေးရွာအုပ်စု"
+    }
+  ]
+}

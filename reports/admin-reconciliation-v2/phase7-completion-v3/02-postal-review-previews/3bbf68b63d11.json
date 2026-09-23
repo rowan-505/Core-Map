@@ -1,0 +1,21 @@
+{
+  "group_id": "3bbf68b63d11",
+  "postal_codes": [
+    "0205003"
+  ],
+  "locality_mm": "ခိုပဲဝ ရပ်ကွက်",
+  "locality_en": "Hko Pe Wa Quarter",
+  "township_en": "Homalin Township",
+  "township_mm": "ဟုမ္မလင်း မြို့နယ်",
+  "township_public_id": "568658f9-06a6-48b5-8258-23c1733ad239",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

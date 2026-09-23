@@ -1,0 +1,21 @@
+{
+  "group_id": "4ce23ccf6b5b",
+  "postal_codes": [
+    "0621205"
+  ],
+  "locality_mm": "လိုက်ကမ် ကျေးရွာအုပ်စု",
+  "locality_en": "Laik Kam Village Tract",
+  "township_en": "Kunhing Township",
+  "township_mm": "ကွန်ဟိန်း မြို့နယ်",
+  "township_public_id": "caa5fed0-b25b-4784-8fd5-ff2b22ba5fb8",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

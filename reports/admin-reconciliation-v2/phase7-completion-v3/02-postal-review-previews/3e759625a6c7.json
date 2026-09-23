@@ -1,0 +1,57 @@
+{
+  "group_id": "3e759625a6c7",
+  "postal_codes": [
+    "0710217"
+  ],
+  "locality_mm": "ကုန်ဘောင် ကျေးရွာအုပ်စု",
+  "locality_en": "Kone Baung Village Tract",
+  "township_en": "Mrauk-U Township",
+  "township_mm": "မြောက်ဦး မြို့နယ်",
+  "township_public_id": "9507bdfe-ed00-46b7-9f9e-e4ec83debe07",
+  "expected_locality_type": "village_tract",
+  "candidates": [
+    {
+      "core_id": "16872",
+      "public_id": "f0b80097-d1b1-48df-b2cb-7a6f9449c11f",
+      "type": "village_tract",
+      "parent_public_id": "9507bdfe-ed00-46b7-9f9e-e4ec83debe07",
+      "name_mm": "ကုန်ဘောင်",
+      "name_en": "Kone Baung",
+      "aliases_mm": [],
+      "aliases_en": []
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR012003018",
+      "name_en": "Kon Baung",
+      "name_my": "ကုန်ဘောင်",
+      "norm_en": "konbaung",
+      "norm_my": "ကုန်ဘောင်",
+      "ts_pcode": "MMR012003",
+      "ts_name": "Mrauk-U",
+      "source_row": 9231,
+      "source_file": "village_tract_boundary_Rakhine_v94.zip:mmr_rke_polbnda_adm4_mimu_who_250k.shp"
+    },
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR012003077",
+      "name_en": "Kone Baung",
+      "name_my": "ကုန်ဘောင်",
+      "norm_en": "konebaung",
+      "norm_my": "ကုန်ဘောင်",
+      "ts_pcode": "MMR012003",
+      "ts_name": "Mrauk-U",
+      "source_row": 9232,
+      "source_file": "village_tract_boundary_Rakhine_v94.zip:mmr_rke_polbnda_adm4_mimu_who_250k.shp"
+    }
+  ],
+  "name_evidence": "unique_exact_bilingual",
+  "recommendation": "link_existing",
+  "review_decision": "link_existing",
+  "selected_admin_public_id": "f0b80097-d1b1-48df-b2cb-7a6f9449c11f",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "unique exact bilingual identity → f0b80097-d1b1-48df-b2cb-7a6f9449c11f"
+}

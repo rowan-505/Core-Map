@@ -52,7 +52,17 @@ async function withTourismApp(
     try {
         await app.register(rateLimit, { global: false });
         await app.register(authPlugin);
-        await app.register(tourismRoutes, { service: tourismService });
+        await app.register(tourismRoutes, {
+            service: tourismService,
+            visitorService: {
+                listPublicFoods: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+                listPublicGuides: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+                listPublicAdvisories: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+            } as unknown as import("./tourism.visitor.service.js").TourismVisitorService,
+            researchService: {
+                list: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+            } as unknown as import("./tourism.research.service.js").TourismResearchService,
+        });
         await app.register(placeReviewsRoutes, { service: placeReviewsService });
         await app.ready();
 

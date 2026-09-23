@@ -1,0 +1,21 @@
+{
+  "group_id": "20e7b32c6f87",
+  "postal_codes": [
+    "0801213"
+  ],
+  "locality_mm": "ဘုရားကြီး ကျေးရွာအုပ်စု",
+  "locality_en": "Hpa Yar Gyi Village Tract",
+  "township_en": "Bago Township",
+  "township_mm": "ပဲခူး မြို့နယ်",
+  "township_public_id": "ea329457-de24-49f8-84fe-a2012f2a6b4a",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

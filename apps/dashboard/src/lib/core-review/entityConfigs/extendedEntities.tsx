@@ -534,10 +534,10 @@ export const ADMIN_AREAS_ENTITY_CONFIG = baseWriteConfig<AdminAreaDetail>({
     createDescription: "Draw the admin boundary polygon, then save.",
     editDescription: (detail) => `public_id: ${detail.publicId}`,
     formNotice: (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-            {/* TODO: Validate child geometry is inside/intersects parent when backend endpoint exists. */}
-            Parent/child geometry validation is not wired yet — confirm boundaries manually until the API supports
-            topology checks.
+        <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-950">
+            Use Neighbours / Labels / Parent boundary and Check geometry on the map to review overlaps
+            and parent containment. Ordinary gaps are not treated as fatal errors. Generic names only
+            warn — they are not changed automatically.
         </p>
     ),
 });

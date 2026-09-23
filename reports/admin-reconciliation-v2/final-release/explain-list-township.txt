@@ -1,0 +1,21 @@
+                                                                            QUERY PLAN                                                                            
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=365.95..365.96 rows=1 width=8) (actual time=5.981..6.020 rows=1 loops=1)
+   Buffers: shared hit=226
+   ->  Nested Loop  (cost=0.28..365.05 rows=360 width=0) (actual time=3.656..4.603 rows=364 loops=1)
+         Buffers: shared hit=226
+         ->  Seq Scan on ref_admin_levels al  (cost=0.00..1.12 rows=1 width=8) (actual time=3.226..3.231 rows=1 loops=1)
+               Filter: (lower(btrim(code)) = 'township'::text)
+               Rows Removed by Filter: 6
+               Buffers: shared hit=1
+         ->  Index Scan using core_admin_areas_level_idx on core_admin_areas a  (cost=0.28..360.33 rows=360 width=16) (actual time=0.152..1.052 rows=364 loops=1)
+               Index Cond: (admin_level_id = al.id)
+               Filter: (deleted_at IS NULL)
+               Rows Removed by Filter: 2
+               Buffers: shared hit=225
+ Planning:
+   Buffers: shared hit=618
+ Planning Time: 31.290 ms
+ Execution Time: 9.352 ms
+(17 rows)
+

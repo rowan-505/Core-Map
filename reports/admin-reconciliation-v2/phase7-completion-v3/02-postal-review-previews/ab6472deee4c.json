@@ -1,0 +1,21 @@
+{
+  "group_id": "ab6472deee4c",
+  "postal_codes": [
+    "1803241"
+  ],
+  "locality_mm": "ညောင်ကျိုး ကျေးရွာအုပ်စု",
+  "locality_en": "Nyaung Kyoe Village Tract",
+  "township_en": "Padaung Township",
+  "township_mm": "ပန်းတောင်း မြို့နယ်",
+  "township_public_id": "a9ab83ec-ebee-4484-80b9-b8b829c4b038",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "e59d08f8990c",
+  "postal_codes": [
+    "1709001"
+  ],
+  "locality_mm": "ဈေးတန်း ရပ်ကွက်",
+  "locality_en": "Zay Tan Quarter",
+  "township_en": "Monghpyak Township",
+  "township_mm": "မိုင်းဖြတ် မြို့နယ်",
+  "township_public_id": "5a05af55-94a0-4164-b72b-4e1a0d76fee5",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

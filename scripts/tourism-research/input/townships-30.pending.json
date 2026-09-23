@@ -1,0 +1,4 @@
+{
+  "notes": "Placeholder for the final 30-township launch list. Replace with exactly 30 canonical CoreMap township public_ids after pilot PASS. Keep research_status pending via empty state.json.",
+  "townships": []
+}

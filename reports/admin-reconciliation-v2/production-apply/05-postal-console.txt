@@ -1,0 +1,3 @@
+Wrote reports/admin-reconciliation-v2/production-apply/postal (apply)
+Planned 17297 status={'linked_local_area': 1638, 'linked_township_only': 12298, 'unmatched': 3361}
+DB rows=17297 rejected=2

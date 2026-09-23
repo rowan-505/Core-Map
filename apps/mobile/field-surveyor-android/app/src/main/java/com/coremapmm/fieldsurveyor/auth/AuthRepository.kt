@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -45,6 +46,24 @@ class AuthRepository(
                 return existing.accessToken
             }
             return rotateRefresh(existing.refreshToken)
+        }
+    }
+
+    /**
+     * Blocking refresh for OkHttp [okhttp3.Authenticator]. Always rotates when a
+     * session exists (ignores local access TTL). Returns null if refresh fails;
+     * a 401 refresh clears credentials inside [rotateRefresh].
+     */
+    fun recoverAccessTokenBlocking(): String? {
+        return runBlocking {
+            mutex.withLock {
+                val existing = sessionFlow.value ?: return@withLock null
+                try {
+                    rotateRefresh(existing.refreshToken)
+                } catch (_: AuthException) {
+                    null
+                }
+            }
         }
     }
 

@@ -1,0 +1,507 @@
+region_en,township_en,linked_exact_local_area,linked_after_review,non_admin_postal_locality,missing_local_admin_identity,ambiguous_local_area,missing_township,rejected_source_error,total
+Ayeyarwady Region,Ahmar Town,0,0,0,0,0,4,0,4
+Ayeyarwady Region,Ahtaung Town,0,0,0,0,0,4,0,4
+Ayeyarwady Region,Ahthoke Town,5,0,0,0,0,0,0,5
+Ayeyarwady Region,Batye Town,0,0,0,2,0,0,0,2
+Ayeyarwady Region,Bogale Township,10,0,0,76,0,0,0,86
+Ayeyarwady Region,Chaung Thar Town,0,0,0,0,0,3,0,3
+Ayeyarwady Region,Danubyu Township,18,0,0,63,0,0,0,81
+Ayeyarwady Region,Dedaye Township,3,0,0,90,0,0,0,93
+Ayeyarwady Region,Du Yar Town,5,0,0,0,0,0,0,5
+Ayeyarwady Region,Einme Township,5,0,0,98,0,0,0,103
+Ayeyarwady Region,Hainggyikyun Town,0,0,0,0,0,3,0,3
+Ayeyarwady Region,Hinthada Township,18,0,0,106,0,0,0,124
+Ayeyarwady Region,Htoogyi Town,0,0,0,0,0,5,0,5
+Ayeyarwady Region,In Pin Town,0,0,0,0,0,4,0,4
+Ayeyarwady Region,Ingapu Township,3,0,0,74,0,0,0,77
+Ayeyarwady Region,Kanaung Town,0,0,0,0,0,5,0,5
+Ayeyarwady Region,Kangyidaunt Township,7,0,0,73,0,0,0,80
+Ayeyarwady Region,Kyaiklat Township,6,0,0,87,0,0,0,93
+Ayeyarwady Region,Kyangin Township,0,0,0,33,0,0,0,33
+Ayeyarwady Region,Kyaunggon Township,0,0,0,68,0,0,0,68
+Ayeyarwady Region,Kyonmangae Town,0,0,0,0,0,5,0,5
+Ayeyarwady Region,Kyonpyaw Town Township,4,0,0,90,0,0,0,94
+Ayeyarwady Region,Labutta (3) Mile Town,0,0,0,0,0,4,0,4
+Ayeyarwady Region,Labutta Township,10,0,0,65,0,0,0,75
+Ayeyarwady Region,Lemyethna Township,5,0,0,43,0,0,0,48
+Ayeyarwady Region,Maubin Township,0,0,0,88,0,0,0,88
+Ayeyarwady Region,Mawlamyinegyun Township,12,1,0,108,0,0,0,121
+Ayeyarwady Region,Me Za Li Kone Town,0,0,0,0,0,4,0,4
+Ayeyarwady Region,Myanaung Township,6,0,0,58,0,0,0,64
+Ayeyarwady Region,Myaungmya Township,0,0,0,114,0,0,0,114
+Ayeyarwady Region,Ngapudaw Township,0,0,0,87,0,0,0,87
+Ayeyarwady Region,Ngathaingchaung Town,5,0,0,0,1,0,0,6
+Ayeyarwady Region,Ngayokekaung Town,0,0,0,0,0,2,0,2
+Ayeyarwady Region,Ngwesaung Town,0,0,0,0,0,4,0,4
+Ayeyarwady Region,Nyaungdon Township,0,0,0,54,0,0,0,54
+Ayeyarwady Region,Pantanaw Township,1,0,0,55,0,0,0,56
+Ayeyarwady Region,Pathein Township,14,0,0,54,0,0,0,68
+Ayeyarwady Region,Pyapon Township,19,0,0,52,0,0,0,71
+Ayeyarwady Region,Pyinsalu Town,0,0,0,0,0,3,0,3
+Ayeyarwady Region,Shwethaungyan Town,0,0,0,0,0,3,0,3
+Ayeyarwady Region,Ta Loke Htaw Town,0,0,0,0,0,5,0,5
+Ayeyarwady Region,Thabaung Township,0,0,0,70,0,0,0,70
+Ayeyarwady Region,Wakema Township,0,0,0,142,0,0,0,142
+Ayeyarwady Region,Yegyi Township,4,0,0,88,1,0,0,93
+Ayeyarwady Region,Zalun Township,5,0,0,66,0,0,0,71
+Bago Region (East),Bago Township,0,0,0,100,0,0,0,100
+Bago Region (East),Daik-U Township,9,0,0,44,0,0,0,53
+Bago Region (East),Hpa Do Town,5,0,0,0,0,0,0,5
+Bago Region (East),Hpayargyi Town,0,0,0,0,0,3,0,3
+Bago Region (East),Hswar Town,0,0,0,0,0,2,0,2
+Bago Region (East),Htantabin Township,0,0,0,35,0,0,0,35
+Bago Region (East),Inntakaw Town,0,0,0,0,0,6,0,6
+Bago Region (East),Kanyutkwin Town,0,0,0,0,0,4,0,4
+Bago Region (East),Kawa Township,6,0,0,92,0,0,0,98
+Bago Region (East),Kaytumati Town,0,0,0,0,0,4,0,4
+Bago Region (East),Kyaukkyi Township,0,0,0,53,0,0,0,53
+Bago Region (East),Kyauktaga Township,5,0,0,47,0,0,0,52
+Bago Region (East),Kywe Pwe Town,0,0,0,0,0,5,0,5
+Bago Region (East),Madauk Town,0,0,0,0,0,2,0,2
+Bago Region (East),Myo Hla Town,0,0,0,0,0,5,0,5
+Bago Region (East),Nyaunglebin Township,5,0,0,49,0,0,0,54
+Bago Region (East),Oktwin Township,0,0,0,47,0,0,0,47
+Bago Region (East),Peinzalok Town,0,0,0,0,0,2,0,2
+Bago Region (East),Penwegon Town,8,0,0,0,0,0,0,8
+Bago Region (East),Phyu Township,0,0,0,71,0,0,0,71
+Bago Region (East),Pyuntasa Town,0,0,0,0,0,4,0,4
+Bago Region (East),Shwegyin Township,7,0,0,61,0,0,0,68
+Bago Region (East),Taungoo Township,22,0,0,38,0,0,0,60
+Bago Region (East),Thanatpin Township,6,0,0,60,0,0,0,66
+Bago Region (East),Thetkala Town,0,0,0,0,0,6,0,6
+Bago Region (East),Waw Township,6,0,0,58,0,0,0,64
+Bago Region (East),Yae Ni Town,0,0,0,0,0,4,0,4
+Bago Region (East),Yedashe Township,0,0,0,58,0,0,0,58
+Bago Region (East),Zayyawadi Town,0,0,0,0,0,4,0,4
+Bago Region (West),Gyobingauk Township,0,0,0,59,0,0,0,59
+Bago Region (West),Inn Ma Town,5,0,0,0,0,0,0,5
+Bago Region (West),Letpadan Township,0,0,0,53,0,0,0,53
+Bago Region (West),Minhla Township,0,0,0,63,0,0,0,63
+Bago Region (West),Monyo Township,0,0,0,42,0,0,0,42
+Bago Region (West),Nattalin Township,0,0,0,82,0,0,0,82
+Bago Region (West),Oakshitpin Town,3,0,0,0,0,0,0,3
+Bago Region (West),Oe Thei Kone Town,0,0,0,0,0,4,0,4
+Bago Region (West),Okpho Township,0,0,0,60,0,0,0,60
+Bago Region (West),Padaung Township,5,0,0,42,0,0,0,47
+Bago Region (West),Paukkhaung Township,5,0,0,53,0,0,0,58
+Bago Region (West),Paungdale Town,0,0,0,0,0,4,0,4
+Bago Region (West),Paungde Township,0,0,0,56,0,0,0,56
+Bago Region (West),Puteekone Town,2,0,0,0,0,0,0,2
+Bago Region (West),Pyay Township,0,0,0,66,0,0,0,66
+Bago Region (West),Shwedaung Township,3,0,0,48,0,0,0,51
+Bago Region (West),Sin Mee Swea Town,0,0,0,0,0,3,0,3
+Bago Region (West),Sit Kwin Town,0,0,0,0,0,4,0,4
+Bago Region (West),Tar Pun Town,0,0,0,0,0,3,0,3
+Bago Region (West),Thayarwady Township,8,0,0,48,0,0,0,56
+Bago Region (West),Thegon Township,3,0,0,52,0,0,0,55
+Bago Region (West),Thonse Town,0,0,0,0,0,13,0,13
+Bago Region (West),Zigon Township,0,0,0,34,0,0,0,34
+Chin State,Cikha Town,0,0,0,0,0,2,0,2
+Chin State,Falam Township,4,0,0,90,0,0,0,94
+Chin State,Hakha Township,0,0,0,38,0,0,0,38
+Chin State,Hnaring Town,0,0,0,0,0,2,0,2
+Chin State,Kanpetlet Township,0,0,0,28,0,0,0,28
+Chin State,Khaikam Town,0,0,0,0,0,4,0,4
+Chin State,Kyin Dway Town,0,0,0,0,0,4,0,4
+Chin State,Lalengpi Town,0,0,0,0,0,2,0,2
+Chin State,M'kuiimnu Town,0,0,0,0,0,4,0,4
+Chin State,Matupi Township,4,0,0,63,0,0,0,67
+Chin State,Mindat Township,4,0,0,46,0,0,0,50
+Chin State,Paletwa Township,3,0,0,98,0,0,0,101
+Chin State,Rezua Town,0,0,0,0,0,4,0,4
+Chin State,Rihkhawdar Town,0,0,0,0,0,2,0,2
+Chin State,Samee Town,0,0,0,0,0,3,0,3
+Chin State,Surkhua Town,0,0,0,0,0,2,0,2
+Chin State,Tedim Township,4,0,0,55,0,0,0,59
+Chin State,Thantlang Township,0,0,0,40,0,0,0,40
+Chin State,Tonzang Township,0,0,0,33,0,0,0,33
+Chin State,Webula Town,0,0,0,0,0,4,0,4
+Kachin State,Bhamo Township,0,0,0,61,0,0,0,61
+Kachin State,Chipwi Township,0,0,0,46,0,0,0,46
+Kachin State,Dawthponeyan Town,0,0,0,0,0,3,0,3
+Kachin State,Hopin Town,0,0,0,0,0,4,0,4
+Kachin State,Hpakant Township,0,0,0,20,0,0,0,20
+Kachin State,Injangyang Township,0,0,0,67,0,0,0,67
+Kachin State,Inn Taw Gyi Town,0,0,0,0,0,4,0,4
+Kachin State,Kamaing Town,0,0,0,0,0,1,0,1
+Kachin State,Kan Paik Ti Town,0,0,0,0,0,3,0,3
+Kachin State,Khaunglanhpu Township,0,0,0,28,0,0,0,28
+Kachin State,Lwegel Town,0,0,0,0,0,7,0,7
+Kachin State,Machanbaw Township,4,0,0,27,0,0,0,31
+Kachin State,Mansi Township,4,0,0,40,0,0,0,44
+Kachin State,Mogaung Township,11,1,0,39,0,0,0,51
+Kachin State,Mohnyin Township,0,0,0,44,0,0,0,44
+Kachin State,Momauk Township,3,0,0,53,0,0,0,56
+Kachin State,Myitkyina Township,29,0,0,29,0,0,0,58
+Kachin State,Myo Hla Town,0,0,0,0,0,4,0,4
+Kachin State,Nam Mar Town,0,0,0,0,0,5,0,5
+Kachin State,Nam Mun Town,0,0,0,0,0,4,0,4
+Kachin State,Nammatee Town,0,0,0,0,0,4,0,4
+Kachin State,Nawngmun Township,0,0,0,18,0,0,0,18
+Kachin State,Pang War Town,0,0,0,0,0,3,0,3
+Kachin State,Pannandin Town,0,0,0,0,0,1,0,1
+Kachin State,Puta-O Township,0,0,0,25,0,0,0,25
+Kachin State,Sadung Town,0,0,0,0,0,5,0,5
+Kachin State,Shin Bway Yang Town,0,0,0,0,0,4,0,4
+Kachin State,Shwegu Township,0,0,0,41,0,0,0,41
+Kachin State,Sinbo Town,0,0,0,0,0,3,0,3
+Kachin State,Sumprabum Township,0,0,0,44,0,0,0,44
+Kachin State,Tanai Township,0,0,0,24,0,0,0,24
+Kachin State,Tsawlaw Township,0,0,0,26,0,0,0,26
+Kachin State,Waingmaw Township,5,0,0,40,0,0,0,45
+Kayah state,Bawlake Township,0,0,0,11,0,0,0,11
+Kayah state,Demoso Township,0,0,0,27,0,0,0,27
+Kayah state,Hpasawng Township,2,0,0,8,0,0,0,10
+Kayah state,Hpruso Township,5,0,0,14,0,0,0,19
+Kayah state,Loikaw Township,0,0,0,32,0,0,0,32
+Kayah state,Loilen Lay Town,0,0,0,0,0,3,0,3
+Kayah state,Mese Township,2,0,0,6,0,0,0,8
+Kayah state,Nan Mei Khon Town,0,0,0,0,0,4,0,4
+Kayah state,Shadaw Township,4,0,0,4,0,0,0,8
+Kayah state,Ywarthit Town,0,0,0,0,0,2,0,2
+Kayin State,Baw Ga Li Town,0,0,0,0,0,4,0,4
+Kayin State,Hlaingbwe Township,0,0,0,76,0,0,0,76
+Kayin State,Hpa-An Township,10,0,0,91,0,0,0,101
+Kayin State,Hpapun Township,0,0,0,37,0,0,0,37
+Kayin State,Hpayarthonesu Town,0,0,0,0,0,4,0,4
+Kayin State,Kamarmaung Town,0,0,0,0,0,4,0,4
+Kayin State,Kawkareik Township,0,0,0,60,0,0,0,60
+Kayin State,Kyaikdon Town,0,0,0,0,0,6,0,6
+Kayin State,Kyainseikgyi Township,6,0,0,51,0,0,0,57
+Kayin State,Kyondoe Town,0,0,0,0,0,4,0,4
+Kayin State,Leik Tho Town,0,0,0,0,0,6,0,6
+Kayin State,Myawaddy Township,0,0,0,24,0,0,0,24
+Kayin State,Paingkyon Town,0,0,0,0,0,5,0,5
+Kayin State,Shan Ywar Thit Town,0,0,0,0,0,4,0,4
+Kayin State,Su Ka Li Town,0,0,0,0,0,1,0,1
+Kayin State,Thandaung Town,0,0,0,0,0,4,0,4
+Kayin State,Thandaunggyi Township,0,0,0,64,0,0,0,64
+Kayin State,Waw Lay Myaing (Waw Lay) Town,0,0,0,0,0,2,0,2
+Magway Region,Aunglan Township,11,0,0,90,0,0,0,101
+Magway Region,Chauk Township,0,0,0,66,0,0,0,66
+Magway Region,Gangaw Township,4,0,0,71,0,0,0,75
+Magway Region,Kamma (PKU) Town,0,0,0,0,0,12,0,12
+Magway Region,Kamma Township,4,0,0,52,0,0,0,56
+Magway Region,Kyaukhtu Town,0,0,0,0,0,3,0,3
+Magway Region,Kyaw Town,0,0,0,0,0,3,0,3
+Magway Region,Magway Township,7,0,0,71,0,0,0,78
+Magway Region,Minbu Township,0,0,0,71,0,0,0,71
+Magway Region,Mindon Township,4,0,0,72,0,0,0,76
+Magway Region,Minhla Township,0,5,0,64,0,0,0,69
+Magway Region,Myaing Township,3,0,0,81,0,0,0,84
+Magway Region,Myit Chay Town,0,0,0,0,0,8,0,8
+Magway Region,Myothit Township,5,0,0,47,0,0,0,52
+Magway Region,Natmauk Township,7,0,0,73,0,0,0,80
+Magway Region,Ngape Township,2,0,0,31,0,0,0,33
+Magway Region,Pakokku Township,0,0,0,70,0,0,0,70
+Magway Region,Pauk Township,0,0,0,75,0,0,0,75
+Magway Region,Pwintbyu Township,4,0,0,52,0,0,0,56
+Magway Region,Sa Lay Town,0,0,0,0,0,5,0,5
+Magway Region,Saku Town,0,0,0,0,0,3,0,3
+Magway Region,Salin Township,4,0,0,106,0,0,0,110
+Magway Region,Saw Township,2,0,0,63,0,0,0,65
+Magway Region,Seikphyu Township,0,0,0,47,0,0,0,47
+Magway Region,Sidoktaya Township,2,0,0,46,0,0,0,48
+Magway Region,Sinbaungwe Township,3,0,0,46,0,0,0,49
+Magway Region,Sinphyukyun Town,0,0,0,0,0,3,0,3
+Magway Region,Taungdwingyi Township,10,0,0,72,0,0,0,82
+Magway Region,Thayet Township,0,0,0,61,0,0,0,61
+Magway Region,Tilin Township,2,0,0,71,0,0,0,73
+Magway Region,Yenangyaung Township,0,0,0,43,0,0,0,43
+Magway Region,Yesagyo Township,8,0,0,81,0,0,0,89
+Mandalay Region,Amarapura Township,0,0,0,50,0,0,0,50
+Mandalay Region,Aungmyaythazan Township,19,0,0,0,0,0,0,19
+Mandalay Region,Bagan Town,0,0,0,0,0,6,0,6
+Mandalay Region,Chanayethazan Township,20,0,0,0,0,0,0,20
+Mandalay Region,Chanmyathazi Township,14,0,0,0,0,0,0,14
+Mandalay Region,Ku Me Town,0,0,0,0,0,5,0,5
+Mandalay Region,Kyaukpadaung Township,12,0,0,109,0,0,0,121
+Mandalay Region,Kyaukse Township,0,0,0,97,0,0,0,97
+Mandalay Region,Madaya Township,5,0,0,83,0,0,0,88
+Mandalay Region,Mahaaungmyay Township,17,0,0,1,0,0,0,18
+Mandalay Region,Mahlaing Township,4,0,0,52,0,0,0,56
+Mandalay Region,Meiktila Township,0,0,0,72,0,0,0,72
+Mandalay Region,Mogoke Township,0,0,0,35,0,0,0,35
+Mandalay Region,Myingyan Township,4,0,0,82,0,0,0,86
+Mandalay Region,Myitnge Town,0,0,0,0,0,1,0,1
+Mandalay Region,Myittha Township,6,0,0,82,0,0,0,88
+Mandalay Region,Natogyi Township,8,0,0,64,0,0,0,72
+Mandalay Region,Ngathayauk Town,0,0,0,0,0,4,0,4
+Mandalay Region,Ngazun Township,0,0,0,48,0,0,0,48
+Mandalay Region,Nyaung-U Township,0,0,0,83,0,0,0,83
+Mandalay Region,Patheingyi Township,0,0,0,59,0,0,0,59
+Mandalay Region,Pyawbwe Township,9,0,0,75,0,0,0,84
+Mandalay Region,Pyigyitagon Township,15,0,0,3,0,0,0,18
+Mandalay Region,Pyinoolwin Township,0,0,0,59,0,0,0,59
+Mandalay Region,Si Mee Khon Town,4,0,0,0,0,0,0,4
+Mandalay Region,Singu Township,0,0,0,39,0,0,0,39
+Mandalay Region,Sintgaing Township,0,0,0,53,0,0,0,53
+Mandalay Region,Tada-U Township,0,0,0,64,0,0,0,64
+Mandalay Region,Takaung Town,0,0,0,0,0,3,0,3
+Mandalay Region,Taungtha Township,5,0,0,78,0,0,0,83
+Mandalay Region,Thabeikkyin Township,0,0,0,24,0,0,0,24
+Mandalay Region,Thazi Township,7,0,0,80,0,0,0,87
+Mandalay Region,Wundwin Township,6,0,0,69,0,0,0,75
+Mandalay Region,Yamethin Township,0,0,0,68,0,0,0,68
+Mon State,Bilin Township,5,0,0,51,0,0,0,56
+Mon State,Chaungzon Township,3,0,0,43,0,0,0,46
+Mon State,Kamarwet Town,0,0,0,0,0,5,0,5
+Mon State,Khawzar Town,0,0,0,0,0,2,0,2
+Mon State,Kyaikkhami Town,6,0,0,0,0,0,0,6
+Mon State,Kyaikmaraw Township,2,0,0,46,0,0,0,48
+Mon State,Kyaikto Township,6,0,0,36,0,0,0,42
+Mon State,Lamaing Town,0,0,0,0,0,3,0,3
+Mon State,Mawlamyine Township,30,0,0,18,0,0,0,48
+Mon State,Mudon Township,4,0,0,38,0,0,0,42
+Mon State,Paung Township,0,0,0,55,0,0,0,55
+Mon State,Thanbyuzayat Township,10,1,0,25,0,0,0,36
+Mon State,Thaton Township,5,0,0,50,0,0,0,55
+Mon State,Thein Za Yat Town,0,0,0,0,0,4,0,4
+Mon State,Thuwunnawady Town,0,0,0,0,0,3,0,3
+Mon State,Ye Township,9,0,0,30,0,0,0,39
+Mon State,Zinkyaik Town,0,0,0,0,0,4,0,4
+Naypyitaw Union Territory,Det Khi Na Thi Ri Township,1,0,0,9,0,0,0,10
+Naypyitaw Union Territory,Lewe Township,0,0,0,67,0,0,0,67
+Naypyitaw Union Territory,Oke Ta Ra Thi Ri Township,2,0,0,8,0,0,0,10
+Naypyitaw Union Territory,Poke Ba Thi Ri Township,9,0,0,26,0,0,0,35
+Naypyitaw Union Territory,Pyinmana Township,0,0,0,38,0,0,0,38
+Naypyitaw Union Territory,Tatkon Township,6,0,0,49,0,0,0,55
+Naypyitaw Union Territory,Za Bu Thi Ri Township,9,1,0,4,1,0,0,15
+Naypyitaw Union Territory,Zay Yar Thi Ri Township,0,0,0,18,0,0,0,18
+Rakhine State,Ann Township,6,1,0,31,0,0,0,38
+Rakhine State,Buthidaung Township,7,0,0,78,0,0,0,85
+Rakhine State,Gwa Township,3,0,0,33,0,0,0,36
+Rakhine State,Kanhtauntkyi Town,0,0,0,0,0,5,0,5
+Rakhine State,Kha Maung Seik Town,0,0,0,0,0,5,0,5
+Rakhine State,Kyaukpyu Township,0,0,0,71,0,0,0,71
+Rakhine State,Kyauktaw Township,0,0,0,84,0,0,0,84
+Rakhine State,Kyeintali Town,0,0,0,0,0,3,0,3
+Rakhine State,Lay Taung Town,0,0,0,0,0,5,0,5
+Rakhine State,Ma-Ei Town,0,0,0,0,0,4,0,4
+Rakhine State,Maungdaw Township,6,0,0,102,0,0,0,108
+Rakhine State,Minbya Township,3,0,0,67,0,0,0,70
+Rakhine State,Mrauk-U Township,7,0,0,96,0,0,0,103
+Rakhine State,Munaung Township,0,0,0,41,0,0,0,41
+Rakhine State,Myebon Township,0,0,0,68,0,0,0,68
+Rakhine State,Myin Hlut Town,0,0,0,0,0,8,0,8
+Rakhine State,Ngapali Town,0,0,0,0,0,5,0,5
+Rakhine State,Pauktaw Township,0,0,0,58,0,0,0,58
+Rakhine State,Ponnagyun Township,4,0,0,92,0,0,0,96
+Rakhine State,Ramree Township,6,0,0,51,0,0,0,57
+Rakhine State,Rathedaung Township,4,0,0,88,0,0,0,92
+Rakhine State,Sa Ne Town,0,0,0,0,0,5,0,5
+Rakhine State,Sittwe Township,30,1,0,29,0,0,0,60
+Rakhine State,Tan Hlwe Ywar Ma Town,0,0,0,0,0,6,0,6
+Rakhine State,Tat Taung Town,0,0,0,0,0,3,0,3
+Rakhine State,Taungpyoletwea Town,0,0,0,0,0,5,0,5
+Rakhine State,Thandwe Township,0,0,0,67,0,0,0,67
+Rakhine State,Toungup Township,0,0,0,57,0,0,0,57
+Sagaing Region,Ayadaw Township,0,0,0,41,0,0,0,41
+Sagaing Region,Banmauk Township,0,0,0,50,0,0,0,50
+Sagaing Region,Budalin Township,3,0,0,54,0,0,0,57
+Sagaing Region,Chaung-U Township,6,0,0,26,0,0,0,32
+Sagaing Region,Don Hee Town Town,0,0,0,0,0,3,0,3
+Sagaing Region,Hkamti Township,0,0,0,32,0,0,0,32
+Sagaing Region,Homalin Township,2,0,0,77,0,0,0,79
+Sagaing Region,Htan Par Kway Town,0,0,0,0,0,1,0,1
+Sagaing Region,Indaw Township,0,0,0,44,0,0,0,44
+Sagaing Region,Kale Township,0,0,0,60,0,0,0,60
+Sagaing Region,Kalewa Township,0,0,0,39,0,0,0,39
+Sagaing Region,Kanbalu Township,5,0,0,85,0,0,0,90
+Sagaing Region,Kani Township,4,0,0,44,0,0,0,48
+Sagaing Region,Katha Township,0,0,0,42,0,0,0,42
+Sagaing Region,Kawlin Township,8,0,0,46,0,0,0,54
+Sagaing Region,Khampat Town,0,0,0,0,0,5,0,5
+Sagaing Region,Khin-U Township,5,0,0,59,0,0,0,64
+Sagaing Region,Kyauk Myaung Town,0,0,0,0,0,4,0,4
+Sagaing Region,Kyunhla Township,0,0,0,38,0,0,0,38
+Sagaing Region,Lahe Township,0,0,0,40,0,0,0,40
+Sagaing Region,Lay Shi Township,2,0,0,22,0,0,0,24
+Sagaing Region,Maw Lu Town,0,0,0,0,0,6,0,6
+Sagaing Region,Mawlaik Township,0,0,0,30,0,0,0,30
+Sagaing Region,Mingin Township,0,0,0,64,0,0,0,64
+Sagaing Region,Mo Paing Lut Town,0,0,0,0,0,2,0,2
+Sagaing Region,Monywa Township,0,0,0,85,0,0,0,85
+Sagaing Region,Myaung Township,0,0,0,53,0,0,0,53
+Sagaing Region,Myinmu Township,4,0,0,48,0,0,0,52
+Sagaing Region,Myothit Town,0,0,0,3,0,0,0,3
+Sagaing Region,Nanyun Township,3,0,0,67,0,0,0,70
+Sagaing Region,Pale Township,2,0,0,59,0,0,0,61
+Sagaing Region,Pansaung Town,0,0,0,0,0,3,0,3
+Sagaing Region,Paungbyin Township,2,0,0,40,0,0,0,42
+Sagaing Region,Pinlebu Township,2,0,0,52,0,0,0,54
+Sagaing Region,Sagaing Township,20,0,0,80,0,0,0,100
+Sagaing Region,Saing Pyin Town,0,0,0,0,0,5,0,5
+Sagaing Region,Salingyi Township,3,0,0,39,0,0,0,42
+Sagaing Region,Sar Taung Town,0,0,0,0,0,11,0,11
+Sagaing Region,Shwe Pyi Aye Town,0,0,0,0,0,11,0,11
+Sagaing Region,Shwebo Township,0,0,0,83,0,0,0,83
+Sagaing Region,Sum Ma Rar Town,0,0,0,0,0,3,0,3
+Sagaing Region,Tabayin Township,2,0,0,56,0,0,0,58
+Sagaing Region,Tamu Township,4,0,0,22,0,0,0,26
+Sagaing Region,Taze Township,2,0,0,59,0,0,0,61
+Sagaing Region,Tigyaing Township,0,0,0,33,0,0,0,33
+Sagaing Region,Wetlet Township,3,0,0,69,0,0,0,72
+Sagaing Region,Wuntho Township,4,0,0,38,0,0,0,42
+Sagaing Region,Ye-U Township,5,0,0,62,0,0,0,67
+Sagaing Region,Yinmarbin Township,4,0,0,42,0,0,0,46
+Sagaing Region,Zee Kone Town,0,0,0,6,0,0,0,6
+Shan State (East),Hmone Hta Town,0,0,0,0,0,3,0,3
+Shan State (East),Ho Tawng (Ho Tao) Township,0,0,0,5,0,0,0,5
+Shan State (East),Kenglat Town,0,0,0,0,0,3,0,3
+Shan State (East),Kengtung Township,5,0,0,31,0,0,0,36
+Shan State (East),Mong Pawk Township,0,0,0,7,0,0,0,7
+Shan State (East),Monghpyak Township,0,0,0,25,0,0,0,25
+Shan State (East),Monghsat Township,0,0,0,33,0,0,0,33
+Shan State (East),Mongkhet Township,2,0,0,16,0,0,0,18
+Shan State (East),Mongkhoke Town,0,0,0,0,0,3,0,3
+Shan State (East),Mongla Township,0,0,0,11,0,0,0,11
+Shan State (East),Mongping Township,3,0,0,29,0,0,0,32
+Shan State (East),Mongton Township,0,0,0,20,0,0,0,20
+Shan State (East),Mongyang Township,11,0,0,15,0,0,0,26
+Shan State (East),Mongyawng Township,9,0,0,20,0,0,0,29
+Shan State (East),Mongyu Town,0,0,0,0,0,1,0,1
+Shan State (East),Ponparkyin Town,0,0,0,0,0,5,0,5
+Shan State (East),Tachileik Township,0,0,0,24,0,0,0,24
+Shan State (East),Tarlay Town,0,0,0,0,0,4,0,4
+Shan State (East),Tontar Town,0,0,0,0,0,4,0,4
+Shan State (North),Chinshwehaw Town,0,0,0,0,0,6,0,6
+Shan State (North),Hopang Township,10,0,0,54,0,0,0,64
+Shan State (North),Hseni Township,4,0,0,32,0,0,0,36
+Shan State (North),Hsipaw Township,11,0,0,67,0,0,0,78
+Shan State (North),Konkyan Township,3,0,0,33,0,0,0,36
+Shan State (North),Kunlong Township,6,0,0,25,0,0,0,31
+Shan State (North),Kutkai Township,8,0,0,73,0,0,0,81
+Shan State (North),Kyaukme Township,9,0,0,76,0,0,0,85
+Shan State (North),Lashio Township,0,0,0,90,0,0,0,90
+Shan State (North),Laukkaing Township,0,0,0,39,0,0,0,39
+Shan State (North),Mabein Township,4,0,0,20,0,0,0,24
+Shan State (North),Man Kan Town,0,0,0,0,0,3,0,3
+Shan State (North),Manhlyoe (Manhero) Town,0,0,0,0,0,3,0,3
+Shan State (North),Manton Township,3,0,0,29,0,0,0,32
+Shan State (North),Matman Township,0,0,0,30,0,0,0,30
+Shan State (North),Maw Hteik Town,0,0,0,0,0,3,0,3
+Shan State (North),Monekoe Town,0,0,0,0,0,7,0,7
+Shan State (North),Monglon Town,0,0,0,0,0,6,0,6
+Shan State (North),Mongmao Township,0,0,0,40,0,0,0,40
+Shan State (North),Mongmit Township,0,0,0,32,0,0,0,32
+Shan State (North),Mongngawt Town,0,0,0,0,0,5,0,5
+Shan State (North),Mongyai Township,3,0,0,28,0,0,0,31
+Shan State (North),Muse Township,0,0,0,73,0,0,0,73
+Shan State (North),Nam Tit Town,0,0,0,5,0,0,0,5
+Shan State (North),Namhkan Township,0,0,0,58,0,0,0,58
+Shan State (North),Namhsan Township,6,0,0,27,0,0,0,33
+Shan State (North),Namtu Township,2,0,0,24,0,0,0,26
+Shan State (North),Narphan Township,0,0,0,34,0,0,0,34
+Shan State (North),Nawnghkio Township,6,0,0,35,0,0,0,41
+Shan State (North),Pan Lon Town,0,0,0,8,0,0,0,8
+Shan State (North),Pang Hseng (Kyu Koke) Town,0,0,0,0,0,5,0,5
+Shan State (North),Pangsang (Panghkam) Township,0,0,0,88,0,0,0,88
+Shan State (North),Pangwaun Township,0,0,0,19,0,0,0,19
+Shan State (North),Tangyan Township,0,0,0,59,0,0,0,59
+Shan State (North),Tarmoenye Town,0,0,0,8,0,0,0,8
+Shan State (North),Wein Kawn Town,0,0,0,0,0,1,0,1
+Shan State (South),- | Pinlon Town,0,0,0,0,0,4,0,4
+Shan State (South),Aungpan Town,4,0,0,8,0,0,0,12
+Shan State (South),Ayetharyar Town,0,0,0,0,0,12,0,12
+Shan State (South),He Hoe Town,0,0,0,0,0,5,0,5
+Shan State (South),Homein Town,3,0,0,0,0,0,0,3
+Shan State (South),Hopong Township,6,0,0,22,0,0,0,28
+Shan State (South),Hsihseng Township,6,0,0,13,0,0,0,19
+Shan State (South),Intaw Town,0,0,0,0,0,6,0,6
+Shan State (South),Kalaw Township,11,0,0,26,0,0,0,37
+Shan State (South),Kar Li Town,0,0,0,0,0,6,0,6
+Shan State (South),Kengtawng Town,0,0,0,0,0,7,0,7
+Shan State (South),Kho Lam Town,0,0,0,0,0,6,0,6
+Shan State (South),Kunhing Township,5,0,0,14,0,0,0,19
+Shan State (South),Kyauktalonegyi Town,0,0,0,0,0,6,0,6
+Shan State (South),Kyethi Township,6,0,0,32,0,0,0,38
+Shan State (South),Laihka Township,4,0,0,19,0,0,0,23
+Shan State (South),Langkho Township,8,0,0,14,0,0,0,22
+Shan State (South),Lawksawk Township,8,0,0,18,0,0,0,26
+Shan State (South),Loilen Township,4,0,0,19,0,0,0,23
+Shan State (South),Mawkmai Township,7,0,0,8,0,0,0,15
+Shan State (South),Monghsu Township,4,0,0,17,0,0,0,21
+Shan State (South),Mongkaing Township,5,0,0,24,0,0,0,29
+Shan State (South),Mongnai Township,4,0,0,16,0,0,0,20
+Shan State (South),Mongnawng Town,5,0,0,0,0,0,0,5
+Shan State (South),Mongpan Township,5,0,0,11,0,0,0,16
+Shan State (South),Mongsan (Hmonesan) Town,0,0,0,0,0,3,0,3
+Shan State (South),Nang Pang Town,0,0,0,0,0,4,0,4
+Shan State (South),Nansang Township,6,0,0,19,0,0,0,25
+Shan State (South),Naungtayar Town,0,0,0,0,0,3,0,3
+Shan State (South),Nyaungshwe Township,8,0,0,34,0,0,0,42
+Shan State (South),Pawng Lawng Town,0,0,0,0,0,6,0,6
+Shan State (South),Pekon Township,6,0,0,13,0,0,0,19
+Shan State (South),Pindaya Township,0,0,0,40,0,0,0,40
+Shan State (South),Pinlaung Township,10,0,0,25,0,0,0,35
+Shan State (South),Shwenyaung Town,0,0,0,0,0,11,0,11
+Shan State (South),Taunggyi Township,0,0,0,46,0,0,0,46
+Shan State (South),Ywangan Township,3,0,0,29,0,0,0,32
+Tanintharyi Region,Bokpyin Township,0,0,0,22,0,0,0,22
+Tanintharyi Region,Dawei Township,15,0,0,25,0,0,0,40
+Tanintharyi Region,Kaleinaung Town,0,0,0,0,0,4,0,4
+Tanintharyi Region,Karathuri Town,0,0,0,0,0,3,0,3
+Tanintharyi Region,Kawthoung Township,10,0,0,18,0,0,0,28
+Tanintharyi Region,Khamaukgyi Town,0,0,0,0,0,3,0,3
+Tanintharyi Region,Kyunsu Township,4,0,0,20,0,0,0,24
+Tanintharyi Region,Launglon Township,4,0,0,41,0,0,0,45
+Tanintharyi Region,Maw Taung Town,0,0,0,0,0,3,0,3
+Tanintharyi Region,Myeik Township,13,0,0,21,0,0,0,34
+Tanintharyi Region,Myitta Town,0,0,0,0,0,3,0,3
+Tanintharyi Region,Pala Town,0,0,0,4,0,0,0,4
+Tanintharyi Region,Palauk Town,0,0,0,0,0,4,0,4
+Tanintharyi Region,Palaw Township,0,0,0,32,0,0,0,32
+Tanintharyi Region,Pyigyimandaing Town,0,0,0,0,0,3,0,3
+Tanintharyi Region,Tanintharyi Township,2,0,0,21,0,0,0,23
+Tanintharyi Region,Thayetchaung Township,5,0,0,39,0,0,0,44
+Tanintharyi Region,Yebyu Township,4,0,0,35,0,0,0,39
+Yangon Region,- | Hlaingtharya (West) Township,11,0,0,4,0,0,0,15
+Yangon Region,- | Hlaingtharya(East) Township,9,0,0,5,0,0,0,14
+Yangon Region,Ahlone Township,7,0,0,4,0,0,0,11
+Yangon Region,Ahpyauk Town,0,0,0,0,0,4,0,4
+Yangon Region,Bahan Township,18,0,0,4,0,0,0,22
+Yangon Region,Botahtaung Township,11,0,0,1,0,0,0,12
+Yangon Region,Cocokyun Township,0,0,0,2,0,0,0,2
+Yangon Region,Dagon Myothit (East) Township,61,0,0,4,0,0,0,65
+Yangon Region,Dagon Myothit (North) Township,27,0,0,0,0,0,0,27
+Yangon Region,Dagon Myothit (Seikkan) Township,31,0,0,8,0,0,0,39
+Yangon Region,Dagon Myothit (South) Township,35,0,0,14,0,0,0,49
+Yangon Region,Dagon Township,5,0,0,0,0,0,0,5
+Yangon Region,Dala Township,24,0,0,23,0,0,0,47
+Yangon Region,Dawbon Township,14,0,0,0,0,0,0,14
+Yangon Region,Hlaing Township,16,0,0,0,0,0,0,16
+Yangon Region,Hlegu Township,0,0,0,59,0,0,0,59
+Yangon Region,Hmawbi Township,4,0,0,39,0,0,0,43
+Yangon Region,Htantabin Township,0,0,0,59,0,0,0,59
+Yangon Region,Htaukkyant Town,10,0,0,3,0,0,0,13
+Yangon Region,Insein Township,21,0,0,0,0,0,0,21
+Yangon Region,Kamayut Township,10,0,0,0,0,0,0,10
+Yangon Region,Kawhmu Township,7,0,0,55,0,0,0,62
+Yangon Region,Kayan Township,13,0,0,53,0,0,0,66
+Yangon Region,Kungyangon Township,5,0,0,45,0,0,0,50
+Yangon Region,Kyauktada Township,9,0,0,0,0,0,0,9
+Yangon Region,Kyauktan Township,9,0,0,46,0,0,0,55
+Yangon Region,Kyeemyindaing Township,20,0,0,2,0,0,0,22
+Yangon Region,Lanmadaw Township,13,0,0,0,0,0,0,13
+Yangon Region,Latha Township,10,0,0,0,0,0,0,10
+Yangon Region,Mayangone Township,10,0,0,0,0,0,0,10
+Yangon Region,Mingaladon Township,13,0,0,6,0,0,0,19
+Yangon Region,Mingalartaungnyunt Township,20,0,0,0,0,0,0,20
+Yangon Region,North Okkalapa Township,19,0,0,0,0,0,0,19
+Yangon Region,Okekan Town,0,0,0,0,0,8,0,8
+Yangon Region,Pabedan Township,11,0,0,0,0,0,0,11
+Yangon Region,Pazundaung Township,10,0,0,0,0,0,0,10
+Yangon Region,Sanchaung Township,18,0,0,0,0,0,0,18
+Yangon Region,Seikgyikanaungto Township,9,0,0,0,0,0,0,9
+Yangon Region,Shwepyithar Township,23,0,0,4,0,0,0,27
+Yangon Region,South Okkalapa Township,11,0,0,2,0,0,0,13
+Yangon Region,Tadar Town,0,0,0,0,0,4,0,4
+Yangon Region,Taikkyi Township,8,0,0,75,0,0,0,83
+Yangon Region,Tamwe Township,18,2,0,0,0,0,0,20
+Yangon Region,Thaketa Township,19,0,0,0,0,0,0,19
+Yangon Region,Thanlyin Township,17,0,0,28,0,0,0,45
+Yangon Region,Thingangyun Township,35,0,0,4,0,0,0,39
+Yangon Region,Thongwa Township,0,0,0,76,0,0,0,76
+Yangon Region,Twantay Township,8,0,0,65,0,0,0,73
+Yangon Region,Yankin Township,15,0,0,0,0,0,0,15

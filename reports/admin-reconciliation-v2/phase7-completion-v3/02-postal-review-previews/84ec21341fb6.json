@@ -1,0 +1,21 @@
+{
+  "group_id": "84ec21341fb6",
+  "postal_codes": [
+    "1617223"
+  ],
+  "locality_mm": "ကြူဆာ ကျေးရွာအုပ်စု",
+  "locality_en": "Kyu Hsar Village Tract",
+  "township_en": "Mongmit Township",
+  "township_mm": "မိုးမိတ် မြို့နယ်",
+  "township_public_id": "f7a2ec31-1c24-4b7c-b4f4-cc46d2403490",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "fadebfa01272",
+  "postal_codes": [
+    "0117001"
+  ],
+  "locality_mm": "ဆော့လော် ရပ်ကွက်",
+  "locality_en": "Tsawlaw Quarter",
+  "township_en": "Tsawlaw Township",
+  "township_mm": "ဆော့လော် မြို့နယ်",
+  "township_public_id": "f29af43f-7f83-43a5-b063-d3d12aa760e4",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

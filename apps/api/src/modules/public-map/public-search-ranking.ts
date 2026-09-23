@@ -120,6 +120,8 @@ export type BuildUnifiedSearchScoreSqlParams = {
     prefix: string;
     isPrefixMode: boolean;
     multiTokenMatch: Prisma.Sql | null;
+    /** PostgreSQL simple FTS does not tokenize Myanmar text usefully. */
+    useFullText?: boolean;
     fuzzyThreshold: number;
     hasRef: boolean;
     lat?: number;
@@ -479,6 +481,7 @@ function buildStrongTextSql(
     prefix: string,
     isPrefixMode: boolean,
     multiTokenMatch: Prisma.Sql | null,
+    useFullText: boolean,
 ): Prisma.Sql {
     if (isPrefixMode) {
         return Prisma.sql`(
@@ -491,13 +494,16 @@ function buildStrongTextSql(
     const multiTokenClause = multiTokenMatch
         ? Prisma.sql`OR (${multiTokenMatch})`
         : Prisma.empty;
+    const fullTextClause = useFullText
+        ? Prisma.sql`OR d.search_vector @@ plainto_tsquery('simple', ${qNorm})`
+        : Prisma.empty;
 
     return Prisma.sql`(
         ${buildCodeExactSql(qNorm)}
         OR ${buildNameExactSql(qNorm)}
         OR ${buildAliasExactSql(qNorm)}
         OR ${buildPrefixSql(prefix)}
-        OR d.search_vector @@ plainto_tsquery('simple', ${qNorm})
+        ${fullTextClause}
         ${multiTokenClause}
     )`;
 }
@@ -516,15 +522,19 @@ export function buildUnifiedSearchScoreSql(params: BuildUnifiedSearchScoreSqlPar
         lat,
         lng,
     } = params;
+    const useFullText = params.useFullText ?? true;
 
     const multiTokenScore = multiTokenMatch
         ? Prisma.sql`+ (CASE WHEN (${multiTokenMatch}) THEN ${w.multiToken} ELSE 0 END)`
         : Prisma.empty;
 
+    const fullTextScore = useFullText
+        ? Prisma.sql`+ (CASE WHEN d.search_vector @@ plainto_tsquery('simple', ${qNorm}) THEN ${w.fullText} ELSE 0 END)`
+        : Prisma.empty;
     const fuzzyScore = isPrefixMode
         ? Prisma.empty
         : Prisma.sql`
-                  + (CASE WHEN d.search_vector @@ plainto_tsquery('simple', ${qNorm}) THEN ${w.fullText} ELSE 0 END)
+                  ${fullTextScore}
                   + (CASE
                         WHEN similarity(coalesce(d.trigram_text, ''), ${qNorm}) >= ${fuzzyThreshold}
                         THEN similarity(coalesce(d.trigram_text, ''), ${qNorm}) * ${w.trigramMultiplier}
@@ -532,7 +542,13 @@ export function buildUnifiedSearchScoreSql(params: BuildUnifiedSearchScoreSqlPar
                      END)
                   ${multiTokenScore}`;
 
-    const strongTextSql = buildStrongTextSql(qNorm, prefix, isPrefixMode, multiTokenMatch);
+    const strongTextSql = buildStrongTextSql(
+        qNorm,
+        prefix,
+        isPrefixMode,
+        multiTokenMatch,
+        useFullText,
+    );
 
     const nearbyScore = hasRef
         ? Prisma.sql`(

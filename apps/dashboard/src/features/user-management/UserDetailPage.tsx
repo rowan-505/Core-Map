@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import { useDashboardRoleAccess } from "@/src/hooks/useDashboardRoleAccess";
 import { isAbortError } from "@/src/lib/api";
 import { usersPath } from "@/src/lib/dashboardPaths";
 
@@ -13,8 +14,10 @@ import {
     getUserAudit,
     getUserPoints,
     removeUserRole,
+    resetUserPassword,
     setUserAdminNote,
     setUserStatus,
+    updateUserProfile,
 } from "./api";
 import {
     ACCOUNT_STATUS_OPTIONS,
@@ -65,6 +68,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export default function UserDetailPage({ id }: { id: string }) {
+    const access = useDashboardRoleAccess();
     const [user, setUser] = useState<AdminUserDetail | null>(null);
     const [points, setPoints] = useState<UserPointsResponse | null>(null);
     const [audit, setAudit] = useState<UserAuditEntry[]>([]);
@@ -77,10 +81,21 @@ export default function UserDetailPage({ id }: { id: string }) {
 
     const [noteDraft, setNoteDraft] = useState("");
     const [statusDraft, setStatusDraft] = useState<AccountStatus>("active");
+    const [profileDisplayName, setProfileDisplayName] = useState("");
+    const [profileEmail, setProfileEmail] = useState("");
+    const [profilePhone, setProfilePhone] = useState("");
+    const [profileLanguage, setProfileLanguage] = useState<"my" | "en">("my");
+    const [profileRegionId, setProfileRegionId] = useState("");
+    const [profileEmailVerified, setProfileEmailVerified] = useState(false);
+    const [resetPassword, setResetPassword] = useState("");
+    const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
     const [newRole, setNewRole] = useState("");
     const [pointsDelta, setPointsDelta] = useState("");
     const [pointsReason, setPointsReason] = useState<PointReasonCode>("admin_adjustment");
     const [pointsNote, setPointsNote] = useState("");
+    const isSuperAdmin = access.roles.includes("super_admin");
+    const resetPasswordMinLength =
+        user?.roles.some((role) => PRIVILEGED_ROLES.has(role)) ? 12 : 8;
 
     const load = useCallback(
         async (signal?: AbortSignal) => {
@@ -97,6 +112,12 @@ export default function UserDetailPage({ id }: { id: string }) {
                 setAudit(a);
                 setNoteDraft(u.admin_note ?? "");
                 setStatusDraft(u.account_status);
+                setProfileDisplayName(u.display_name);
+                setProfileEmail(u.email);
+                setProfilePhone(u.phone ?? "");
+                setProfileLanguage(u.preferred_language === "en" ? "en" : "my");
+                setProfileRegionId(u.primary_region_id ?? "");
+                setProfileEmailVerified(u.email_verified);
             } catch (err) {
                 if (isAbortError(err)) return;
                 setError(err instanceof Error ? err.message : "Failed to load user.");
@@ -205,6 +226,127 @@ export default function UserDetailPage({ id }: { id: string }) {
                     </dl>
                 </Section>
 
+                {isSuperAdmin ? (
+                    <Section title="Edit profile">
+                        <form
+                            className="space-y-4"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                const regionText = profileRegionId.trim();
+                                const regionId = regionText === "" ? null : Number(regionText);
+                                if (
+                                    regionId !== null &&
+                                    (!Number.isInteger(regionId) || regionId <= 0)
+                                ) {
+                                    setActionError("Region ID must be a positive whole number.");
+                                    return;
+                                }
+                                void runAction(
+                                    () =>
+                                        updateUserProfile(id, {
+                                            displayName: profileDisplayName.trim(),
+                                            email: profileEmail.trim(),
+                                            phone: profilePhone.trim() || null,
+                                            preferredLanguage: profileLanguage,
+                                            primaryRegionId: regionId,
+                                            emailVerified: profileEmailVerified,
+                                        }),
+                                    "Profile updated."
+                                );
+                            }}
+                        >
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        Display name
+                                    </span>
+                                    <input
+                                        required
+                                        minLength={2}
+                                        maxLength={120}
+                                        value={profileDisplayName}
+                                        onChange={(event) =>
+                                            setProfileDisplayName(event.target.value)
+                                        }
+                                        className={INPUT_CLASS}
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        Email
+                                    </span>
+                                    <input
+                                        required
+                                        type="email"
+                                        value={profileEmail}
+                                        onChange={(event) => setProfileEmail(event.target.value)}
+                                        className={INPUT_CLASS}
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        Phone
+                                    </span>
+                                    <input
+                                        type="tel"
+                                        maxLength={40}
+                                        value={profilePhone}
+                                        onChange={(event) => setProfilePhone(event.target.value)}
+                                        className={INPUT_CLASS}
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        Region ID
+                                    </span>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={profileRegionId}
+                                        onChange={(event) =>
+                                            setProfileRegionId(event.target.value)
+                                        }
+                                        className={INPUT_CLASS}
+                                        placeholder="No region"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        Language
+                                    </span>
+                                    <select
+                                        value={profileLanguage}
+                                        onChange={(event) =>
+                                            setProfileLanguage(event.target.value as "my" | "en")
+                                        }
+                                        className={SELECT_CLASS}
+                                    >
+                                        <option value="my">Myanmar</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </label>
+                                <label className="flex items-center gap-2 self-end pb-2 text-sm text-gray-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={profileEmailVerified}
+                                        onChange={(event) =>
+                                            setProfileEmailVerified(event.target.checked)
+                                        }
+                                    />
+                                    Email verified
+                                </label>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                                Changing email or verification status signs the user out of active
+                                sessions.
+                            </p>
+                            <button type="submit" disabled={busy} className={PRIMARY_BTN}>
+                                Save profile
+                            </button>
+                        </form>
+                    </Section>
+                ) : null}
+
                 <div className="grid gap-5 lg:grid-cols-2">
                     <Section title="Account status">
                         <div className="flex flex-wrap items-end gap-3">
@@ -312,6 +454,79 @@ export default function UserDetailPage({ id }: { id: string }) {
                         </div>
                     </Section>
                 </div>
+
+                {isSuperAdmin ? (
+                    <Section title="Reset password">
+                        <form
+                            className="space-y-3"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                setActionError("");
+                                if (resetPassword !== resetPasswordConfirm) {
+                                    setActionError("Passwords do not match.");
+                                    return;
+                                }
+                                if (resetPassword.length < resetPasswordMinLength) {
+                                    setActionError(
+                                        `Password must be at least ${resetPasswordMinLength} characters for this account.`
+                                    );
+                                    return;
+                                }
+                                void runAction(
+                                    () => resetUserPassword(id, resetPassword),
+                                    "Password reset. Active sessions were revoked."
+                                ).then(() => {
+                                    setResetPassword("");
+                                    setResetPasswordConfirm("");
+                                });
+                            }}
+                        >
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        New password
+                                    </span>
+                                    <input
+                                        required
+                                        type="password"
+                                        minLength={resetPasswordMinLength}
+                                        maxLength={200}
+                                        value={resetPassword}
+                                        onChange={(event) =>
+                                            setResetPassword(event.target.value)
+                                        }
+                                        className={INPUT_CLASS}
+                                        autoComplete="new-password"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        Confirm password
+                                    </span>
+                                    <input
+                                        required
+                                        type="password"
+                                        minLength={resetPasswordMinLength}
+                                        maxLength={200}
+                                        value={resetPasswordConfirm}
+                                        onChange={(event) =>
+                                            setResetPasswordConfirm(event.target.value)
+                                        }
+                                        className={INPUT_CLASS}
+                                        autoComplete="new-password"
+                                    />
+                                </label>
+                            </div>
+                            <p className="text-xs text-amber-800">
+                                This immediately revokes all active sessions. The new password does
+                                not expire automatically.
+                            </p>
+                            <button type="submit" disabled={busy} className={PRIMARY_BTN}>
+                                Reset password
+                            </button>
+                        </form>
+                    </Section>
+                ) : null}
 
                 <Section title="Admin note">
                     <textarea

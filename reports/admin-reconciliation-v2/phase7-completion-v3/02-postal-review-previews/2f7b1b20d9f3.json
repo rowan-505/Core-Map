@@ -1,0 +1,21 @@
+{
+  "group_id": "2f7b1b20d9f3",
+  "postal_codes": [
+    "0109206"
+  ],
+  "locality_mm": "ဒနိုင်ယန် ကျေးရွာအုပ်စု",
+  "locality_en": "Da Naing Yang Village Tract",
+  "township_en": "Tanai Township",
+  "township_mm": "တနိုင်း မြို့နယ်",
+  "township_public_id": "1e399fef-fd78-4c8d-81f9-180a0d01b05d",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

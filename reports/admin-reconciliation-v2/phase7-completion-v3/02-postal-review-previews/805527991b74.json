@@ -1,0 +1,21 @@
+{
+  "group_id": "805527991b74",
+  "postal_codes": [
+    "1801004"
+  ],
+  "locality_mm": "ဆံတော် ရပ်ကွက်",
+  "locality_en": "San Taw Quarter",
+  "township_en": "Pyay Township",
+  "township_mm": "ပြည် မြို့နယ်",
+  "township_public_id": "2f1f583a-5ab0-4e13-9357-13f5b8dc3ad4",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

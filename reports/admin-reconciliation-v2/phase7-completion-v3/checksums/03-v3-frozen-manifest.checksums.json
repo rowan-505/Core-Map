@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-09-21T16:46:21Z",
+  "git_commit": "cd4e715a10f35c7bcc9bf62fa0fcd37d6bab10fd",
+  "files": {
+    "03-admin-actions-v3.csv": {
+      "sha256": "f3d8afc5e9d9d9da29291ad5438634f29e6fd614f72388a2f850e05d1b4e7256",
+      "bytes": 11109383
+    },
+    "03-village-actions-v3.csv": {
+      "sha256": "9f411de6ee96907242431b2ac370f408184a5d7de55746036207c362afe0a74d",
+      "bytes": 29449781
+    },
+    "03-admin-alias-actions-v3.csv": {
+      "sha256": "ec401ab4941c3c14a1589e5e2f9a7f9352d893b786a719b0615a7e74a79be470",
+      "bytes": 72431
+    },
+    "03-postal-actions-v3.csv": {
+      "sha256": "d290556b652f547f153d7c73b725d0a2f5ef876f8748d00c5d3720740660d5c6",
+      "bytes": 9621438
+    }
+  },
+  "postal_status_counts": {
+    "linked_exact": 15452,
+    "confirmed_non_admin": 1822,
+    "linked_after_review": 17,
+    "rejected_source_error": 6
+  },
+  "gates": {
+    "missing_local_admin_identity": 0,
+    "ambiguous_local_area": 0,
+    "township_unresolved": 0,
+    "exact_pending_create": 0,
+    "blank/defer": 0,
+    "arithmetic_17297": 17297,
+    "linked_exact": 15452,
+    "linked_after_review": 17,
+    "confirmed_non_admin": 1822,
+    "rejected_source_error": 6
+  },
+  "production_touched": false
+}

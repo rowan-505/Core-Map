@@ -1,0 +1,21 @@
+{
+  "group_id": "3fa31730ee4a",
+  "postal_codes": [
+    "0813003"
+  ],
+  "locality_mm": "သီရိရတနာ ရပ်ကွက်",
+  "locality_en": "Thi Ri Ya Da Nar Quarter",
+  "township_en": "Htantabin Township",
+  "township_mm": "ထန်းတပင် မြို့နယ်",
+  "township_public_id": "d4213201-c14a-48cf-adef-9ae6be622006",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

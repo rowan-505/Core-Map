@@ -1,0 +1,21 @@
+{
+  "group_id": "c5c714308515",
+  "postal_codes": [
+    "1622235"
+  ],
+  "locality_mm": "တောက်ရွှေရှမ်း ကျေးရွာအုပ်စု",
+  "locality_en": "Tauk Shwe Shan Village Tract",
+  "township_en": "Laukkaing Township",
+  "township_mm": "လောက်ကိုင် မြို့နယ်",
+  "township_public_id": "a58893b8-20a7-404a-9d1d-24cbb99cf23c",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

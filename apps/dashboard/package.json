@@ -13,7 +13,8 @@
     "test:community-moderation": "node --import tsx --test src/features/community-moderation/*.test.ts",
     "test:tourism-moderation": "node --import tsx --test src/features/tourism-moderation/*.test.ts",
     "test:tourism-place-picker": "node --import tsx --test src/components/tourism/*.test.ts",
-    "test:place-review-moderation": "node --import tsx --test src/features/place-review-moderation/*.test.ts"
+    "test:place-review-moderation": "node --import tsx --test src/features/place-review-moderation/*.test.ts",
+    "test:admin-geography": "node --import tsx --test src/features/admin-geography/*.test.ts src/features/admin-area-boundary-review/*.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

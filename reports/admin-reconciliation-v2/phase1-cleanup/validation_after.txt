@@ -1,0 +1,19 @@
+             check_name              | pass |            detail             
+-------------------------------------+------+-------------------------------
+ chain_hsihseng_shan_pao             | t    | 
+ chain_nanyun_sagaing_naga           | t    | 
+ chain_padaung_pyay                  | t    | 
+ chain_pinlaung_pao                  | t    | 
+ chain_pyay_bago_district            | t    | 
+ chain_shwedaung_pyay                | t    | 
+ chain_ywangan_shan_danu             | t    | 
+ foreign_not_public_or_official      | t    | 0
+ no_duplicate_primary_affected       | t    | 0
+ no_existing_geom_change_placeholder | t    | run geom md5 diff vs snapshot
+ no_fk_parent_to_deleted             | t    | 0
+ no_orphan_parent_id                 | t    | 0
+ official_first_level_15             | t    | 15
+ saz_sad_model_six_under_states      | t    | 
+ wa_under_sad                        | t    | 
+(15 rows)
+

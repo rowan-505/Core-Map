@@ -1,0 +1,10 @@
+              metric               | value 
+-----------------------------------+-------
+ official_first_level_state_region |    15
+ wa_under_country                  |     0
+ cleanup_created_rows              |     3
+ foreign_disabled_ok               |     5
+ saz_sad_under_shan_sagaing        |     6
+ parents_seven_fixed               |     7
+(6 rows)
+

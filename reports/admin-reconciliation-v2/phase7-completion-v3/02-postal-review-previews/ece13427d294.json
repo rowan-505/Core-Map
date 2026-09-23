@@ -1,0 +1,21 @@
+{
+  "group_id": "ece13427d294",
+  "postal_codes": [
+    "0409006"
+  ],
+  "locality_mm": "အမှတ် (၆) ရပ်ကွက်",
+  "locality_en": "No (6) Quarter",
+  "township_en": "Thayet Township",
+  "township_mm": "သရက် မြို့နယ်",
+  "township_public_id": "3947a6a8-b983-4238-a4b8-141c76c2e268",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

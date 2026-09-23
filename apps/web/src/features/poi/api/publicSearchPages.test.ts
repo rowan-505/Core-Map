@@ -74,11 +74,11 @@ describe('public search infinite-query retry policy', () => {
 
   it('retries 5xx and network failures only within the limited retry budget', () => {
     assert.equal(shouldRetryPublicSearch(0, new PublicMapApiError(500, 'Server error')), true);
-    assert.equal(shouldRetryPublicSearch(1, new PublicMapApiError(503, 'Unavailable')), true);
+    assert.equal(shouldRetryPublicSearch(1, new PublicMapApiError(503, 'Unavailable')), false);
     assert.equal(shouldRetryPublicSearch(2, new PublicMapApiError(503, 'Unavailable')), false);
 
     assert.equal(shouldRetryPublicSearch(0, new TypeError('NetworkError')), true);
-    assert.equal(shouldRetryPublicSearch(1, new TypeError('NetworkError')), true);
+    assert.equal(shouldRetryPublicSearch(1, new TypeError('NetworkError')), false);
     assert.equal(shouldRetryPublicSearch(2, new TypeError('NetworkError')), false);
   });
 

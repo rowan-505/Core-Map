@@ -58,7 +58,11 @@
     "tourism:research:normalize": "tsx scripts/tourism-research/normalize.ts",
     "tourism:research:import": "tsx scripts/tourism-research/import.ts",
     "tourism:research:pilot-check": "tsx scripts/tourism-research/pilot-check.ts",
-    "test:tourism-research": "tsx --test scripts/tourism-research/run.test.ts scripts/tourism-research/phase5.test.ts"
+    "test:tourism-research": "tsx --test scripts/tourism-research/run.test.ts scripts/tourism-research/phase5.test.ts",
+    "test:name-pair-fill": "tsx --test tools/data-pipeline/name-pair-fill/romanize.test.ts",
+    "name-pair-fill": "tsx tools/data-pipeline/name-pair-fill/run.ts",
+    "name-pair-fill:dry-run": "tsx tools/data-pipeline/name-pair-fill/run.ts --dry-run",
+    "name-pair-fill:rebuild-search": "tsx tools/data-pipeline/name-pair-fill/rebuild-search.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

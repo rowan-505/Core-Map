@@ -1,0 +1,21 @@
+{
+  "group_id": "5a944fb84ab2",
+  "postal_codes": [
+    "1019297"
+  ],
+  "locality_mm": "နိဗ္ဗန် ကျေးရွာအုပ်စု",
+  "locality_en": "Neik Ban Village Tract",
+  "township_en": "Einme Township",
+  "township_mm": "အိမ်မဲ မြို့နယ်",
+  "township_public_id": "af8b7d53-f2b7-45de-a5cc-f1259bc0924a",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -178,6 +178,19 @@ export type TransportPreviewMapProps = {
      * placeholder geometry for empty variants).
      */
     mapCenterGetterRef?: MutableRefObject<(() => TransportPreviewLngLat | null) | null>;
+    /** Optional ref populated with the live MapLibre instance. */
+    mapInstanceRef?: MutableRefObject<maplibregl.Map | null>;
+    /**
+     * Temporary existing-stop search hits (Choose existing stop overlay). One
+     * GeoJSON source; does not mutate route stops or nearby-candidate layers.
+     */
+    existingStopSearchPoints?: ReadonlyArray<{
+        publicId: string;
+        lng: number;
+        lat: number;
+    }>;
+    selectedExistingStopSearchId?: string | null;
+    onExistingStopSearchSelect?: (publicId: string) => void;
 };
 
 const DEFAULT_HEIGHT_CLASS =
@@ -197,6 +210,7 @@ const SRC_DRAFT_PATH = "transport-preview-draft-path";
 const SRC_DRAFT_VERTICES = "transport-preview-draft-vertices";
 const SRC_EDITABLE_POINT = "transport-preview-editable-point";
 const SRC_CANDIDATES = "transport-preview-candidates";
+const SRC_SEARCH_CANDIDATES = "transport-preview-search-candidates";
 const SRC_SELECTED_SAVED = "transport-preview-selected-saved";
 const SRC_SELECTED_PREVIEW = "transport-preview-selected-preview";
 
@@ -227,11 +241,14 @@ const LYR_DRAFT_VERTICES = "transport-preview-draft-vertices-circle";
 const LYR_EDITABLE_POINT = "transport-preview-editable-point-circle";
 const LYR_CANDIDATES_CIRCLE = "transport-preview-candidates-circle";
 const LYR_CANDIDATES_LABEL = "transport-preview-candidates-label";
+const LYR_SEARCH_CANDIDATES_CIRCLE = "transport-preview-search-candidates-circle";
 
 const ROUTE_STOP_COLOR = "#1d4ed8";
 const ROUTE_STOP_SELECTED_COLOR = "#ea580c";
 const CANDIDATE_COLOR = "#9333ea";
 const CANDIDATE_SELECTED_COLOR = "#16a34a";
+const SEARCH_CANDIDATE_COLOR = "#0f766e";
+const SEARCH_CANDIDATE_SELECTED_COLOR = "#14b8a6";
 
 const ORDERED_LAYER_IDS = [
     LYR_PATH,
@@ -251,6 +268,7 @@ const ORDERED_LAYER_IDS = [
     LYR_SELECTED_PREVIEW_LABEL,
     LYR_CANDIDATES_CIRCLE,
     LYR_CANDIDATES_LABEL,
+    LYR_SEARCH_CANDIDATES_CIRCLE,
     LYR_DRAFT_PATH,
     LYR_DRAFT_VERTICES,
     LYR_EDITABLE_POINT,
@@ -422,6 +440,42 @@ function candidatesToFeatureCollection(
                 },
             })),
     };
+}
+
+function searchPreviewToFeatureCollection(
+    points: ReadonlyArray<{ publicId: string; lng: number; lat: number }>,
+): FeatureCollection<Point> {
+    return {
+        type: "FeatureCollection",
+        features: points
+            .filter((point) => Number.isFinite(point.lng) && Number.isFinite(point.lat))
+            .map((point) => ({
+                type: "Feature",
+                id: point.publicId,
+                properties: { id: point.publicId },
+                geometry: {
+                    type: "Point",
+                    coordinates: [point.lng, point.lat],
+                },
+            })),
+    };
+}
+
+function reapplySelectedSearchCandidateFeatureState(
+    map: maplibregl.Map,
+    selectedId: string | null,
+): void {
+    if (!selectedId) {
+        return;
+    }
+    try {
+        map.setFeatureState(
+            { source: SRC_SEARCH_CANDIDATES, id: selectedId },
+            { selected: true },
+        );
+    } catch {
+        // Feature may not be in the source yet on the same tick as setData.
+    }
 }
 
 function reapplySelectedCandidateFeatureState(
@@ -822,6 +876,10 @@ function ensureLayers(map: maplibregl.Map): void {
         map.addSource(SRC_CANDIDATES, { type: "geojson", data: emptyFc(), promoteId: "id" });
     }
 
+    if (!map.getSource(SRC_SEARCH_CANDIDATES)) {
+        map.addSource(SRC_SEARCH_CANDIDATES, { type: "geojson", data: emptyFc(), promoteId: "id" });
+    }
+
     for (const id of [SRC_SELECTED_SAVED, SRC_SELECTED_PREVIEW]) {
         if (!map.getSource(id)) {
             map.addSource(id, { type: "geojson", data: emptyFc() });
@@ -1107,6 +1165,46 @@ function ensureLayers(map: maplibregl.Map): void {
         });
     }
 
+    if (!map.getLayer(LYR_SEARCH_CANDIDATES_CIRCLE)) {
+        map.addLayer({
+            id: LYR_SEARCH_CANDIDATES_CIRCLE,
+            type: "circle",
+            source: SRC_SEARCH_CANDIDATES,
+            paint: {
+                "circle-radius": [
+                    "case",
+                    ["boolean", ["feature-state", "selected"], false],
+                    7,
+                    5,
+                ],
+                "circle-color": [
+                    "case",
+                    ["boolean", ["feature-state", "selected"], false],
+                    SEARCH_CANDIDATE_SELECTED_COLOR,
+                    SEARCH_CANDIDATE_COLOR,
+                ],
+                "circle-opacity": [
+                    "case",
+                    ["boolean", ["feature-state", "selected"], false],
+                    0.95,
+                    0.72,
+                ],
+                "circle-stroke-width": [
+                    "case",
+                    ["boolean", ["feature-state", "selected"], false],
+                    3,
+                    1.5,
+                ],
+                "circle-stroke-color": [
+                    "case",
+                    ["boolean", ["feature-state", "selected"], false],
+                    "#0f766e",
+                    "#ffffff",
+                ],
+            },
+        });
+    }
+
     if (!map.getLayer(LYR_LINKED)) {
         map.addLayer({
             id: LYR_LINKED,
@@ -1264,6 +1362,10 @@ export default function TransportPreviewMap({
     onPathEditDraftChange,
     pathEditHint = null,
     mapCenterGetterRef,
+    mapInstanceRef,
+    existingStopSearchPoints = [],
+    selectedExistingStopSearchId = null,
+    onExistingStopSearchSelect,
 }: TransportPreviewMapProps) {
     const clientMounted = useClientMounted();
     const transportBasemap = useTransportDashboardBasemapMode();
@@ -1284,6 +1386,8 @@ export default function TransportPreviewMap({
         useRef<typeof onCandidateSearchRequest>(onCandidateSearchRequest);
     const onPathVertexSelectRef = useRef<typeof onPathVertexSelect>(onPathVertexSelect);
     const onPathEditDraftChangeRef = useRef<typeof onPathEditDraftChange>(onPathEditDraftChange);
+    const onExistingStopSearchSelectRef = useRef(onExistingStopSearchSelect);
+    const prevSelectedSearchCandidateIdRef = useRef<string | null>(null);
     const pathEditDragRef = useRef<{
         vertexIndex: number;
         startX: number;
@@ -1321,6 +1425,20 @@ export default function TransportPreviewMap({
     useEffect(() => {
         onPathEditDraftChangeRef.current = onPathEditDraftChange;
     }, [onPathEditDraftChange]);
+
+    useEffect(() => {
+        onExistingStopSearchSelectRef.current = onExistingStopSearchSelect;
+    }, [onExistingStopSearchSelect]);
+
+    useEffect(() => {
+        if (!mapInstanceRef) {
+            return;
+        }
+        mapInstanceRef.current = mapReady ? mapRef.current : null;
+        return () => {
+            mapInstanceRef.current = null;
+        };
+    }, [mapInstanceRef, mapReady]);
 
     useEffect(() => {
         if (!mapCenterGetterRef) {
@@ -1379,6 +1497,11 @@ export default function TransportPreviewMap({
     const candidatesFc = useMemo(
         () => candidatesToFeatureCollection(nearbyCandidates, selectedRouteStopPublicId),
         [nearbyCandidates, selectedRouteStopPublicId],
+    );
+
+    const searchCandidatesFc = useMemo(
+        () => searchPreviewToFeatureCollection(existingStopSearchPoints),
+        [existingStopSearchPoints],
     );
 
     const showStopSequenceGuideLine = useMemo(
@@ -1496,6 +1619,9 @@ export default function TransportPreviewMap({
             markerRef.current = null;
             mapRef.current?.remove();
             mapRef.current = null;
+            if (mapInstanceRef) {
+                mapInstanceRef.current = null;
+            }
             lastFitKeyRef.current = null;
             lastAutoFitSignatureRef.current = null;
         };
@@ -1599,6 +1725,12 @@ export default function TransportPreviewMap({
             }
             setSourceData(map, SRC_CANDIDATES, candidatesFc as FeatureCollection<Geometry>);
             reapplySelectedCandidateFeatureState(map, selectedCandidateId);
+            setSourceData(
+                map,
+                SRC_SEARCH_CANDIDATES,
+                searchCandidatesFc as FeatureCollection<Geometry>,
+            );
+            reapplySelectedSearchCandidateFeatureState(map, selectedExistingStopSearchId);
 
             if (showStopSequenceGuideLine) {
                 setSourceData(map, SRC_STOP_PREVIEW, stopSequenceGuideData);
@@ -1702,7 +1834,9 @@ export default function TransportPreviewMap({
         routePathLineStyle,
         selectedStopId,
         selectedCandidateId,
+        selectedExistingStopSearchId,
         candidatesFc,
+        searchCandidatesFc,
         basemapMode,
         useSplitSelectedStopMarkers,
         selectedSavedMarkerFc,
@@ -1847,6 +1981,92 @@ export default function TransportPreviewMap({
             map.off("idle", onIdle);
         };
     }, [mapReady, selectedCandidateId]);
+
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map || !mapReady) {
+            return;
+        }
+
+        const apply = () => {
+            if (map !== mapRef.current || !map.isStyleLoaded()) {
+                return false;
+            }
+            ensureLayers(map);
+
+            const prev = prevSelectedSearchCandidateIdRef.current;
+            if (prev && prev !== selectedExistingStopSearchId) {
+                map.removeFeatureState({ source: SRC_SEARCH_CANDIDATES, id: prev }, "selected");
+            }
+            if (selectedExistingStopSearchId) {
+                map.setFeatureState(
+                    { source: SRC_SEARCH_CANDIDATES, id: selectedExistingStopSearchId },
+                    { selected: true },
+                );
+            }
+            prevSelectedSearchCandidateIdRef.current = selectedExistingStopSearchId;
+            return true;
+        };
+
+        if (apply()) {
+            return;
+        }
+
+        const onIdle = () => {
+            if (apply()) {
+                map.off("idle", onIdle);
+            }
+        };
+        map.on("idle", onIdle);
+        return () => {
+            map.off("idle", onIdle);
+        };
+    }, [mapReady, selectedExistingStopSearchId]);
+
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map || !mapReady || pathDrawing || pathEditActive || !onExistingStopSearchSelect) {
+            return;
+        }
+
+        const querySearchCandidateAt = (event: maplibregl.MapMouseEvent): string | null => {
+            if (!map.getLayer(LYR_SEARCH_CANDIDATES_CIRCLE)) {
+                return null;
+            }
+            const features = map.queryRenderedFeatures(event.point, {
+                layers: [LYR_SEARCH_CANDIDATES_CIRCLE],
+            });
+            const publicId = features[0]?.properties?.id;
+            return typeof publicId === "string" && publicId.length > 0 ? publicId : null;
+        };
+
+        const onClick = (event: maplibregl.MapMouseEvent) => {
+            const publicId = querySearchCandidateAt(event);
+            if (!publicId) {
+                return;
+            }
+            onExistingStopSearchSelectRef.current?.(publicId);
+        };
+
+        const onMouseEnter = () => {
+            map.getCanvas().style.cursor = "pointer";
+        };
+        const onMouseLeave = () => {
+            map.getCanvas().style.cursor = "";
+        };
+
+        map.on("click", LYR_SEARCH_CANDIDATES_CIRCLE, onClick);
+        map.on("mouseenter", LYR_SEARCH_CANDIDATES_CIRCLE, onMouseEnter);
+        map.on("mouseleave", LYR_SEARCH_CANDIDATES_CIRCLE, onMouseLeave);
+        return () => {
+            map.off("click", LYR_SEARCH_CANDIDATES_CIRCLE, onClick);
+            map.off("mouseenter", LYR_SEARCH_CANDIDATES_CIRCLE, onMouseEnter);
+            map.off("mouseleave", LYR_SEARCH_CANDIDATES_CIRCLE, onMouseLeave);
+            if (mapRef.current) {
+                mapRef.current.getCanvas().style.cursor = "";
+            }
+        };
+    }, [mapReady, pathDrawing, pathEditActive, onExistingStopSearchSelect]);
 
     useEffect(() => {
         if (!fitRequestId) {
@@ -2356,6 +2576,15 @@ export default function TransportPreviewMap({
         };
 
         const onClick = (event: maplibregl.MapMouseEvent) => {
+            if (map.getLayer(LYR_SEARCH_CANDIDATES_CIRCLE)) {
+                const searchHits = map.queryRenderedFeatures(event.point, {
+                    layers: [LYR_SEARCH_CANDIDATES_CIRCLE],
+                });
+                if (searchHits.length > 0) {
+                    return;
+                }
+            }
+
             const candidateId = queryCandidateAt(event);
             if (candidateId) {
                 onCandidateSelectRef.current?.(candidateId);
@@ -2401,6 +2630,7 @@ export default function TransportPreviewMap({
     const showRoutePathLegend = Boolean(
         routePathLegendLabel && isDrawable(routePath) && routePathLineStyle,
     );
+    const showSearchPreviewLegend = existingStopSearchPoints.length > 0;
 
     const mapBody = (
         <div className={chromeless ? "relative min-h-0 flex-1" : "relative p-2"}>
@@ -2456,6 +2686,25 @@ export default function TransportPreviewMap({
                     <span className="mt-0.5 block text-[10px] font-normal text-gray-500">
                         Solid · saved route path
                     </span>
+                </div>
+            ) : null}
+
+            {showSearchPreviewLegend ? (
+                <div
+                    className={`pointer-events-none absolute right-4 z-10 rounded-md border border-teal-200/90 bg-white/92 px-2.5 py-1.5 text-xs text-teal-900 shadow-sm ${
+                        mapInteractionHint && showRoutePathLegend
+                            ? "bottom-36"
+                            : showRoutePathLegend || mapInteractionHint
+                              ? "bottom-14"
+                              : "bottom-4"
+                    }`}
+                >
+                    <span
+                        className="mr-2 inline-block h-2.5 w-2.5 rounded-full align-middle"
+                        style={{ backgroundColor: SEARCH_CANDIDATE_COLOR }}
+                        aria-hidden
+                    />
+                    Possible stops
                 </div>
             ) : null}
 

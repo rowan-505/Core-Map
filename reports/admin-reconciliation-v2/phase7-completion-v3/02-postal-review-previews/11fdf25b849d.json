@@ -1,0 +1,21 @@
+{
+  "group_id": "11fdf25b849d",
+  "postal_codes": [
+    "1617003"
+  ],
+  "locality_mm": "လက်ခုတ်တန်း ရပ်ကွက်",
+  "locality_en": "Let Khoke Tan Quarter",
+  "township_en": "Mongmit Township",
+  "township_mm": "မိုးမိတ် မြို့နယ်",
+  "township_public_id": "f7a2ec31-1c24-4b7c-b4f4-cc46d2403490",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

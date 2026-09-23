@@ -1,0 +1,21 @@
+{
+  "group_id": "746e38e09188",
+  "postal_codes": [
+    "0716003"
+  ],
+  "locality_mm": "ဂူတာ ရပ်ကွက်",
+  "locality_en": "Gu Tar Quarter",
+  "township_en": "Toungup Township",
+  "township_mm": "တောင်ကုတ် မြို့နယ်",
+  "township_public_id": "30c03d09-353b-4f6f-bbe1-a748be68445c",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

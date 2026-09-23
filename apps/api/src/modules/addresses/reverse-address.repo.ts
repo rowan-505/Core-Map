@@ -1,10 +1,14 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
 import {
+    REVERSE_ADDRESS_EXPAND_DEG,
     REVERSE_CANDIDATE_LIMIT,
     REVERSE_EXACT_ADDRESS_MAX_M,
+    REVERSE_PLACE_EXPAND_DEG,
     REVERSE_PLACE_MAX_M,
+    REVERSE_STREET_EXPAND_DEG,
     REVERSE_STREET_MAX_M,
+    REVERSE_VILLAGE_EXPAND_DEG,
     REVERSE_VILLAGE_HINT_MAX_M,
 } from "./reverse-address.constants.js";
 
@@ -125,6 +129,9 @@ const ADMIN_NAME_MY = Prisma.sql`
     ) AS an_my ON true
 `;
 
+/** Process-lifetime cache for optional join tables (not re-checked per click). */
+const optionalTableCache = new Map<string, Promise<boolean>>();
+
 export class ReverseAddressRepository {
     constructor(private readonly prisma: PrismaClient) {}
 
@@ -132,17 +139,27 @@ export class ReverseAddressRepository {
         return Prisma.sql`ST_SetSRID(ST_MakePoint(${point.lng}, ${point.lat}), 4326)`;
     }
 
-    async tableExists(qualified: string): Promise<boolean> {
-        const rows = await this.prisma.$queryRaw<Array<{ ok: boolean }>>`
-            SELECT to_regclass(${qualified}) IS NOT NULL AS ok
-        `;
-        return rows[0]?.ok === true;
+    /** Optional schema probes only — never call for required core tables on the hot path. */
+    private optionalTableExists(qualified: string): Promise<boolean> {
+        let pending = optionalTableCache.get(qualified);
+        if (!pending) {
+            pending = this.prisma
+                .$queryRaw<Array<{ ok: boolean }>>`
+                    SELECT to_regclass(${qualified}) IS NOT NULL AS ok
+                `
+                .then((rows) => rows[0]?.ok === true)
+                .catch(() => false);
+            optionalTableCache.set(qualified, pending);
+        }
+        return pending;
+    }
+
+    /** Test helper — clears optional-table cache. */
+    static clearOptionalTableCacheForTests(): void {
+        optionalTableCache.clear();
     }
 
     async findNearbyCoreAddresses(point: ClickPoint): Promise<NearbyCoreAddressRow[]> {
-        if (!(await this.tableExists("core.core_addresses"))) {
-            return [];
-        }
         const click = this.clickSql(point);
         return this.prisma.$queryRaw<NearbyCoreAddressRow[]>`
             WITH click AS (SELECT ${click}::geometry(Point, 4326) AS geom)
@@ -164,8 +181,10 @@ export class ReverseAddressRepository {
             WHERE a.deleted_at IS NULL
               AND (
                   (a.point_geom IS NOT NULL AND NOT ST_IsEmpty(a.point_geom)
+                   AND a.point_geom && ST_Expand(click.geom, ${REVERSE_ADDRESS_EXPAND_DEG})
                    AND ST_DWithin(a.point_geom::geography, click.geom::geography, ${REVERSE_EXACT_ADDRESS_MAX_M}))
                   OR (a.entrance_geom IS NOT NULL AND NOT ST_IsEmpty(a.entrance_geom)
+                      AND a.entrance_geom && ST_Expand(click.geom, ${REVERSE_ADDRESS_EXPAND_DEG})
                       AND ST_DWithin(a.entrance_geom::geography, click.geom::geography, ${REVERSE_EXACT_ADDRESS_MAX_M}))
               )
             ORDER BY distance_m ASC
@@ -174,15 +193,15 @@ export class ReverseAddressRepository {
     }
 
     async findBuildingAtPoint(point: ClickPoint): Promise<BuildingAtPointRow | null> {
-        if (!(await this.tableExists("core.core_buildings"))) {
-            return null;
-        }
         const click = this.clickSql(point);
-        const hasPlaceBuildings = await this.tableExists("core.core_place_buildings");
-        const hasPlaceAddresses = await this.tableExists("core.core_place_addresses");
+        const [hasPlaceBuildings, hasPlaceAddresses] = await Promise.all([
+            this.optionalTableExists("core.core_place_buildings"),
+            this.optionalTableExists("core.core_place_addresses"),
+        ]);
 
-        const linkJoin = hasPlaceBuildings && hasPlaceAddresses
-            ? Prisma.sql`
+        const linkJoin =
+            hasPlaceBuildings && hasPlaceAddresses
+                ? Prisma.sql`
                 LEFT JOIN core.core_place_buildings AS pb ON pb.building_id = b.id
                 LEFT JOIN LATERAL (
                     SELECT pa.address_id
@@ -194,7 +213,7 @@ export class ReverseAddressRepository {
                 LEFT JOIN core.core_addresses AS a
                     ON a.id = pa.address_id AND a.deleted_at IS NULL
             `
-            : Prisma.sql`
+                : Prisma.sql`
                 LEFT JOIN LATERAL (SELECT NULL::bigint AS address_id) AS pa ON true
                 LEFT JOIN core.core_addresses AS a ON false
             `;
@@ -239,11 +258,8 @@ export class ReverseAddressRepository {
     }
 
     async findNearbyPlaces(point: ClickPoint): Promise<NearbyPlaceRow[]> {
-        if (!(await this.tableExists("core.core_places"))) {
-            return [];
-        }
         const click = this.clickSql(point);
-        const hasPlaceAddresses = await this.tableExists("core.core_place_addresses");
+        const hasPlaceAddresses = await this.optionalTableExists("core.core_place_addresses");
         const paJoin = hasPlaceAddresses
             ? Prisma.sql`
                 LEFT JOIN LATERAL (
@@ -277,24 +293,34 @@ export class ReverseAddressRepository {
             WHERE p.deleted_at IS NULL
               AND p.lat IS NOT NULL
               AND p.lng IS NOT NULL
-              AND ST_DWithin(
-                  COALESCE(
-                      NULLIF(p.point_geom, ST_GeomFromText('POINT EMPTY', 4326)),
-                      ST_SetSRID(ST_MakePoint(p.lng, p.lat), 4326)
-                  )::geography,
-                  click.geom::geography,
-                  ${REVERSE_PLACE_MAX_M}
+              AND (
+                  (
+                      p.point_geom IS NOT NULL
+                      AND NOT ST_IsEmpty(p.point_geom)
+                      AND p.point_geom && ST_Expand(click.geom, ${REVERSE_PLACE_EXPAND_DEG})
+                      AND ST_DWithin(p.point_geom::geography, click.geom::geography, ${REVERSE_PLACE_MAX_M})
+                  )
+                  OR (
+                      (p.point_geom IS NULL OR ST_IsEmpty(p.point_geom))
+                      AND ST_DWithin(
+                          ST_SetSRID(ST_MakePoint(p.lng, p.lat), 4326)::geography,
+                          click.geom::geography,
+                          ${REVERSE_PLACE_MAX_M}
+                      )
+                  )
               )
             ORDER BY distance_m ASC
             LIMIT ${REVERSE_CANDIDATE_LIMIT}
         `;
     }
 
-    async findNearbyStreets(point: ClickPoint, maxDistanceM: number): Promise<NearbyStreetRow[]> {
-        if (!(await this.tableExists("core.core_streets"))) {
-            return [];
-        }
+    async findNearbyStreets(point: ClickPoint, maxDistanceM: number = REVERSE_STREET_MAX_M): Promise<NearbyStreetRow[]> {
         const click = this.clickSql(point);
+        // Expand slightly beyond the meter radius so the coarse bbox does not clip edge hits.
+        const expandDeg =
+            maxDistanceM <= REVERSE_STREET_MAX_M
+                ? REVERSE_STREET_EXPAND_DEG
+                : Math.max(REVERSE_STREET_EXPAND_DEG, maxDistanceM / 100_000);
         return this.prisma.$queryRaw<NearbyStreetRow[]>`
             WITH click AS (SELECT ${click}::geometry(Point, 4326) AS geom)
             SELECT
@@ -318,6 +344,7 @@ export class ReverseAddressRepository {
             WHERE s.deleted_at IS NULL
               AND s.geom IS NOT NULL
               AND NOT ST_IsEmpty(s.geom)
+              AND s.geom && ST_Expand(click.geom, ${expandDeg})
               AND ST_DWithin(s.geom::geography, click.geom::geography, ${maxDistanceM})
             ORDER BY distance_m ASC
             LIMIT ${REVERSE_CANDIDATE_LIMIT}
@@ -325,9 +352,6 @@ export class ReverseAddressRepository {
     }
 
     async findAdminAreasAtPoint(point: ClickPoint): Promise<AdminAreaAtPointRow[]> {
-        if (!(await this.tableExists("core.core_admin_areas"))) {
-            return [];
-        }
         const click = this.clickSql(point);
         return this.prisma.$queryRaw<AdminAreaAtPointRow[]>`
             WITH click AS (SELECT ${click}::geometry(Point, 4326) AS geom)
@@ -376,9 +400,6 @@ export class ReverseAddressRepository {
     }
 
     async findNearestVillageHint(point: ClickPoint): Promise<AdminAreaAtPointRow | null> {
-        if (!(await this.tableExists("core.core_admin_areas"))) {
-            return null;
-        }
         const click = this.clickSql(point);
         const rows = await this.prisma.$queryRaw<AdminAreaAtPointRow[]>`
             WITH click AS (SELECT ${click}::geometry(Point, 4326) AS geom)
@@ -406,6 +427,7 @@ export class ReverseAddressRepository {
               AND aa.deleted_at IS NULL
               AND aa.address_usage = 'locality_hint'
               AND aa.boundary_status IN ('approximate', 'settlement_extent')
+              AND aa.centroid && ST_Expand(click.geom, ${REVERSE_VILLAGE_EXPAND_DEG})
               AND ST_DWithin(aa.centroid::geography, click.geom::geography, ${REVERSE_VILLAGE_HINT_MAX_M})
             ORDER BY ST_Distance(aa.centroid::geography, click.geom::geography) ASC
             LIMIT 1
@@ -414,9 +436,6 @@ export class ReverseAddressRepository {
     }
 
     async findLandAreaAtPoint(point: ClickPoint): Promise<LandAreaAtPointRow | null> {
-        if (!(await this.tableExists("core.core_land_areas"))) {
-            return null;
-        }
         const click = this.clickSql(point);
         const rows = await this.prisma.$queryRaw<LandAreaAtPointRow[]>`
             WITH click AS (SELECT ${click}::geometry(Point, 4326) AS geom)
@@ -450,9 +469,6 @@ export class ReverseAddressRepository {
     }
 
     async listAddressComponents(addressId: bigint): Promise<CoreAddressComponentDbRow[]> {
-        if (!(await this.tableExists("core.core_address_components"))) {
-            return [];
-        }
         return this.prisma.$queryRaw<CoreAddressComponentDbRow[]>`
             SELECT
                 c.id,

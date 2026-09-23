@@ -1,0 +1,21 @@
+{
+  "group_id": "5661c047f93d",
+  "postal_codes": [
+    "0220001"
+  ],
+  "locality_mm": "ပိတောက်မြိုင် ရပ်ကွက်",
+  "locality_en": "Pi Tauk Myaing Quarter",
+  "township_en": "Kyunhla Township",
+  "township_mm": "ကျွန်းလှ မြို့နယ်",
+  "township_public_id": "77e076d0-6183-40fd-b8c2-acff13ead27a",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

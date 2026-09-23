@@ -36,7 +36,7 @@ Outbox unique work `field-outbox-sync` needs a network. Local states: `LOCAL`, `
 | POST | `/auth/refresh` | `{ refreshToken }` |
 | POST | `/auth/logout` | `{ refreshToken }` |
 
-Refresh rotates. Access tokens refresh 30 seconds early. A 401 on field/media routes clears local credentials and returns to Login. Drafts stay.
+Refresh rotates. Access tokens refresh 30 seconds early. On CoreMap API 401 the client refreshes once and retries; credentials clear only if that refresh fails. R2 media PUT 401s do not clear the session. Drafts stay.
 
 Tokens live in `EncryptedSharedPreferences`. Do not embed JWT secrets, R2 keys, or database URLs in the APK.
 

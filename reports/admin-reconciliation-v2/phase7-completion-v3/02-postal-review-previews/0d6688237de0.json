@@ -1,0 +1,21 @@
+{
+  "group_id": "0d6688237de0",
+  "postal_codes": [
+    "0901211"
+  ],
+  "locality_mm": "လောပိတ ကျေးရွာအုပ်စု",
+  "locality_en": "Law Pi Ta Village Tract",
+  "township_en": "Loikaw Township",
+  "township_mm": "လွိုင်ကော် မြို့နယ်",
+  "township_public_id": "5632cab6-82ff-453a-b4bf-724c50230562",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

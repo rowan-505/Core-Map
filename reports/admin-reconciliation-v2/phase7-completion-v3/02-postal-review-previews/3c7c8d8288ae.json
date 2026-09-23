@@ -1,0 +1,21 @@
+{
+  "group_id": "3c7c8d8288ae",
+  "postal_codes": [
+    "0209008"
+  ],
+  "locality_mm": "အောင်ဇေယျ ရပ်ကွက်",
+  "locality_en": "Aung Zay Ya Quarter",
+  "township_en": "Kale Township",
+  "township_mm": "ကလေး မြို့နယ်",
+  "township_public_id": "44d39efd-def9-4dd5-a573-f3543a988c81",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

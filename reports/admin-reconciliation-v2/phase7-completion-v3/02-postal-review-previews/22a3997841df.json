@@ -1,0 +1,21 @@
+{
+  "group_id": "22a3997841df",
+  "postal_codes": [
+    "1610200"
+  ],
+  "locality_mm": "ကောင်းဆာ ကျေးရွာအုပ်စု",
+  "locality_en": "Kawng Hsar Village Tract",
+  "township_en": "Namhkan Township",
+  "township_mm": "နမ့်ခမ်း မြို့နယ်",
+  "township_public_id": "8c022312-297d-4a47-b3f2-4582461ac3f6",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,11 @@
+{
+  "notes": "Copy entries into townships.json. public_id must be the canonical CoreMap admin_area public_id.",
+  "townships": [
+    {
+      "public_id": "REPLACE-WITH-COREMAP-ADMIN-AREA-PUBLIC-ID",
+      "name_en": "Kyauktan",
+      "name_mm": "ကျောက်တန်း",
+      "region_en": "Yangon Region"
+    }
+  ]
+}

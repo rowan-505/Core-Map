@@ -2,7 +2,6 @@ export const DASHBOARD_PATH = "/dashboard";
 
 export const CORE_REVIEW_PATH = `${DASHBOARD_PATH}/core-review`;
 export const REFERENCES_PATH = `${DASHBOARD_PATH}/references`;
-export const STATS_PATH = `${DASHBOARD_PATH}/stats`;
 export const ROUTING_ADMIN_PATH = `${DASHBOARD_PATH}/routing`;
 export const LOCAL_BASEMAP_PATH = `${DASHBOARD_PATH}/local-basemap`;
 export const DEV_MAP_PATH = `${DASHBOARD_PATH}/dev-map`;
@@ -17,6 +16,7 @@ export const COMMUNITY_PATH = `${DASHBOARD_PATH}/community`;
 export const TOURISM_PATH = `${DASHBOARD_PATH}/tourism`;
 export const SEARCH_PATH = `${DASHBOARD_PATH}/search`;
 export const ACCOUNT_PATH = `${DASHBOARD_PATH}/account`;
+export const ADMIN_GEOGRAPHY_PATH = `${DASHBOARD_PATH}/admin-geography`;
 
 function joinPath(base: string, segment?: string): string {
     const seg = segment?.replace(/^\/+|\/+$/g, "") ?? "";
@@ -29,10 +29,6 @@ export function coreReviewPath(segment?: string): string {
 
 export function referencesPath(segment?: string): string {
     return joinPath(REFERENCES_PATH, segment);
-}
-
-export function statsPath(segment?: string): string {
-    return joinPath(STATS_PATH, segment);
 }
 
 export function routingAdminPath(segment?: string): string {
@@ -89,4 +85,8 @@ export function searchPath(segment?: string): string {
 
 export function accountPath(segment?: string): string {
     return joinPath(ACCOUNT_PATH, segment);
+}
+
+export function adminGeographyPath(segment?: string): string {
+    return joinPath(ADMIN_GEOGRAPHY_PATH, segment);
 }

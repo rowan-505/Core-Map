@@ -1,0 +1,21 @@
+{
+  "group_id": "56fd33fcf3c3",
+  "postal_codes": [
+    "0802233"
+  ],
+  "locality_mm": "ဖဒို ကျေးရွာအုပ်စု",
+  "locality_en": "Hpa Do Village Tract",
+  "township_en": "Kyauktaga Township",
+  "township_mm": "ကျောက်တံခါး မြို့နယ်",
+  "township_public_id": "6a043b11-5d9c-4c73-ad46-a81d4fb6700d",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

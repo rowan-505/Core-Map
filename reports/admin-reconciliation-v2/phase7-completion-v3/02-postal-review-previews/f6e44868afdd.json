@@ -1,0 +1,21 @@
+{
+  "group_id": "f6e44868afdd",
+  "postal_codes": [
+    "0714003"
+  ],
+  "locality_mm": "ရန်အောင်မြင် ရပ်ကွက်",
+  "locality_en": "Yan Aung Myin Quarter",
+  "township_en": "Munaung Township",
+  "township_mm": "မာန်အောင် မြို့နယ်",
+  "township_public_id": "02024cd8-8421-4c25-8e3f-bd6ecf574ed5",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

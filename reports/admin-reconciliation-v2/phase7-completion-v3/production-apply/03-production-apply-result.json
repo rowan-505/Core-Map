@@ -1,0 +1,80 @@
+{
+  "generated_at": "2026-09-21T18:08:40Z",
+  "scope": "production_database_import_only",
+  "licence": "PASS_DATABASE_ONLY",
+  "search_rebuild": false,
+  "tiles_rebuild": false,
+  "cdn_invalidate": false,
+  "database_host": "aws-1-ap-northeast-1.pooler.supabase.com",
+  "backup_sha256": "73e505abd3efe529ad0ac25093f2663a98298b7038dec475efb387e8c4cd8b0a",
+  "frozen_checksums": {
+    "03-admin-actions-v3.csv": {
+      "sha256": "f3d8afc5e9d9d9da29291ad5438634f29e6fd614f72388a2f850e05d1b4e7256",
+      "bytes": 11109383
+    },
+    "03-village-actions-v3.csv": {
+      "sha256": "9f411de6ee96907242431b2ac370f408184a5d7de55746036207c362afe0a74d",
+      "bytes": 29449781
+    },
+    "03-admin-alias-actions-v3.csv": {
+      "sha256": "ec401ab4941c3c14a1589e5e2f9a7f9352d893b786a719b0615a7e74a79be470",
+      "bytes": 72431
+    },
+    "03-postal-actions-v3.csv": {
+      "sha256": "d290556b652f547f153d7c73b725d0a2f5ef876f8748d00c5d3720740660d5c6",
+      "bytes": 9621438
+    }
+  },
+  "preflight": {
+    "admin_active": 2520,
+    "admin_placeholders": 6,
+    "settle_active": 57590,
+    "pangsang_exists": 1
+  },
+  "outcomes": {
+    "township_already_created": 1,
+    "wvt_keep_existing": 1850,
+    "wvt_update_names": 36,
+    "wvt_already_created": 5,
+    "wvt_created": 14274,
+    "wvt_merge_pending": 4,
+    "wvt_update_type": 4,
+    "wvt_skip_no_geom": 2,
+    "wvt_rejected": 1,
+    "merge_merged": 4,
+    "settle_keep_existing": 48719,
+    "settle_merged": 2124,
+    "settle_created": 3571,
+    "settle_update_names": 825,
+    "settle_update_type": 14
+  },
+  "alias_stats": {
+    "alias_inserted_or_exists": 466
+  },
+  "postal_stats": {
+    "linked_exact_local_area": 15452,
+    "confirmed_non_admin": 1822,
+    "linked_after_review": 17,
+    "rejected_source_error": 6
+  },
+  "postal_breakdown": {
+    "linked_exact_local_area": 15452,
+    "confirmed_non_admin": 1822,
+    "linked_after_review": 17,
+    "rejected_source_error": 6
+  },
+  "geometry_preservation": {
+    "keep_existing_prehashed": 1867,
+    "changed_keep_existing_geom": 0,
+    "result": "PASS"
+  },
+  "snapshot": {
+    "admin_active": 16790,
+    "admin_placeholders": 14280,
+    "settle_active": 59435,
+    "settle_v3_placeholders": 3571,
+    "postal": 17297,
+    "pangsang_exists": 1,
+    "pangsang_children": 87
+  }
+}

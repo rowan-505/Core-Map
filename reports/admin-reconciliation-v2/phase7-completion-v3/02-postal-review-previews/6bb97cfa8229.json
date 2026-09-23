@@ -1,0 +1,21 @@
+{
+  "group_id": "6bb97cfa8229",
+  "postal_codes": [
+    "0712002"
+  ],
+  "locality_mm": "အစိုးရ ရပ်ကွက်",
+  "locality_en": "Ah Soe Ya Quarter",
+  "township_en": "Kyaukpyu Township",
+  "township_mm": "ကျောက်ဖြူ မြို့နယ်",
+  "township_public_id": "c25fa666-5a35-4e95-af46-319665641346",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

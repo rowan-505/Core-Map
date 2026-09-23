@@ -1,0 +1,21 @@
+{
+  "group_id": "5c8f629e4069",
+  "postal_codes": [
+    "1605003"
+  ],
+  "locality_mm": "အမှတ် (၃) ရပ်ကွက်",
+  "locality_en": "No (3) Quarter",
+  "township_en": "Pangsang (Panghkam) Township",
+  "township_mm": "ပန်ဆန်း (ပန်ခမ်း) မြို့နယ်",
+  "township_public_id": "7c8315d4-ab5a-4b41-974a-fb3cbe249fc9",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

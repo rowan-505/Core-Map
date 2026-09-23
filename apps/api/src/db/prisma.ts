@@ -24,7 +24,7 @@ function getOrCreatePrismaClient(): PrismaClient {
 }
 
 function createPrismaClient() {
-    const databaseUrl = applyPrismaConnectionLimit(process.env.DATABASE_URL);
+    const databaseUrl = applyPrismaDatabaseUrl(process.env.DATABASE_URL);
     const options = databaseUrl
         ? {
               datasources: {
@@ -38,6 +38,8 @@ function createPrismaClient() {
     return new PrismaClient(options);
 }
 
+const DEFAULT_PRISMA_CONNECT_TIMEOUT_SECONDS = "20";
+
 /**
  * Effective Prisma `connection_limit` when the URL does not already set one.
  * Default is `"8"` for map/API concurrency (reverse layers capped at 2).
@@ -47,6 +49,21 @@ function createPrismaClient() {
 export function resolvePrismaConnectionLimitValue(): string {
     const fromEnv = process.env.PRISMA_CONNECTION_LIMIT?.trim();
     return fromEnv && fromEnv.length > 0 ? fromEnv : "8";
+}
+
+export function resolvePrismaConnectTimeoutValue(): string {
+    const fromEnv = process.env.PRISMA_CONNECT_TIMEOUT?.trim();
+    return fromEnv && fromEnv.length > 0 ? fromEnv : DEFAULT_PRISMA_CONNECT_TIMEOUT_SECONDS;
+}
+
+/**
+ * Normalize the Prisma datasource URL: keep an existing `connection_limit` /
+ * `connect_timeout`, otherwise apply safe defaults. High-latency Supabase
+ * poolers often exceed Prisma’s 5s default and surface as auth 500s.
+ */
+export function applyPrismaDatabaseUrl(databaseUrl: string | undefined): string | undefined {
+    const limited = applyPrismaConnectionLimit(databaseUrl);
+    return applyPrismaConnectTimeout(limited);
 }
 
 /**
@@ -106,6 +123,22 @@ function appendConnectionLimit(databaseUrl: string, connectionLimit: string) {
     try {
         const url = new URL(databaseUrl);
         url.searchParams.set("connection_limit", connectionLimit);
+        return url.toString();
+    } catch {
+        return databaseUrl;
+    }
+}
+
+function applyPrismaConnectTimeout(databaseUrl: string | undefined): string | undefined {
+    if (!databaseUrl) {
+        return undefined;
+    }
+
+    try {
+        const url = new URL(databaseUrl);
+        if (!url.searchParams.has("connect_timeout")) {
+            url.searchParams.set("connect_timeout", resolvePrismaConnectTimeoutValue());
+        }
         return url.toString();
     } catch {
         return databaseUrl;

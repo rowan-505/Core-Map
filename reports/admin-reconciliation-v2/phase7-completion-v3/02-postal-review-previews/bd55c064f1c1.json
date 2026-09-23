@@ -1,0 +1,21 @@
+{
+  "group_id": "bd55c064f1c1",
+  "postal_codes": [
+    "1607217"
+  ],
+  "locality_mm": "ယောင်နွန်း ကျေးရွာအုပ်စု",
+  "locality_en": "Yawng Nun Village Tract",
+  "township_en": "Pangwaun Township",
+  "township_mm": "ပန်ဝိုင် မြို့နယ်",
+  "township_public_id": "eec6430f-edce-4897-81ce-3f8fc8191ee5",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "e0019455b85c",
+  "postal_codes": [
+    "1814003"
+  ],
+  "locality_mm": "တောင်ရွာမ ရပ်ကွက်",
+  "locality_en": "Taung Ywar Ma Quarter",
+  "township_en": "Gyobingauk Township",
+  "township_mm": "ကြို့ပင်ကောက် မြို့နယ်",
+  "township_public_id": "9fd8601d-df57-4568-b7f9-07bfbee0988f",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

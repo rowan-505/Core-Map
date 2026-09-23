@@ -1,0 +1,21 @@
+{
+  "group_id": "0a098af72d40",
+  "postal_codes": [
+    "0236001"
+  ],
+  "locality_mm": "မြို့သစ် ရပ်ကွက်",
+  "locality_en": "Myo Thit Quarter",
+  "township_en": "Myaung Township",
+  "township_mm": "မြောင် မြို့နယ်",
+  "township_public_id": "9afca375-72dc-417a-8052-fd32bbaa72f8",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

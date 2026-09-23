@@ -1150,11 +1150,7 @@ export class AuthService {
         if (!method) {
             throw new AuthError("MFA is not enabled for this account.", 400);
         }
-        const key = getAuthEnv().mfaEncryptionKey;
-        if (!key) {
-            throw new AuthError("MFA is not configured.", 503);
-        }
-        const secret = decryptSecret(method.secretEncrypted, key);
+        const secret = this.decryptMfaSecret(method.secretEncrypted);
         const totpOk = verifyTotp(secret, code);
         if (!totpOk) {
             const recovered = await this.authRepo.consumeRecoveryCode(
@@ -1193,10 +1189,7 @@ export class AuthService {
         if (existing) {
             throw new AuthError("MFA is already enabled for this account.", 400);
         }
-        const key = getAuthEnv().mfaEncryptionKey;
-        if (!key) {
-            throw new AuthError("MFA is not configured.", 503);
-        }
+        const key = this.requireMfaEncryptionKey();
         const secret = generateTotpSecret();
         await this.authRepo.createPendingTotp(BigInt(user.id), encryptSecret(secret, key));
         return { secret, otpauthUrl: otpauthUrl({ secret, email: user.email }) };
@@ -1211,11 +1204,7 @@ export class AuthService {
         if (!pending) {
             throw new AuthError("No MFA enrollment in progress.", 400);
         }
-        const key = getAuthEnv().mfaEncryptionKey;
-        if (!key) {
-            throw new AuthError("MFA is not configured.", 503);
-        }
-        const secret = decryptSecret(pending.secretEncrypted, key);
+        const secret = this.decryptMfaSecret(pending.secretEncrypted);
         if (!verifyTotp(secret, code)) {
             throw new AuthError("Invalid verification code", 400);
         }
@@ -1494,6 +1483,23 @@ export class AuthService {
                 403,
                 "feature_disabled"
             );
+        }
+    }
+
+    private requireMfaEncryptionKey(): string {
+        const key = getAuthEnv().mfaEncryptionKey;
+        if (!key) {
+            throw new AuthError("MFA is not configured.", 503);
+        }
+        return key;
+    }
+
+    private decryptMfaSecret(secretEncrypted: string): string {
+        const key = this.requireMfaEncryptionKey();
+        try {
+            return decryptSecret(secretEncrypted, key);
+        } catch {
+            throw new AuthError("MFA could not be verified. Contact an administrator.", 503);
         }
     }
 

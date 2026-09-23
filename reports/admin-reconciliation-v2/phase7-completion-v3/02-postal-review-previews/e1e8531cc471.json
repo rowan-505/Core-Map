@@ -1,0 +1,21 @@
+{
+  "group_id": "e1e8531cc471",
+  "postal_codes": [
+    "1408001"
+  ],
+  "locality_mm": "ရွှေဘုံသာ ရပ်ကွက်",
+  "locality_en": "Shwe Bon Thar Quarter",
+  "township_en": "Bokpyin Township",
+  "township_mm": "ဘုတ်ပြင်း မြို့နယ်",
+  "township_public_id": "67cda726-bad7-47a7-bef8-042cd509690e",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

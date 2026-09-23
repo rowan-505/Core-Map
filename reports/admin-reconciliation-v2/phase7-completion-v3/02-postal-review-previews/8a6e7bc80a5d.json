@@ -1,0 +1,21 @@
+{
+  "group_id": "8a6e7bc80a5d",
+  "postal_codes": [
+    "1107023"
+  ],
+  "locality_mm": "ကြီးပွားရေး ရပ်ကွက်",
+  "locality_en": "Kyi Pwar Yay Quarter",
+  "township_en": "Thingangyun Township",
+  "township_mm": "သင်္ဃန်းကျွန်း မြို့နယ်",
+  "township_public_id": "47c4cf97-e6e3-43e5-8112-8553a9162006",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

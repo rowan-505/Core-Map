@@ -5,9 +5,11 @@ import {
     buildFailedSearchIndexHealthReport,
     buildSearchIndexHealthReport,
     hasSearchIndexHealthIssues,
+    isSearchIndexFamilyCriticallyUnhealthy,
     isSearchIndexFamilyUnhealthy,
     normalizeSearchIndexHealthRow,
     resolveRebuildViewsForHealthFamilies,
+    shouldQueueFamilyForAutoRepair,
 } from "./search-index-health.js";
 
 test("isSearchIndexFamilyUnhealthy detects missing, ghost, or stale rows", () => {
@@ -15,6 +17,51 @@ test("isSearchIndexFamilyUnhealthy detects missing, ghost, or stale rows", () =>
     assert.equal(isSearchIndexFamilyUnhealthy({ missing: 1, ghost: 0, stale: 0 }), true);
     assert.equal(isSearchIndexFamilyUnhealthy({ missing: 0, ghost: 2, stale: 0 }), true);
     assert.equal(isSearchIndexFamilyUnhealthy({ missing: 0, ghost: 0, stale: 3 }), true);
+});
+
+test("shouldQueueFamilyForAutoRepair is critical-only and skips small heavy gaps", () => {
+    assert.equal(
+        shouldQueueFamilyForAutoRepair(
+            { entity_family: "places", missing: 1, ghost: 0, stale: 0 },
+            { criticalOnly: true },
+        ),
+        true,
+    );
+    assert.equal(
+        shouldQueueFamilyForAutoRepair(
+            { entity_family: "places", missing: 0, ghost: 0, stale: 50 },
+            { criticalOnly: true },
+        ),
+        false,
+    );
+    assert.equal(
+        shouldQueueFamilyForAutoRepair(
+            { entity_family: "places", missing: 0, ghost: 0, stale: 50 },
+            { criticalOnly: false },
+        ),
+        true,
+    );
+    assert.equal(
+        shouldQueueFamilyForAutoRepair(
+            { entity_family: "street_groups", missing: 5, ghost: 0, stale: 0 },
+            { criticalOnly: true },
+        ),
+        false,
+    );
+    assert.equal(
+        shouldQueueFamilyForAutoRepair(
+            { entity_family: "street_groups", missing: 100, ghost: 0, stale: 0 },
+            { criticalOnly: true },
+        ),
+        true,
+    );
+    assert.equal(
+        shouldQueueFamilyForAutoRepair(
+            { entity_family: "settlements", missing: 1, ghost: 0, stale: 0 },
+            { criticalOnly: true, includeHeavy: true },
+        ),
+        true,
+    );
 });
 
 test("resolveRebuildViewsForHealthFamilies maps and dedupes transport route families", () => {

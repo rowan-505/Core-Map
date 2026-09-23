@@ -168,6 +168,7 @@ export function formatBucketLabel(iso: string, bucket: "hour" | "day"): string {
 const INDEX_FAMILY_LABELS: Record<string, string> = {
     places: "Places",
     admin_areas: "Admin areas",
+    settlements: "Settlements",
     street_groups: "Street groups",
     addresses: "Addresses",
     transport_stops: "Transport stops",
@@ -179,6 +180,29 @@ const INDEX_FAMILY_LABELS: Record<string, string> = {
     water_lines: "Water lines",
     water_polygons: "Water polygons",
 };
+
+/** Matches API SEARCH_INDEX_HEAVY_REBUILD_FAMILIES — multi-hour full rebuilds. */
+export const SEARCH_INDEX_HEAVY_REBUILD_FAMILIES = new Set(["settlements", "street_groups"]);
+
+/** Matches API SEARCH_INDEX_HEAVY_REBUILD_CRITICAL_GAP_MIN. */
+export const SEARCH_INDEX_HEAVY_REBUILD_CRITICAL_GAP_MIN = 100;
+
+/**
+ * Auto-repair queue filter (critical missing/ghost only; skip heavy unless large gap).
+ * Keep in sync with apps/api shouldQueueFamilyForAutoRepair.
+ */
+export function shouldQueueFamilyForAutoRepair(row: {
+    entity_family: string;
+    missing_count: number;
+    ghost_count: number;
+}): boolean {
+    const gap = row.missing_count + row.ghost_count;
+    if (gap <= 0) return false;
+    if (SEARCH_INDEX_HEAVY_REBUILD_FAMILIES.has(row.entity_family)) {
+        return gap >= SEARCH_INDEX_HEAVY_REBUILD_CRITICAL_GAP_MIN;
+    }
+    return true;
+}
 
 export function indexFamilyLabel(value: string): string {
     return INDEX_FAMILY_LABELS[value] ?? value;

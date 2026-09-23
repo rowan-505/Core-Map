@@ -1,0 +1,21 @@
+{
+  "group_id": "fa8b605324cf",
+  "postal_codes": [
+    "0804005"
+  ],
+  "locality_mm": "တောင်ငူတန်း ရပ်ကွက်",
+  "locality_en": "Taungoo Tan Quarter",
+  "township_en": "Kyaukkyi Township",
+  "township_mm": "ကျောက်ကြီး မြို့နယ်",
+  "township_public_id": "42b59e9e-67cd-40ed-8097-1be225540267",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

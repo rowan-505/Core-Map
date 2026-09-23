@@ -1,0 +1,21 @@
+{
+  "group_id": "e7f7a3bd56c2",
+  "postal_codes": [
+    "1009227"
+  ],
+  "locality_mm": "အထောင် ကျေးရွာအုပ်စု",
+  "locality_en": "Ah Htaung Village Tract",
+  "township_en": "Kyonpyaw Town Township",
+  "township_mm": "ကျုံပျော် မြို့နယ်",
+  "township_public_id": "7c7a5171-9546-4ae7-b409-7b184514b5c8",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

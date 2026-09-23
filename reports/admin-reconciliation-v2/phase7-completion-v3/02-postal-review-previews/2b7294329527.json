@@ -1,0 +1,21 @@
+{
+  "group_id": "2b7294329527",
+  "postal_codes": [
+    "0710287"
+  ],
+  "locality_mm": "ရန်အောင်ပြင် ကျေးရွာအုပ်စု",
+  "locality_en": "Yan Aung Pyin Village Tract",
+  "township_en": "Mrauk-U Township",
+  "township_mm": "မြောက်ဦး မြို့နယ်",
+  "township_public_id": "9507bdfe-ed00-46b7-9f9e-e4ec83debe07",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

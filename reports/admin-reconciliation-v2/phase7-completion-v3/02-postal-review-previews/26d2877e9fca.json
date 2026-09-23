@@ -1,0 +1,21 @@
+{
+  "group_id": "26d2877e9fca",
+  "postal_codes": [
+    "0812239"
+  ],
+  "locality_mm": "ကျွဲပွဲ ကျေးရွာအုပ်စု",
+  "locality_en": "Kywe Pwe Village Tract",
+  "township_en": "Oktwin Township",
+  "township_mm": "အုတ်တွင်း မြို့နယ်",
+  "township_public_id": "d62af6d8-d8cd-47e9-9efe-0963fa8f07d8",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

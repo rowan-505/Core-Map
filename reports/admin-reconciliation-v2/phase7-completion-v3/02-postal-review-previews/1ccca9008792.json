@@ -1,0 +1,21 @@
+{
+  "group_id": "1ccca9008792",
+  "postal_codes": [
+    "1140204"
+  ],
+  "locality_mm": "ရေဥက္ကံ ကျေးရွာအုပ်စု | ဥက္ကံသောင်ကြား (ရေဥက္ကံ) ကျေးရွာအုပ်စု",
+  "locality_en": "Oke Kan Thaung Kyar (Yae Oke Kan) Village Tract | Yae Oke Kan Village Tract",
+  "township_en": "- | Hlaingtharya(East) Township",
+  "township_mm": "- | လှိုင်သာယာ(အရှေ့) မြို့နယ်",
+  "township_public_id": "f82dcfc5-7c66-47e6-b16d-7368ddfa32ba",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

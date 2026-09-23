@@ -1,0 +1,21 @@
+{
+  "group_id": "426ac99b321d",
+  "postal_codes": [
+    "1812276"
+  ],
+  "locality_mm": "ပျဉ်းမခေါင် ကျေးရွာအုပ်စု",
+  "locality_en": "Pyin Ma Khaung Village Tract",
+  "township_en": "Nattalin Township",
+  "township_mm": "နတ်တလင်း မြို့နယ်",
+  "township_public_id": "d25c0246-f943-42a3-a97b-24f20150614f",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

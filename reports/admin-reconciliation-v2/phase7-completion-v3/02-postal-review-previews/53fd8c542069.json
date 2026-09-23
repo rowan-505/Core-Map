@@ -1,0 +1,21 @@
+{
+  "group_id": "53fd8c542069",
+  "postal_codes": [
+    "1305006"
+  ],
+  "locality_mm": "အမှတ် (၆) ရပ်ကွက်",
+  "locality_en": "No (6) Quarter",
+  "township_en": "Myawaddy Township",
+  "township_mm": "မြဝတီ မြို့နယ်",
+  "township_public_id": "273b9ffe-f0b3-408a-a091-ac81bfd57981",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

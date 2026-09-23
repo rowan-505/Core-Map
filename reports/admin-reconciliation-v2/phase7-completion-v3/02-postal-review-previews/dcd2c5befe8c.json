@@ -1,0 +1,21 @@
+{
+  "group_id": "dcd2c5befe8c",
+  "postal_codes": [
+    "0222004"
+  ],
+  "locality_mm": "မေတ္တာမြိုင် ရပ်ကွက်",
+  "locality_en": "Myit Tar Myaing Quarter",
+  "township_en": "Taze Township",
+  "township_mm": "တန့်ဆည် မြို့နယ်",
+  "township_public_id": "0c37fbaa-de5f-444d-ab2a-ab13e6524ed7",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

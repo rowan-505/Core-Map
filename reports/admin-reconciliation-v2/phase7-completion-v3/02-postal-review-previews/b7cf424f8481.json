@@ -1,0 +1,21 @@
+{
+  "group_id": "b7cf424f8481",
+  "postal_codes": [
+    "1143203"
+  ],
+  "locality_mm": "စိုက်ပျိုးမွေးမြူရေးကျေးရွာအမှတ် (၁) ကျေးရွာအုပ်စု",
+  "locality_en": "Saik Pyo Mway Myu Yay Kyay Ywar (1) Village Tract",
+  "township_en": "Dagon Myothit (South) Township",
+  "township_mm": "ဒဂုံမြို့သစ် (တောင်ပိုင်း) မြို့နယ်",
+  "township_public_id": "13288755-ec6b-4a53-beac-6182cfa3ecf4",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

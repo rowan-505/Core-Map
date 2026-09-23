@@ -1,0 +1,21 @@
+{
+  "group_id": "050538d0017a",
+  "postal_codes": [
+    "1601002"
+  ],
+  "locality_mm": "အောင်မေတ္တာ ရပ်ကွက်",
+  "locality_en": "Aung Myit Tar Quarter",
+  "township_en": "Lashio Township",
+  "township_mm": "လားရှိုး မြို့နယ်",
+  "township_public_id": "ff921958-83f9-44df-919a-3093fc826112",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

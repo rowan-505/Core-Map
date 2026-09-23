@@ -1,0 +1,21 @@
+{
+  "group_id": "f2ac50b6a830",
+  "postal_codes": [
+    "1603225"
+  ],
+  "locality_mm": "နောင်အက် (ပန်ကောင်းမူး) ကျေးရွာအုပ်စု",
+  "locality_en": "Nawng Et (Pang Kawng Mu) Village Tract",
+  "township_en": "Mongyai Township",
+  "township_mm": "မိုင်းရယ် မြို့နယ်",
+  "township_public_id": "68fdbb5b-be2b-46ce-902c-e797d59d2e18",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

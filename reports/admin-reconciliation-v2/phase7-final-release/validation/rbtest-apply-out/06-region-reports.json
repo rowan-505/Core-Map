@@ -1,0 +1,933 @@
+[
+  {
+    "region": "Ayeyarwady",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 202,
+        "matched": 169,
+        "updated": 169,
+        "merged": 0,
+        "created_placeholder": 33,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 1984,
+        "matched": 1,
+        "updated": 1,
+        "merged": 0,
+        "created_placeholder": 1983,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 10781,
+        "matched": 10180,
+        "updated": 644,
+        "merged": 1273,
+        "created_placeholder": 601,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 2230,
+        "matched": 165,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 2230,
+        "rejected": 0,
+        "manual_review": 2,
+        "unaccounted": 2063
+      }
+    }
+  },
+  {
+    "region": "Bago (East)",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 81,
+        "matched": 79,
+        "updated": 6,
+        "merged": 0,
+        "created_placeholder": 1,
+        "rejected": 1,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 755,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 755,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 2378,
+        "matched": 2297,
+        "updated": 36,
+        "merged": 32,
+        "created_placeholder": 81,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 943,
+        "matched": 79,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 943,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 864
+      }
+    }
+  },
+  {
+    "region": "Bago (West)",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 35,
+        "matched": 34,
+        "updated": 13,
+        "merged": 0,
+        "created_placeholder": 1,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 731,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 731,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 3454,
+        "matched": 3409,
+        "updated": 40,
+        "merged": 161,
+        "created_placeholder": 45,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 823,
+        "matched": 34,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 823,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 789
+      }
+    }
+  },
+  {
+    "region": "Chin",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 19,
+        "matched": 19,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 482,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 482,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 1373,
+        "matched": 1269,
+        "updated": 20,
+        "merged": 17,
+        "created_placeholder": 104,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 543,
+        "matched": 19,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 543,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 524
+      }
+    }
+  },
+  {
+    "region": "Kachin",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 54,
+        "matched": 54,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 612,
+        "matched": 1,
+        "updated": 1,
+        "merged": 0,
+        "created_placeholder": 611,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 1560,
+        "matched": 1485,
+        "updated": 14,
+        "merged": 10,
+        "created_placeholder": 75,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 784,
+        "matched": 56,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 784,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 728
+      }
+    }
+  },
+  {
+    "region": "Kayah",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 13,
+        "matched": 13,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 85,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 85,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 469,
+        "matched": 442,
+        "updated": 4,
+        "merged": 8,
+        "created_placeholder": 27,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 124,
+        "matched": 13,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 124,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 111
+      }
+    }
+  },
+  {
+    "region": "Kayin",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 15,
+        "matched": 15,
+        "updated": 1,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 397,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 397,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 1491,
+        "matched": 1475,
+        "updated": 10,
+        "merged": 28,
+        "created_placeholder": 16,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 463,
+        "matched": 16,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 463,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 447
+      }
+    }
+  },
+  {
+    "region": "Magway",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 97,
+        "matched": 86,
+        "updated": 11,
+        "merged": 0,
+        "created_placeholder": 11,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 1599,
+        "matched": 1,
+        "updated": 1,
+        "merged": 0,
+        "created_placeholder": 1598,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 4712,
+        "matched": 4557,
+        "updated": 404,
+        "merged": 71,
+        "created_placeholder": 151,
+        "rejected": 4,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 1746,
+        "matched": 82,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 1746,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 1664
+      }
+    }
+  },
+  {
+    "region": "Mandalay",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 159,
+        "matched": 151,
+        "updated": 1,
+        "merged": 1,
+        "created_placeholder": 7,
+        "rejected": 1,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 1463,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 1463,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 4707,
+        "matched": 4588,
+        "updated": 305,
+        "merged": 109,
+        "created_placeholder": 119,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 1703,
+        "matched": 155,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 1703,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 1548
+      }
+    }
+  },
+  {
+    "region": "Mon",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 83,
+        "matched": 76,
+        "updated": 8,
+        "merged": 0,
+        "created_placeholder": 7,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 390,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 390,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 1040,
+        "matched": 894,
+        "updated": 12,
+        "merged": 22,
+        "created_placeholder": 146,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 494,
+        "matched": 80,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 494,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 414
+      }
+    }
+  },
+  {
+    "region": "Nay Pyi Taw",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 39,
+        "matched": 27,
+        "updated": 2,
+        "merged": 0,
+        "created_placeholder": 11,
+        "rejected": 1,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 204,
+        "matched": 1,
+        "updated": 1,
+        "merged": 0,
+        "created_placeholder": 203,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 796,
+        "matched": 775,
+        "updated": 54,
+        "merged": 15,
+        "created_placeholder": 21,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 248,
+        "matched": 27,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 248,
+        "rejected": 0,
+        "manual_review": 1,
+        "unaccounted": 220
+      }
+    }
+  },
+  {
+    "region": "Rakhine",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 81,
+        "matched": 80,
+        "updated": 7,
+        "merged": 0,
+        "created_placeholder": 1,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 1069,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 1069,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 3502,
+        "matched": 3345,
+        "updated": 22,
+        "merged": 98,
+        "created_placeholder": 157,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 1245,
+        "matched": 76,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 1245,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 1169
+      }
+    }
+  },
+  {
+    "region": "Sagaing",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 95,
+        "matched": 93,
+        "updated": 5,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 2,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 1825,
+        "matched": 1,
+        "updated": 1,
+        "merged": 0,
+        "created_placeholder": 1823,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 1
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 5725,
+        "matched": 5687,
+        "updated": 159,
+        "merged": 57,
+        "created_placeholder": 37,
+        "rejected": 1,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 2038,
+        "matched": 95,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 2038,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 1943
+      }
+    }
+  },
+  {
+    "region": "Shan (East)",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 30,
+        "matched": 30,
+        "updated": 9,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 204,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 204,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 2298,
+        "matched": 1903,
+        "updated": 29,
+        "merged": 21,
+        "created_placeholder": 395,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 289,
+        "matched": 30,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 289,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 259
+      }
+    }
+  },
+  {
+    "region": "Shan (North)",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 85,
+        "matched": 75,
+        "updated": 17,
+        "merged": 0,
+        "created_placeholder": 10,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 965,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 876,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 89
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 3488,
+        "matched": 2534,
+        "updated": 197,
+        "merged": 42,
+        "created_placeholder": 951,
+        "rejected": 3,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 1220,
+        "matched": 75,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 1220,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 1145
+      }
+    }
+  },
+  {
+    "region": "Shan (South)",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 137,
+        "matched": 129,
+        "updated": 26,
+        "merged": 0,
+        "created_placeholder": 8,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 456,
+        "matched": 1,
+        "updated": 1,
+        "merged": 0,
+        "created_placeholder": 455,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 3616,
+        "matched": 3045,
+        "updated": 66,
+        "merged": 54,
+        "created_placeholder": 570,
+        "rejected": 1,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 674,
+        "matched": 128,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 674,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 546
+      }
+    }
+  },
+  {
+    "region": "Tanintharyi",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 67,
+        "matched": 58,
+        "updated": 13,
+        "merged": 0,
+        "created_placeholder": 9,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 293,
+        "matched": 1,
+        "updated": 1,
+        "merged": 0,
+        "created_placeholder": 292,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 1306,
+        "matched": 1288,
+        "updated": 7,
+        "merged": 50,
+        "created_placeholder": 18,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 358,
+        "matched": 57,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 358,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 301
+      }
+    }
+  },
+  {
+    "region": "Yangon",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 709,
+        "matched": 691,
+        "updated": 110,
+        "merged": 2,
+        "created_placeholder": 15,
+        "rejected": 3,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 661,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 661,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 1906,
+        "matched": 1855,
+        "updated": 214,
+        "merged": 44,
+        "created_placeholder": 51,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 1373,
+        "matched": 664,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 1372,
+        "rejected": 1,
+        "manual_review": 0,
+        "unaccounted": 708
+      }
+    }
+  },
+  {
+    "region": "_unknown",
+    "entities": {
+      "ward": {
+        "entity": "ward",
+        "source_count": 0,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village_tract": {
+        "entity": "village_tract",
+        "source_count": 0,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "village": {
+        "entity": "village",
+        "source_count": 0,
+        "matched": 0,
+        "updated": 0,
+        "merged": 12,
+        "created_placeholder": 0,
+        "rejected": 0,
+        "manual_review": 0,
+        "unaccounted": 0
+      },
+      "postal": {
+        "entity": "postal",
+        "source_count": 1,
+        "matched": 0,
+        "updated": 0,
+        "merged": 0,
+        "created_placeholder": 0,
+        "rejected": 1,
+        "manual_review": 0,
+        "unaccounted": 0
+      }
+    }
+  }
+]

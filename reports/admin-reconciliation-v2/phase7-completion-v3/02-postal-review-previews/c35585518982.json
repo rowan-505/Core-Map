@@ -1,0 +1,21 @@
+{
+  "group_id": "c35585518982",
+  "postal_codes": [
+    "1810002"
+  ],
+  "locality_mm": "အောင်မင်္ဂလာ ရပ်ကွက်",
+  "locality_en": "Aung Min Ga Lar Quarter",
+  "township_en": "Okpho Township",
+  "township_mm": "အုတ်ဖို မြို့နယ်",
+  "township_public_id": "5b5b8580-77e5-423a-9e78-c9dee4c12070",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

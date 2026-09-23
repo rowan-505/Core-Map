@@ -1,0 +1,21 @@
+{
+  "group_id": "bb755106406f",
+  "postal_codes": [
+    "1621249"
+  ],
+  "locality_mm": "ကောမုန် ကျေးရွာအုပ်စု",
+  "locality_en": "Kaw Mon Village Tract",
+  "township_en": "Hopang Township",
+  "township_mm": "ဟိုပန် မြို့နယ်",
+  "township_public_id": "6a9008c2-c205-4b58-8d95-2013115d10b0",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "faa5e4f8b0bd",
+  "postal_codes": [
+    "0103001"
+  ],
+  "locality_mm": "အမှတ် (၁) ရပ်ကွက်",
+  "locality_en": "No (1) Quarter",
+  "township_en": "Nawngmun Township",
+  "township_mm": "နောင်မွန်း မြို့နယ်",
+  "township_public_id": "39aca498-4c51-49b3-ae50-50cc7ef46888",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

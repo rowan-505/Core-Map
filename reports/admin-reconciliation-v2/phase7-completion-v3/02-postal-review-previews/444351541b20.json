@@ -1,0 +1,21 @@
+{
+  "group_id": "444351541b20",
+  "postal_codes": [
+    "1813002"
+  ],
+  "locality_mm": "ဇောတိက ရပ်ကွက်",
+  "locality_en": "Zaw Ti  Ka Quarter",
+  "township_en": "Monyo Township",
+  "township_mm": "မိုးညို မြို့နယ်",
+  "township_public_id": "3465bc05-4c64-4087-b9e6-787b2ff029d2",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

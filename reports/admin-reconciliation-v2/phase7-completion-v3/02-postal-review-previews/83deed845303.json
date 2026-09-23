@@ -1,0 +1,21 @@
+{
+  "group_id": "83deed845303",
+  "postal_codes": [
+    "1619212"
+  ],
+  "locality_mm": "ဆိုင်းလိန် (က) ကျေးရွာအုပ်စု",
+  "locality_en": "Hseng Lein (Ka) Village Tract",
+  "township_en": "Manton Township",
+  "township_mm": "မန်တုံ မြို့နယ်",
+  "township_public_id": "c5ae9f1c-5a77-45ec-be90-851b56ef9604",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

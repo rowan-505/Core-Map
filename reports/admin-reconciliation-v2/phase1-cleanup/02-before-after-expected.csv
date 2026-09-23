@@ -1,0 +1,22 @@
+metric,before_expected,after_expected,notes
+official_first_level_state_region,17,15,Wa North/South removed from parent_id=11 official SR count
+wa_parent_is_country,2,0,6378 and 6485 no longer under country
+saz_or_sad_under_correct_state,0,6,"Pa-O/Danu/Kokang/PaLaung/WaSAD under Shan; Naga under Sagaing"
+foreign_public_or_official,5,0,all five foreign rows disabled for public/official use
+foreign_rows_hard_deleted,0,0,rows preserved
+foreign_is_active_true,5,5,left active after FK inspection; no unsafe reassignment
+township_6674_parent,6665,6693,Nanyun under Naga SAZ
+township_6091_parent,5999,6115,Hsihseng under Pa-O SAZ
+township_6073_parent,6042,6115,Pinlaung under Pa-O SAZ
+township_6187_parent,6197,6192,Ywangan under Danu SAZ
+township_7139_parent,7128,pyay_district_new,Pyay under new Bago Pyay District
+township_6778_parent,7155,pyay_district_new,Padaung under new Pyay District
+township_7151_parent,7155,pyay_district_new,Shwedaung under new Pyay District
+saz_6115_parent,6042,6329,Pa-O under Shan
+saz_6192_parent,6197,6329,Danu under Shan
+saz_6693_parent,6665,6703,Naga under Sagaing
+kokang_6411_level,district,self_administered_zone,reclassify existing polygon row
+duplicate_merges_applied,0,0,none explicitly approved
+existing_geom_md5_changed,0,0,validation must prove zero
+orphan_parent_id,0,0,must remain zero
+fk_to_deleted_admin,0,0,must remain zero

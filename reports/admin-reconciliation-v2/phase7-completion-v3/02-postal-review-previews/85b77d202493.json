@@ -1,0 +1,21 @@
+{
+  "group_id": "85b77d202493",
+  "postal_codes": [
+    "0215001"
+  ],
+  "locality_mm": "မြောက်ပိုင်း ရပ်ကွက်",
+  "locality_en": "Myauk Paing Quarter",
+  "township_en": "Katha Township",
+  "township_mm": "ကသာ မြို့နယ်",
+  "township_public_id": "095293bf-0b9b-4ab3-abe0-3912b48f1b1e",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

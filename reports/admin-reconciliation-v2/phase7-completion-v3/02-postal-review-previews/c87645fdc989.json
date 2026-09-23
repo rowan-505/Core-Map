@@ -1,0 +1,21 @@
+{
+  "group_id": "c87645fdc989",
+  "postal_codes": [
+    "0220003"
+  ],
+  "locality_mm": "အင်ကြင်းမြိုင် ရပ်ကွက်",
+  "locality_en": "In Gyin Myaing Quarter",
+  "township_en": "Kyunhla Township",
+  "township_mm": "ကျွန်းလှ မြို့နယ်",
+  "township_public_id": "77e076d0-6183-40fd-b8c2-acff13ead27a",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

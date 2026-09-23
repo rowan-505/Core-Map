@@ -1,0 +1,21 @@
+{
+  "group_id": "1da6334bae87",
+  "postal_codes": [
+    "1808004"
+  ],
+  "locality_mm": "ဘီးလင်းတန်း ရပ်ကွက်",
+  "locality_en": "Bee Lin Tan Quarter",
+  "township_en": "Letpadan Township",
+  "township_mm": "လက်ပံတန်း မြို့နယ်",
+  "township_public_id": "b5d53caf-38cc-4e4a-a62a-d498b35a6ed7",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

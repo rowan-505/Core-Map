@@ -1,0 +1,361 @@
+source_key,level,action,outcome,coremap_id,name_en,name_my,notes
+02_District:69,district,manual_review,rejected_do_not_merge,,Mong Maw (Wa SAD),မိုင်းမော-ဝအထူးဒေသ (၂),Human rejected merge with CoreMap 6294 Mong La. Leave unmatched.
+02_District:74,district,manual_review,rejected_do_not_merge,,Monghpyak,မိုင်းဖြတ်ခရိုင်,Human rejected merge with CoreMap 6371 Mong Hsat. Leave unmatched.
+_06-VillageTract:4205,ward_village_tract,manual_review,manual_review_remaining,,Nyaung Kone,ညောင်ကုန်း,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:788,ward_village_tract,manual_review,manual_review_remaining,,Nyaung Kone Ward,ညောင်ကုန်းရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:859,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:860,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:861,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:862,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:855,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:856,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:857,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:858,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:947,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:948,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:949,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:950,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:952,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:953,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:954,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:955,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:965,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:966,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:967,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:968,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:969,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:970,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:971,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:972,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1024,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1025,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1026,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1027,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1028,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1020,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1021,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1022,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1023,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1014,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1015,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1016,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1017,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1018,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1010,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1011,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1012,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1013,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1000,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1001,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1007,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1008,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1009,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:706,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:707,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:704,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:705,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:3744,ward_village_tract,manual_review,manual_review_remaining,,Thea Ma Wa,သဲမဝ,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:3745,ward_village_tract,manual_review,manual_review_remaining,,Thea Ma Wa,သဲမဝ,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2061,ward_village_tract,manual_review,manual_review_remaining,,Aye Mya Wa Di Ward,ဧမြဝတီရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 6849,6853"
+_05_Ward:2102,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2104,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2105,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2106,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2098,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2099,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2100,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2101,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:9982,ward_village_tract,manual_review,manual_review_remaining,,Na Gar Paw,နဂါးပေါ်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1957,ward_village_tract,manual_review,manual_review_remaining,,Nagar Paw Ward,နဂါးပေါ်ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2132,ward_village_tract,manual_review,manual_review_remaining,,Ma Har Myaing Ward,မဟာမြိုင်ရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 6794,6797"
+_06-VillageTract:10360,ward_village_tract,manual_review,manual_review_remaining,,Myo Ma,မြို့မ,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2004,ward_village_tract,manual_review,manual_review_remaining,,Myo Ma Ward,မြို့မရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2124,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2125,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2126,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2119,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2120,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2121,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:9748,ward_village_tract,manual_review,manual_review_remaining,,Hin Naung,ဟင်နောင်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:9749,ward_village_tract,manual_review,manual_review_remaining,,Hin Naung,ဟင်နောင်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1905,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1908,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1903,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1904,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2049,ward_village_tract,manual_review,manual_review_remaining,,Myo Ma Ward,မြို့မရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2048,ward_village_tract,manual_review,manual_review_remaining,,Myo Ma Ward,မြို့မရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2741,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2742,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2743,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2744,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2737,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2738,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2739,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2740,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2733,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2734,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2735,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2736,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:2040,ward_village_tract,manual_review,manual_review_remaining,,Ywar Thit,ရွာသစ်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:340,ward_village_tract,manual_review,manual_review_remaining,,Ywar Thit Ward,ရွာသစ်ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:326,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:327,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:328,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:329,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:330,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:331,ward_village_tract,manual_review,manual_review_remaining,,No (6) Ward,အမှတ် (၆) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:347,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:348,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:349,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:350,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:351,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:352,ward_village_tract,manual_review,manual_review_remaining,,No (6) Ward,အမှတ် (၆) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:2122,ward_village_tract,manual_review,manual_review_remaining,,Aung Min Ga Lar,အောင်မင်္ဂလာ,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:374,ward_village_tract,manual_review,manual_review_remaining,,Aung Min Ga Lar Ward,အောင်မင်္ဂလာရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:2460,ward_village_tract,manual_review,manual_review_remaining,,Du Yin Pin,ဒူးရင်းပင်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:2461,ward_village_tract,manual_review,manual_review_remaining,,Du Yin Pin,ဒူးရင်းပင်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:447,ward_village_tract,manual_review,manual_review_remaining,,Gant Gaw Waing Ward,ဂန့်ဂေါ်ဝိုင်းရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 5891,5897"
+_05_Ward:501,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:502,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:503,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:504,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:496,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:497,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:498,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:499,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:2432,ward_village_tract,manual_review,manual_review_remaining,,Oke Hpyat,အုတ်ဖြတ်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:438,ward_village_tract,manual_review,manual_review_remaining,,Oke Hpyat Ward,အုတ်ဖြတ်ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:3153,ward_village_tract,manual_review,manual_review_remaining,,Kyoet Kone,ကြို့ကုန်း,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:3154,ward_village_tract,manual_review,manual_review_remaining,,Kyoet Kone,ကြို့ကုန်း,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:557,ward_village_tract,manual_review,manual_review_remaining,,Myo Ma Ward,မြို့မရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:550,ward_village_tract,manual_review,manual_review_remaining,,Myo Ma Ward,မြို့မရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:5054,ward_village_tract,manual_review,manual_review_remaining,,Ma Gyi Kan,မကျီးကန်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:5055,ward_village_tract,manual_review,manual_review_remaining,,Ma Gyi Kan,မကျီးကန်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1038,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1045,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1046,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1047,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1048,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1053,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1054,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1055,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1056,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1057,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1086,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1087,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1088,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1090,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1091,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1092,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1140,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1147,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1148,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1149,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1150,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1151,ward_village_tract,manual_review,manual_review_remaining,,No (6) Ward,အမှတ် (၆) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1152,ward_village_tract,manual_review,manual_review_remaining,,No (7) Ward,အမှတ် (၇) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1153,ward_village_tract,manual_review,manual_review_remaining,,No (8) Ward,အမှတ် (၈) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1154,ward_village_tract,manual_review,manual_review_remaining,,No (9) Ward,အမှတ် (၉) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1141,ward_village_tract,manual_review,manual_review_remaining,,No (10) Ward,အမှတ် (၁၀) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1142,ward_village_tract,manual_review,manual_review_remaining,,No (11) Ward,အမှတ် (၁၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1143,ward_village_tract,manual_review,manual_review_remaining,,No (12) Ward,အမှတ် (၁၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1120,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1124,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1125,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1126,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1127,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1128,ward_village_tract,manual_review,manual_review_remaining,,No (6) Ward,အမှတ် (၆) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1129,ward_village_tract,manual_review,manual_review_remaining,,No (7) Ward,အမှတ် (၇) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1130,ward_village_tract,manual_review,manual_review_remaining,,No (8) Ward,အမှတ် (၈) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1131,ward_village_tract,manual_review,manual_review_remaining,,No (9) Ward,အမှတ် (၉) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1121,ward_village_tract,manual_review,manual_review_remaining,,No (10) Ward,အမှတ် (၁၀) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1122,ward_village_tract,manual_review,manual_review_remaining,,No (11) Ward,အမှတ် (၁၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1123,ward_village_tract,manual_review,manual_review_remaining,,No (12) Ward,အမှတ် (၁၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1132,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1133,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1134,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1135,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1136,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1137,ward_village_tract,manual_review,manual_review_remaining,,No (6) Ward,အမှတ် (၆) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1138,ward_village_tract,manual_review,manual_review_remaining,,No (7) Ward,အမှတ် (၇) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1139,ward_village_tract,manual_review,manual_review_remaining,,No (8) Ward,အမှတ် (၈) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:6446,ward_village_tract,manual_review,manual_review_remaining,,Myay Hpyu,မြေဖြူ,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:6447,ward_village_tract,manual_review,manual_review_remaining,,Myay Hpyu,မြေဖြူ,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1447,ward_village_tract,manual_review,manual_review_remaining,,Ngwe Taw Kyi Kone Ward,ငွေတော်ကြည်ကုန်းရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 6211,6212"
+_05_Ward:1488,ward_village_tract,manual_review,manual_review_remaining,,Zay Ward,ဈေးရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 6907,6908"
+_05_Ward:1417,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1418,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1419,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1420,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1413,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1414,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1415,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1416,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:8005,ward_village_tract,manual_review,manual_review_remaining,,Ah Hta Yan,အထရံ,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1520,ward_village_tract,manual_review,manual_review_remaining,,Ah Hta Yan Ward,အထရံရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1606,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1607,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1604,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1605,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:8740,ward_village_tract,manual_review,manual_review_remaining,,Sa Par Seik,စပါးဆိပ်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:8741,ward_village_tract,manual_review,manual_review_remaining,,Sa Par Seik,စပါးဆိပ်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:8733,ward_village_tract,manual_review,manual_review_remaining,,Paik Thei,ပိုက်သည်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1729,ward_village_tract,manual_review,manual_review_remaining,,Paik Thei Ward,ပိုက်သည်ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:8811,ward_village_tract,manual_review,manual_review_remaining,,Myaw Chaung,မြောချောင်း,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1733,ward_village_tract,manual_review,manual_review_remaining,,Ah Shey Paing Ward,အရှေ့ပိုင်းရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1751,ward_village_tract,manual_review,manual_review_remaining,,Ah Shey Paing Ward,အရှေ့ပိုင်းရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1754,ward_village_tract,manual_review,manual_review_remaining,,Myaw Chaung Ward,မြောချောင်းရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1705,ward_village_tract,manual_review,manual_review_remaining,,Ah Lel Paing Ward,အလယ်ပိုင်းရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1722,ward_village_tract,manual_review,manual_review_remaining,,Ah Lel Paing Ward,အလယ်ပိုင်းရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2944,ward_village_tract,manual_review,manual_review_remaining,,No (105) Ward,အမှတ် (၁၀၅) ရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 5185,5186"
+_05_Ward:2945,ward_village_tract,manual_review,manual_review_remaining,,No (106) Ward,အမှတ် (၁၀၆) ရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 5182,5183"
+_05_Ward:3148,ward_village_tract,manual_review,manual_review_remaining,,Taung Bet Paing Ward,တောင်ဘက်ပိုင်းရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 5113,5119"
+_06-VillageTract:13102,ward_village_tract,manual_review,manual_review_remaining,,Min Ga Lar,မင်္ဂလာ,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2643,ward_village_tract,manual_review,manual_review_remaining,,Min Ga Lar Ward,မင်္ဂလာရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2601,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2602,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2603,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2604,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,ရပ်ကွက် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2605,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,ရပ်ကွက် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2606,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,ရပ်ကွက် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11996,ward_village_tract,manual_review,manual_review_remaining,,Man Kat,မန်ကပ်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12026,ward_village_tract,manual_review,manual_review_remaining,,Pang Hto Len,ပန်ထိုလင်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12027,ward_village_tract,manual_review,manual_review_remaining,,Pang Hto Len,ပန်ထိုလင်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11997,ward_village_tract,manual_review,manual_review_remaining,,Man Kat,မန်ကပ်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12617,ward_village_tract,manual_review,manual_review_remaining,,Pang Hpein,ပန်ဖိန်း,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12632,ward_village_tract,manual_review,manual_review_remaining,,Yawng Lan,ယောင်လန်း,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12583,ward_village_tract,manual_review,manual_review_remaining,,Man Htan,မန်ထန်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12584,ward_village_tract,manual_review,manual_review_remaining,,Man Htan,မန်ထန်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12633,ward_village_tract,manual_review,manual_review_remaining,,Yawng Lan,ယောင်လန်း,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12616,ward_village_tract,manual_review,manual_review_remaining,,Pang Hpein,ပန်ဖိန်း,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2410,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,ရပ်ကွက် (၁),Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2411,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,ရပ်ကွက် (၂),Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2412,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,ရပ်ကွက် (၃),Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2407,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2408,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2409,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12332,ward_village_tract,manual_review,manual_review_remaining,,Nawng Hseng,နောင်ဆိုင်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:12333,ward_village_tract,manual_review,manual_review_remaining,,Nawng Hseng,နောင်ဆိုင်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2358,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2359,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2360,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2361,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2362,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2355,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2356,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2357,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2374,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2375,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2376,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2377,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2378,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11840,ward_village_tract,manual_review,manual_review_remaining,,Loi Kan,လွယ်ကန်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11841,ward_village_tract,manual_review,manual_review_remaining,,Loi Kan,လွယ်ကန်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11908,ward_village_tract,manual_review,manual_review_remaining,,Loi An,လွယ်အံ,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11909,ward_village_tract,manual_review,manual_review_remaining,,Loi An,လွယ်အံ,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11678,ward_village_tract,manual_review,manual_review_remaining,,Kawng Hkan,ကောင်းခံ,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11695,ward_village_tract,manual_review,manual_review_remaining,,Man Kyawng,မန်ကျောင်း,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11696,ward_village_tract,manual_review,manual_review_remaining,,Man Kyawng,မန်ကျောင်း,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:11679,ward_village_tract,manual_review,manual_review_remaining,,Kawng Hkan,ကောင်းခံ,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2245,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2246,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2247,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2248,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2249,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2250,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2251,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2252,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2253,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2254,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2336,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2337,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2338,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2333,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2334,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2335,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2273,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2274,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2275,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2276,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2277,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2278,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2189,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2190,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2191,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2183,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2184,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2185,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2217,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2218,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2219,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2231,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2232,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:2233,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:229,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:236,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:237,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:238,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:244,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:245,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:246,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:225,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:226,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:227,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:228,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:222,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:223,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:224,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:206,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:207,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:199,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:200,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:1835,ward_village_tract,manual_review,manual_review_remaining,,Hpa Yar Kone,ဘုရားကုန်း,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:1879,ward_village_tract,manual_review,manual_review_remaining,,Nyaung Pin Thar,ညောင်ပင်သာ,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:1880,ward_village_tract,manual_review,manual_review_remaining,,Nyaung Pin Thar,ညောင်ပင်သာ,Unresolved duplicate create for same normalized hierarchy path
+_06-VillageTract:1836,ward_village_tract,manual_review,manual_review_remaining,,Hpa Yar Kone,ဘုရားကုန်း,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:305,ward_village_tract,manual_review,manual_review_remaining,,Myo Ma Ward,မြို့မရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:297,ward_village_tract,manual_review,manual_review_remaining,,Myo Ma Ward,မြို့မရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:70,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:71,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:72,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:73,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:74,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:43,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:44,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:45,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:46,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:47,ward_village_tract,manual_review,manual_review_remaining,,No (5) Ward,အမှတ် (၅) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:177,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:178,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:179,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:180,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:168,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:169,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:170,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:171,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:80,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,(၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:81,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,(၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:82,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,(၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:75,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:76,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:77,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:78,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:83,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:84,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:85,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:86,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:125,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:127,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:128,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:129,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:135,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:136,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:137,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:121,ward_village_tract,manual_review,manual_review_remaining,,No (1) Ward,အမှတ် (၁) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:122,ward_village_tract,manual_review,manual_review_remaining,,No (2) Ward,အမှတ် (၂) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:123,ward_village_tract,manual_review,manual_review_remaining,,No (3) Ward,အမှတ် (၃) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:124,ward_village_tract,manual_review,manual_review_remaining,,No (4) Ward,အမှတ် (၄) ရပ်ကွက်,Unresolved duplicate create for same normalized hierarchy path
+_05_Ward:1674,ward_village_tract,manual_review,manual_review_remaining,,Thu Kha Theik Di Ward,သုခသိဒ္ဓိရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 5117,6054"
+_05_Ward:1670,ward_village_tract,manual_review,manual_review_remaining,,Nyar Na Theik Di Ward,ဉာဏသိဒ္ဓိရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 6012,6022"
+_05_Ward:1666,ward_village_tract,manual_review,manual_review_remaining,,Ba La Theik Di Ward,ဗလသိဒ္ဓိရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 6023,6025"
+_05_Ward:1668,ward_village_tract,manual_review,manual_review_remaining,,Dha Na Theik Di Ward,ဓနသိဒ္ဓိရပ်ကွက်,"Multiple plausible CoreMap candidates under matched hierarchy scope: 6011,6024"

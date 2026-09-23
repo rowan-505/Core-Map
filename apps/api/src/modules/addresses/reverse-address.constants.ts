@@ -15,6 +15,19 @@ export const REVERSE_VILLAGE_HINT_MAX_M = 3000;
 
 export const REVERSE_CANDIDATE_LIMIT = 8;
 
+/**
+ * Degree expand for GiST `geom && ST_Expand(...)` prefilters (same idea as
+ * migration 109 / `core.reverse_address_minimal`). Coarse only — exact filter
+ * remains `ST_DWithin(...::geography, meters)`.
+ */
+export const REVERSE_ADDRESS_EXPAND_DEG = 0.0005; // ~30m+
+export const REVERSE_PLACE_EXPAND_DEG = 0.002; // ~150m+
+export const REVERSE_STREET_EXPAND_DEG = 0.004; // ~300m+
+export const REVERSE_VILLAGE_EXPAND_DEG = 0.03; // ~3000m+
+
+/** Max concurrent DB-heavy reverse layer queries per request. */
+export const REVERSE_LAYER_CONCURRENCY = 2;
+
 export const OFFICIAL_BOUNDARY_STATUSES = new Set(["official", "surveyed"]);
 
 export const LOCALITY_HINT_BOUNDARY_STATUSES = new Set(["approximate", "settlement_extent"]);

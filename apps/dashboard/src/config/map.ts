@@ -6,7 +6,6 @@ import {
 } from "@/src/lib/dashboardBasemapCurrentJsonUrl";
 import {
     assertPublicBasemapUrl,
-    DashboardBasemapNotConfiguredError,
 } from "@/src/lib/basemaps/basemapEnv";
 
 import "./env";
@@ -19,8 +18,16 @@ export {
 
 const IS_DEV = process.env.NODE_ENV !== "production";
 
-/** Default local tile-server base for regional `.pmtiles` archives (matches `npm run tiles:serve`). */
-const DEFAULT_LOCAL_REGION_PMTILES_BASE_URL = "http://localhost:8080/regions";
+/** Public CDN regional basemap (Yangon) — default when no env override is set. */
+export const DEFAULT_CDN_BASEMAP_PMTILES_URL =
+    "https://tiles.coremapmm.com/basemaps/yangon/v2/basemap.pmtiles";
+
+/** Public CDN overview basemap — default when no env override is set. */
+export const DEFAULT_CDN_OVERVIEW_PMTILES_URL =
+    "https://tiles.coremapmm.com/basemaps/overview/v2/myanmar-overview-v2.pmtiles";
+
+/** CDN base for regional archives: `{base}/{region}/v2/basemap.pmtiles`. */
+const DEFAULT_CDN_REGION_PMTILES_BASE_URL = "https://tiles.coremapmm.com/basemaps";
 
 /**
  * Optional direct PMTiles archive URL from the Next.js client bundle.
@@ -30,17 +37,17 @@ const DEFAULT_LOCAL_REGION_PMTILES_BASE_URL = "http://localhost:8080/regions";
  * once per map boot — it is idempotent and safe across React rerenders.
  */
 export function getDashboardBasemapPmtilesUrlOverride(): string | undefined {
-  const v = process.env.NEXT_PUBLIC_BASEMAP_PMTILES_URL;
-  if (typeof v === "string" && v.trim() !== "") {
-    // Reject a localhost URL in production (allowed in local dev); never fetch localhost when deployed.
-    return assertPublicBasemapUrl(v.trim(), "NEXT_PUBLIC_BASEMAP_PMTILES_URL");
-  }
-  return undefined;
+    const v = process.env.NEXT_PUBLIC_BASEMAP_PMTILES_URL;
+    if (typeof v === "string" && v.trim() !== "") {
+        // Reject a localhost URL in production (allowed in local dev); never fetch localhost when deployed.
+        return assertPublicBasemapUrl(v.trim(), "NEXT_PUBLIC_BASEMAP_PMTILES_URL");
+    }
+    return undefined;
 }
 
 /**
- * Resolves the HTTP(S) URL of the active `.pmtiles` file: env override, else `current.json`
- * (defaults to local tile server — see {@link getDashboardBasemapCurrentJsonUrl}).
+ * Resolves the HTTP(S) URL of the active `.pmtiles` file: env override, else `current.json`,
+ * else the public CoreMap CDN Yangon archive (so maps work without a local tile server).
  */
 export async function resolveDashboardBasemapPmtilesHttpUrl(options?: {
     signal?: AbortSignal;
@@ -51,14 +58,23 @@ export async function resolveDashboardBasemapPmtilesHttpUrl(options?: {
         return override;
     }
     const currentJsonUrl = options?.currentJsonUrl ?? getDashboardBasemapCurrentJsonUrl();
-    if (!currentJsonUrl) {
-        // Production with no public basemap env var: do NOT fetch the localhost default.
-        throw new DashboardBasemapNotConfiguredError();
+    if (currentJsonUrl) {
+        try {
+            return await fetchActiveBasemapPmtilesHttpUrl({
+                currentJsonUrl,
+                signal: options?.signal,
+            });
+        } catch (err) {
+            // Local `current.json` (e.g. localhost:8080) is often offline — fall through to CDN.
+            if (IS_DEV) {
+                console.warn(
+                    "[dashboard] basemap current.json failed; using tiles.coremapmm.com",
+                    err,
+                );
+            }
+        }
     }
-    return fetchActiveBasemapPmtilesHttpUrl({
-        currentJsonUrl,
-        signal: options?.signal,
-    });
+    return DEFAULT_CDN_BASEMAP_PMTILES_URL;
 }
 
 /**
@@ -75,8 +91,8 @@ export function getDashboardOverviewPmtilesUrlOverride(): string | undefined {
 }
 
 /**
- * Resolves the active overview `.pmtiles` HTTP(S) URL: env override, else overview `current.json`.
- * Throws when neither is reachable — callers should fall back to the regional-only basemap.
+ * Resolves the active overview `.pmtiles` HTTP(S) URL: env override, else overview `current.json`,
+ * else the public CoreMap CDN overview archive.
  */
 export async function resolveDashboardOverviewPmtilesHttpUrl(options?: {
     signal?: AbortSignal;
@@ -87,20 +103,27 @@ export async function resolveDashboardOverviewPmtilesHttpUrl(options?: {
         return override;
     }
     const currentJsonUrl = options?.currentJsonUrl ?? getDashboardOverviewCurrentJsonUrl();
-    if (!currentJsonUrl) {
-        // Production with no public overview env var: do NOT fetch the localhost default.
-        // The overview is optional — `tryLoadOverviewStyle` catches this and renders regional only.
-        throw new DashboardBasemapNotConfiguredError();
+    if (currentJsonUrl) {
+        try {
+            return await fetchActiveOverviewPmtilesHttpUrl({
+                currentJsonUrl,
+                signal: options?.signal,
+            });
+        } catch (err) {
+            if (IS_DEV) {
+                console.warn(
+                    "[dashboard] overview current.json failed; using tiles.coremapmm.com",
+                    err,
+                );
+            }
+        }
     }
-    return fetchActiveOverviewPmtilesHttpUrl({
-        currentJsonUrl,
-        signal: options?.signal,
-    });
+    return DEFAULT_CDN_OVERVIEW_PMTILES_URL;
 }
 
 /**
  * DEV-ONLY: when `NEXT_PUBLIC_LOAD_ALL_LOCAL_REGION_PMTILES` is truthy, preview maps load every
- * regional archive from the local tile server for full nationwide detail. Ignored in production.
+ * regional archive for full nationwide detail. Ignored in production.
  */
 export function isDashboardLoadAllRegionPmtilesEnabled(): boolean {
     if (!IS_DEV) {
@@ -114,11 +137,16 @@ export function isDashboardLoadAllRegionPmtilesEnabled(): boolean {
     return normalized === "true" || normalized === "1";
 }
 
-/** Base URL for local region `.pmtiles` archives used by the dev all-regions mode. */
+/** Base URL for regional `.pmtiles` archives (CDN by default). */
 export function getDashboardLocalRegionPmtilesBaseUrl(): string {
     const v = process.env.NEXT_PUBLIC_LOCAL_REGION_PMTILES_BASE_URL;
     if (typeof v === "string" && v.trim() !== "") {
-        return v.trim().replace(/\/+$/, "");
+        const trimmed = v.trim().replace(/\/+$/, "");
+        // Allow host-only values from older .env files.
+        if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed;
+        }
+        return `https://${trimmed.replace(/^\/+/, "")}`;
     }
-    return DEFAULT_LOCAL_REGION_PMTILES_BASE_URL;
+    return DEFAULT_CDN_REGION_PMTILES_BASE_URL;
 }

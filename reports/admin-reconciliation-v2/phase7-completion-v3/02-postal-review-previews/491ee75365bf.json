@@ -1,0 +1,21 @@
+{
+  "group_id": "491ee75365bf",
+  "postal_codes": [
+    "0902001"
+  ],
+  "locality_mm": "မြို့မ ရပ်ကွက်",
+  "locality_en": "Myo Ma Quarter",
+  "township_en": "Demoso Township",
+  "township_mm": "ဒီးမော့ဆို မြို့နယ်",
+  "township_public_id": "6feb9a2a-9848-4841-9231-f4b29c9b0594",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

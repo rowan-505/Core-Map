@@ -1,0 +1,21 @@
+{
+  "group_id": "7589126ab86f",
+  "postal_codes": [
+    "0906204"
+  ],
+  "locality_mm": "သာယာ ကျေးရွာအုပ်စု",
+  "locality_en": "Thar Yar Village Tract",
+  "township_en": "Mese Township",
+  "township_mm": "မယ်စဲ မြို့နယ်",
+  "township_public_id": "8b8bb612-a137-4048-85fa-7cf344633cb9",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

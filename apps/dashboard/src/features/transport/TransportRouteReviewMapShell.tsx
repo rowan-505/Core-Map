@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, memo, useCallback, useEffect, useId, useMemo, useRef, useState, type MutableRefObject, type UIEvent } from "react";
+import type maplibregl from "maplibre-gl";
 
 import TransportPreviewMap, { type TransportPreviewStop } from "./TransportPreviewMap";
 import TransportMapLayerToggle from "./TransportMapLayerToggle";
@@ -404,6 +405,14 @@ export type TransportRouteReviewMapShellProps = {
     readonly mapCenterGetterRef?: MutableRefObject<
         (() => { lng: number; lat: number } | null) | null
     >;
+    readonly mapInstanceRef?: MutableRefObject<maplibregl.Map | null>;
+    readonly existingStopSearchPoints?: ReadonlyArray<{
+        publicId: string;
+        lng: number;
+        lat: number;
+    }>;
+    readonly selectedExistingStopSearchId?: string | null;
+    readonly onExistingStopSearchSelect?: (publicId: string) => void;
 };
 
 /**
@@ -502,6 +511,10 @@ export default function TransportRouteReviewMapShell({
     insertPickPoint = null,
     onInsertPickPointChange,
     mapCenterGetterRef,
+    mapInstanceRef,
+    existingStopSearchPoints = [],
+    selectedExistingStopSearchId = null,
+    onExistingStopSearchSelect,
 }: TransportRouteReviewMapShellProps) {
     const titleId = useId();
     const { basemapMode, setBasemapMode, satelliteAvailable } = useTransportDashboardBasemapMode();
@@ -1477,6 +1490,10 @@ export default function TransportRouteReviewMapShell({
                         pathDrawing={pathDrawing}
                         onDraftPathAddPoint={canWrite ? onDraftPathAddPoint : undefined}
                         mapCenterGetterRef={mapCenterGetterRef}
+                        mapInstanceRef={mapInstanceRef}
+                        existingStopSearchPoints={existingStopSearchPoints}
+                        selectedExistingStopSearchId={selectedExistingStopSearchId}
+                        onExistingStopSearchSelect={onExistingStopSearchSelect}
                         emptyHint={
                             variants.length === 0
                                 ? "No variants to display."

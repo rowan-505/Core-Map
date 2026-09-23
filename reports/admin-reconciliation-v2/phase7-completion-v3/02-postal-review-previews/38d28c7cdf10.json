@@ -1,0 +1,21 @@
+{
+  "group_id": "38d28c7cdf10",
+  "postal_codes": [
+    "1020006"
+  ],
+  "locality_mm": "ပတ္တမြား ရပ်ကွက်",
+  "locality_en": "Pa Da Myar Quarter",
+  "township_en": "Wakema Township",
+  "township_mm": "ဝါးခယ်မ မြို့နယ်",
+  "township_public_id": "c245a4d4-9f3f-4b05-a8ef-9328b86530a4",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "8f7ad40920ce",
+  "postal_codes": [
+    "0804235"
+  ],
+  "locality_mm": "ဇင့်ကာ ကျေးရွာအုပ်စု",
+  "locality_en": "Zint Kar Village Tract",
+  "township_en": "Kyaukkyi Township",
+  "township_mm": "ကျောက်ကြီး မြို့နယ်",
+  "township_public_id": "42b59e9e-67cd-40ed-8097-1be225540267",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

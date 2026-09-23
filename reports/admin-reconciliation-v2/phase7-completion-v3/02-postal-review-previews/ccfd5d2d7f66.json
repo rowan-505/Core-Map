@@ -1,0 +1,21 @@
+{
+  "group_id": "ccfd5d2d7f66",
+  "postal_codes": [
+    "0202002"
+  ],
+  "locality_mm": "လဟယ်ရွာမ ရပ်ကွက်",
+  "locality_en": "Lahe Ywar Ma Quarter",
+  "township_en": "Lahe Township",
+  "township_mm": "လဟယ် မြို့နယ်",
+  "township_public_id": "e5865555-62ad-4691-b0d5-4d1c32960fb8",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

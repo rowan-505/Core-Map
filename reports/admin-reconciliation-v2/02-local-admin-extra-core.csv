@@ -1,0 +1,56 @@
+coremap_id,public_id,canonical_name,admin_area_type,township_id,parent_id,primary_en,primary_my,reason
+5058,be2b99ba-3f60-45ac-a7cb-3dab7da52c1f,ညောင်ပင်ဆိပ်ရပ်ကွက်,ward,5098,5098,Nyaung Pin Seik Ward,ညောင်ပင်ဆိပ်ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5084,46652f4a-e482-438c-8dbd-3c4cef99848a,နောင်ခရိရပ်ကွက်,ward,5108,5108,Naung Kha Ri Ward,နောင်ခရိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5113,47b76aab-40fa-49e9-96a0-f44e42b6d630,တောင်ဘက်ပိုင်းရပ်ကွက်,ward,5112,5112,Taung Bet Paing Ward,တောင်ဘက်ပိုင်းရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5117,17c69ec3-1366-4758-b8f0-d546b9efd942,သုခသိဒ္ဓိရပ်ကွက်,ward,6029,6029,Thu Kha Theik Di Ward,သုခသိဒ္ဓိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5119,4eccfe61-d04c-46d4-bc2f-0fd6ce3bcad2,တောင်ဘက်ပိုင်းရပ်ကွက်,ward,5112,5112,Taung Bet Paing Ward,တောင်ဘက်ပိုင်းရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5126,e22a9991-be66-46d0-b82f-f4e84905c5d5,ဝဏ္ဏသိဒ္ဒိရပ်ကွက်,ward,6029,6029,Wun Na Theik Di Ward,ဝဏ္ဏသိဒ္ဒိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5156,2c56e443-1f98-45c4-b407-9b6b45b1ad47,အမှတ် (၁၅၃) ရပ်ကွက်,ward,5165,5165,No (153) Ward,အမှတ် (၁၅၃) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5157,ec785785-bc1f-4f5f-aeed-c70590290eda,လေးဒေါင့်ကန် (တောင်) ရပ်ကွက်,ward,5165,5165,Lay Daunt Kan (South) Ward,လေးဒေါင့်ကန် (တောင်) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5158,ac56279d-8d31-40d5-8879-92b1f1c465ee,ရှမ်းတဲကြီး (တောင်) ရပ်ကွက်,ward,5165,5165,Shan Te Gyi (South) Ward,ရှမ်းတဲကြီး (တောင်) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5160,42d8d430-1ade-4016-bff5-20cd64169947,စိုက်ပျိုးမွေးမြူရေး အမှတ် (၁) ရပ်ကွက်,ward,5165,5165,Saik Pyo Mway Myu Yay No.(1) Ward,စိုက်ပျိုးမွေးမြူရေး အမှတ် (၁) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5166,66451e46-47b4-4775-aa4e-f8612557722e,အမှတ် (၁၅၄) ရပ်ကွက်,ward,5165,5165,No (154) Ward,အမှတ် (၁၅၄) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5167,f99c1a21-e727-44e3-95c4-920d278f661e,သုံးခွ (တောင်) ရပ်ကွက်,ward,5165,5165,Thone Gwa (South) Ward,သုံးခွ (တောင်) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5169,3e3f08cd-7d87-4364-a23e-93943867d7ed,ရွာသာကြီး (တောင်) ရပ်ကွက်,ward,5165,5165,Ywar Thar Gyi (South) Ward,ရွာသာကြီး (တောင်) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5171,79623ef2-63e7-4469-8ff7-ff8b72382fd8,အမှတ် (၁၅၀) ရပ်ကွက်,ward,5165,5165,No (150) Ward,အမှတ် (၁၅၀) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5173,73f697a1-23f0-4a5d-9429-2ba580bce644,အမှတ် (၁၄၉) ရပ်ကွက်,ward,5165,5165,No (149) Ward,အမှတ် (၁၄၉) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5174,237e4a05-1593-4f25-9b39-70356e12225e,အမှတ် (၁၅၁) ရပ်ကွက်,ward,5165,5165,No (151) Ward,အမှတ် (၁၅၁) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5182,79e13a25-4ab4-458e-acf0-a0f34ef59969,အမှတ် (၁၀၆) ရပ်ကွက်,ward,5231,5231,No (106) Ward,အမှတ် (၁၀၆) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5183,b463e80f-9d80-4de1-b135-1e73f108eacb,အမှတ် (၁၀၆) ရပ်ကွက်,ward,5231,5231,No (106) Ward,အမှတ် (၁၀၆) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5185,29f7a6de-8a50-42d2-bc07-6246d61027e0,အမှတ် (၁၀၅) ရပ်ကွက်,ward,5231,5231,No (105) Ward,အမှတ် (၁၀၅) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5186,df5a528f-d747-437d-a63f-c8deaee40b89,အမှတ် (၁၀၅) ရပ်ကွက်,ward,5231,5231,No (105) Ward,အမှတ် (၁၀၅) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5239,782ac89b-2bdf-4390-9743-b6bd9f989129,၁၄/၂ ရပ်ကွက်,ward,5267,5267,14/2 Ward,၁၄/၂ ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5263,ac0b1b77-5836-4f21-b8b8-7c3e54e048c3,၁၄/၃ ရပ်ကွက်,ward,5267,5267,14/3 Ward,၁၄/၃ ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5367,11331d87-12ce-483c-9e69-164f00af7b84,အမှတ် (၅၈) ရပ်ကွက်,ward,5231,5231,No (58) Ward,အမှတ် (၅၈) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5442,76963da5-eafc-46d6-9b61-c5ee036f4efe,ဆိပ်ကမ်းမိသားစုရိပ်သာရပ်ကွက်,ward,5476,5476,Seik Kan Mi Thar Su Yeik Thar Ward,ဆိပ်ကမ်းမိသားစုရိပ်သာရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5705,9dba583f-4b99-438a-a9de-25ffac13279f,ကြံခင်းစုရပ်ကွက်,ward,5253,5253,Kyan Khin Su Ward,ကြံခင်းစုရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5886,6fb9392d-8053-4ce9-a411-a2370533f3ff,အေးရိပ်ငြိမ်ကွက်သစ်,ward,5889,5889,Aye Yeik Nyein Kwet Thit,အေးရိပ်ငြိမ်ကွက်သစ်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5891,193dd29c-4c4e-452d-a77e-5e7d0c207042,ဂန့်ဂေါ်ဝိုင်းရပ်ကွက်,ward,5920,5920,Gant Gaw Waing Ward,ဂန့်ဂေါ်ဝိုင်းရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5897,fd127513-b00a-49ba-9761-07474aed3328,ဂန့်ဂေါ်ဝိုင်းရပ်ကွက်,ward,5920,5920,Gant Gaw Waing Ward,ဂန့်ဂေါ်ဝိုင်းရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+5989,140130db-69d4-4df9-a2bb-7634b5fce0fa,ရွှေအင်ကြင်းရပ်ကွက်,ward,5990,5990,Shwe In Kyinn Ward,ရွှေအင်ကြင်းရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6011,18201e24-096c-40b1-b4b8-3f51015dd2b8,ဓနသိဒ္ဓိရပ်ကွက်,ward,6029,6029,Dha Na Theik Di Ward,ဓနသိဒ္ဓိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6012,c9ab6343-a540-48ea-a737-a73ead2258ce,ဉာဏသိဒ္ဓိရပ်ကွက်,ward,6029,6029,Nyar Na Theik Di Ward,ဉာဏသိဒ္ဓိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6022,387d3bd2-9c66-4441-a65f-2c74c9784e91,ဉာဏသိဒ္ဓိရပ်ကွက်,ward,6029,6029,Nyar Na Theik Di Ward,ဉာဏသိဒ္ဓိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6023,dda8330a-acd9-4e72-a9a5-d6786c100cca,ဗလသိဒ္ဓိရပ်ကွက်,ward,6029,6029,Ba La Theik Di Ward,ဗလသိဒ္ဓိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6024,eeec9dcc-e0c6-40e2-b75d-ab645e49e6b4,ဓနသိဒ္ဓိရပ်ကွက်,ward,6029,6029,Dha Na Theik Di Ward,ဓနသိဒ္ဓိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6025,3a9ddc81-23ca-43a9-bbf7-8b2ce67cc57a,ဗလသိဒ္ဓိရပ်ကွက်,ward,6029,6029,Ba La Theik Di Ward,ဗလသိဒ္ဓိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6054,0b8ae743-0340-4c93-85fe-a5743b929daa,သုခသိဒ္ဓိရပ်ကွက်,ward,6029,6029,Thu Kha Theik Di Ward,သုခသိဒ္ဓိရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6209,d4c2e914-3be7-4ca0-b558-fe5a21fbed22,(ဈ) ရပ်ကွက်,ward,6276,6276,(Za Myin Zwe) Ward,(ဈ) ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6211,e23dde8c-1f04-4432-8bdb-f5bdf95e6147,ငွေတော်ကြည်ကုန်းရပ်ကွက်,ward,6203,6203,Ngwe Taw Kyi Kone Ward,ငွေတော်ကြည်ကုန်းရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6212,f565a5cc-d7d0-406a-a4d9-fb4d434064cb,ငွေတော်ကြည်ကုန်းရပ်ကွက်,ward,6203,6203,Ngwe Taw Kyi Kone Ward,ငွေတော်ကြည်ကုန်းရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6256,63b73091-b4ef-4de1-860f-624373ce4c01,တက္ကသိုလ်ရပ်ကွက်,ward,6223,6223,Tet Ka Tho Ward,တက္ကသိုလ်ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6493,aee2b4a3-4702-41ef-a7bd-d3937d3e61f7,莱莫区,special_area,6467,6467,Loimaw Township,,No MIMU ward/VT source matched this CoreMap row under an approved township
+6514,4658eb9c-0d9b-4478-806c-280786f24a84,တောင်မြို့တိုးချဲ့ရပ်ကွက်,ward,6523,6523,Taung Myo Toe Cheit Ward,တောင်မြို့တိုးချဲ့ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6561,04a3113e-1644-467b-bde0-a0b901c4336c,ဟိုပိတ်ကျေးရွာအုပ်စု,village_tract,6562,6562,Ho Peik Village-tract,ဟိုပိတ်ကျေးရွာအုပ်စု,No MIMU ward/VT source matched this CoreMap row under an approved township
+6578,2852b726-fed0-4546-a1d5-959e8781d3ea,户育乡,special_area,6584,6584,Huyu,,No MIMU ward/VT source matched this CoreMap row under an approved township
+6583,757aeb12-9cfd-4d8f-9a98-623a0afb6c8d,弄岛镇,special_area,6584,6584,Nongdao,,No MIMU ward/VT source matched this CoreMap row under an approved township
+6619,f026ab7f-76a8-4f15-b9a9-815bbdd325fa,畹町镇,special_area,6600,6600,Wanding,,No MIMU ward/VT source matched this CoreMap row under an approved township
+6621,7c594d21-df5d-4868-849f-a8c4ebb3ca66,鲁掌镇,special_area,6690,6690,Luzhang,,No MIMU ward/VT source matched this CoreMap row under an approved township
+6624,fdf32188-5f55-4033-a008-602d8aae4102,勐秀乡,special_area,6584,6584,Mengxiu,,No MIMU ward/VT source matched this CoreMap row under an approved township
+6696,a0d515e0-8fae-480b-93b8-8753f3b4292d,片马镇,special_area,6690,6690,Pianma,,No MIMU ward/VT source matched this CoreMap row under an approved township
+6794,78361f3d-1c68-4771-9960-71409026dbc6,မဟာမြိုင်ရပ်ကွက်,ward,6766,6766,Ma Har Myaing Ward,မဟာမြိုင်ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6797,30309448-fabf-4601-ae5c-48a8ed285394,မဟာမြိုင်ရပ်ကွက်,ward,6766,6766,Ma Har Myaing Ward,မဟာမြိုင်ရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6849,5aa05c27-d82e-4211-bd12-957df238d4c2,ဧမြဝတီရပ်ကွက်,ward,6831,6831,Aye Mya Wa Di Ward,ဧမြဝတီရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6853,0ccf04d6-07e5-43af-b1fd-bbe5079e867f,ဧမြဝတီရပ်ကွက်,ward,6831,6831,Aye Mya Wa Di Ward,ဧမြဝတီရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6907,aca3cb9b-5016-49e1-84e4-fcc6a7fe1cd7,ဈေးရပ်ကွက်,ward,6903,6903,Zay Ward,ဈေးရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township
+6908,e32465e7-619b-4bf9-98a3-b1cd445adcb6,ဈေးရပ်ကွက်,ward,6903,6903,Zay Ward,ဈေးရပ်ကွက်,No MIMU ward/VT source matched this CoreMap row under an approved township

@@ -1,0 +1,21 @@
+{
+  "group_id": "a94c93533d84",
+  "postal_codes": [
+    "1618212"
+  ],
+  "locality_mm": "ခါဂျစ် ကျေးရွာအုပ်စု",
+  "locality_en": "Hkar Gyit Village Tract",
+  "township_en": "Mabein Township",
+  "township_mm": "မဘိမ်း မြို့နယ်",
+  "township_public_id": "16f9e74c-f933-4bae-aca5-b029782a4d2c",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -455,7 +455,7 @@ export default function ReferenceDataPage({ type }: { type: ReferenceTypeKey }) 
                                             {row.usage_count === null || row.usage_count === undefined
                                                 ? "—"
                                                 : Number(row.usage_count) > 0
-                                                  ? `Yes (${row.usage_count})`
+                                                  ? "Yes"
                                                   : "No"}
                                         </td>
                                         <td className="px-3 py-2 text-right">

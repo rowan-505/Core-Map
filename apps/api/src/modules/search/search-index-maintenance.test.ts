@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { summarizeSearchFamilyRebuildRows } from "./search-family-rebuild.js";
 import { buildRepairedByFamily, normalizeSearchIndexHealthRow } from "./search-index-health.js";
 import { searchIndexRebuildLockKeys } from "./search-index-maintenance.lock.js";
 import {
@@ -12,6 +13,13 @@ describe("search index maintenance schema", () => {
     it("accepts allowlisted families only", () => {
         assert.equal(
             reindexSearchFamilyBodySchema.safeParse({ entity_family: "places" }).success,
+            true,
+        );
+        assert.equal(
+            reindexSearchFamilyBodySchema.safeParse({
+                entity_family: "admin_areas",
+                skip_health_refresh: true,
+            }).success,
             true,
         );
         assert.equal(
@@ -41,6 +49,18 @@ describe("searchIndexRebuildLockKeys", () => {
     it("dedupes views that share the same lock key bucket", () => {
         const keys = searchIndexRebuildLockKeys(["places", "places"]);
         assert.equal(keys.length, 1);
+    });
+});
+
+describe("summarizeSearchFamilyRebuildRows", () => {
+    it("uses rebuilt view document counts instead of the full index snapshot", () => {
+        assert.equal(
+            summarizeSearchFamilyRebuildRows(
+                { place: 64_156, settlement: 55_864, street_group: 15_314 },
+                { street_groups: { documents: 15_314, names: 49_882 } },
+            ),
+            15_314,
+        );
     });
 });
 

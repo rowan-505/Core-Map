@@ -1,0 +1,166 @@
+{
+  "generated_at": "2026-09-21T14:17:03.530658+00:00",
+  "production_apply_approved": false,
+  "manual_review_count": 0,
+  "manual_review_gate": "PASS",
+  "frozen_actions": {
+    "local": {
+      "keep_existing": 1846,
+      "update_names": 36,
+      "create_mimu_placeholder": 14282,
+      "reject_source_error": 8,
+      "update_type": 4
+    },
+    "village": {
+      "keep_existing": 48716,
+      "merge_duplicate_candidate": 1473,
+      "create_mimu_placeholder": 3565,
+      "update_names": 825,
+      "reject_source_error": 9,
+      "update_type": 14
+    },
+    "postal_status": {
+      "malformed_rejected": 2,
+      "linked_exact_local_area": 1851,
+      "missing_local_area": 15430,
+      "linked_after_review": 13,
+      "ambiguous_local_area": 3
+    }
+  },
+  "phase6_totals": {
+    "ward.source_count": 2001,
+    "ward.matched": 1879,
+    "ward.updated": 398,
+    "ward.merged": 3,
+    "ward.created_placeholder": 114,
+    "ward.rejected": 8,
+    "ward.manual_review": 0,
+    "ward.unaccounted": 0,
+    "village_tract.source_count": 14175,
+    "village_tract.matched": 7,
+    "village_tract.updated": 7,
+    "village_tract.merged": 0,
+    "village_tract.created_placeholder": 14078,
+    "village_tract.rejected": 0,
+    "village_tract.manual_review": 0,
+    "village_tract.unaccounted": 90,
+    "village.source_count": 54602,
+    "village.matched": 51028,
+    "village.updated": 2235,
+    "village.merged": 2124,
+    "village.created_placeholder": 3565,
+    "village.rejected": 9,
+    "village.manual_review": 0,
+    "village.unaccounted": 2,
+    "postal.source_count": 17299,
+    "postal.matched": 1851,
+    "postal.updated": 0,
+    "postal.merged": 0,
+    "postal.created_placeholder": 17297,
+    "postal.rejected": 2,
+    "postal.manual_review": 3,
+    "postal.unaccounted": 15443
+  },
+  "phase6_validation": {
+    "matched_admin_geom_changed": 0,
+    "matched_settlement_point_changed": 0,
+    "invalid_new_admin_geom": 0,
+    "invalid_new_village_point": 0,
+    "placeholder_parent_not_township": 0,
+    "placeholder_type_not_ward_or_vt": 0,
+    "baseline_local_parent_not_township": 80,
+    "baseline_local_type_not_ward_or_vt": 37,
+    "postal_total": 17297,
+    "postal_distinct": 17297,
+    "postal_bad_codes": 0,
+    "postal_local_township_mismatch": 0,
+    "placeholder_meta_mismatch": 0,
+    "pass": true
+  },
+  "disposable_post_counts": {
+    "wards_active": 2064,
+    "village_tracts_active": 14084,
+    "villages_active": 59455,
+    "placeholders_admin": 14192,
+    "postal_total": 17297,
+    "postal_exact": 1851
+  },
+  "exceptions": {
+    "manual_review_local_actions": 0,
+    "manual_review_village_actions": 0,
+    "village_tract_create_missing_township_parent": 88,
+    "ward_reject_source_error": 8,
+    "village_reject_source_error": 9,
+    "village_create_missing_coords": 0,
+    "postal_malformed_rejected": 2,
+    "postal_ambiguous_local_area": 3,
+    "postal_linked_after_review": 13,
+    "postal_missing_local_area": 15430,
+    "postal_linked_exact_local_area": 1851,
+    "extra_coremap_local_admin_rows": 55,
+    "extra_coremap_village_rows": 6887,
+    "merge_confirmed_duplicate_decisions": 1476,
+    "phase6_unaccounted_village_tract": 90,
+    "phase6_unaccounted_village": 2,
+    "phase6_postal_manual_review_status_rows": 3
+  },
+  "accepted_exceptions": [
+    {
+      "id": "EX-VT-PARENT-90",
+      "count": 88,
+      "reason": "create_mimu_placeholder village tracts with unresolved approved_township_id; skipped (no invent)",
+      "decision": "accepted_for_phase7_gate \u2014 fix in follow-up coverage project"
+    },
+    {
+      "id": "EX-POSTAL-MISSING-LOCAL",
+      "count": 15430,
+      "reason": "no safe exact local-area match within township; store code with missing_local_area",
+      "decision": "accepted_for_phase7_gate \u2014 expected; not a blocker"
+    },
+    {
+      "id": "EX-POSTAL-AMBIGUOUS",
+      "count": 3,
+      "reason": "ambiguous local candidates; not auto-linked",
+      "decision": "accepted_for_phase7_gate \u2014 leave unmatched until review"
+    },
+    {
+      "id": "EX-POSTAL-MALFORMED",
+      "count": 2,
+      "reason": "malformed codes rejected by DDL; not stored",
+      "decision": "accepted_for_phase7_gate"
+    },
+    {
+      "id": "EX-REJECT-SOURCE",
+      "count": 17,
+      "reason": "explicit reject_source_error decisions",
+      "decision": "accepted_for_phase7_gate"
+    },
+    {
+      "id": "EX-EXTRA-COREMAP",
+      "count": 6942,
+      "reason": "CoreMap rows without MIMU counterpart preserved as-is",
+      "decision": "accepted_for_phase7_gate \u2014 not deleted"
+    },
+    {
+      "id": "EX-BASELINE-HIERARCHY",
+      "count": 117,
+      "reason": "pre-existing non-placeholder WVT parent/type anomalies outside Phase6 creates",
+      "decision": "accepted_for_phase7_gate \u2014 separate cleanup; placeholders validated clean"
+    }
+  ],
+  "existing_matches": {
+    "ward_keep_or_update": 1879,
+    "village_tract_keep_or_update": 7,
+    "village_keep_or_update": 49555
+  },
+  "new_placeholders_planned": {
+    "ward": 114,
+    "village_tract": 14168,
+    "village": 3565
+  },
+  "merged_duplicates": {
+    "merge_decisions_confirmed": 1476,
+    "phase6_ward_merged_losers": 3,
+    "phase6_village_merged_losers": 2124
+  }
+}

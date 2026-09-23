@@ -7,6 +7,7 @@ import {
     getCachedSearchIndexHealthReport,
     peekSearchIndexHealthCache,
     SEARCH_INDEX_HEALTH_CACHE_TTL_MS,
+    waitForSearchIndexHealthBackgroundRefresh,
 } from "./search-index-health-cache.js";
 
 function sampleReport() {
@@ -64,7 +65,7 @@ describe("search index health cache", () => {
         assert.ok(peekSearchIndexHealthCache(1_000 + 1_000));
     });
 
-    it("re-runs loader after TTL expires", async () => {
+    it("serves stale report after TTL and refreshes in the background", async () => {
         clearSearchIndexHealthCache();
         let loads = 0;
         const loader = async () => {
@@ -73,11 +74,18 @@ describe("search index health cache", () => {
         };
 
         await getCachedSearchIndexHealthReport(loader, { now: 5_000 });
-        await getCachedSearchIndexHealthReport(loader, {
+        const stale = await getCachedSearchIndexHealthReport(loader, {
             now: 5_000 + SEARCH_INDEX_HEALTH_CACHE_TTL_MS + 1,
         });
 
+        assert.equal(stale.overall_severity, "healthy");
+        await waitForSearchIndexHealthBackgroundRefresh();
         assert.equal(loads, 2);
+        assert.ok(
+            peekSearchIndexHealthCache(5_000 + SEARCH_INDEX_HEALTH_CACHE_TTL_MS + 1, {
+                allowStale: true,
+            }),
+        );
     });
 
     it("refresh bypasses cached value", async () => {
@@ -109,5 +117,25 @@ describe("search index health cache", () => {
         const recovered = await getCachedSearchIndexHealthReport(loader);
         assert.equal(loads, 2);
         assert.equal(recovered.overall_severity, "healthy");
+    });
+
+    it("coalesces concurrent cold loads into one loader call", async () => {
+        clearSearchIndexHealthCache();
+        await waitForSearchIndexHealthBackgroundRefresh();
+        let loads = 0;
+        let release!: (value: ReturnType<typeof sampleReport>) => void;
+        const loader = () =>
+            new Promise<ReturnType<typeof sampleReport>>((resolve) => {
+                loads += 1;
+                release = resolve;
+            });
+
+        const first = getCachedSearchIndexHealthReport(loader, { now: 20_000 });
+        const second = getCachedSearchIndexHealthReport(loader, { now: 20_000 });
+        assert.equal(loads, 1);
+        release(sampleReport());
+        const [a, b] = await Promise.all([first, second]);
+        assert.equal(a.overall_severity, b.overall_severity);
+        assert.equal(loads, 1);
     });
 });

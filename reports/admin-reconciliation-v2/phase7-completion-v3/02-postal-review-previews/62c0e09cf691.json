@@ -1,0 +1,21 @@
+{
+  "group_id": "62c0e09cf691",
+  "postal_codes": [
+    "1709216"
+  ],
+  "locality_mm": "လုံကောင့် ကျေးရွာအုပ်စု",
+  "locality_en": "Long Kaunt Village Tract",
+  "township_en": "Monghpyak Township",
+  "township_mm": "မိုင်းဖြတ် မြို့နယ်",
+  "township_public_id": "5a05af55-94a0-4164-b72b-4e1a0d76fee5",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

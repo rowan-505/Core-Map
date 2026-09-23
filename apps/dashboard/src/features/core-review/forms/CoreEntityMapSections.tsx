@@ -118,6 +118,7 @@ export default function CoreEntityMapSections({
                 onApiValidation={onApiValidation}
                 streetSplitMapProps={entityKey === "streets" ? streetSplitMapProps : null}
                 mapSurfaceRef={entityKey === "places" ? mapSurfaceRef : undefined}
+                enableAdminAreaBoundaryReview={entityKey === "admin-areas"}
             />
             {config.secondaryGeometry && entityKey !== "addresses" ? (
                 <CoreEntityGeometrySection

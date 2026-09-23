@@ -1,0 +1,74 @@
+=== FINAL COUNTS ===
+     code      | count 
+---------------+-------
+ island        |     6
+ special_area  |    31
+ village_tract | 14084
+ ward          |  2064
+(4 rows)
+
+ villages_active 
+-----------------
+           59455
+(1 row)
+
+ admin_placeholders 
+--------------------
+              14192
+(1 row)
+
+ village_placeholders 
+----------------------
+                 3592
+(1 row)
+
+=== POSTAL ===
+      match_status       | count 
+-------------------------+-------
+ missing_local_area      | 15430
+ linked_exact_local_area |  1851
+ linked_after_review     |    13
+ ambiguous_local_area    |     3
+(4 rows)
+
+ postal_total | postal_distinct 
+--------------+-----------------
+        17297 |           17297
+(1 row)
+
+ bad_codes 
+-----------
+         0
+(1 row)
+
+ local_township_mismatch 
+-------------------------
+                       0
+(1 row)
+
+=== GEOMETRY / HIERARCHY (placeholders) ===
+ invalid_placeholder_geom 
+--------------------------
+                        0
+(1 row)
+
+ invalid_village_points 
+------------------------
+                      0
+(1 row)
+
+ placeholder_parent_not_township 
+---------------------------------
+                               0
+(1 row)
+
+ placeholder_meta_mismatch 
+---------------------------
+                     14192
+(1 row)
+
+ placeholder_meta_mismatch 
+---------------------------
+                         0
+(1 row)
+

@@ -1,0 +1,21 @@
+{
+  "group_id": "7d9aa3636c1c",
+  "postal_codes": [
+    "0111003"
+  ],
+  "locality_mm": "အုတ်ကျင်း ရပ်ကွက်",
+  "locality_en": "Oke Kyin Quarter",
+  "township_en": "Mohnyin Township",
+  "township_mm": "မိုးညှင်း မြို့နယ်",
+  "township_public_id": "9acfdc84-eb1f-4200-a298-8fa0c523e65a",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

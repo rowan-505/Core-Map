@@ -8,7 +8,11 @@ import {
     messageSchema,
     notFoundSchema,
 } from "../../lib/openapi/common.js";
-import { ACCOUNT_STATUSES, ANALYTICS_BUCKETS } from "./admin-users.schema.js";
+import {
+    ACCOUNT_STATUSES,
+    ADMIN_MANAGED_ROLE_CODES,
+    ANALYTICS_BUCKETS,
+} from "./admin-users.schema.js";
 
 const userListItemSchema = {
     type: "object",
@@ -117,6 +121,32 @@ export const getAdminUsersSchema = {
     },
 } satisfies FastifySchema;
 
+export const postAdminUserSchema = {
+    tags: [Tags.Dashboard],
+    summary: "Super admin: create account",
+    description:
+        "Creates an email-verified account with one initial role and a password. Audited. The password is never returned.",
+    security: [...bearerAuth],
+    body: {
+        type: "object",
+        required: ["email", "displayName", "password", "roleCode"],
+        properties: {
+            email: { type: "string", format: "email" },
+            displayName: { type: "string", minLength: 2, maxLength: 120 },
+            password: { type: "string", minLength: 8, maxLength: 200 },
+            roleCode: { type: "string", enum: [...ADMIN_MANAGED_ROLE_CODES] },
+        },
+        additionalProperties: false,
+    },
+    response: {
+        201: userDetailSchema,
+        400: badRequestSchema,
+        401: messageSchema,
+        403: forbiddenSchema,
+        409: messageSchema,
+    },
+} satisfies FastifySchema;
+
 export const getAdminUserSchema = {
     tags: [Tags.Dashboard],
     summary: "Admin: user detail",
@@ -125,6 +155,60 @@ export const getAdminUserSchema = {
     params: userIdParams,
     response: {
         200: userDetailSchema,
+        400: badRequestSchema,
+        401: messageSchema,
+        403: forbiddenSchema,
+        404: notFoundSchema,
+    },
+} satisfies FastifySchema;
+
+export const patchUserProfileSchema = {
+    tags: [Tags.Dashboard],
+    summary: "Super admin: update user profile",
+    description:
+        "Updates editable account data. Email or verification changes revoke active sessions. Audited.",
+    security: [...bearerAuth],
+    params: userIdParams,
+    body: {
+        type: "object",
+        minProperties: 1,
+        properties: {
+            email: { type: "string", format: "email" },
+            displayName: { type: "string", minLength: 2, maxLength: 120 },
+            phone: { type: "string", minLength: 3, maxLength: 40, nullable: true },
+            preferredLanguage: { type: "string", enum: ["my", "en"] },
+            primaryRegionId: { type: "integer", minimum: 1, nullable: true },
+            emailVerified: { type: "boolean" },
+        },
+        additionalProperties: false,
+    },
+    response: {
+        200: userDetailSchema,
+        400: badRequestSchema,
+        401: messageSchema,
+        403: forbiddenSchema,
+        404: notFoundSchema,
+        409: messageSchema,
+    },
+} satisfies FastifySchema;
+
+export const postUserPasswordResetSchema = {
+    tags: [Tags.Dashboard],
+    summary: "Super admin: reset user password",
+    description:
+        "Sets a new password, ensures the password identity exists, revokes active sessions, and writes an audit entry. The password is never returned or logged.",
+    security: [...bearerAuth],
+    params: userIdParams,
+    body: {
+        type: "object",
+        required: ["password"],
+        properties: {
+            password: { type: "string", minLength: 8, maxLength: 200 },
+        },
+        additionalProperties: false,
+    },
+    response: {
+        200: messageSchema,
         400: badRequestSchema,
         401: messageSchema,
         403: forbiddenSchema,

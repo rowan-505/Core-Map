@@ -1,0 +1,21 @@
+{
+  "group_id": "66d947f0dc11",
+  "postal_codes": [
+    "0708002"
+  ],
+  "locality_mm": "အလယ်ပိုင်း ရပ်ကွက်",
+  "locality_en": "Ah Lel Paing Quarter",
+  "township_en": "Pauktaw Township",
+  "township_mm": "ပေါက်တော မြို့နယ်",
+  "township_public_id": "c7e446b4-6cbe-490a-8008-e766aa5f520e",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

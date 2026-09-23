@@ -1,0 +1,21 @@
+{
+  "group_id": "561f7d11b289",
+  "postal_codes": [
+    "1802252"
+  ],
+  "locality_mm": "ရွှေတောင်ငွေတောင် ကျေးရွာအုပ်စု",
+  "locality_en": "Shwe Taung Ngwe Taung Village Tract",
+  "township_en": "Paukkhaung Township",
+  "township_mm": "ပေါက်ခေါင်း မြို့နယ်",
+  "township_public_id": "7ef50b48-148f-4042-9152-f57229dc8ecf",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

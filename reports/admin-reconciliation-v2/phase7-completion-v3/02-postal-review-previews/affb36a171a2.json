@@ -1,0 +1,21 @@
+{
+  "group_id": "affb36a171a2",
+  "postal_codes": [
+    "1008255"
+  ],
+  "locality_mm": "အသုတ် ကျေးရွာအုပ်စု",
+  "locality_en": "Ah Thoke Village Tract",
+  "township_en": "Yegyi Township",
+  "township_mm": "ရေကြည် မြို့နယ်",
+  "township_public_id": "938a79c1-c5f0-4a7a-9f2a-120dff8c8750",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

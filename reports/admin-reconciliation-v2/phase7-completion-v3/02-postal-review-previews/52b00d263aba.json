@@ -1,0 +1,21 @@
+{
+  "group_id": "52b00d263aba",
+  "postal_codes": [
+    "0417007"
+  ],
+  "locality_mm": "အမှတ် (၇) ရပ်ကွက်",
+  "locality_en": "No (7) Quarter",
+  "township_en": "Chauk Township",
+  "township_mm": "ချောက် မြို့နယ်",
+  "township_public_id": "e05a66b5-54c8-49a1-ae5c-6c1397b0bb5d",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "8a6504a14f94",
+  "postal_codes": [
+    "0506007"
+  ],
+  "locality_mm": "အိုးတော် ရပ်ကွက်",
+  "locality_en": "Oe Taw Quarter",
+  "township_en": "Amarapura Township",
+  "township_mm": "အမရပူရ မြို့နယ်",
+  "township_public_id": "afb23c10-442a-4fd0-8e7d-7c6324c372f2",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

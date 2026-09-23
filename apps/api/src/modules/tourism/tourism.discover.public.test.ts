@@ -162,6 +162,14 @@ async function withPublicApp(
         await app.register(tourismRoutes, {
             service: tourismService,
             catalogService: catalog as unknown as TourismCatalogService,
+            visitorService: {
+                listPublicFoods: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+                listPublicGuides: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+                listPublicAdvisories: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+            } as unknown as import("./tourism.visitor.service.js").TourismVisitorService,
+            researchService: {
+                list: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+            } as unknown as import("./tourism.research.service.js").TourismResearchService,
         });
         await app.ready();
         await run({ app });

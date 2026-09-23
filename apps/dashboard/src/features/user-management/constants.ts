@@ -1,10 +1,37 @@
 import type { AccountStatus, PointReasonCode } from "./types";
 
 export const ROLE_OPTIONS = [
-    { value: "user", label: "User" },
-    { value: "viewer", label: "Viewer" },
-    { value: "admin", label: "Admin" },
-    { value: "super_admin", label: "Super admin" },
+    {
+        value: "user",
+        label: "User",
+        authorization: "Public web account. No dashboard or field-survey access.",
+        passwordMinLength: 8,
+    },
+    {
+        value: "viewer",
+        label: "Viewer",
+        authorization: "Read-only dashboard access. Cannot change canonical data.",
+        passwordMinLength: 8,
+    },
+    {
+        value: "surveyor",
+        label: "Surveyor",
+        authorization: "Field-survey access only. No dashboard or canonical data writes.",
+        passwordMinLength: 8,
+    },
+    {
+        value: "admin",
+        label: "Admin",
+        authorization:
+            "Dashboard read/write access. Cannot manage privileged roles or super-admin-only actions.",
+        passwordMinLength: 12,
+    },
+    {
+        value: "super_admin",
+        label: "Super admin",
+        authorization: "Full dashboard administration. MFA enrollment is required at login.",
+        passwordMinLength: 12,
+    },
 ] as const;
 
 export const PRIVILEGED_ROLES = new Set(["admin", "super_admin"]);

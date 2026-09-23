@@ -1,0 +1,11 @@
+{
+  "notes": "Replace public_id with canonical CoreMap admin_area public_id before paid runs. Add more townships as needed; do not hardcode a fixed batch size.",
+  "townships": [
+    {
+      "public_id": "00000000-0000-4000-8000-000000000001",
+      "name_en": "Kyauktan",
+      "name_mm": "ကျောက်တန်း",
+      "region_en": "Yangon Region"
+    }
+  ]
+}

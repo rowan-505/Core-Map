@@ -1,0 +1,21 @@
+{
+  "group_id": "1c1b61ba0fed",
+  "postal_codes": [
+    "1204211"
+  ],
+  "locality_mm": "ကျိုက္ကော် ကျေးရွာအုပ်စု",
+  "locality_en": "Kyaik Kaw Village Tract",
+  "township_en": "Thaton Township",
+  "township_mm": "သထုံ မြို့နယ်",
+  "township_public_id": "85b93da2-27e7-4d45-8e83-8a3539776f8f",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

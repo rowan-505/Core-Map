@@ -18,6 +18,7 @@ import { useDashboardTileVersions } from "@/src/components/map/BuildingTileVersi
 import { useClientMounted } from "@/src/hooks/useClientMounted";
 import { attachDashboardMapErrorHandler } from "@/src/components/map/mapErrorHandlers";
 import { logDashboardGlyphServingHealthInDev } from "@/src/lib/map/dashboardGlyphDevCheck";
+import { DASHBOARD_GLYPH_URL } from "@/src/lib/map/dashboardMapFonts";
 import {
     dashboardComplexTextTransformRequest,
     ensureDashboardMaplibreComplexTextPlugin,
@@ -1180,8 +1181,22 @@ export default function StreetEditorMap({
                     includeMartinOverlays: includeOverlays,
                 });
             } catch (err) {
+                // Local tile server (e.g. :8080) is often down in dashboard-only sessions.
+                // Keep the editor usable: blank basemap + draw/vertex tools still mount.
                 console.error("StreetEditorMap basemap style failed:", err);
-                return;
+                style = {
+                    version: 8,
+                    name: "street-editor-fallback",
+                    glyphs: DASHBOARD_GLYPH_URL,
+                    sources: {},
+                    layers: [
+                        {
+                            id: "background",
+                            type: "background",
+                            paint: { "background-color": "#e5e7eb" },
+                        },
+                    ],
+                };
             }
 
             if (cancelled || !root) {

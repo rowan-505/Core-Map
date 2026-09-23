@@ -1,0 +1,139 @@
+{
+  "schema_version": "tourism-research-v1",
+  "research_run": {
+    "township_public_id": "00000000-0000-4000-8000-000000000001",
+    "township_name_en": "Kyauktan",
+    "township_name_mm": "ကျောက်တန်း",
+    "region_en": "Yangon Region",
+    "provider": "gemini",
+    "research_interaction_id": "interaction-fixture-1",
+    "researched_at": "2026-09-21T01:00:00.000Z",
+    "prompt_version": "2026-09-21.1"
+  },
+  "candidates": [
+    {
+      "candidate_key": "attraction:ye-le-pagoda",
+      "entity_type": "attraction",
+      "name": "Ye Le Pagoda",
+      "evidence_confidence": 80,
+      "payload": {
+        "name_en": "Ye Le Pagoda",
+        "name_mm": null,
+        "description": "Island pagoda near Kyauktan.",
+        "tourism_type_guess": "religious",
+        "editorial_recommendation": 80,
+        "importance_reference": 75,
+        "trend_evidence_score": 40,
+        "freshness_score": 60,
+        "manual_boost_reference": 0,
+        "season_evidence": null,
+        "sources": [
+          {
+            "url": "https://example.com/ye-le",
+            "title": "Ye Le Pagoda guide",
+            "published_at": "2025-01-10T00:00:00.000Z"
+          }
+        ],
+        "uncertainties": [],
+        "conflicts": []
+      }
+    },
+    {
+      "candidate_key": "food:mohinga",
+      "entity_type": "food",
+      "name": "Mohinga",
+      "evidence_confidence": 70,
+      "payload": {
+        "food_type": "dish",
+        "labels": ["must_try", "traditional", "popular"],
+        "description": "Rice noodle fish soup.",
+        "traditionality_reference": 90,
+        "food_significance_reference": 85,
+        "trend_evidence_score": 50,
+        "freshness_score": 55,
+        "available_at": [
+          {
+            "place_name": "Local tea shop near jetty",
+            "location_text": "Near Kyauktan jetty",
+            "place_type_guess": "tea_shop",
+            "source_url": "https://example.com/food",
+            "confidence": 55
+          }
+        ],
+        "sources": [
+          { "url": "https://example.com/food", "title": "Kyauktan foods" }
+        ],
+        "uncertainties": ["Exact shop name varies by source"]
+      }
+    },
+    {
+      "candidate_key": "event:pagoda-festival",
+      "entity_type": "event",
+      "name": "Pagoda festival",
+      "evidence_confidence": 45,
+      "payload": {
+        "event_type_guess": "religious",
+        "occurrence_starts_at": null,
+        "occurrence_ends_at": null,
+        "recurring_context": "Annual around full moon in past years",
+        "schedule_uncertainty": "No confirmed current-year dates in sources",
+        "primary_place_suggestion": "Ye Le Pagoda",
+        "sources": [
+          { "title": "Festival notes 2022", "url": "https://example.com/fest" }
+        ],
+        "uncertainties": ["Do not infer 2026 dates from older years"]
+      }
+    },
+    {
+      "candidate_key": "local_guide:jetty-etiquette",
+      "entity_type": "local_guide",
+      "name": "Jetty etiquette",
+      "evidence_confidence": 60,
+      "payload": {
+        "guide_type": "etiquette",
+        "title": "Jetty etiquette",
+        "short_description": "Remove shoes where marked.",
+        "content": "Visitors should follow local dress and shoe customs at religious sites.",
+        "sources": [
+          { "url": "https://example.com/tips", "title": "Visitor tips" }
+        ]
+      }
+    },
+    {
+      "candidate_key": "advisory:ferry-access",
+      "entity_type": "advisory",
+      "name": "Ferry access note",
+      "evidence_confidence": 50,
+      "payload": {
+        "advisory_type": "transport",
+        "severity": "info",
+        "title": "Ferry access note",
+        "description": "Boat access depends on tide and weather.",
+        "effective_from": null,
+        "effective_until": null,
+        "sources": [
+          { "url": "https://example.com/ferry", "title": "Access note" }
+        ],
+        "conflicts": [
+          "One source says all-day service; another says morning-only in monsoon."
+        ]
+      }
+    },
+    {
+      "candidate_key": "activity:boat-trip",
+      "entity_type": "activity",
+      "name": "Boat trip to island pagoda",
+      "evidence_confidence": 65,
+      "payload": {
+        "activity_type_guess": "boat_trip",
+        "description": "Short boat ride from Kyauktan jetty.",
+        "primary_place_suggestion": "Kyauktan jetty",
+        "season_evidence": null,
+        "sources": [
+          { "url": "https://example.com/boat", "title": "Boat trip" }
+        ],
+        "notes": null
+      }
+    }
+  ]
+}

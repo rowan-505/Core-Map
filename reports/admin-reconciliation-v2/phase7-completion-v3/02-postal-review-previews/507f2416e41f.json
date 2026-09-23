@@ -1,0 +1,21 @@
+{
+  "group_id": "507f2416e41f",
+  "postal_codes": [
+    "1144200"
+  ],
+  "locality_mm": "ကျီစု (အရှေ့) ကျေးရွာအုပ်စု",
+  "locality_en": "Kyi Su (East) Village Tract",
+  "township_en": "Dagon Myothit (Seikkan) Township",
+  "township_mm": "ဒဂုံမြို့သစ် (ဆိပ်ကမ်း) မြို့နယ်",
+  "township_public_id": "2e3aa5eb-4216-4181-8e69-4f402561a39e",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

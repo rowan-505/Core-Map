@@ -53,6 +53,13 @@ model AuthUser {
   tourismEventsUpdated      TourismEvent[]                   @relation("TourismEventUpdatedBy")
   tourismEventOccurrencesCreated TourismEventOccurrence[]    @relation("TourismEventOccurrenceCreatedBy")
   tourismEventOccurrencesUpdated TourismEventOccurrence[]    @relation("TourismEventOccurrenceUpdatedBy")
+  tourismFoodsCreated            TourismFood[]               @relation("TourismFoodCreatedBy")
+  tourismFoodsUpdated            TourismFood[]               @relation("TourismFoodUpdatedBy")
+  tourismLocalGuidesCreated      TourismLocalGuide[]         @relation("TourismLocalGuideCreatedBy")
+  tourismLocalGuidesUpdated      TourismLocalGuide[]         @relation("TourismLocalGuideUpdatedBy")
+  tourismAdvisoriesCreated       TourismAdvisory[]           @relation("TourismAdvisoryCreatedBy")
+  tourismAdvisoriesUpdated       TourismAdvisory[]           @relation("TourismAdvisoryUpdatedBy")
+  tourismResearchCandidatesReviewed TourismResearchCandidate[] @relation("TourismResearchCandidateReviewedBy")
   communityPlaceReviews     CommunityPlaceReview[]           @relation("CommunityPlaceReviewAuthor")
   communityReviewModerationEvents CommunityReviewModerationEvent[] @relation("CommunityReviewModerationActor")
 
@@ -432,8 +439,12 @@ model CoreAdminArea {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  tourismActivities TourismActivity[]
-  tourismEvents     TourismEvent[]
+  tourismActivities          TourismActivity[]
+  tourismEvents              TourismEvent[]
+  tourismFoods               TourismFood[]
+  tourismLocalGuides         TourismLocalGuide[]
+  tourismAdvisories          TourismAdvisory[]
+  tourismResearchCandidates  TourismResearchCandidate[]
 
   @@map("core_admin_areas")
   @@schema("core")
@@ -465,6 +476,9 @@ model CorePlace {
   tourismCandidateIgnore   TourismPlaceCandidateIgnore?
   tourismActivities        TourismActivity[]
   tourismEvents            TourismEvent[]
+  tourismFoodPlaceLinks    TourismFoodPlaceLink[]
+  tourismLocalGuides       TourismLocalGuide[]
+  tourismAdvisories        TourismAdvisory[]
   communityPlaceReviews    CommunityPlaceReview[]
   communityRatingSummary   CommunityPlaceRatingSummary?
 
@@ -725,6 +739,7 @@ model TourismActivity {
   activityType   RefActivityType @relation(fields: [activityTypeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   primaryPlace   CorePlace?      @relation(fields: [primaryPlaceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   adminArea      CoreAdminArea   @relation(fields: [adminAreaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  advisories     TourismAdvisory[]
   createdByUser  AuthUser?       @relation("TourismActivityCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
   updatedByUser  AuthUser?       @relation("TourismActivityUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
@@ -757,6 +772,7 @@ model TourismEvent {
   primaryPlace   CorePlace?                @relation(fields: [primaryPlaceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   adminArea      CoreAdminArea             @relation(fields: [adminAreaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   occurrences    TourismEventOccurrence[]
+  advisories     TourismAdvisory[]
   createdByUser  AuthUser?                 @relation("TourismEventCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
   updatedByUser  AuthUser?                 @relation("TourismEventUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
@@ -791,6 +807,165 @@ model TourismEventOccurrence {
   @@index([endsAt], map: "event_occurrences_ends_at_idx")
   @@index([status], map: "event_occurrences_status_idx")
   @@map("event_occurrences")
+  @@schema("tourism")
+}
+
+// ---------------------------------------------------------------------------
+// tourism foods / guides / advisories / research staging (Phase 1)
+// Source: 20260921120000_tourism_foods_guides_advisories_research.sql
+// Foods are dishes, not restaurants. research_candidates is unverified staging.
+// ---------------------------------------------------------------------------
+
+model TourismFood {
+  id               BigInt    @id @default(autoincrement())
+  publicId         String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  name             String    @db.Text
+  nameEn           String?   @map("name_en") @db.Text
+  nameMm           String?   @map("name_mm") @db.Text
+  shortDescription String?   @map("short_description") @db.Text
+  /// Allowed: dish | snack | dessert | drink | specialty | other
+  foodType         String    @map("food_type") @db.Text
+  /// Allowed labels: signature | must_try | popular | traditional | local_specialty | street_food | seasonal
+  labels           String[]  @default([])
+  adminAreaId      BigInt    @map("admin_area_id")
+  isActive         Boolean   @default(true) @map("is_active")
+  isVerified       Boolean   @default(false) @map("is_verified")
+  sourceUrl        String?   @map("source_url") @db.Text
+  verifiedAt       DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdBy        BigInt?   @map("created_by")
+  updatedBy        BigInt?   @map("updated_by")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  adminArea     CoreAdminArea         @relation(fields: [adminAreaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  placeLinks    TourismFoodPlaceLink[]
+  createdByUser AuthUser?             @relation("TourismFoodCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedByUser AuthUser?             @relation("TourismFoodUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([adminAreaId], map: "foods_admin_area_id_idx")
+  @@map("foods")
+  @@schema("tourism")
+}
+
+model TourismFoodPlaceLink {
+  id               BigInt    @id @default(autoincrement())
+  foodId           BigInt    @map("food_id")
+  placeId          BigInt    @map("place_id")
+  availabilityNote String?   @map("availability_note") @db.Text
+  isSignatureHere  Boolean   @default(false) @map("is_signature_here")
+  isVerified       Boolean   @default(false) @map("is_verified")
+  sourceUrl        String?   @map("source_url") @db.Text
+  verifiedAt       DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  food  TourismFood @relation(fields: [foodId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  place CorePlace   @relation(fields: [placeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([foodId, placeId], map: "food_place_links_food_place_key")
+  @@index([foodId], map: "food_place_links_food_id_idx")
+  @@index([placeId], map: "food_place_links_place_id_idx")
+  @@map("food_place_links")
+  @@schema("tourism")
+}
+
+model TourismLocalGuide {
+  id               BigInt    @id @default(autoincrement())
+  publicId         String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  adminAreaId      BigInt    @map("admin_area_id")
+  placeId          BigInt?   @map("place_id")
+  /// Allowed: culture | craft | local_product | food_culture | etiquette | visitor_tip | practical_info | other
+  guideType        String    @map("guide_type") @db.Text
+  title            String    @db.Text
+  shortDescription String?   @map("short_description") @db.Text
+  content          String    @db.Text
+  isActive         Boolean   @default(true) @map("is_active")
+  isVerified       Boolean   @default(false) @map("is_verified")
+  sourceUrl        String?   @map("source_url") @db.Text
+  verifiedAt       DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdBy        BigInt?   @map("created_by")
+  updatedBy        BigInt?   @map("updated_by")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  adminArea     CoreAdminArea @relation(fields: [adminAreaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  place         CorePlace?    @relation(fields: [placeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdByUser AuthUser?     @relation("TourismLocalGuideCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedByUser AuthUser?     @relation("TourismLocalGuideUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([adminAreaId], map: "local_guides_admin_area_id_idx")
+  @@index([placeId], map: "local_guides_place_id_idx")
+  @@map("local_guides")
+  @@schema("tourism")
+}
+
+model TourismAdvisory {
+  id             BigInt    @id @default(autoincrement())
+  publicId       String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  adminAreaId    BigInt    @map("admin_area_id")
+  placeId        BigInt?   @map("place_id")
+  activityId     BigInt?   @map("activity_id")
+  eventId        BigInt?   @map("event_id")
+  /// Allowed: access | seasonal | closure | safety | etiquette | transport | weather | payment | visitor_requirement | other
+  advisoryType   String    @map("advisory_type") @db.Text
+  title          String    @db.Text
+  description    String    @db.Text
+  /// Allowed: info | caution | important
+  severity       String    @db.Text
+  effectiveFrom  DateTime? @map("effective_from") @db.Timestamptz(6)
+  effectiveUntil DateTime? @map("effective_until") @db.Timestamptz(6)
+  isActive       Boolean   @default(true) @map("is_active")
+  isVerified     Boolean   @default(false) @map("is_verified")
+  sourceUrl      String?   @map("source_url") @db.Text
+  verifiedAt     DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdBy      BigInt?   @map("created_by")
+  updatedBy      BigInt?   @map("updated_by")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  adminArea     CoreAdminArea    @relation(fields: [adminAreaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  place         CorePlace?       @relation(fields: [placeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  activity      TourismActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  event         TourismEvent?    @relation(fields: [eventId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdByUser AuthUser?        @relation("TourismAdvisoryCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedByUser AuthUser?        @relation("TourismAdvisoryUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([adminAreaId], map: "advisories_admin_area_id_idx")
+  @@index([placeId], map: "advisories_place_id_idx")
+  @@map("advisories")
+  @@schema("tourism")
+}
+
+/** Unverified AI/human research staging — not public production tourism data. */
+model TourismResearchCandidate {
+  id                    BigInt    @id @default(autoincrement())
+  publicId              String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  adminAreaId           BigInt    @map("admin_area_id")
+  /// Allowed: attraction | activity | event | food | food_place | local_guide | advisory | other
+  entityType            String    @map("entity_type") @db.Text
+  name                  String    @db.Text
+  /// Allowed: new | reviewing | added | rejected | needs_research
+  researchStatus        String    @default("new") @map("research_status") @db.Text
+  evidenceConfidence    Int?      @map("evidence_confidence") @db.SmallInt
+  normalizedPayload     Json      @map("normalized_payload") @db.JsonB
+  researchProvider      String    @map("research_provider") @db.Text
+  researchRunId         String?   @map("research_run_id") @db.Text
+  /// Stable key within research_run_id for idempotent imports
+  candidateKey          String?   @map("candidate_key") @db.Text
+  researchedAt          DateTime  @map("researched_at") @db.Timestamptz(6)
+  reviewedBy            BigInt?   @map("reviewed_by")
+  reviewedAt            DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  createdEntityType     String?   @map("created_entity_type") @db.Text
+  createdEntityPublicId String?   @map("created_entity_public_id") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  adminArea      CoreAdminArea @relation(fields: [adminAreaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedByUser AuthUser?     @relation("TourismResearchCandidateReviewedBy", fields: [reviewedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([adminAreaId, researchStatus], map: "research_candidates_admin_area_status_idx")
+  @@index([entityType], map: "research_candidates_entity_type_idx")
+  @@map("research_candidates")
   @@schema("tourism")
 }
 

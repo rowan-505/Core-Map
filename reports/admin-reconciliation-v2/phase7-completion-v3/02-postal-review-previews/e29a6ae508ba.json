@@ -1,0 +1,34 @@
+{
+  "group_id": "e29a6ae508ba",
+  "postal_codes": [
+    "0715007"
+  ],
+  "locality_mm": "လေယာဉ်ကွင်း ရပ်ကွက်",
+  "locality_en": "Lay Yin Kwin Quarter",
+  "township_en": "Ann Township",
+  "township_mm": "အမ်း မြို့နယ်",
+  "township_public_id": "23fcc105-16fc-44f9-9a18-71955d34e0f2",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR012014701507",
+      "name_en": "Lay Yin Pyan Kwin Ward",
+      "name_my": "လေယာဉ်ကွင်းရပ်ကွက်",
+      "norm_en": "layyinpyankwin",
+      "norm_my": "လေယာဉ်ကွင်း",
+      "ts_pcode": "MMR012014",
+      "ts_name": "Ann",
+      "source_row": 77,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    }
+  ],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "MIMU source exists (MMR012014701507) but no CoreMap ward/VT to link; do not invent admin from postal text"
+}

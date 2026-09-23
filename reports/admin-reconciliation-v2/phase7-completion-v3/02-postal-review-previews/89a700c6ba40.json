@@ -1,0 +1,21 @@
+{
+  "group_id": "89a700c6ba40",
+  "postal_codes": [
+    "1624223"
+  ],
+  "locality_mm": "ဝမ်ဖင်း ကျေးရွာအုပ်စု",
+  "locality_en": "Wan Hpin Village Tract",
+  "township_en": "Matman Township",
+  "township_mm": "မက်မန်း မြို့နယ်",
+  "township_public_id": "ba250acb-fbe6-497e-bc19-4cf6389882b5",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -106,11 +106,15 @@ describe('search result highlight overlay', () => {
     const mock = createMockMap();
 
     await fitSearchResult(mock.map, adminAreaResult());
-    await fitSearchResult(mock.map, adminAreaResult(), { geometry: geometry() });
+    await fitSearchResult(mock.map, adminAreaResult(), {
+      geometry: geometry(),
+      fitCamera: false,
+    });
 
     const feature = mock.source()?.data.features[0];
     assert.equal(feature?.geometry.type, 'Polygon');
     assert.equal(feature?.properties?.entityId, '101');
+    assert.equal(mock.fitBoundsCalls.length, 1);
     assert.equal(feature?.properties?.source, undefined);
     assert.deepEqual(
       (feature?.geometry as GeoJSON.Polygon).coordinates[0]?.[0],
@@ -137,6 +141,41 @@ describe('search result highlight overlay', () => {
       (feature?.geometry as GeoJSON.Polygon).coordinates[0]?.[0],
       [95.9, 16.7],
     );
+  });
+
+  it('draws a selected transport path with its ordered stop points', async () => {
+    const mock = createMockMap();
+    const routeResult = adminAreaResult({
+      id: 'transport_route:7',
+      entityType: 'transport_route',
+      type: 'transport_route',
+      entityId: '7',
+    });
+    const routeGeometry: SearchResultGeometry = {
+      ...geometry('7'),
+      entityType: 'transport_route',
+      geometryType: 'LineString',
+      feature: {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: [[96.11, 16.81], [96.19, 16.89]],
+        },
+        properties: {},
+      },
+      importantStops: [
+        { publicId: 'stop-1', displayName: 'First', sequence: 1, lng: 96.11, lat: 16.81 },
+        { publicId: 'stop-2', displayName: 'Second', sequence: 2, lng: 96.19, lat: 16.89 },
+      ],
+    };
+
+    await fitSearchResult(mock.map, routeResult, { geometry: routeGeometry });
+
+    const features = mock.source()?.data.features ?? [];
+    assert.equal(features.length, 3);
+    assert.equal(features[0]?.geometry.type, 'LineString');
+    assert.equal(features[1]?.properties?.role, 'selected-route-stop');
+    assert.equal(features[2]?.properties?.stop_sequence, 2);
   });
 
   it('clear selection removes the overlay data', async () => {

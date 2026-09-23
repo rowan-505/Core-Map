@@ -1,0 +1,21 @@
+{
+  "group_id": "0c3bc5b04f99",
+  "postal_codes": [
+    "0107001"
+  ],
+  "locality_mm": "ရစ်လောခေါင် ရပ်ကွက်",
+  "locality_en": "Yit Law Hkaung Quarter",
+  "township_en": "Chipwi Township",
+  "township_mm": "ချီ​ဖွေ မြို့နယ်",
+  "township_public_id": "93c52e90-af03-420b-aea3-2a4ae723f1e1",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

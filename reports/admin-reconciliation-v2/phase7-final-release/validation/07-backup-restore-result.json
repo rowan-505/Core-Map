@@ -1,0 +1,16 @@
+{
+  "backup_readable_complete": true,
+  "counts": {
+    "admin": 2516,
+    "settlements": 57590,
+    "postal": 17297
+  },
+  "pg_restore_error_lines": 1,
+  "data_blocking_errors": 0,
+  "errors": [
+    "pg_restore: error: could not execute query: ERROR:  unrecognized configuration parameter \"transaction_timeout\""
+  ],
+  "pass_strict_zero_errors": false,
+  "pass_readable_complete": true,
+  "note": "Single pg_restore error is unsupported GUC transaction_timeout on local PG16; table row counts match backup."
+}

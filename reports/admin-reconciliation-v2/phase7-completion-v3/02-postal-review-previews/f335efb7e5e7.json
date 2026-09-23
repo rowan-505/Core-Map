@@ -1,0 +1,21 @@
+{
+  "group_id": "f335efb7e5e7",
+  "postal_codes": [
+    "0907203"
+  ],
+  "locality_mm": "သံလွင် (အရှေ့) ကျေးရွာအုပ်စု",
+  "locality_en": "Than Lwin (East) Village Tract",
+  "township_en": "Shadaw Township",
+  "township_mm": "ရှားတော မြို့နယ်",
+  "township_public_id": "8e325bbd-9ac1-4887-9c52-3a166896b0a0",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

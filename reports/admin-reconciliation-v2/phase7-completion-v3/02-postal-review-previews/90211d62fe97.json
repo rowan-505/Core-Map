@@ -1,0 +1,21 @@
+{
+  "group_id": "90211d62fe97",
+  "postal_codes": [
+    "0716212"
+  ],
+  "locality_mm": "ကူးတို့ဆိပ် ကျေးရွာအုပ်စု",
+  "locality_en": "Ku Toet Seik Village Tract",
+  "township_en": "Toungup Township",
+  "township_mm": "တောင်ကုတ် မြို့နယ်",
+  "township_public_id": "30c03d09-353b-4f6f-bbe1-a748be68445c",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

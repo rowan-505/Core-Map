@@ -1,0 +1,21 @@
+{
+  "group_id": "1d68af43e3a1",
+  "postal_codes": [
+    "1809007"
+  ],
+  "locality_mm": "ပြည်တော်သာ ရပ်ကွက်",
+  "locality_en": "Pyi Taw Thar Quarter",
+  "township_en": "Minhla Township",
+  "township_mm": "မင်းလှ မြို့နယ်",
+  "township_public_id": "f03b16e4-2bbd-42f2-a62b-ad95b37579d6",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

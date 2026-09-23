@@ -1,0 +1,21 @@
+{
+  "group_id": "50033fc24437",
+  "postal_codes": [
+    "1205208"
+  ],
+  "locality_mm": "ဇင်းကျိုက် ကျေးရွာအုပ်စု",
+  "locality_en": "Zin Kyaik Village Tract",
+  "township_en": "Paung Township",
+  "township_mm": "ပေါင် မြို့နယ်",
+  "township_public_id": "c74837cf-7bc6-4354-941f-f1a904529c22",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

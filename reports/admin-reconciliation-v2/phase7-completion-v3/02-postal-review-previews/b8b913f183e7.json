@@ -1,0 +1,21 @@
+{
+  "group_id": "b8b913f183e7",
+  "postal_codes": [
+    "0709004"
+  ],
+  "locality_mm": "ဥက္ကာပျံ ရပ်ကွက်",
+  "locality_en": "Oke Kar Pyan Quarter",
+  "township_en": "Minbya Township",
+  "township_mm": "မင်းပြား မြို့နယ်",
+  "township_public_id": "21053ec0-3c86-497e-9aed-d82667ca8b8a",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

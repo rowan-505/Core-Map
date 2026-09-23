@@ -1,0 +1,21 @@
+{
+  "group_id": "c0b6fac4924a",
+  "postal_codes": [
+    "0505018"
+  ],
+  "locality_mm": "(ဋ) ရပ်ကွက်",
+  "locality_en": "(Ta Ta Lin Cheik) Quarter",
+  "township_en": "Pyigyitagon Township",
+  "township_mm": "ပြည်ကြီးတံခွန် မြို့နယ်",
+  "township_public_id": "851d1ec6-15f3-4c8a-aa3c-971641692c5f",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

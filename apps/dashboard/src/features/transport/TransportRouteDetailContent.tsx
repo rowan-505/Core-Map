@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type maplibregl from "maplibre-gl";
 
 import { isAbortError } from "@/src/lib/api";
 import { transportPath } from "@/src/lib/dashboardNavigation";
@@ -34,8 +35,10 @@ import { shouldFetchRouteReviewReadiness } from "./routeReviewReadinessFetch";
 import { transportModeLabel } from "./constants";
 import { getTransportDisplayNameFromNames } from "./naming";
 import InsertRouteStopDialog, {
+    type ExistingStopSearchPreviewState,
     type InsertStopContext,
 } from "./InsertRouteStopDialog";
+import { existingStopSearchPreviewPoints } from "./existingStopSearchPreview";
 import RemoveRouteStopDialog from "./RemoveRouteStopDialog";
 import SwapRouteDirectionDialog from "./SwapRouteDirectionDialog";
 import {
@@ -469,6 +472,13 @@ export default function TransportRouteDetailContent({
     const reviewMapCenterGetterRef = useRef<(() => { lng: number; lat: number } | null) | null>(
         null,
     );
+    const reviewMapInstanceRef = useRef<maplibregl.Map | null>(null);
+    const selectExistingStopFromMapRef = useRef<(publicId: string) => void>(() => {});
+    const [existingStopPreview, setExistingStopPreview] = useState<ExistingStopSearchPreviewState>({
+        items: [],
+        selectedCandidateStopId: null,
+        active: false,
+    });
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
     const [stops, setStops] = useState<readonly TransportRouteStopItem[]>([]);
@@ -1143,6 +1153,22 @@ export default function TransportRouteDetailContent({
 
     const getInsertFallbackPlaceholderPoint = useCallback(() => {
         return reviewMapCenterGetterRef.current?.() ?? null;
+    }, []);
+
+    const handleExistingStopPreviewChange = useCallback((state: ExistingStopSearchPreviewState) => {
+        setExistingStopPreview(state);
+    }, []);
+
+    const existingStopSearchMapPoints = useMemo(
+        () =>
+            existingStopPreview.active
+                ? existingStopSearchPreviewPoints(existingStopPreview.items)
+                : [],
+        [existingStopPreview],
+    );
+
+    const handleExistingStopSearchSelect = useCallback((publicId: string) => {
+        selectExistingStopFromMapRef.current(publicId);
     }, []);
 
     const openInsert = useCallback(
@@ -2578,14 +2604,19 @@ export default function TransportRouteDetailContent({
                 onRevertStopPreview={handleReviewMapRevertStopPreview}
                 onSelectStop={setSelectedRouteStopId}
                 actionToast={reviewMapToast}
-                candidateSearchHint={reviewMapCandidateSearchHint}
-                nearbyCandidates={nearbyMapCandidates}
+                candidateSearchHint={
+                    existingStopPreview.active ? null : reviewMapCandidateSearchHint
+                }
+                nearbyCandidates={existingStopPreview.active ? [] : nearbyMapCandidates}
                 nearbyCandidateCount={nearbyCandidates.length}
                 nearbyCandidatesStatus={nearbyCandidatesStatus}
                 onRetryNearbyCandidates={retryNearbyCandidates}
-                selectedCandidateId={selectedNearbyCandidateId}
+                selectedCandidateId={
+                    existingStopPreview.active ? null : selectedNearbyCandidateId
+                }
                 onCandidateSelect={handleNearbyCandidateSelect}
                 onCandidateSearchRequest={
+                    !existingStopPreview.active &&
                     pathMode === null &&
                     !isReviewMapPathEditMode(reviewMapMode) &&
                     selectedRouteStopId
@@ -2659,6 +2690,10 @@ export default function TransportRouteDetailContent({
                 deleteStopAllowed={selectedStopDeleteAllowed}
                 deleteBlockMessage={selectedStopDeleteBlockMessage}
                 mapCenterGetterRef={reviewMapCenterGetterRef}
+                mapInstanceRef={reviewMapInstanceRef}
+                existingStopSearchPoints={existingStopSearchMapPoints}
+                selectedExistingStopSearchId={existingStopPreview.selectedCandidateStopId}
+                onExistingStopSearchSelect={handleExistingStopSearchSelect}
             />
 
             <GeneratePathFromStopsDialog
@@ -2731,6 +2766,9 @@ export default function TransportRouteDetailContent({
                 onCancel={cancelInsert}
                 onInserted={handleStopInserted}
                 getFallbackPlaceholderPoint={getInsertFallbackPlaceholderPoint}
+                mapInstanceRef={reviewMapInstanceRef}
+                onExistingStopPreviewChange={handleExistingStopPreviewChange}
+                selectCandidateFromMapRef={selectExistingStopFromMapRef}
             />
 
             {replaceTarget && selectedVariantId && route ? (

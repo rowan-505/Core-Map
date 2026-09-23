@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import StatsCard from "@/src/components/dashboard/StatsCard";
+import { useDashboardRoleAccess } from "@/src/hooks/useDashboardRoleAccess";
 import { isAbortError } from "@/src/lib/api";
 import { usersPath } from "@/src/lib/dashboardPaths";
 
@@ -34,6 +35,7 @@ const EMPTY_FILTERS: Filters = {
 
 export default function UsersPage() {
     const router = useRouter();
+    const access = useDashboardRoleAccess();
     const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
     const [searchInput, setSearchInput] = useState("");
     const [page, setPage] = useState(1);
@@ -108,12 +110,23 @@ export default function UsersPage() {
     return (
         <main className="p-6">
             <div className="mx-auto max-w-7xl space-y-5">
-                <header className="border-b border-gray-200 pb-4">
-                    <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-                    <p className="mt-1 text-sm text-gray-600">
-                        Public accounts, roles, verification, and points. Read-only list; open a user
-                        to manage status, roles, notes, and points.
-                    </p>
+                <header className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 pb-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+                        <p className="mt-1 text-sm text-gray-600">
+                            Accounts, roles, verification, and points. Open a user to manage account
+                            data.
+                        </p>
+                    </div>
+                    {access.roles.includes("super_admin") ? (
+                        <button
+                            type="button"
+                            onClick={() => router.push(usersPath("new"))}
+                            className={PRIMARY_BTN}
+                        >
+                            Create account
+                        </button>
+                    ) : null}
                 </header>
 
                 {summary ? (

@@ -1,0 +1,30 @@
+  id  |         canonical_name         |        code        | is_official_boundary | is_public_usable 
+------+--------------------------------+--------------------+----------------------+------------------
+ 5985 | อำเภอเวียงแหง                   | township           | f                    | f
+ 5986 | อำเภอปางมะผ้า                   | township           | f                    | f
+ 6675 | Vijoynagar EAC                 | township           | f                    | f
+ 6734 | S' Bungtlang                   | township           | f                    | f
+ 6735 | Tipa                           | township           | f                    | f
+ 6389 | ເຂດ​ຊັ້ນນອກ 外特区                | ward_village_tract | t                    | t
+ 6455 | 新厂镇                         | ward_village_tract | f                    | f
+ 6465 | 芒信镇                         | ward_village_tract | f                    | f
+ 6578 | 户育乡                         | ward_village_tract | t                    | t
+ 6582 | 姐相镇                         | ward_village_tract | t                    | t
+ 6583 | 弄岛镇                         | ward_village_tract | t                    | t
+ 6602 | ကြယ်ဂေါင် နယ်စပ်ကုန်သွယ်ရေး စီးပွားရေးဇုန် | ward_village_tract | t                    | t
+ 6619 | 畹町镇                         | ward_village_tract | t                    | t
+ 6621 | 鲁掌镇                         | ward_village_tract | t                    | t
+ 6624 | 勐秀乡                         | ward_village_tract | t                    | t
+ 6680 | Nampong SDO                    | ward_village_tract | t                    | t
+ 6691 | Renuk Circle                   | ward_village_tract | t                    | t
+ 6696 | 片马镇                         | ward_village_tract | t                    | t
+ 6939 | Camp 14                        | ward_village_tract | t                    | t
+ 6940 | Camp 11                        | ward_village_tract | t                    | t
+ 6968 | Camp 25                        | ward_village_tract | t                    | t
+ 6969 | Leda D                         | ward_village_tract | t                    | t
+ 6970 | Leda MS                        | ward_village_tract | t                    | t
+ 6971 | Camp 27                        | ward_village_tract | t                    | t
+ 6972 | Camp 26                        | ward_village_tract | t                    | t
+ 6976 | Camp 24                        | ward_village_tract | t                    | t
+(26 rows)
+

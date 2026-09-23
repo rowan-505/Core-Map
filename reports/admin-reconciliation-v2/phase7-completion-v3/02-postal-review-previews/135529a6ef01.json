@@ -1,0 +1,21 @@
+{
+  "group_id": "135529a6ef01",
+  "postal_codes": [
+    "0420005"
+  ],
+  "locality_mm": "အမှတ် (၅) ရပ်ကွက်",
+  "locality_en": "No (5) Quarter",
+  "township_en": "Pakokku Township",
+  "township_mm": "ပခုက္ကူ မြို့နယ်",
+  "township_public_id": "972fde85-8ce2-48a4-b973-7faeefd60067",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

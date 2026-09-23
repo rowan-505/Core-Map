@@ -1,0 +1,21 @@
+{
+  "group_id": "0119cfb347da",
+  "postal_codes": [
+    "1208224"
+  ],
+  "locality_mm": "ထောင်ကေး ကျေးရွာအုပ်စု",
+  "locality_en": "Htaung Kay Village Tract",
+  "township_en": "Mudon Township",
+  "township_mm": "မုဒုံ မြို့နယ်",
+  "township_public_id": "741fa2dc-d4f8-4cac-8983-6069d8b5c88c",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

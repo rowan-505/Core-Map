@@ -1,0 +1,21 @@
+{
+  "group_id": "8288b99c5efd",
+  "postal_codes": [
+    "0814240"
+  ],
+  "locality_mm": "ကညွှတ်ကွင်း(အရှေ့) ကျေးရွာအုပ်စု",
+  "locality_en": "Ka Nyut Kwin (East) Village Tract",
+  "township_en": "Phyu Township",
+  "township_mm": "ဖြူး မြို့နယ်",
+  "township_public_id": "1790b109-65f8-40a5-9506-e15d542b247f",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

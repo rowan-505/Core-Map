@@ -1,7 +1,7 @@
 import { PublicMapApiError } from './publicMapApiError';
 
 const NON_RETRYABLE_PUBLIC_SEARCH_STATUSES = new Set([400, 401, 403, 404, 422]);
-const MAX_PUBLIC_SEARCH_RETRIES = 2;
+const MAX_PUBLIC_SEARCH_RETRIES = 1;
 
 export function isAbortError(error: unknown): boolean {
   return !!error && typeof error === 'object' && (error as { name?: unknown }).name === 'AbortError';

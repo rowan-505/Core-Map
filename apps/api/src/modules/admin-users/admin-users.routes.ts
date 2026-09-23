@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 
+import { getApiEnv } from "../../config/env.js";
 import { AdminAnalyticsRepository } from "./admin-analytics.repo.js";
 import { AdminAnalyticsService } from "./admin-analytics.service.js";
 import { AdminUsersRepository } from "./admin-users.repo.js";
@@ -7,10 +8,13 @@ import { AdminUsersError, AdminUsersService, type AdminActor } from "./admin-use
 import {
     assignRoleBodySchema,
     auditQuerySchema,
+    createUserBodySchema,
     growthQuerySchema,
     listUsersQuerySchema,
+    resetUserPasswordBodySchema,
     updateAdminNoteBodySchema,
     updateStatusBodySchema,
+    updateUserProfileBodySchema,
     userPublicIdParamSchema,
     userRoleParamSchema,
 } from "./admin-users.schema.js";
@@ -27,7 +31,10 @@ import {
     getAnalyticsSummarySchema,
     getUserAuditSchema,
     patchUserAdminNoteSchema,
+    patchUserProfileSchema,
     patchUserStatusSchema,
+    postAdminUserSchema,
+    postUserPasswordResetSchema,
     postUserRoleSchema,
 } from "./admin-users.openapi.js";
 
@@ -52,6 +59,16 @@ const adminUsersRoutes: FastifyPluginAsync = async (app) => {
     const analyticsService = new AdminAnalyticsService(new AdminAnalyticsRepository(app.prisma));
     const requireAdmin = app.requireRole("admin", "super_admin");
     const adminGuard = { preHandler: [app.authenticate, requireAdmin] };
+    const superAdminGuard = {
+        preHandler: [app.authenticate, app.requireRole("super_admin")],
+    };
+    const rateLimit = getApiEnv().authRateLimit;
+    const sensitiveConfig = {
+        rateLimit: {
+            max: rateLimit.sensitiveAccount,
+            timeWindow: rateLimit.windowMs,
+        },
+    };
 
     // --- Analytics (static paths; registered before/around :id is fine — find-my-way prefers static) ---
 
@@ -107,6 +124,29 @@ const adminUsersRoutes: FastifyPluginAsync = async (app) => {
 
     // --- User management ---
 
+    app.post(
+        "/admin/users",
+        {
+            ...superAdminGuard,
+            config: sensitiveConfig,
+            schema: postAdminUserSchema,
+        },
+        async (request, reply) => {
+            const body = createUserBodySchema.safeParse(request.body);
+            if (!body.success) {
+                return reply
+                    .code(400)
+                    .send({ message: "Invalid account payload", issues: body.error.flatten() });
+            }
+            try {
+                const detail = await usersService.createUser(toActor(request), body.data);
+                return reply.code(201).send(detail);
+            } catch (error) {
+                return handleError(error, reply);
+            }
+        }
+    );
+
     app.get("/admin/users", { ...adminGuard, schema: getAdminUsersSchema }, async (request, reply) => {
         const parsed = listUsersQuerySchema.safeParse(request.query);
         if (!parsed.success) {
@@ -153,6 +193,69 @@ const adminUsersRoutes: FastifyPluginAsync = async (app) => {
             }
             try {
                 return reply.send(await usersService.getUserAudit(params.data.id, query.data.limit));
+            } catch (error) {
+                return handleError(error, reply);
+            }
+        }
+    );
+
+    app.patch(
+        "/admin/users/:id/profile",
+        {
+            ...superAdminGuard,
+            config: sensitiveConfig,
+            schema: patchUserProfileSchema,
+        },
+        async (request, reply) => {
+            const params = userPublicIdParamSchema.safeParse(request.params);
+            if (!params.success) {
+                return reply
+                    .code(400)
+                    .send({ message: "Invalid user id", issues: params.error.flatten() });
+            }
+            const body = updateUserProfileBodySchema.safeParse(request.body);
+            if (!body.success) {
+                return reply
+                    .code(400)
+                    .send({ message: "Invalid profile payload", issues: body.error.flatten() });
+            }
+            try {
+                return reply.send(
+                    await usersService.updateProfile(toActor(request), params.data.id, body.data)
+                );
+            } catch (error) {
+                return handleError(error, reply);
+            }
+        }
+    );
+
+    app.post(
+        "/admin/users/:id/password",
+        {
+            ...superAdminGuard,
+            config: sensitiveConfig,
+            schema: postUserPasswordResetSchema,
+        },
+        async (request, reply) => {
+            const params = userPublicIdParamSchema.safeParse(request.params);
+            if (!params.success) {
+                return reply
+                    .code(400)
+                    .send({ message: "Invalid user id", issues: params.error.flatten() });
+            }
+            const body = resetUserPasswordBodySchema.safeParse(request.body);
+            if (!body.success) {
+                return reply
+                    .code(400)
+                    .send({ message: "Invalid password payload", issues: body.error.flatten() });
+            }
+            try {
+                await usersService.resetPassword(
+                    toActor(request),
+                    params.data.id,
+                    body.data.password
+                );
+                return reply.send({ message: "Password reset" });
             } catch (error) {
                 return handleError(error, reply);
             }

@@ -174,3 +174,96 @@ export const TOURISM_ACTIVITY_NAME_MAX_LENGTH = 200;
 export const TOURISM_SCHEDULE_REVIEW_NOTE_MAX_LENGTH = 1000;
 export const TOURISM_OCCURRENCE_SCHEDULE_NOTE_MAX_LENGTH = 1000;
 export const TOURISM_OCCURRENCE_SOURCE_URL_MAX_LENGTH = 2000;
+
+/** tourism.foods.food_type CHECK */
+export const TOURISM_FOOD_TYPES = [
+    "dish",
+    "snack",
+    "dessert",
+    "drink",
+    "specialty",
+    "other",
+] as const;
+
+export type TourismFoodType = (typeof TOURISM_FOOD_TYPES)[number];
+
+/** tourism.foods.labels allowed values */
+export const TOURISM_FOOD_LABELS = [
+    "signature",
+    "must_try",
+    "popular",
+    "traditional",
+    "local_specialty",
+    "street_food",
+    "seasonal",
+] as const;
+
+export type TourismFoodLabel = (typeof TOURISM_FOOD_LABELS)[number];
+
+/** tourism.local_guides.guide_type CHECK */
+export const TOURISM_GUIDE_TYPES = [
+    "culture",
+    "craft",
+    "local_product",
+    "food_culture",
+    "etiquette",
+    "visitor_tip",
+    "practical_info",
+    "other",
+] as const;
+
+export type TourismGuideType = (typeof TOURISM_GUIDE_TYPES)[number];
+
+/** tourism.advisories.advisory_type CHECK */
+export const TOURISM_ADVISORY_TYPES = [
+    "access",
+    "seasonal",
+    "closure",
+    "safety",
+    "etiquette",
+    "transport",
+    "weather",
+    "payment",
+    "visitor_requirement",
+    "other",
+] as const;
+
+export type TourismAdvisoryType = (typeof TOURISM_ADVISORY_TYPES)[number];
+
+/** tourism.advisories.severity CHECK */
+export const TOURISM_ADVISORY_SEVERITIES = ["info", "caution", "important"] as const;
+
+export type TourismAdvisorySeverity = (typeof TOURISM_ADVISORY_SEVERITIES)[number];
+
+export const TOURISM_FOOD_NAME_MAX_LENGTH = 200;
+export const TOURISM_GUIDE_TITLE_MAX_LENGTH = 200;
+export const TOURISM_GUIDE_CONTENT_MAX_LENGTH = 20000;
+export const TOURISM_ADVISORY_TITLE_MAX_LENGTH = 200;
+export const TOURISM_ADVISORY_DESCRIPTION_MAX_LENGTH = 5000;
+export const TOURISM_SOURCE_URL_MAX_LENGTH = 2000;
+export const TOURISM_AVAILABILITY_NOTE_MAX_LENGTH = 1000;
+
+/** tourism.research_candidates.entity_type CHECK */
+export const TOURISM_RESEARCH_ENTITY_TYPES = [
+    "attraction",
+    "activity",
+    "event",
+    "food",
+    "food_place",
+    "local_guide",
+    "advisory",
+    "other",
+] as const;
+
+export type TourismResearchEntityType = (typeof TOURISM_RESEARCH_ENTITY_TYPES)[number];
+
+/** tourism.research_candidates.research_status CHECK */
+export const TOURISM_RESEARCH_STATUSES = [
+    "new",
+    "reviewing",
+    "added",
+    "rejected",
+    "needs_research",
+] as const;
+
+export type TourismResearchStatus = (typeof TOURISM_RESEARCH_STATUSES)[number];

@@ -1,0 +1,34 @@
+{
+  "group_id": "d94686800222",
+  "postal_codes": [
+    "1209008"
+  ],
+  "locality_mm": "ကြံ့ခိုင်ရေး ရပ်ကွက်",
+  "locality_en": "Kyant Khaing Yay Quarter",
+  "township_en": "Thanbyuzayat Township",
+  "township_mm": "သံဖြူဇရပ် မြို့နယ်",
+  "township_public_id": "bfec2286-8963-470f-b164-9357b30d4e04",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR011004701508",
+      "name_en": "Kyant Khaing Ye Ward",
+      "name_my": "ကြံ့ခိုင်ရေးရပ်ကွက်",
+      "norm_en": "kyantkhaingye",
+      "norm_my": "ကြံ့ခိုင်ရေး",
+      "ts_pcode": "MMR011004",
+      "ts_name": "Thanbyuzayat",
+      "source_row": 630,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    }
+  ],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "MIMU source exists (MMR011004701508) but no CoreMap ward/VT to link; do not invent admin from postal text"
+}

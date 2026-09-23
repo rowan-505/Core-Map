@@ -1,0 +1,5 @@
+Wrote reports to reports/admin-reconciliation-v2/phase2-import (dry-run)
+Accounted 18037/18037
+Official SR=15 ok=True
+Official TSP=327/330 ok=True
+Geom stable ok=True placeholders=0

@@ -1,0 +1,21 @@
+{
+  "group_id": "375f551540b8",
+  "postal_codes": [
+    "0211003"
+  ],
+  "locality_mm": "သရက်တော ရပ်ကွက်",
+  "locality_en": "Tha Yet Taw Quarter",
+  "township_en": "Mingin Township",
+  "township_mm": "မင်းကင်း မြို့နယ်",
+  "township_public_id": "ca7ddc81-3d99-4e57-af9d-9f3c15a4a808",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

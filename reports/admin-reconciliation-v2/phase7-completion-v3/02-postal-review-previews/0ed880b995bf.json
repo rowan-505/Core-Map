@@ -1,0 +1,21 @@
+{
+  "group_id": "0ed880b995bf",
+  "postal_codes": [
+    "0603003"
+  ],
+  "locality_mm": "ဈေးတန်း ရပ်ကွက်",
+  "locality_en": "Zay Tan Quarter",
+  "township_en": "Pindaya Township",
+  "township_mm": "ပင်းတယ မြို့နယ်",
+  "township_public_id": "1e21c040-9ea6-4ac6-bdf9-4784006c55fe",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "e3c5af2ac723",
+  "postal_codes": [
+    "1202222"
+  ],
+  "locality_mm": "သိမ်ဇရပ် ကျေးရွာအုပ်စု",
+  "locality_en": "Thein Za Yat Village Tract",
+  "township_en": "Kyaikto Township",
+  "township_mm": "ကျိုက်ထို မြို့နယ်",
+  "township_public_id": "63d433c8-858f-40fc-a439-c100f242427e",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,67 @@
+{
+  "group_id": "21960d76d545",
+  "postal_codes": [
+    "0704256"
+  ],
+  "locality_mm": "ငတောက်တူကြီး ကျေးရွာအုပ်စု",
+  "locality_en": "Nga Tauk Tu Chay Village Tract",
+  "township_en": "Rathedaung Township",
+  "township_mm": "ရသေ့တောင် မြို့နယ်",
+  "township_public_id": "9ed96ae9-faa6-4198-9e03-b8db24ee490f",
+  "expected_locality_type": "village_tract",
+  "candidates": [
+    {
+      "core_id": "17188",
+      "public_id": "7d141387-6ece-450f-87a3-ca2a613277c3",
+      "type": "village_tract",
+      "parent_public_id": "9ed96ae9-faa6-4198-9e03-b8db24ee490f",
+      "name_mm": "ငတောက်တူကြီး",
+      "name_en": "Nga Tauk Tu Gyi",
+      "aliases_mm": [],
+      "aliases_en": []
+    },
+    {
+      "core_id": "17187",
+      "public_id": "c28b3c1a-e507-4daa-8484-745b4c372484",
+      "type": "village_tract",
+      "parent_public_id": "9ed96ae9-faa6-4198-9e03-b8db24ee490f",
+      "name_mm": "ငတောက်တူချေ",
+      "name_en": "Nga Tauk Tu Chay",
+      "aliases_mm": [],
+      "aliases_en": []
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR012008059",
+      "name_en": "Nga Tauk Tu Chay",
+      "name_my": "ငတောက်တူချေ",
+      "norm_en": "ngatauktuchay",
+      "norm_my": "ငတောက်တူချေ",
+      "ts_pcode": "MMR012008",
+      "ts_name": "Rathedaung",
+      "source_row": 9547,
+      "source_file": "village_tract_boundary_Rakhine_v94.zip:mmr_rke_polbnda_adm4_mimu_who_250k.shp"
+    },
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR012008057",
+      "name_en": "Nga Tauk Tu Gyi",
+      "name_my": "ငတောက်တူကြီး",
+      "norm_en": "ngatauktugyi",
+      "norm_my": "ငတောက်တူကြီး",
+      "ts_pcode": "MMR012008",
+      "ts_name": "Rathedaung",
+      "source_row": 9548,
+      "source_file": "village_tract_boundary_Rakhine_v94.zip:mmr_rke_polbnda_adm4_mimu_who_250k.shp"
+    }
+  ],
+  "name_evidence": "conflict_mm_vs_en",
+  "recommendation": "source_error",
+  "review_decision": "source_error",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "inconsistent bilingual postal row: MY→7d141387-6ece-450f-87a3-ca2a613277c3 (ငတောက်တူကြီး/Nga Tauk Tu Gyi) but EN→c28b3c1a-e507-4daa-8484-745b4c372484 (ငတောက်တူချေ/Nga Tauk Tu Chay)"
+}

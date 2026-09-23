@@ -1,0 +1,21 @@
+{
+  "group_id": "1a84f84d8887",
+  "postal_codes": [
+    "0306234"
+  ],
+  "locality_mm": "လိုင်လင်းပီ ကျေးရွာအုပ်စု",
+  "locality_en": "Lalengpi Village Tract",
+  "township_en": "Matupi Township",
+  "township_mm": "မတူပီ မြို့နယ်",
+  "township_public_id": "7edf813a-edf2-48cd-8c2e-aa6fd19e3e18",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

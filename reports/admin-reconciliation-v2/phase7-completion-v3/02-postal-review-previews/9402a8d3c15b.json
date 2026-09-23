@@ -1,0 +1,21 @@
+{
+  "group_id": "9402a8d3c15b",
+  "postal_codes": [
+    "1011003"
+  ],
+  "locality_mm": "အမှတ် (၃) ရပ်ကွက်",
+  "locality_en": "No (3) Quarter",
+  "township_en": "Thabaung Township",
+  "township_mm": "သာပေါင်း မြို့နယ်",
+  "township_public_id": "57660ae1-9f7c-4c08-a4fe-33aa56abe364",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

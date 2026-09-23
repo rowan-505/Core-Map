@@ -1,0 +1,65 @@
+id,admin_area_id,name,language_code,script_code,name_type,is_primary,search_weight
+9260,5985,Wiang Haeng District,en,Latn,imported,f,10
+5230,5985,อำเภอเวียงแหง,und,,primary,t,100
+9261,5986,Pang Mapha District,en,Latn,imported,f,10
+5229,5986,อำเภอปางมะผ้า,und,,primary,t,100
+7975,6073,Pinlaung Township,en,LATN,official,t,90
+7378,6073,ပင်လောင်းမြို့နယ်,my,,primary,t,100
+7974,6073,ပင်လောင်းမြို့နယ်,my,MYMR,official,t,100
+7793,6091,Sesai Township,en,LATN,official,t,90
+7218,6091,ဆီဆိုင်မြို့နယ်,my,,primary,t,100
+7792,6091,ဆီဆိုင်မြို့နယ်,my,MYMR,official,t,100
+9358,6115,Pa'O Self-Administered Zone,en,Latn,imported,f,10
+7474,6115,ပအိုဝ်းကိုယ်ပိုင်အုပ်ချုပ်ခွင့်ရဒေသ,my,,primary,t,100
+7617,6144,Pindaya Township,en,LATN,official,t,90
+7377,6144,ပင်းတယမြို့နယ်,my,,primary,t,100
+7616,6144,ပင်းတယမြို့နယ်,my,MYMR,official,t,100
+8281,6187,Ywangan Township,en,LATN,official,t,90
+7465,6187,ရွာငံမြို့နယ်,my,,primary,t,100
+8280,6187,ရွာငံမြို့နယ်,my,MYMR,official,t,100
+7777,6192,Danu Self-Administered Zone,en,LATN,official,t,90
+7473,6192,ဓနုကိုယ်ပိုင်အုပ်ချုပ်ခွင့်ရဒေသ,my,,primary,t,100
+7776,6192,ဓနုကိုယ်ပိုင်အုပ်ချုပ်ခွင့်ရဒေသ,my,MYMR,official,t,100
+7825,6310,Hopong Township,en,LATN,official,t,90
+7212,6310,ဟိုပုံးမြို့နယ်,my,,primary,t,100
+7824,6310,ဟိုပုံးမြို့နယ်,my,MYMR,official,t,100
+9575,6378,Wa State Southern Region,en,Latn,imported,f,10
+7486,6378,ဝပြည်နယ် တောင်ပိုင်း,my,,primary,t,100
+8211,6394,Namhsan Township,en,LATN,official,t,90
+7341,6394,နမ့်ဆန်မြို့နယ်,my,,primary,t,100
+8210,6394,နမ့်ဆန်မြို့နယ်,my,MYMR,official,t,100
+8275,6410,Hsihseng Township,en,LATN,official,t,90
+5060,6410,ရှီးရှမ်း‌မြို့နယ်,my,,primary,t,100
+8274,6410,ရှီးရှမ်း‌မြို့နယ်,my,MYMR,official,t,100
+7555,6411,Kokang Self-Administered Zone,en,LATN,official,t,90
+5054,6411,ကိုးကန့်ခရိုင်,my,,primary,t,100
+7554,6411,ကိုးကန့်,my,MYMR,official,t,100
+9639,6485,Wa State (Northern Region),en,Latn,imported,f,10
+7487,6485,ဝပြည်နယ် မြောက်ပိုင်း,my,,primary,t,100
+8225,6527,Mantong Township,en,LATN,official,t,90
+7288,6527,မန်တုံမြို့နယ်,my,,primary,t,100
+8224,6527,မန်တုံမြို့နယ်,my,MYMR,official,t,100
+7987,6674,Nanyun Township,en,LATN,official,t,90
+7344,6674,နန်းယွန်းမြို့နယ်,my,,primary,t,100
+7986,6674,နန်းယွန်းမြို့နယ်,my,MYMR,official,t,100
+5008,6675,Vijoynagar EAC,und,,primary,t,100
+8313,6692,Lahe Township,en,LATN,official,t,90
+7268,6692,လဟယ်မြို့နယ်,my,,primary,t,100
+8312,6692,လဟယ်မြို့နယ်,my,MYMR,official,t,100
+7763,6693,Naga Self-Administered Zone,en,LATN,official,t,90
+7471,6693,နာဂ ကိုယ်ပိုင်အုပ်ချုပ်ခွင့်ရဒေသ,my,,primary,t,100
+7762,6693,နာဂ ကိုယ်ပိုင်အုပ်ချုပ်ခွင့်ရဒေသ,my,MYMR,official,t,100
+8177,6699,Lahe Township,en,LATN,official,t,90
+7275,6699,လေရှီးမြို့နယ်,my,,primary,t,100
+8176,6699,လေရှီးမြို့နယ်,my,MYMR,official,t,100
+5011,6734,S' Bungtlang,und,,primary,t,100
+5012,6735,Tipa,und,,primary,t,100
+8067,6778,Pandaung Township,en,LATN,official,t,90
+7361,6778,ပန်းတောင်းမြို့နယ်,my,,primary,t,100
+8066,6778,ပန်းတောင်းမြို့နယ်,my,MYMR,official,t,100
+7663,7139,Pyay Township,en,LATN,official,t,90
+7386,7139,ပြည်မြို့နယ်,my,,primary,t,100
+7662,7139,ပြည်မြို့နယ်,my,MYMR,official,t,100
+7669,7151,Shwedaung Township,en,LATN,official,t,90
+7401,7151,ရွှေတောင်မြို့နယ်,my,,primary,t,100
+7668,7151,ရွှေတောင်မြို့နယ်,my,MYMR,official,t,100

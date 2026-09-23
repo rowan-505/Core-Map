@@ -1,0 +1,21 @@
+{
+  "group_id": "be771bce2ea7",
+  "postal_codes": [
+    "0237019"
+  ],
+  "locality_mm": "တင်းတိပ် ရပ်ကွက်",
+  "locality_en": "Tin Teik Quarter",
+  "township_en": "Sagaing Township",
+  "township_mm": "စစ်ကိုင်း မြို့နယ်",
+  "township_public_id": "a3fe95b9-754b-4041-ace9-f5f407d1153d",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

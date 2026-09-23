@@ -1,0 +1,21 @@
+{
+  "group_id": "b217a5b8a647",
+  "postal_codes": [
+    "1130244"
+  ],
+  "locality_mm": "ဘိုကုန်း ကျေးရွာအုပ်စု",
+  "locality_en": "Boe Kone Village Tract",
+  "township_en": "Kyauktan Township",
+  "township_mm": "ကျောက်တန်း မြို့နယ်",
+  "township_public_id": "e94864c7-fc7b-4d74-96a2-3abfd8539ecf",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

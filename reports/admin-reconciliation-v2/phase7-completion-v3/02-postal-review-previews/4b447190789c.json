@@ -1,0 +1,21 @@
+{
+  "group_id": "4b447190789c",
+  "postal_codes": [
+    "1623219"
+  ],
+  "locality_mm": "စုံဟော် ကျေးရွာအုပ်စု",
+  "locality_en": "Son Haw Village Tract",
+  "township_en": "Konkyan Township",
+  "township_mm": "ကုန်းကြမ်း မြို့နယ်",
+  "township_public_id": "392f1420-4a8f-4546-bef9-e232f028977b",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

@@ -1,0 +1,21 @@
+{
+  "group_id": "07ad873e4be9",
+  "postal_codes": [
+    "1623230"
+  ],
+  "locality_mm": "လမ်ဖြေလင် ကျေးရွာအုပ်စု",
+  "locality_en": "Lan Hpyay Lin (Lan Pi Lin) Village Tract",
+  "township_en": "Konkyan Township",
+  "township_mm": "ကုန်းကြမ်း မြို့နယ်",
+  "township_public_id": "392f1420-4a8f-4546-bef9-e232f028977b",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

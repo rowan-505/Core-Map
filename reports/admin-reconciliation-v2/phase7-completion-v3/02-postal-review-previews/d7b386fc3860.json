@@ -1,0 +1,21 @@
+{
+  "group_id": "d7b386fc3860",
+  "postal_codes": [
+    "0204214"
+  ],
+  "locality_mm": "ဆွမ္မရာ ကျေးရွာအုပ်စု",
+  "locality_en": "Sum Ma Rar (Sum Pa Rar) Village Tract",
+  "township_en": "Lay Shi Township",
+  "township_mm": "လေရှီး မြို့နယ်",
+  "township_public_id": "b99234fc-d2b4-476d-850a-687e7f3b2a9e",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

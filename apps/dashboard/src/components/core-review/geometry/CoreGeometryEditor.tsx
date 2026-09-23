@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import type { Geometry } from "geojson";
 import type { Map as MaplibreMap } from "maplibre-gl";
 
@@ -80,6 +80,10 @@ export type CoreGeometryEditorProps = {
     basemapOnly?: boolean;
     /** When false, polygon maps do not auto-activate draggable vertex edit mode on load. */
     autoEnterVertexEdit?: boolean;
+    /** Extra header controls beside Show vertices. */
+    headerTrailingControls?: ReactNode;
+    /** Extra footer content under the map (e.g. boundary check panel). */
+    footerExtra?: ReactNode;
 };
 
 function previewEntityType(geometryType: CoreGeometryType): DataReviewEntityType {
@@ -187,6 +191,8 @@ export default function CoreGeometryEditor({
     splitPreviewLngLat = null,
     basemapOnly = false,
     autoEnterVertexEdit = true,
+    headerTrailingControls = null,
+    footerExtra = null,
 }: CoreGeometryEditorProps) {
     const previewKind = coreGeometryTypeToPreviewKind(geometryType);
     const resolvedTitle = title ?? defaultCoreGeometryEditorTitle(geometryType);
@@ -401,6 +407,7 @@ export default function CoreGeometryEditor({
                 showVerticesToggle: showVertexToggle,
                 showVertices: verticesVisible,
                 onShowVerticesChange: setVerticesVisible,
+                trailingControls: headerTrailingControls,
                 palette: "core",
             }}
             toolbar={
@@ -447,6 +454,7 @@ export default function CoreGeometryEditor({
                 <div className="space-y-3 px-3 py-3">
                     <CoreGeometryStatsFooter result={validation} />
                     <CoreGeometryValidationPanel result={validation} />
+                    {footerExtra}
                 </div>
             }
             bodyClassName="p-0"

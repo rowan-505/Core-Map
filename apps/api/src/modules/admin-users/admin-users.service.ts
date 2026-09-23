@@ -1,3 +1,11 @@
+import { Prisma } from "@prisma/client";
+
+import { hashPassword } from "../auth/password.js";
+import {
+    assertPasswordPolicy,
+    isPrivilegedRoleList,
+    PasswordPolicyError,
+} from "../auth/password-policy.js";
 import {
     AdminUsersRepository,
     type UserAuditRow,
@@ -24,6 +32,7 @@ export type AdminActor = {
 };
 
 const PRIVILEGED_ROLES = new Set(["admin", "super_admin"]);
+const MANAGED_ROLES = new Set(["user", "viewer", "surveyor", "admin", "super_admin"]);
 
 function isPrivilegedRole(code: string): boolean {
     return PRIVILEGED_ROLES.has(code);
@@ -71,6 +80,56 @@ export type AdminUserDetail = AdminUserListItem & {
 export class AdminUsersService {
     constructor(private readonly repo: AdminUsersRepository) {}
 
+    async createUser(
+        actor: AdminActor,
+        input: {
+            email: string;
+            displayName: string;
+            password: string;
+            roleCode: string;
+        }
+    ): Promise<AdminUserDetail> {
+        if (!isSuperAdmin(actor)) {
+            throw new AdminUsersError("Only super_admin can create accounts", 403);
+        }
+        if (!MANAGED_ROLES.has(input.roleCode)) {
+            throw new AdminUsersError("Unknown role", 400);
+        }
+
+        const email = input.email.trim().toLowerCase();
+        const displayName = input.displayName.trim();
+        this.assertManagedPassword(input.password, isPrivilegedRole(input.roleCode));
+
+        if ((await this.repo.findUserIdByEmail(email)) !== null) {
+            throw new AdminUsersError("Email already registered", 409);
+        }
+
+        const roleId = await this.repo.findRoleIdByCode(input.roleCode);
+        if (roleId === null) {
+            throw new AdminUsersError("Role is not configured", 500);
+        }
+
+        const actorUserId = await this.repo.findUserIdByPublicId(actor.publicId);
+        try {
+            const publicId = await this.repo.createUser({
+                email,
+                displayName,
+                passwordHash: await hashPassword(input.password),
+                roleId,
+                roleCode: input.roleCode,
+                actorUserId,
+                ipAddress: actor.ipAddress,
+                userAgent: actor.userAgent,
+            });
+            return this.getUserDetail(publicId);
+        } catch (error) {
+            if (isUniqueViolation(error)) {
+                throw new AdminUsersError("Email already registered", 409);
+            }
+            throw error;
+        }
+    }
+
     async listUsers(filters: UserListFilters): Promise<{
         items: AdminUserListItem[];
         total: number;
@@ -101,6 +160,107 @@ export class AdminUsersService {
         }
         const rows = await this.repo.listUserAudit(target.id, limit);
         return rows.map(toAuditEntry);
+    }
+
+    async updateProfile(
+        actor: AdminActor,
+        targetPublicId: string,
+        fields: {
+            email?: string;
+            displayName?: string;
+            phone?: string | null;
+            preferredLanguage?: "my" | "en";
+            primaryRegionId?: number | null;
+            emailVerified?: boolean;
+        }
+    ): Promise<AdminUserDetail> {
+        if (!isSuperAdmin(actor)) {
+            throw new AdminUsersError("Only super_admin can edit account profiles", 403);
+        }
+
+        const target = await this.repo.getManageableUser(targetPublicId);
+        if (!target) {
+            throw new AdminUsersError("User not found", 404);
+        }
+
+        const email = fields.email?.trim().toLowerCase();
+        if (email && email !== target.email) {
+            const emailOwnerId = await this.repo.findUserIdByEmail(email);
+            if (emailOwnerId !== null && emailOwnerId !== target.id) {
+                throw new AdminUsersError("Email already registered", 409);
+            }
+        }
+
+        let primaryRegionId: bigint | null | undefined;
+        if (fields.primaryRegionId !== undefined) {
+            primaryRegionId =
+                fields.primaryRegionId === null ? null : BigInt(fields.primaryRegionId);
+            if (
+                primaryRegionId !== null &&
+                !(await this.repo.adminAreaExists(primaryRegionId))
+            ) {
+                throw new AdminUsersError(
+                    "primaryRegionId does not reference a known region",
+                    400
+                );
+            }
+        }
+
+        const actorUserId = await this.repo.findUserIdByPublicId(actor.publicId);
+        try {
+            await this.repo.updateProfile({
+                target,
+                fields: {
+                    ...(email !== undefined ? { email } : {}),
+                    ...(fields.displayName !== undefined
+                        ? { displayName: fields.displayName.trim() }
+                        : {}),
+                    ...(fields.phone !== undefined ? { phone: fields.phone } : {}),
+                    ...(fields.preferredLanguage !== undefined
+                        ? { preferredLanguage: fields.preferredLanguage }
+                        : {}),
+                    ...(primaryRegionId !== undefined ? { primaryRegionId } : {}),
+                    ...(fields.emailVerified !== undefined
+                        ? { emailVerified: fields.emailVerified }
+                        : {}),
+                },
+                actorUserId,
+                ipAddress: actor.ipAddress,
+                userAgent: actor.userAgent,
+            });
+        } catch (error) {
+            if (isUniqueViolation(error)) {
+                throw new AdminUsersError("Email already registered", 409);
+            }
+            throw error;
+        }
+
+        return this.getUserDetail(targetPublicId);
+    }
+
+    async resetPassword(
+        actor: AdminActor,
+        targetPublicId: string,
+        password: string
+    ): Promise<void> {
+        if (!isSuperAdmin(actor)) {
+            throw new AdminUsersError("Only super_admin can reset passwords", 403);
+        }
+
+        const target = await this.repo.getManageableUser(targetPublicId);
+        if (!target) {
+            throw new AdminUsersError("User not found", 404);
+        }
+        this.assertManagedPassword(password, isPrivilegedRoleList(target.roles));
+
+        const actorUserId = await this.repo.findUserIdByPublicId(actor.publicId);
+        await this.repo.resetPassword({
+            target,
+            passwordHash: await hashPassword(password),
+            actorUserId,
+            ipAddress: actor.ipAddress,
+            userAgent: actor.userAgent,
+        });
     }
 
     async updateStatus(
@@ -237,6 +397,24 @@ export class AdminUsersService {
 
         return this.getUserDetail(targetPublicId);
     }
+
+    private assertManagedPassword(password: string, privileged: boolean): void {
+        try {
+            assertPasswordPolicy(password, { privileged });
+        } catch (error) {
+            if (error instanceof PasswordPolicyError) {
+                throw new AdminUsersError(error.message, 400);
+            }
+            throw error;
+        }
+    }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        return error.code === "P2002";
+    }
+    return /unique|duplicate key/i.test(error instanceof Error ? error.message : String(error));
 }
 
 function bigintToString(value: bigint | null): string | null {

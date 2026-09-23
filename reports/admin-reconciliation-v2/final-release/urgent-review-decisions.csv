@@ -1,0 +1,7 @@
+source_key,level,decision,coremap_id,name_en,name_my,notes
+02_District:7,district,approved_same,5974,Bawlake,ဘောလခဲခရိုင်,Human confirmed same as CoreMap 5974. Names updated. Geometry not changed.
+02_District:69,district,rejected_do_not_merge,6294,Mong Maw (Wa SAD),မိုင်းမော-ဝအထူးဒေသ (၂),Not the same as CoreMap 6294 Mong La. Do not merge. Row left unmatched.
+02_District:74,district,rejected_do_not_merge,6371,Monghpyak,မိုင်းဖြတ်ခရိုင်,Not the same as CoreMap 6371 Mong Hsat. Do not merge. Row left unmatched.
+03_Township:310,township,approved_same,7444,Kawthoung,ကော့သောင်း,Human confirmed same as CoreMap 7444. Names updated. Geometry not changed.
+03_Township:107,township,approved_same,7018,Minbu,မင်းဘူး,Human confirmed same as CoreMap 7018. Names updated. Geometry not changed.
+03_Township:120,township,approved_same,7026,Sidoktaya,စေတုတ္ထရာ,Human confirmed same as CoreMap 7026. Names updated. Geometry not changed.

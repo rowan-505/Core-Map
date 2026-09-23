@@ -40,6 +40,9 @@ export type UserDetailRow = UserListRow & {
 
 export type ManageableUser = {
     id: bigint;
+    public_id: string;
+    email: string;
+    email_verified: boolean;
     account_status: string;
     roles: string[];
     deleted_at: Date | null;
@@ -73,12 +76,42 @@ export class AdminUsersRepository {
         return rows[0]?.id ?? null;
     }
 
+    async findUserIdByEmail(email: string): Promise<bigint | null> {
+        const user = await this.prisma.authUser.findUnique({
+            where: { email },
+            select: { id: true },
+        });
+        return user?.id ?? null;
+    }
+
+    async adminAreaExists(adminAreaId: bigint): Promise<boolean> {
+        const rows = await this.prisma.$queryRaw<{ id: bigint }[]>(Prisma.sql`
+            SELECT id FROM core.core_admin_areas WHERE id = ${adminAreaId} LIMIT 1
+        `);
+        return rows.length > 0;
+    }
+
     /** Existing user (including soft-deleted) with roles, for permission checks + mutations. */
     async getManageableUser(publicId: string): Promise<ManageableUser | null> {
         const rows = await this.prisma.$queryRaw<
-            { id: bigint; account_status: string; roles: string[]; deleted_at: Date | null }[]
+            {
+                id: bigint;
+                public_id: string;
+                email: string;
+                email_verified: boolean;
+                account_status: string;
+                roles: string[];
+                deleted_at: Date | null;
+            }[]
         >(Prisma.sql`
-            SELECT u.id, u.account_status, u.deleted_at, ${ROLES_SUBQUERY} AS roles
+            SELECT
+                u.id,
+                u.public_id,
+                u.email,
+                u.email_verified,
+                u.account_status,
+                u.deleted_at,
+                ${ROLES_SUBQUERY} AS roles
             FROM app_auth.auth_users u
             WHERE u.public_id::text = ${publicId}
             LIMIT 1
@@ -88,6 +121,9 @@ export class AdminUsersRepository {
         return row
             ? {
                   id: row.id,
+                  public_id: row.public_id,
+                  email: row.email,
+                  email_verified: row.email_verified,
                   account_status: row.account_status,
                   roles: row.roles,
                   deleted_at: row.deleted_at,
@@ -219,6 +255,196 @@ export class AdminUsersRepository {
             select: { id: true },
         });
         return role?.id ?? null;
+    }
+
+    async createUser(input: {
+        email: string;
+        displayName: string;
+        passwordHash: string;
+        roleId: bigint;
+        roleCode: string;
+        actorUserId: bigint | null;
+        ipAddress: string | null;
+        userAgent: string | null;
+    }): Promise<string> {
+        return this.prisma.$transaction(async (tx) => {
+            const user = await tx.authUser.create({
+                data: {
+                    email: input.email,
+                    displayName: input.displayName,
+                    passwordHash: input.passwordHash,
+                    emailVerified: true,
+                    isActive: true,
+                    accountStatus: "active",
+                },
+            });
+            await tx.authIdentity.create({
+                data: {
+                    userId: user.id,
+                    provider: "password",
+                    providerSubject: user.publicId,
+                    providerEmail: user.email,
+                    providerEmailVerified: true,
+                },
+            });
+            await tx.authUserRole.create({
+                data: { userId: user.id, roleId: input.roleId },
+            });
+            await tx.auditLog.create({
+                data: {
+                    actorUserId: input.actorUserId,
+                    actionType: "admin_user_created",
+                    entityType: "auth_user",
+                    entityId: user.id,
+                    afterSnapshot: {
+                        public_id: user.publicId,
+                        email: user.email,
+                        display_name: user.displayName,
+                        email_verified: true,
+                        role_code: input.roleCode,
+                    },
+                    ipAddress: input.ipAddress,
+                    userAgent: input.userAgent,
+                },
+            });
+            return user.publicId;
+        });
+    }
+
+    async updateProfile(input: {
+        target: ManageableUser;
+        fields: {
+            email?: string;
+            displayName?: string;
+            phone?: string | null;
+            preferredLanguage?: "my" | "en";
+            primaryRegionId?: bigint | null;
+            emailVerified?: boolean;
+        };
+        actorUserId: bigint | null;
+        ipAddress: string | null;
+        userAgent: string | null;
+    }): Promise<void> {
+        await this.prisma.$transaction(async (tx) => {
+            const current = await tx.authUser.findUniqueOrThrow({
+                where: { id: input.target.id },
+                select: {
+                    email: true,
+                    displayName: true,
+                    phone: true,
+                    preferredLanguage: true,
+                    primaryRegionId: true,
+                    emailVerified: true,
+                },
+            });
+            const updated = await tx.authUser.update({
+                where: { id: input.target.id },
+                data: {
+                    ...input.fields,
+                    updatedAt: new Date(),
+                },
+                select: {
+                    email: true,
+                    displayName: true,
+                    phone: true,
+                    preferredLanguage: true,
+                    primaryRegionId: true,
+                    emailVerified: true,
+                },
+            });
+
+            if (
+                input.fields.email !== undefined ||
+                input.fields.emailVerified !== undefined
+            ) {
+                await tx.authIdentity.updateMany({
+                    where: { userId: input.target.id, provider: "password" },
+                    data: {
+                        providerEmail: updated.email,
+                        providerEmailVerified: updated.emailVerified,
+                    },
+                });
+            }
+
+            const credentialsChanged =
+                current.email !== updated.email ||
+                current.emailVerified !== updated.emailVerified;
+            if (credentialsChanged) {
+                await tx.authSession.updateMany({
+                    where: { userId: input.target.id, revokedAt: null },
+                    data: {
+                        revokedAt: new Date(),
+                        revokeReason: "admin_profile_change",
+                    },
+                });
+            }
+
+            await tx.auditLog.create({
+                data: {
+                    actorUserId: input.actorUserId,
+                    actionType: "admin_user_profile_updated",
+                    entityType: "auth_user",
+                    entityId: input.target.id,
+                    beforeSnapshot: profileSnapshot(current),
+                    afterSnapshot: profileSnapshot(updated),
+                    ipAddress: input.ipAddress,
+                    userAgent: input.userAgent,
+                },
+            });
+        });
+    }
+
+    async resetPassword(input: {
+        target: ManageableUser;
+        passwordHash: string;
+        actorUserId: bigint | null;
+        ipAddress: string | null;
+        userAgent: string | null;
+    }): Promise<void> {
+        await this.prisma.$transaction(async (tx) => {
+            await tx.authUser.update({
+                where: { id: input.target.id },
+                data: { passwordHash: input.passwordHash, updatedAt: new Date() },
+            });
+            await tx.authIdentity.upsert({
+                where: {
+                    provider_providerSubject: {
+                        provider: "password",
+                        providerSubject: input.target.public_id,
+                    },
+                },
+                create: {
+                    userId: input.target.id,
+                    provider: "password",
+                    providerSubject: input.target.public_id,
+                    providerEmail: input.target.email,
+                    providerEmailVerified: input.target.email_verified,
+                },
+                update: {
+                    providerEmail: input.target.email,
+                    providerEmailVerified: input.target.email_verified,
+                    updatedAt: new Date(),
+                },
+            });
+            const revoked = await tx.authSession.updateMany({
+                where: { userId: input.target.id, revokedAt: null },
+                data: { revokedAt: new Date(), revokeReason: "admin_password_reset" },
+            });
+            await tx.auditLog.create({
+                data: {
+                    actorUserId: input.actorUserId,
+                    actionType: "admin_user_password_reset",
+                    entityType: "auth_user",
+                    entityId: input.target.id,
+                    afterSnapshot: {
+                        password_reset: true,
+                        sessions_revoked: revoked.count,
+                    },
+                    ipAddress: input.ipAddress,
+                    userAgent: input.userAgent,
+                },
+            });
+        });
     }
 
     async updateStatus(input: {
@@ -367,4 +593,22 @@ export class AdminUsersRepository {
             return true;
         });
     }
+}
+
+function profileSnapshot(value: {
+    email: string;
+    displayName: string;
+    phone: string | null;
+    preferredLanguage: string;
+    primaryRegionId: bigint | null;
+    emailVerified: boolean;
+}) {
+    return {
+        email: value.email,
+        display_name: value.displayName,
+        phone: value.phone,
+        preferred_language: value.preferredLanguage,
+        primary_region_id: value.primaryRegionId?.toString() ?? null,
+        email_verified: value.emailVerified,
+    };
 }

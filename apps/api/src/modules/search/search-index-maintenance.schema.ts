@@ -13,6 +13,11 @@ const incrementalEntityTypeEnum = z.enum([
 
 export const reindexSearchFamilyBodySchema = z.object({
     entity_family: healthFamilyEnum,
+    /**
+     * Skip expensive full health reload after rebuild.
+     * Used by dashboard sequential repair; refresh health once at the end.
+     */
+    skip_health_refresh: z.boolean().optional(),
 });
 
 export const reindexSearchEntityBodySchema = z.object({

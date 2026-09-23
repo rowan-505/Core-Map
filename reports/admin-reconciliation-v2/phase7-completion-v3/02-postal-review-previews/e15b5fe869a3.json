@@ -1,0 +1,21 @@
+{
+  "group_id": "e15b5fe869a3",
+  "postal_codes": [
+    "0606211"
+  ],
+  "locality_mm": "နောင်လိုင် ကျေးရွာအုပ်စု",
+  "locality_en": "Pekon(Naung Hlaing) Village Tract",
+  "township_en": "Pekon Township",
+  "township_mm": "ဖယ်ခုံ မြို့နယ်",
+  "township_public_id": "6f539d20-6386-4822-98f2-83acecdad2b7",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

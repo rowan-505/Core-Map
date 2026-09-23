@@ -4,9 +4,9 @@ import { getApiEnv, getOAuthProviderCapabilities } from "../../config/env.js";
 import { createEmailService } from "../email/email.service.js";
 import { DEV_AUTH_BYPASS_USER, isAuthBypassActive } from "../../plugins/auth.js";
 import { resolveBrowserLoginClientType } from "./auth-client.js";
+import { handleAuthError, verifyPurposeToken } from "./auth-http-error.js";
 import { AuthError, AuthService, type AuthSessionResult } from "./auth.service.js";
 import { AuthRepository, type AuthUserProfile } from "./auth.repo.js";
-import { PasswordPolicyError } from "./password-policy.js";
 import {
     changeEmailBodySchema,
     changePasswordBodySchema,
@@ -151,26 +151,6 @@ function oauthLinkSuccessRedirect(provider: string, returnTo: string | null): st
     } catch {
         return `${fallback}?linked=${encodeURIComponent(provider)}`;
     }
-}
-
-function handleAuthError(error: unknown, reply: FastifyReply): FastifyReply {
-    if (error instanceof AuthError) {
-        return reply.code(error.statusCode).send({ message: error.message, code: error.code });
-    }
-    if (error instanceof PasswordPolicyError) {
-        return reply.code(400).send({ message: error.message, code: "password_policy" });
-    }
-    if (
-        error instanceof Error &&
-        "statusCode" in error &&
-        typeof (error as { statusCode?: unknown }).statusCode === "number"
-    ) {
-        const statusCode = (error as { statusCode: number }).statusCode;
-        const maybeCode = (error as { code?: unknown }).code;
-        const code = typeof maybeCode === "string" ? maybeCode : undefined;
-        return reply.code(statusCode).send({ message: error.message, code });
-    }
-    throw error;
 }
 
 function validationError(reply: FastifyReply, parsed: { error: { flatten: () => unknown; issues: { message: string }[] } }) {
@@ -374,12 +354,13 @@ const authRoutes: FastifyPluginAsync = async (app) => {
                 return reply.code(400).send({ message: "Invalid payload" });
             }
             try {
-                const claims = app.jwt.verify<{ sub: string; purpose?: string }>(parsed.data.mfaToken);
-                if (claims.purpose !== "mfa" || !claims.sub) {
-                    return reply.code(401).send({ message: "Invalid or expired MFA token" });
-                }
+                const userPublicId = verifyPurposeToken(
+                    () => app.jwt.verify<{ sub: string; purpose?: string }>(parsed.data.mfaToken),
+                    "mfa",
+                    "Invalid or expired MFA token"
+                );
                 const result = await authService.verifyMfa(
-                    claims.sub,
+                    userPublicId,
                     parsed.data.code,
                     sessionContext(request)
                 );
@@ -785,13 +766,15 @@ const authRoutes: FastifyPluginAsync = async (app) => {
                 return reply.code(400).send({ message: "Invalid payload" });
             }
             try {
-                const claims = app.jwt.verify<{ sub: string; purpose?: string }>(
-                    parsed.data.enrollmentToken
+                const userPublicId = verifyPurposeToken(
+                    () =>
+                        app.jwt.verify<{ sub: string; purpose?: string }>(
+                            parsed.data.enrollmentToken
+                        ),
+                    "mfa_enroll",
+                    "Invalid or expired enrollment token"
                 );
-                if (claims.purpose !== "mfa_enroll" || !claims.sub) {
-                    return reply.code(401).send({ message: "Invalid or expired enrollment token" });
-                }
-                return reply.send(await authService.enrollMfaStart(claims.sub));
+                return reply.send(await authService.enrollMfaStart(userPublicId));
             } catch (error) {
                 return handleAuthError(error, reply);
             }
@@ -807,14 +790,16 @@ const authRoutes: FastifyPluginAsync = async (app) => {
                 return reply.code(400).send({ message: "Invalid payload" });
             }
             try {
-                const claims = app.jwt.verify<{ sub: string; purpose?: string }>(
-                    parsed.data.enrollmentToken
+                const userPublicId = verifyPurposeToken(
+                    () =>
+                        app.jwt.verify<{ sub: string; purpose?: string }>(
+                            parsed.data.enrollmentToken
+                        ),
+                    "mfa_enroll",
+                    "Invalid or expired enrollment token"
                 );
-                if (claims.purpose !== "mfa_enroll" || !claims.sub) {
-                    return reply.code(401).send({ message: "Invalid or expired enrollment token" });
-                }
                 const completed = await authService.completeMfaEnrollmentBootstrap(
-                    claims.sub,
+                    userPublicId,
                     parsed.data.code,
                     sessionContext(request)
                 );

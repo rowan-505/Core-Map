@@ -40,4 +40,11 @@ describe("dashboard access token memory storage", () => {
         assert.equal(getAccessToken(), "test");
         assert.equal(local.has("accessToken"), false);
     });
+
+    it("returns an in-memory token immediately when restoring from other tabs", async () => {
+        const { restoreAccessTokenFromOtherTabs } = await import("./authTokenStorage.js");
+        __setAccessTokenForTests("peer-jwt");
+        const restored = await restoreAccessTokenFromOtherTabs(10);
+        assert.equal(restored, "peer-jwt");
+    });
 });

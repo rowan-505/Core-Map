@@ -1,0 +1,21 @@
+{
+  "group_id": "f707448c0a05",
+  "postal_codes": [
+    "1708003"
+  ],
+  "locality_mm": "ဆန်ဆိုင်း(ခ) ရပ်ကွက်",
+  "locality_en": "Hsan Hseng  (Kha Gway) Quarter",
+  "township_en": "Tachileik Township",
+  "township_mm": "တာချီလိတ် မြို့နယ်",
+  "township_public_id": "4ba61133-b252-41ee-a2bf-d89e724bcfbf",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

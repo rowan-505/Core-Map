@@ -1,0 +1,20 @@
+npm notice run kyauktan-map@0.1.0 test:admin-geography
+npm notice run node --import tsx --test src/features/admin-geography/*.test.ts
+▶ admin geography filter → API params
+  ✔ maps township + official chips without GeoJSON flags (1.238209ms)
+  ✔ maps MIMU placeholder and needs_fix filters (0.151833ms)
+  ✔ treats settlement filter as unsupported for admin-area GeoJSON (1.00125ms)
+  ✔ mutually excludes official vs reference chips (0.269917ms)
+✔ admin geography filter → API params (3.857542ms)
+▶ admin geography tiles never use nationwide GeoJSON
+  ✔ builds MVT tile templates with filter query only (0.43625ms)
+  ✔ flags bulk GeoJSON patterns as unsafe (0.181667ms)
+✔ admin geography tiles never use nationwide GeoJSON (0.779709ms)
+ℹ tests 6
+ℹ suites 2
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 257.533458

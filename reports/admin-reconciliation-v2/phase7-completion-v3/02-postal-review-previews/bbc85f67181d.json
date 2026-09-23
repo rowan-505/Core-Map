@@ -1,0 +1,21 @@
+{
+  "group_id": "bbc85f67181d",
+  "postal_codes": [
+    "0102002"
+  ],
+  "locality_mm": "အမှတ် (၂) ရပ်ကွက်",
+  "locality_en": "No (2) Quarter",
+  "township_en": "Injangyang Township",
+  "township_mm": "အင်ဂျန်းယန် မြို့နယ်",
+  "township_public_id": "95a2ca52-9e38-4045-9e00-334771a534ae",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

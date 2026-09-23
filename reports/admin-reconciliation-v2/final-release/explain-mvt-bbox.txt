@@ -1,0 +1,29 @@
+                                                                                                                                                 QUERY PLAN                                                                                                                                                 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=54.19..353.47 rows=95 width=8) (actual time=6.126..6.962 rows=44 loops=1)
+   Buffers: shared hit=59
+   ->  Nested Loop  (cost=54.19..353.47 rows=95 width=8) (actual time=5.977..6.711 rows=44 loops=1)
+         Buffers: shared hit=59
+         ->  Seq Scan on ref_admin_levels al  (cost=0.00..1.09 rows=1 width=8) (actual time=0.444..0.449 rows=1 loops=1)
+               Filter: (code = 'township'::text)
+               Rows Removed by Filter: 6
+               Buffers: shared hit=1
+         ->  Bitmap Heap Scan on core_admin_areas a  (cost=54.19..351.44 rows=95 width=16) (actual time=5.224..5.946 rows=44 loops=1)
+               Recheck Cond: ((al.id = admin_level_id) AND (geom IS NOT NULL) AND (geom && '0103000020E610000001000000050000000000000000005840000000000080304000000000000058400000000000003140000000000020584000000000000031400000000000205840000000000080304000000000000058400000000000803040'::geometry))
+               Filter: (deleted_at IS NULL)
+               Heap Blocks: exact=38
+               Buffers: shared hit=58
+               ->  BitmapAnd  (cost=54.19..54.19 rows=95 width=0) (actual time=4.581..4.592 rows=0 loops=1)
+                     Buffers: shared hit=20
+                     ->  Bitmap Index Scan on core_admin_areas_level_idx  (cost=0.00..10.98 rows=360 width=0) (actual time=0.714..0.714 rows=366 loops=1)
+                           Index Cond: (admin_level_id = al.id)
+                           Buffers: shared hit=2
+                     ->  Bitmap Index Scan on core_admin_areas_geom_gix  (cost=0.00..42.78 rows=663 width=0) (actual time=3.565..3.565 rows=721 loops=1)
+                           Index Cond: ((geom IS NOT NULL) AND (geom && '0103000020E610000001000000050000000000000000005840000000000080304000000000000058400000000000003140000000000020584000000000000031400000000000205840000000000080304000000000000058400000000000803040'::geometry))
+                           Buffers: shared hit=18
+ Planning:
+   Buffers: shared hit=628 read=1 dirtied=1
+ Planning Time: 62.301 ms
+ Execution Time: 9.245 ms
+(25 rows)
+

@@ -1,0 +1,21 @@
+{
+  "group_id": "45fe5ef10922",
+  "postal_codes": [
+    "0309257"
+  ],
+  "locality_mm": "ဆမီး ကျေးရွာအုပ်စု",
+  "locality_en": "Sa Mee Village Tract",
+  "township_en": "Paletwa Township",
+  "township_mm": "ပလက်ဝ မြို့နယ်",
+  "township_public_id": "02191b8a-704d-444d-9c61-2fd279e40ed1",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

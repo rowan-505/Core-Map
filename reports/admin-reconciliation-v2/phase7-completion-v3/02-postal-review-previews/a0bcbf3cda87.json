@@ -1,0 +1,21 @@
+{
+  "group_id": "a0bcbf3cda87",
+  "postal_codes": [
+    "0507248"
+  ],
+  "locality_mm": "ဇီးအုပ် ကျေးရွာအုပ်စု",
+  "locality_en": "Zee Oke Village Tract",
+  "township_en": "Patheingyi Township",
+  "township_mm": "ပုသိမ်ကြီး မြို့နယ်",
+  "township_public_id": "9db167eb-432e-4714-8910-09500af449e7",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

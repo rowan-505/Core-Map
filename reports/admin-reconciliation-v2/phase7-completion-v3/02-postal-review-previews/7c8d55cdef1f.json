@@ -1,0 +1,21 @@
+{
+  "group_id": "7c8d55cdef1f",
+  "postal_codes": [
+    "0620205"
+  ],
+  "locality_mm": "တောင်ကိုင်း ကျေးရွာအုပ်စု",
+  "locality_en": "Taung Kaing Village Tract",
+  "township_en": "Mongpan Township",
+  "township_mm": "မိုင်းပန် မြို့နယ်",
+  "township_public_id": "3cdba452-a0ec-4ca5-8e9b-b812a7c69d29",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

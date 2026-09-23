@@ -56,6 +56,9 @@ export const PUBLIC_SEARCH_STATEMENT_TIMEOUT_MS = 2000;
  */
 export const PUBLIC_SEARCH_CANDIDATE_BRANCH_LIMIT = 200;
 export const PUBLIC_SEARCH_FUZZY_CANDIDATE_LIMIT = 250;
+/** Myanmar FTS is ineffective; keep its trigram/name pools small before ranking. */
+export const PUBLIC_SEARCH_MYANMAR_CANDIDATE_BRANCH_LIMIT = 80;
+export const PUBLIC_SEARCH_MYANMAR_FUZZY_CANDIDATE_LIMIT = 100;
 
 export type ViewportPublicPlacesParams = {
     bbox: [number, number, number, number];
@@ -865,6 +868,14 @@ export class PublicMapRepository {
         const qNorm = params.q.trim().toLowerCase();
         const prefix = `${qNorm}%`;
         const isPrefixMode = params.mode === "prefix";
+        const isMyanmarQuery = /[\u1000-\u109f]/u.test(qNorm);
+        const useFullText = !isMyanmarQuery;
+        const candidateBranchLimit = isMyanmarQuery
+            ? PUBLIC_SEARCH_MYANMAR_CANDIDATE_BRANCH_LIMIT
+            : PUBLIC_SEARCH_CANDIDATE_BRANCH_LIMIT;
+        const fuzzyCandidateLimit = isMyanmarQuery
+            ? PUBLIC_SEARCH_MYANMAR_FUZZY_CANDIDATE_LIMIT
+            : PUBLIC_SEARCH_FUZZY_CANDIDATE_LIMIT;
         const routeVariantVisibilityFilter = allowsTransportRouteVariantResults(qNorm)
             ? Prisma.empty
             : Prisma.sql`AND d.entity_type NOT IN ('transport_route_variant', 'bus_route_variant')`;
@@ -924,6 +935,7 @@ export class PublicMapRepository {
             prefix,
             isPrefixMode,
             multiTokenMatch,
+            useFullText,
             fuzzyThreshold,
             hasRef,
             lat: params.lat,
@@ -986,7 +998,7 @@ export class PublicMapRepository {
                   WHERE ${candidateFilters}
                     AND (${multiTokenMatch})
                   ORDER BY COALESCE(d.importance_score, 0) DESC, d.id ASC
-                  LIMIT ${PUBLIC_SEARCH_FUZZY_CANDIDATE_LIMIT}
+                  LIMIT ${fuzzyCandidateLimit}
               `
             : Prisma.sql`
                   ${numericTransportCandidateBranch}
@@ -1006,10 +1018,10 @@ export class PublicMapRepository {
                       WHERE ${candidateFilters}
                         AND d.trigram_text LIKE ${prefix}
                       ORDER BY COALESCE(d.importance_score, 0) DESC, d.id ASC
-                      LIMIT ${PUBLIC_SEARCH_CANDIDATE_BRANCH_LIMIT}
+                      LIMIT ${candidateBranchLimit}
                   )
                   ${
-                      isPrefixMode
+                      isPrefixMode || !useFullText
                           ? Prisma.empty
                           : Prisma.sql`
                                 UNION ALL
@@ -1022,8 +1034,14 @@ export class PublicMapRepository {
                                         ts_rank_cd(d.search_vector, plainto_tsquery('simple', ${qNorm})) DESC,
                                         COALESCE(d.importance_score, 0) DESC,
                                         d.id ASC
-                                    LIMIT ${PUBLIC_SEARCH_CANDIDATE_BRANCH_LIMIT}
+                                    LIMIT ${candidateBranchLimit}
                                 )
+                            `
+                  }
+                  ${
+                      isPrefixMode
+                          ? Prisma.empty
+                          : Prisma.sql`
                                 UNION ALL
                                 (
                                     SELECT d.id
@@ -1034,7 +1052,7 @@ export class PublicMapRepository {
                                         similarity(d.trigram_text, ${qNorm}) DESC,
                                         COALESCE(d.importance_score, 0) DESC,
                                         d.id ASC
-                                    LIMIT ${PUBLIC_SEARCH_FUZZY_CANDIDATE_LIMIT}
+                                    LIMIT ${fuzzyCandidateLimit}
                                 )
                             `
                   }
@@ -1058,7 +1076,7 @@ export class PublicMapRepository {
                           },
                           n.search_weight DESC,
                           d.id ASC
-                      LIMIT ${PUBLIC_SEARCH_CANDIDATE_BRANCH_LIMIT}
+                      LIMIT ${candidateBranchLimit}
                   )
               `;
 
@@ -1512,7 +1530,7 @@ export class PublicMapRepository {
 
     /**
      * Lightweight route preview for map overlays: one simplified path (primary/focus
-     * variant), variant summaries, and optional first/last stops only.
+     * variant), variant summaries, and the ordered stops for that path.
      */
     async getTransportRouteMapPreview(
         entityType:
@@ -1613,15 +1631,13 @@ export class PublicMapRepository {
                     END AS g
                 FROM focus_path
             ),
-            endpoint_stops AS (
+            preview_stops AS (
                 SELECT
                     s.public_id::text AS public_id,
                     COALESCE(NULLIF(BTRIM(s.name_mm), ''), s.name) AS display_name,
                     rs.stop_sequence,
                     ST_Y(s.geom)::double precision AS lat,
-                    ST_X(s.geom)::double precision AS lng,
-                    ROW_NUMBER() OVER (ORDER BY rs.stop_sequence ASC) AS fwd_rn,
-                    ROW_NUMBER() OVER (ORDER BY rs.stop_sequence DESC) AS rev_rn
+                    ST_X(s.geom)::double precision AS lng
                 FROM focus_variant fv
                 JOIN transport.route_stops rs
                   ON rs.route_variant_id = fv.id
@@ -1629,6 +1645,8 @@ export class PublicMapRepository {
                   ON s.id = rs.stop_id
                  AND ${sqlSearchOverlayVisible("s")}
                  AND s.geom IS NOT NULL
+                ORDER BY rs.stop_sequence
+                LIMIT 500
             )
             SELECT
                 ST_AsGeoJSON(s.g)::json AS path_geometry,
@@ -1665,8 +1683,7 @@ export class PublicMapRepository {
                             )
                             ORDER BY es.stop_sequence
                         )
-                        FROM endpoint_stops es
-                        WHERE es.fwd_rn = 1 OR es.rev_rn = 1
+                        FROM preview_stops es
                     ),
                     '[]'::json
                 ) AS stops_json

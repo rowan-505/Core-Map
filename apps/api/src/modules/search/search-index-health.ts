@@ -50,127 +50,180 @@ export const SEARCH_HEALTH_FAMILY_REBUILD_VIEWS: Readonly<Record<string, string>
     water_polygons: "water_polygons",
 };
 
-export const SEARCH_INDEX_HEALTH_QUERY = `
-WITH families AS (
-    SELECT *
-    FROM (
-        VALUES
-            ('places', 'place'),
-            ('settlements', 'settlement'),
-            ('admin_areas', 'admin_area'),
-            ('street_groups', 'street_group'),
-            ('addresses', 'address'),
-            ('transport_stops', 'transport_stop'),
-            ('transport_terminals', 'transport_terminal'),
-            ('transport_routes', 'transport_route'),
-            ('transport_route_variants', 'transport_route_variant'),
-            ('buildings', 'building'),
-            ('land_area', 'land_area'),
-            ('water_lines', 'water_line'),
-            ('water_polygons', 'water_polygon')
-    ) AS t(entity_family, search_entity_type)
-),
-canonical AS MATERIALIZED (
-    SELECT entity_type, entity_id::bigint AS entity_id, source_updated_at
-    FROM search.v_search_places_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_settlements_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_admin_areas_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_street_groups_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_addresses_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_bus_stops_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_bus_routes_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_transport_terminals_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_buildings_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_land_area_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_water_lines_source
-    UNION ALL
-    SELECT entity_type, entity_id::bigint, source_updated_at
-    FROM search.v_search_water_polygons_source
-),
-indexed AS MATERIALIZED (
+/**
+ * Full rebuilds for these families routinely take 1–3+ hours on production and
+ * often look stuck. Auto-repair skips them unless missing+ghost is large or the
+ * operator opts in with includeHeavy / an explicit family reindex.
+ */
+export const SEARCH_INDEX_HEAVY_REBUILD_FAMILIES = new Set([
+    "settlements",
+    "street_groups",
+]);
+
+/** Minimum missing+ghost before auto-repair will queue a heavy family. */
+export const SEARCH_INDEX_HEAVY_REBUILD_CRITICAL_GAP_MIN = 100;
+
+export function isSearchIndexHeavyRebuildFamily(entityFamily: string): boolean {
+    return SEARCH_INDEX_HEAVY_REBUILD_FAMILIES.has(entityFamily);
+}
+
+/**
+ * Decide whether auto-repair should rebuild a family.
+ * Default is critical-only (missing/ghost), and heavy families need a large gap
+ * unless `includeHeavy` is set.
+ */
+export function shouldQueueFamilyForAutoRepair(
+    row: Pick<SearchIndexFamilyHealth, "entity_family" | "missing" | "ghost" | "stale">,
+    options: { criticalOnly?: boolean; includeHeavy?: boolean } = {},
+): boolean {
+    const criticalOnly = options.criticalOnly !== false;
+    const gap = row.missing + row.ghost;
+
+    if (criticalOnly) {
+        if (gap <= 0) {
+            return false;
+        }
+    } else if (!isSearchIndexFamilyUnhealthy(row)) {
+        return false;
+    }
+
+    if (isSearchIndexHeavyRebuildFamily(row.entity_family) && options.includeHeavy !== true) {
+        return gap >= SEARCH_INDEX_HEAVY_REBUILD_CRITICAL_GAP_MIN;
+    }
+
+    return true;
+}
+
+/**
+ * Per-family reconciliation. Avoids one MATERIALIZED union + FULL OUTER JOIN
+ * across every source view (that pattern blocks the dashboard for minutes).
+ * Each family joins only its own indexed slice against its source view.
+ */
+function buildFamilyHealthStatsSql(input: {
+    entityFamily: string;
+    searchEntityType: string;
+    sourceView: string;
+    /** When the source view mixes entity types (bus routes), filter the type. */
+    filterSourceEntityType?: boolean;
+}): string {
+    const sourceFrom = input.filterSourceEntityType
+        ? `(
+        SELECT entity_id::bigint AS entity_id, source_updated_at
+        FROM ${input.sourceView}
+        WHERE entity_type = '${input.searchEntityType}'
+    )`
+        : `(
+        SELECT entity_id::bigint AS entity_id, source_updated_at
+        FROM ${input.sourceView}
+    )`;
+
+    return `
+SELECT
+    '${input.entityFamily}'::text AS entity_family,
+    '${input.searchEntityType}'::text AS search_entity_type,
+    count(c.entity_id) AS canonical_count,
+    count(i.entity_id) AS indexed_count,
+    count(*) FILTER (
+        WHERE c.entity_id IS NOT NULL
+          AND i.entity_id IS NULL
+    ) AS missing_count,
+    count(*) FILTER (
+        WHERE i.entity_id IS NOT NULL
+          AND c.entity_id IS NULL
+    ) AS ghost_count,
+    count(*) FILTER (
+        WHERE c.entity_id IS NOT NULL
+          AND i.entity_id IS NOT NULL
+          AND (
+              i.source_updated_at IS NULL
+              OR c.source_updated_at IS NULL
+              OR i.source_updated_at < c.source_updated_at
+          )
+    ) AS stale_count,
+    max(i.indexed_at) AS latest_indexed_at,
+    max(c.source_updated_at) AS latest_source_updated_at
+FROM ${sourceFrom} c
+FULL OUTER JOIN (
     SELECT
-        entity_type,
         entity_id::bigint AS entity_id,
         source_updated_at,
         indexed_at
     FROM search.search_documents
-    WHERE is_public = true
+    WHERE entity_type = '${input.searchEntityType}'
+      AND is_public = true
       AND is_active = true
-),
-joined AS MATERIALIZED (
-    SELECT
-        coalesce(c.entity_type, i.entity_type) AS entity_type,
-        c.entity_id AS canonical_entity_id,
-        i.entity_id AS indexed_entity_id,
-        c.source_updated_at AS canonical_source_updated_at,
-        i.source_updated_at AS indexed_source_updated_at,
-        i.indexed_at
-    FROM canonical c
-    FULL OUTER JOIN indexed i
-        ON i.entity_type = c.entity_type
-       AND i.entity_id = c.entity_id
-),
-per_family AS (
-    SELECT
-        f.entity_family,
-        f.search_entity_type,
-        count(j.canonical_entity_id) AS canonical_count,
-        count(j.indexed_entity_id) AS indexed_count,
-        count(*) FILTER (
-            WHERE j.canonical_entity_id IS NOT NULL
-              AND j.indexed_entity_id IS NULL
-        ) AS missing_count,
-        count(*) FILTER (
-            WHERE j.indexed_entity_id IS NOT NULL
-              AND j.canonical_entity_id IS NULL
-        ) AS ghost_count,
-        count(*) FILTER (
-            WHERE j.canonical_entity_id IS NOT NULL
-              AND j.indexed_entity_id IS NOT NULL
-              AND (
-                  j.indexed_source_updated_at IS NULL
-                  OR j.canonical_source_updated_at IS NULL
-                  OR j.indexed_source_updated_at < j.canonical_source_updated_at
-              )
-        ) AS stale_count,
-        max(j.indexed_at) AS latest_indexed_at,
-        max(j.canonical_source_updated_at) AS latest_source_updated_at
-    FROM families f
-    LEFT JOIN joined j
-        ON j.entity_type = f.search_entity_type
-    GROUP BY f.entity_family, f.search_entity_type
-)
-SELECT
-    entity_family,
-    search_entity_type,
-    canonical_count,
-    indexed_count,
-    missing_count,
-    ghost_count,
-    stale_count,
-    latest_indexed_at,
-    latest_source_updated_at
-FROM per_family
+) i ON i.entity_id = c.entity_id
+`.trim();
+}
+
+const SEARCH_INDEX_HEALTH_FAMILY_SPECS = [
+    { entityFamily: "places", searchEntityType: "place", sourceView: "search.v_search_places_source" },
+    {
+        entityFamily: "settlements",
+        searchEntityType: "settlement",
+        sourceView: "search.v_search_settlements_source",
+    },
+    {
+        entityFamily: "admin_areas",
+        searchEntityType: "admin_area",
+        sourceView: "search.v_search_admin_areas_source",
+    },
+    {
+        entityFamily: "street_groups",
+        searchEntityType: "street_group",
+        sourceView: "search.v_search_street_groups_source",
+    },
+    {
+        entityFamily: "addresses",
+        searchEntityType: "address",
+        sourceView: "search.v_search_addresses_source",
+    },
+    {
+        entityFamily: "transport_stops",
+        searchEntityType: "transport_stop",
+        sourceView: "search.v_search_bus_stops_source",
+    },
+    {
+        entityFamily: "transport_terminals",
+        searchEntityType: "transport_terminal",
+        sourceView: "search.v_search_transport_terminals_source",
+    },
+    {
+        entityFamily: "transport_routes",
+        searchEntityType: "transport_route",
+        sourceView: "search.v_search_bus_routes_source",
+        filterSourceEntityType: true,
+    },
+    {
+        entityFamily: "transport_route_variants",
+        searchEntityType: "transport_route_variant",
+        sourceView: "search.v_search_bus_routes_source",
+        filterSourceEntityType: true,
+    },
+    {
+        entityFamily: "buildings",
+        searchEntityType: "building",
+        sourceView: "search.v_search_buildings_source",
+    },
+    {
+        entityFamily: "land_area",
+        searchEntityType: "land_area",
+        sourceView: "search.v_search_land_area_source",
+    },
+    {
+        entityFamily: "water_lines",
+        searchEntityType: "water_line",
+        sourceView: "search.v_search_water_lines_source",
+    },
+    {
+        entityFamily: "water_polygons",
+        searchEntityType: "water_polygon",
+        sourceView: "search.v_search_water_polygons_source",
+    },
+] as const;
+
+export const SEARCH_INDEX_HEALTH_QUERY = `
+${SEARCH_INDEX_HEALTH_FAMILY_SPECS.map((spec) => buildFamilyHealthStatsSql(spec)).join("\nUNION ALL\n")}
 ORDER BY entity_family
 `;
 
@@ -181,6 +234,11 @@ export function toHealthCount(value: bigint | number): number {
 export function normalizeSearchIndexHealthRow(row: SearchIndexHealthRow): SearchIndexFamilyHealth {
     return {
         ...row,
+        canonical_count: toHealthCount(row.canonical_count),
+        indexed_count: toHealthCount(row.indexed_count),
+        missing_count: toHealthCount(row.missing_count),
+        ghost_count: toHealthCount(row.ghost_count),
+        stale_count: toHealthCount(row.stale_count),
         missing: toHealthCount(row.missing_count),
         ghost: toHealthCount(row.ghost_count),
         stale: toHealthCount(row.stale_count),
@@ -189,6 +247,13 @@ export function normalizeSearchIndexHealthRow(row: SearchIndexHealthRow): Search
 
 export function isSearchIndexFamilyUnhealthy(row: Pick<SearchIndexFamilyHealth, "missing" | "ghost" | "stale">): boolean {
     return row.missing > 0 || row.ghost > 0 || row.stale > 0;
+}
+
+/** Missing or ghost only — ignores stale (avoids full rebuild for tiny freshness drift). */
+export function isSearchIndexFamilyCriticallyUnhealthy(
+    row: Pick<SearchIndexFamilyHealth, "missing" | "ghost">,
+): boolean {
+    return row.missing > 0 || row.ghost > 0;
 }
 
 export function hasSearchIndexHealthIssues(
@@ -242,10 +307,59 @@ export function resolveRebuildViewsForHealthFamilies(entityFamilies: Iterable<st
 }
 
 export async function runSearchIndexHealthCheck(prisma: PrismaClient): Promise<SearchIndexFamilyHealth[]> {
-    const rows = await prisma.$queryRawUnsafe<SearchIndexHealthRow[]>(SEARCH_INDEX_HEALTH_QUERY);
-    return rows.map(normalizeSearchIndexHealthRow);
-}
+    // Full reconciliation against geospatial source views is slow; do not inherit
+    // a short pooler/session statement_timeout. Cap concurrency so we overlap the
+    // large families without exhausting the Prisma pool.
+    const concurrency = 3;
+    const familyRows: SearchIndexHealthRow[] = new Array(SEARCH_INDEX_HEALTH_FAMILY_SPECS.length);
+    let nextIndex = 0;
 
+    async function worker(): Promise<void> {
+        while (true) {
+            const index = nextIndex;
+            nextIndex += 1;
+            if (index >= SEARCH_INDEX_HEALTH_FAMILY_SPECS.length) {
+                return;
+            }
+            const spec = SEARCH_INDEX_HEALTH_FAMILY_SPECS[index]!;
+            familyRows[index] = await prisma.$transaction(
+                async (tx) => {
+                    await tx.$executeRawUnsafe("SET LOCAL statement_timeout = 0");
+                    const rows = await tx.$queryRawUnsafe<SearchIndexHealthRow[]>(
+                        buildFamilyHealthStatsSql(spec),
+                    );
+                    return (
+                        rows[0] ?? {
+                            entity_family: spec.entityFamily,
+                            search_entity_type: spec.searchEntityType,
+                            canonical_count: 0,
+                            indexed_count: 0,
+                            missing_count: 0,
+                            ghost_count: 0,
+                            stale_count: 0,
+                            latest_indexed_at: null,
+                            latest_source_updated_at: null,
+                        }
+                    );
+                },
+                {
+                    timeout: 10 * 60 * 1000,
+                    maxWait: 60 * 1000,
+                },
+            );
+        }
+    }
+
+    await Promise.all(
+        Array.from({ length: Math.min(concurrency, SEARCH_INDEX_HEALTH_FAMILY_SPECS.length) }, () =>
+            worker(),
+        ),
+    );
+
+    return familyRows
+        .map(normalizeSearchIndexHealthRow)
+        .sort((a, b) => a.entity_family.localeCompare(b.entity_family));
+}
 export function formatSearchHealthTimestamp(value: Date | null): string {
     if (!value) {
         return "-";
@@ -296,6 +410,11 @@ export type SearchIndexHealthReport = {
     overall_severity_reasons: string[];
     health_query_ok: boolean;
     health_query_error: string | null;
+    /**
+     * `full` = exact missing/ghost/stale via row reconciliation.
+     * `snapshot` = fast count-diff only (stale always 0); safe for page load.
+     */
+    report_mode: "full" | "snapshot";
     totals: {
         expected_searchable_count: number;
         canonical_count: number;
@@ -359,11 +478,13 @@ export function buildSearchIndexHealthReport(
         health_query_ok?: boolean;
         health_query_error?: string | null;
         now?: Date;
+        report_mode?: "full" | "snapshot";
     } = {},
 ): SearchIndexHealthReport {
     const now = options.now ?? new Date();
     const healthQueryOk = options.health_query_ok ?? true;
     const healthQueryError = options.health_query_error ?? null;
+    const reportMode = options.report_mode ?? "full";
 
     const families: SearchIndexHealthFamilyReport[] = rows.map((row) => {
         const expectedSearchableCount = toHealthCount(row.canonical_count);
@@ -377,6 +498,13 @@ export function buildSearchIndexHealthReport(
             },
             now,
         );
+        const reasons =
+            reportMode === "snapshot"
+                ? [
+                      ...familySeverity.reasons,
+                      "Fast snapshot: missing/ghost estimated from counts; stale not checked. Run health check for exact drift.",
+                  ]
+                : familySeverity.reasons;
 
         return {
             entity_family: row.entity_family,
@@ -390,7 +518,7 @@ export function buildSearchIndexHealthReport(
             latest_indexed_at: row.latest_indexed_at?.toISOString() ?? null,
             latest_source_updated_at: row.latest_source_updated_at?.toISOString() ?? null,
             severity: familySeverity.severity,
-            severity_reasons: familySeverity.reasons,
+            severity_reasons: reasons,
             status: severityToBinaryHealthStatus(familySeverity.severity),
         };
     });
@@ -432,6 +560,7 @@ export function buildSearchIndexHealthReport(
             : ["health query failed"],
         health_query_ok: healthQueryOk,
         health_query_error: healthQueryError,
+        report_mode: reportMode,
         totals,
         families,
         last_rebuild_run: serializeIndexRun(runs.latest ?? undefined),
@@ -464,6 +593,104 @@ export async function fetchSearchIndexRunMetadata(
     };
 }
 
+/**
+ * Fast page-load health: indexed counts first (always quick), then best-effort
+ * canonical counts with a short timeout. Missing/ghost are count-diff estimates;
+ * stale is always 0. Exact drift requires Run health check / refresh=true.
+ */
+export async function runSearchIndexHealthSnapshot(
+    prisma: PrismaClient,
+): Promise<SearchIndexFamilyHealth[]> {
+    type IndexedRow = {
+        entity_type: string;
+        indexed_count: bigint | number;
+        latest_indexed_at: Date | null;
+    };
+
+    const indexedRows = await prisma.$queryRawUnsafe<IndexedRow[]>(`
+        SELECT
+            entity_type,
+            count(*)::bigint AS indexed_count,
+            max(indexed_at) AS latest_indexed_at
+        FROM search.search_documents
+        WHERE is_public = true
+          AND is_active = true
+        GROUP BY entity_type
+    `);
+    const indexedByType = new Map(
+        indexedRows.map((row) => [
+            row.entity_type,
+            {
+                indexed_count: toHealthCount(row.indexed_count),
+                latest_indexed_at: row.latest_indexed_at,
+            },
+        ]),
+    );
+
+    const concurrency = 3;
+    const familyRows: SearchIndexHealthRow[] = new Array(SEARCH_INDEX_HEALTH_FAMILY_SPECS.length);
+    let nextIndex = 0;
+
+    async function worker(): Promise<void> {
+        while (true) {
+            const index = nextIndex;
+            nextIndex += 1;
+            if (index >= SEARCH_INDEX_HEALTH_FAMILY_SPECS.length) {
+                return;
+            }
+            const spec = SEARCH_INDEX_HEALTH_FAMILY_SPECS[index]!;
+            const indexed = indexedByType.get(spec.searchEntityType) ?? {
+                indexed_count: 0,
+                latest_indexed_at: null,
+            };
+
+            let canonicalCount = indexed.indexed_count;
+            try {
+                const filterSource =
+                    "filterSourceEntityType" in spec && spec.filterSourceEntityType === true;
+                const canonicalSql = filterSource
+                    ? `SELECT count(*)::bigint AS n FROM ${spec.sourceView} WHERE entity_type = '${spec.searchEntityType}'`
+                    : `SELECT count(*)::bigint AS n FROM ${spec.sourceView}`;
+                const rows = await prisma.$transaction(
+                    async (tx) => {
+                        await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '20s'");
+                        return tx.$queryRawUnsafe<Array<{ n: bigint | number }>>(canonicalSql);
+                    },
+                    { timeout: 25_000, maxWait: 10_000 },
+                );
+                canonicalCount = toHealthCount(rows[0]?.n ?? 0);
+            } catch {
+                // Keep indexed-only row when a large source view times out.
+                canonicalCount = indexed.indexed_count;
+            }
+
+            const missing = Math.max(0, canonicalCount - indexed.indexed_count);
+            const ghost = Math.max(0, indexed.indexed_count - canonicalCount);
+            familyRows[index] = {
+                entity_family: spec.entityFamily,
+                search_entity_type: spec.searchEntityType,
+                canonical_count: canonicalCount,
+                indexed_count: indexed.indexed_count,
+                missing_count: missing,
+                ghost_count: ghost,
+                stale_count: 0,
+                latest_indexed_at: indexed.latest_indexed_at,
+                latest_source_updated_at: null,
+            };
+        }
+    }
+
+    await Promise.all(
+        Array.from({ length: Math.min(concurrency, SEARCH_INDEX_HEALTH_FAMILY_SPECS.length) }, () =>
+            worker(),
+        ),
+    );
+
+    return familyRows
+        .map(normalizeSearchIndexHealthRow)
+        .sort((a, b) => a.entity_family.localeCompare(b.entity_family));
+}
+
 export async function loadSearchIndexHealthReportUncached(
     prisma: PrismaClient,
 ): Promise<SearchIndexHealthReport> {
@@ -472,14 +699,28 @@ export async function loadSearchIndexHealthReportUncached(
             runSearchIndexHealthCheck(prisma),
             fetchSearchIndexRunMetadata(prisma),
         ]);
-        return buildSearchIndexHealthReport(rows, runs);
+        return buildSearchIndexHealthReport(rows, runs, { report_mode: "full" });
+    } catch (error) {
+        return buildFailedSearchIndexHealthReport(error);
+    }
+}
+
+export async function loadSearchIndexHealthSnapshotReport(
+    prisma: PrismaClient,
+): Promise<SearchIndexHealthReport> {
+    try {
+        const [rows, runs] = await Promise.all([
+            runSearchIndexHealthSnapshot(prisma),
+            fetchSearchIndexRunMetadata(prisma),
+        ]);
+        return buildSearchIndexHealthReport(rows, runs, { report_mode: "snapshot" });
     } catch (error) {
         return buildFailedSearchIndexHealthReport(error);
     }
 }
 
 export type SearchIndexHealthReportOptions = {
-    /** Bypass the short-lived in-process cache. */
+    /** Bypass cache and run exact full reconciliation (slow). */
     refresh?: boolean;
 };
 
@@ -487,10 +728,24 @@ export async function getSearchIndexHealthReport(
     prisma: PrismaClient,
     options: SearchIndexHealthReportOptions = {},
 ): Promise<SearchIndexHealthReport> {
-    return getCachedSearchIndexHealthReport(
-        () => loadSearchIndexHealthReportUncached(prisma),
-        { refresh: options.refresh },
-    );
+    if (options.refresh) {
+        // Full reconciliation is intentional and slow — never serve snapshot here.
+        return getCachedSearchIndexHealthReport(
+            () => loadSearchIndexHealthReportUncached(prisma),
+            { refresh: true, requireFresh: true },
+        );
+    }
+
+    const cached = peekSearchIndexHealthCache(Date.now(), { allowStale: true });
+    if (cached && cached.report_mode === "full") {
+        return getCachedSearchIndexHealthReport(
+            () => loadSearchIndexHealthReportUncached(prisma),
+            { refresh: false },
+        );
+    }
+
+    // Default page load: fast count snapshot so the dashboard never times out.
+    return loadSearchIndexHealthSnapshotReport(prisma);
 }
 
 export type SearchIndexHealthSeveritySummary = Pick<
@@ -506,7 +761,7 @@ export type SearchIndexHealthSeveritySummary = Pick<
 export async function getSearchIndexHealthSeveritySummary(
     prisma: PrismaClient,
 ): Promise<SearchIndexHealthSeveritySummary> {
-    const cached = peekSearchIndexHealthCache();
+    const cached = peekSearchIndexHealthCache(Date.now(), { allowStale: true });
     if (cached) {
         return {
             overall_severity: cached.overall_severity,

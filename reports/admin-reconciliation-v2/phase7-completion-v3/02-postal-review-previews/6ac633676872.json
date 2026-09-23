@@ -1,0 +1,21 @@
+{
+  "group_id": "6ac633676872",
+  "postal_codes": [
+    "0203002"
+  ],
+  "locality_mm": "ခန္တီးမြို့မ ရပ်ကွက်",
+  "locality_en": "Hkamti Myo Ma Quarter",
+  "township_en": "Hkamti Township",
+  "township_mm": "ခန္တီး မြို့နယ်",
+  "township_public_id": "2e1a75a6-6544-445a-99e9-a2815bd85566",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

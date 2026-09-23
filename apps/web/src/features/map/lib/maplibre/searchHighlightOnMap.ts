@@ -98,6 +98,8 @@ export type FitSearchResultOptions = {
   readonly padding?: MapCameraPadding | number;
   /** Pre-fetched geometry from React Query (selection overlay). */
   readonly geometry?: SearchResultGeometry | null;
+  /** Set false when only replacing placeholder data for an already framed result. */
+  readonly fitCamera?: boolean;
   /** Override the point fly-to zoom; defaults to a per-entity value. */
   readonly zoom?: number;
   readonly duration?: number;
@@ -225,7 +227,9 @@ export async function fitSearchResult(
       return;
     }
     setSearchHighlight(map, highlightPointFeature(center, result));
-    flyToSearchPoint(map, center, result, options);
+    if (options.fitCamera !== false) {
+      flyToSearchPoint(map, center, result, options);
+    }
     return;
   }
 
@@ -256,6 +260,10 @@ export async function fitSearchResult(
     setSearchHighlight(map, highlightPointFeature(center, result));
   } else {
     clearSearchHighlight(map);
+  }
+
+  if (options.fitCamera === false) {
+    return;
   }
 
   if (result.bbox) {

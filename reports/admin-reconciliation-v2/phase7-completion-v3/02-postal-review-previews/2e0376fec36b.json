@@ -1,0 +1,21 @@
+{
+  "group_id": "2e0376fec36b",
+  "postal_codes": [
+    "1606226"
+  ],
+  "locality_mm": "ဈေးသစ် (ဟာခွန်) ကျေးရွာအုပ်စု",
+  "locality_en": "Zay Thit (Har Hkun) Village Tract",
+  "township_en": "Narphan Township",
+  "township_mm": "နားဖန် မြို့နယ်",
+  "township_public_id": "f91b8baf-5850-4770-928b-f6ae1ab6b94b",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

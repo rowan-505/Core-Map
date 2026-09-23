@@ -33,7 +33,7 @@ declare namespace NodeJS {
      * archive from the local tile server for full nationwide detail. Ignored in production.
      */
     NEXT_PUBLIC_LOAD_ALL_LOCAL_REGION_PMTILES?: string;
-    /** Optional base URL for local region `.pmtiles` archives (default `http://localhost:8080/regions`). */
+    /** Optional base URL for regional `.pmtiles` (default `https://tiles.coremapmm.com/basemaps`). */
     NEXT_PUBLIC_LOCAL_REGION_PMTILES_BASE_URL?: string;
     /**
      * DEV ONLY flag ("true"/"1"). Enables Local Basemap admin UI (Windows/WSL hybrid

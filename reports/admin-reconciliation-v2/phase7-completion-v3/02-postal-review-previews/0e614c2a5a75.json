@@ -1,0 +1,21 @@
+{
+  "group_id": "0e614c2a5a75",
+  "postal_codes": [
+    "0514002"
+  ],
+  "locality_mm": "မြို့မ ရပ်ကွက်",
+  "locality_en": "Myo Ma Quarter",
+  "township_en": "Sintgaing Township",
+  "township_mm": "စဉ့်ကိုင် မြို့နယ်",
+  "township_public_id": "c7d0ac0f-3dc8-4499-8117-18331e9c9ee0",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

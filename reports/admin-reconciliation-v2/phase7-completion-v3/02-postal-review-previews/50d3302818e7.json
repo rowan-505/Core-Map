@@ -1,0 +1,21 @@
+{
+  "group_id": "50d3302818e7",
+  "postal_codes": [
+    "0508234"
+  ],
+  "locality_mm": "ဖေါင်းတော ကျေးရွာအုပ်စု",
+  "locality_en": "Myo Haung Kone (Hpaung Taw) Village Tract",
+  "township_en": "Pyinoolwin Township",
+  "township_mm": "ပြင်ဦးလွင် မြို့နယ်",
+  "township_public_id": "776f0afa-d089-4aeb-84cf-9d1c24d95100",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

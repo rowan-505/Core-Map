@@ -1,0 +1,72 @@
+{
+  "group_id": "3a9f781ed9c2",
+  "postal_codes": [
+    "1008005",
+    "1070002"
+  ],
+  "locality_mm": "မြို့မ ရပ်ကွက်",
+  "locality_en": "Myo Ma Quarter",
+  "township_en": "Ngathaingchaung Town",
+  "township_mm": "ငသိုင်းချောင်း မြို့",
+  "township_public_id": "938a79c1-c5f0-4a7a-9f2a-120dff8c8750",
+  "expected_locality_type": "ward",
+  "candidates": [
+    {
+      "core_id": "7262",
+      "public_id": "f58552ab-5582-4170-ae18-aee9fc84715b",
+      "type": "ward",
+      "parent_public_id": "938a79c1-c5f0-4a7a-9f2a-120dff8c8750",
+      "name_mm": "မြို့မရပ်ကွက်",
+      "name_en": "",
+      "aliases_mm": [],
+      "aliases_en": [
+        "Myo Ma Ward"
+      ]
+    },
+    {
+      "core_id": "7269",
+      "public_id": "7ec6eadf-2545-4e0e-8176-4ab68f29d4fd",
+      "type": "ward",
+      "parent_public_id": "938a79c1-c5f0-4a7a-9f2a-120dff8c8750",
+      "name_mm": "မြို့မရပ်ကွက်",
+      "name_en": "",
+      "aliases_mm": [],
+      "aliases_en": [
+        "Myo Ma Ward"
+      ]
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR017006701505",
+      "name_en": "Myo Ma Ward",
+      "name_my": "မြို့မရပ်ကွက်",
+      "norm_en": "myoma",
+      "norm_my": "မ",
+      "ts_pcode": "MMR017006",
+      "ts_name": "Yegyi",
+      "source_row": 1366,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    },
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR017006702502",
+      "name_en": "Myo Ma Ward",
+      "name_my": "မြို့မရပ်ကွက်",
+      "norm_en": "myoma",
+      "norm_my": "မ",
+      "ts_pcode": "MMR017006",
+      "ts_name": "Yegyi",
+      "source_row": 1991,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    }
+  ],
+  "name_evidence": "multiple_candidates",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "multiple candidates / conflict; no unique exact proof"
+}

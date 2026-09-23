@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-09-21T14:15:26Z",
+  "purpose": "Phase7 pre-production frozen action-manifest checksums",
+  "production_writes": false,
+  "files": {
+    "03-approved-local-admin.csv": {
+      "sha256": "6a0f8fc2841f5a446b5066296837c0b108a907fe67a52aa4b93512cfd5a369a8",
+      "bytes": 6414055,
+      "rows": 16176
+    },
+    "03-approved-villages.csv": {
+      "sha256": "adf6498a2b7e3f776d806ad5ace36723ecd56ca9fc609acab65a8452b548f9e2",
+      "bytes": 26899346,
+      "rows": 54604
+    },
+    "04-postal-actions.frozen.csv": {
+      "sha256": "5f40c130e7eacdb5a9ab1418b74030447cf5285d73f233ee8b80ad8a1bc8224d",
+      "bytes": 7884763,
+      "rows": 17299
+    },
+    "03-local-admin-decisions.csv": {
+      "sha256": "8af6b0faef0837bec6d76e3fdc469e88237fb95ca350c9b96dd81469c687d1de",
+      "bytes": 80395,
+      "rows": 253
+    },
+    "03-village-decisions.csv": {
+      "sha256": "34d2bd81aaf5e73975f89b054c41945bce59c73feffaa25f93e08c5d4acae0a2",
+      "bytes": 763840,
+      "rows": 2627
+    },
+    "03-merge-decisions.csv": {
+      "sha256": "3aa3cd99d4c389c5405b7003eb26fa7c7b36f0f4fdf9c2b99135952724adb30a",
+      "bytes": 483857,
+      "rows": 1487
+    }
+  },
+  "matches_phase5_freeze": {
+    "local": true,
+    "villages": true,
+    "postal": true
+  }
+}

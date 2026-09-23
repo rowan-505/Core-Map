@@ -1,0 +1,55 @@
+region,entity,source_count,keep_existing,update_names,merge_duplicate_candidate,create_mimu_placeholder,reject_source_error
+Ayeyarwady,ward,202,163,6,0,33,0
+Ayeyarwady,village_tract,1984,1,0,0,1983,0
+Ayeyarwady,village,10781,9373,14,793,601,0
+Bago (East),ward,81,79,0,0,1,1
+Bago (East),village_tract,755,0,0,0,755,0
+Bago (East),village,2378,2266,5,26,81,0
+Bago (West),ward,35,34,0,0,1,0
+Bago (West),village_tract,731,0,0,0,731,0
+Bago (West),village,3454,3300,4,105,45,0
+Chin,ward,19,19,0,0,0,0
+Chin,village_tract,482,0,0,0,482,0
+Chin,village,1373,1247,5,17,104,0
+Kachin,ward,54,54,0,0,0,0
+Kachin,village_tract,612,1,0,0,611,0
+Kachin,village,1560,1465,10,10,75,0
+Kayah,ward,13,13,0,0,0,0
+Kayah,village_tract,85,0,0,0,85,0
+Kayah,village,469,433,2,7,27,0
+Kayin,ward,15,15,0,0,0,0
+Kayin,village_tract,397,0,0,0,397,0
+Kayin,village,1491,1452,2,21,16,0
+Magway,ward,97,80,6,0,11,0
+Magway,village_tract,1599,0,1,0,1598,0
+Magway,village,4712,4221,276,60,151,4
+Mandalay,ward,159,151,0,0,7,1
+Mandalay,village_tract,1463,0,0,0,1463,0
+Mandalay,village,4707,4298,209,81,119,0
+Mon,ward,83,73,3,0,7,0
+Mon,village_tract,390,0,0,0,390,0
+Mon,village,1040,875,3,16,146,0
+Nay Pyi Taw,ward,39,27,0,0,11,1
+Nay Pyi Taw,village_tract,204,1,0,0,203,0
+Nay Pyi Taw,village,796,760,6,9,21,0
+Rakhine,ward,81,78,2,0,1,0
+Rakhine,village_tract,1069,0,0,0,1069,0
+Rakhine,village,3502,3244,12,89,157,0
+Sagaing,ward,95,93,0,0,0,2
+Sagaing,village_tract,1825,0,1,0,1824,0
+Sagaing,village,5725,5531,103,53,37,1
+Shan (East),ward,30,30,0,0,0,0
+Shan (East),village_tract,204,0,0,0,204,0
+Shan (East),village,2298,1875,12,16,395,0
+Shan (North),ward,85,75,0,0,10,0
+Shan (North),village_tract,965,0,0,0,965,0
+Shan (North),village,3488,2353,143,38,951,3
+Shan (South),ward,137,129,0,0,8,0
+Shan (South),village_tract,456,0,1,0,455,0
+Shan (South),village,3616,2974,23,48,570,1
+Tanintharyi,ward,67,57,1,0,9,0
+Tanintharyi,village_tract,293,0,1,0,292,0
+Tanintharyi,village,1306,1242,2,44,18,0
+Yangon,ward,709,673,18,0,15,3
+Yangon,village_tract,661,0,0,0,661,0
+Yangon,village,1906,1807,8,40,51,0

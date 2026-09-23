@@ -81,6 +81,7 @@ class AuthApi(
     private fun url(path: String): String = baseUrl.trimEnd('/') + path
 
     companion object {
-        fun defaultClient(): OkHttpClient = FieldHttp.client()
+        /** Test/default client with no API-host session recovery. */
+        fun defaultClient(): OkHttpClient = FieldHttp.client(apiBaseUrl = "")
     }
 }

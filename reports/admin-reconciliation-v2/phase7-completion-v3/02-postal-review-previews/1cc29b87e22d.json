@@ -1,0 +1,21 @@
+{
+  "group_id": "1cc29b87e22d",
+  "postal_codes": [
+    "1507014"
+  ],
+  "locality_mm": "ကျည်တောင်ကန်အမှတ် (၃)  (မြို့ဟောင်း) ရပ်ကွက်",
+  "locality_en": "Kyi Taung Kan No (3)  (Myo Haung) Quarter",
+  "township_en": "Poke Ba Thi Ri Township",
+  "township_mm": "ပုဗ္ဗသီရိ မြို့နယ်",
+  "township_public_id": "cf19b0d8-dcda-403b-af29-83858c97f8f6",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

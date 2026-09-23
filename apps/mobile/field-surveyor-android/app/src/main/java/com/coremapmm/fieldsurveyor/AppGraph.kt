@@ -54,14 +54,20 @@ class AppGraph(
 ) {
     companion object {
         fun create(app: FieldApp): AppGraph {
-            val onUnauthorized = AtomicReference<() -> Unit> {}
-            val http = FieldHttp.client { onUnauthorized.get().invoke() }
-            val database = FieldDatabase.create(app)
             val apiBaseUrl = ApiBaseUrl.resolve(app)
+            val onUnauthorized = AtomicReference<() -> Unit> {}
+            val recoverAccessToken = AtomicReference<() -> String?> { null }
+            val http = FieldHttp.client(
+                apiBaseUrl = apiBaseUrl,
+                recoverAccessToken = { recoverAccessToken.get().invoke() },
+                onUnauthorized = { onUnauthorized.get().invoke() },
+            )
+            val database = FieldDatabase.create(app)
             val auth = AuthRepository(
                 api = AuthApi(apiBaseUrl, http),
                 tokenStore = SecureTokenStore(app),
             )
+            recoverAccessToken.set { auth.recoverAccessTokenBlocking() }
             onUnauthorized.set { auth.clearCredentialsOnly() }
             val reports = database.localReportDao()
             val reportMedia = database.localReportMediaDao()

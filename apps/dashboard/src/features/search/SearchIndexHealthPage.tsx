@@ -14,7 +14,6 @@ import {
     getSearchIndexHealth,
     reindexSearchEntity,
     reindexSearchFamily,
-    repairSearchIndexHealth,
     runSearchIndexHealthCheck,
 } from "./api";
 import {
@@ -32,8 +31,26 @@ import {
     shouldShowSearchIndexHealthSkeleton,
     type SearchIndexHealthLoadPhase,
 } from "./searchIndexHealthPageState";
-import SearchIndexMaintenanceConfirmDialog from "./SearchIndexMaintenanceConfirmDialog";
-import type { SearchIndexHealthReport, SearchIndexMaintenanceOperation } from "./types";
+import {
+    clearCachedSearchIndexHealthReport,
+    writeCachedSearchIndexHealthReport,
+} from "./searchIndexHealthLocalCache";
+import {
+    defaultSearchIndexRepairTimingEstimates,
+    estimateSearchIndexFamilyDurationMs,
+    estimateSearchIndexQueueDurationMs,
+    readSearchIndexRepairTimingEstimates,
+    recordSearchIndexFamilyDuration,
+    SEARCH_INDEX_HEALTH_CHECK_ESTIMATE_MS,
+} from "./searchIndexRepairTiming";
+import SearchIndexMaintenanceConfirmDialog, {
+    type SearchIndexRepairProgress,
+} from "./SearchIndexMaintenanceConfirmDialog";
+import type {
+    SearchIndexHealthFamily,
+    SearchIndexHealthReport,
+    SearchIndexMaintenanceOperation,
+} from "./types";
 import { PRIMARY_BTN, SECONDARY_BTN, SELECT_CLASS, SyncStateBadge } from "./ui";
 
 const HEALTH_FAMILY_SKELETON_ROWS = 12;
@@ -72,6 +89,10 @@ function formatOperationFlash(operation: SearchIndexMaintenanceOperation): strin
         parts.push(operation.message);
     }
     return parts.join(" · ");
+}
+
+function isRepairCandidate(row: SearchIndexHealthFamily): boolean {
+    return row.missing_count > 0 || row.ghost_count > 0 || row.stale_count > 0;
 }
 
 function SearchIndexHealthSkeleton() {
@@ -122,11 +143,15 @@ export default function SearchIndexHealthPage() {
     const [data, setData] = useState<SearchIndexHealthReport | null>(null);
     const [phase, setPhase] = useState<SearchIndexHealthLoadPhase>("initial");
     const dataRef = useRef<SearchIndexHealthReport | null>(null);
+    const [cacheNote, setCacheNote] = useState("");
     const [error, setError] = useState("");
     const [actionError, setActionError] = useState("");
     const [flash, setFlash] = useState("");
     const [runningAction, setRunningAction] = useState(false);
     const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+    const [confirmUnderstood, setConfirmUnderstood] = useState(false);
+    const [repairProgress, setRepairProgress] = useState<SearchIndexRepairProgress | null>(null);
+    const timingEstimatesRef = useRef(defaultSearchIndexRepairTimingEstimates());
     const [entityType, setEntityType] = useState("place");
     const [entityId, setEntityId] = useState("");
 
@@ -138,7 +163,7 @@ export default function SearchIndexHealthPage() {
     const load = useCallback(async (options?: { refresh?: boolean; signal?: AbortSignal }) => {
         const isRefresh = options?.refresh ?? false;
         const hasData = dataRef.current != null;
-        setPhase(phaseAtSearchIndexHealthLoadStart(hasData, isRefresh));
+        setPhase(phaseAtSearchIndexHealthLoadStart(hasData, isRefresh || hasData));
         setError("");
         try {
             const res = await getSearchIndexHealth({
@@ -147,6 +172,12 @@ export default function SearchIndexHealthPage() {
             });
             dataRef.current = res;
             setData(res);
+            writeCachedSearchIndexHealthReport(res);
+            setCacheNote(
+                res.report_mode === "snapshot"
+                    ? "Fast snapshot (count comparison). Missing/ghost are estimates; stale is not checked. Use Run health check for exact drift."
+                    : "",
+            );
             setPhase("loaded");
         } catch (err) {
             if (isAbortError(err)) return;
@@ -154,11 +185,11 @@ export default function SearchIndexHealthPage() {
             setPhase(
                 resolveSearchIndexHealthLoadPhase({
                     hasData: dataRef.current != null,
-                    isRefresh,
+                    isRefresh: isRefresh || hasData,
                     success: false,
                 }),
             );
-            if (!isRefresh) {
+            if (!isRefresh && !hasData) {
                 dataRef.current = null;
                 setData(null);
             }
@@ -166,14 +197,25 @@ export default function SearchIndexHealthPage() {
     }, []);
 
     useEffect(() => {
+        clearCachedSearchIndexHealthReport();
+        timingEstimatesRef.current = readSearchIndexRepairTimingEstimates();
         const controller = new AbortController();
-        void load({ signal: controller.signal });
+        // Soft GET uses a fast count snapshot — never force refresh=true on mount
+        // (that path kills the browser proxy with ERR_EMPTY_RESPONSE).
+        void load({ signal: controller.signal, refresh: false });
         return () => controller.abort();
     }, [load]);
+
+    useEffect(() => {
+        setConfirmUnderstood(false);
+        setRepairProgress(null);
+    }, [pendingAction]);
 
     const applyOperationResult = useCallback((operation: SearchIndexMaintenanceOperation) => {
         dataRef.current = operation.health_after;
         setData(operation.health_after);
+        writeCachedSearchIndexHealthReport(operation.health_after);
+        setCacheNote("");
         setPhase("loaded");
         setFlash(formatOperationFlash(operation));
         setActionError("");
@@ -199,11 +241,234 @@ export default function SearchIndexHealthPage() {
         setActionError("");
         setFlash("");
         try {
-            let result: SearchIndexMaintenanceOperation;
             if (pendingAction.kind === "repair") {
-                result = await repairSearchIndexHealth();
-            } else if (pendingAction.kind === "reindex_family") {
-                result = await reindexSearchFamily({ entity_family: pendingAction.entity_family });
+                const actionStartedAt = Date.now();
+                const preliminaryFamilies = (dataRef.current?.families ?? []).filter(
+                    isRepairCandidate,
+                );
+                const preliminaryEtaMs =
+                    SEARCH_INDEX_HEALTH_CHECK_ESTIMATE_MS * 2 +
+                    estimateSearchIndexQueueDurationMs(
+                        preliminaryFamilies,
+                        timingEstimatesRef.current,
+                    );
+
+                setRepairProgress({
+                    percent: 0,
+                    etaSeconds: Math.ceil(preliminaryEtaMs / 1_000),
+                    currentFamily: null,
+                    finished: [],
+                    remaining: preliminaryFamilies.map((row) =>
+                        indexFamilyLabel(row.entity_family),
+                    ),
+                    phase: "health_check",
+                    stageStartedAtMs: Date.now(),
+                    lastDurationMs: null,
+                    rowsRebuiltTotal: 0,
+                });
+
+                // Always start from an exact report. The initial page snapshot
+                // does not include stale-row reconciliation.
+                const initialHealth = await runSearchIndexHealthCheck();
+                const queueFamilies = [...initialHealth.health_after.families]
+                    .filter(isRepairCandidate)
+                    .sort(
+                        (a, b) =>
+                            a.expected_searchable_count - b.expected_searchable_count ||
+                            a.entity_family.localeCompare(b.entity_family),
+                    );
+                if (queueFamilies.length === 0) {
+                    applyOperationResult(initialHealth);
+                    setFlash("Search index is healthy. No family rebuild was needed.");
+                    setRepairProgress({
+                        percent: 100,
+                        etaSeconds: 0,
+                        currentFamily: null,
+                        finished: [],
+                        remaining: [],
+                        phase: "done",
+                        stageStartedAtMs: Date.now(),
+                        lastDurationMs: null,
+                        rowsRebuiltTotal: 0,
+                    });
+                    setPendingAction(null);
+                    return;
+                }
+
+                const finished: string[] = [];
+                let rowsRebuiltTotal = 0;
+                let lastDurationMs: number | null = null;
+
+                for (let index = 0; index < queueFamilies.length; index += 1) {
+                    const family = queueFamilies[index]!;
+                    const remaining = queueFamilies.slice(index + 1);
+                    const etaMs =
+                        estimateSearchIndexFamilyDurationMs(
+                            family,
+                            timingEstimatesRef.current,
+                        ) +
+                        estimateSearchIndexQueueDurationMs(
+                            remaining,
+                            timingEstimatesRef.current,
+                        ) +
+                        SEARCH_INDEX_HEALTH_CHECK_ESTIMATE_MS;
+                    setRepairProgress({
+                        percent: 5 + Math.round((index / queueFamilies.length) * 85),
+                        etaSeconds: Math.ceil(etaMs / 1_000),
+                        currentFamily: indexFamilyLabel(family.entity_family),
+                        finished: finished.map(indexFamilyLabel),
+                        remaining: remaining.map((row) =>
+                            indexFamilyLabel(row.entity_family),
+                        ),
+                        phase: "rebuilding",
+                        stageStartedAtMs: Date.now(),
+                        lastDurationMs,
+                        rowsRebuiltTotal,
+                    });
+
+                    const started = Date.now();
+                    const result = await reindexSearchFamily({
+                        entity_family: family.entity_family,
+                        skip_health_refresh: true,
+                    });
+                    lastDurationMs = result.duration_ms || Date.now() - started;
+                    timingEstimatesRef.current = recordSearchIndexFamilyDuration(
+                        timingEstimatesRef.current,
+                        family.entity_family,
+                        lastDurationMs,
+                    );
+                    rowsRebuiltTotal += result.rows_rebuilt;
+                    finished.push(family.entity_family);
+
+                    if (result.status === "failed" || result.status === "conflict") {
+                        setActionError(
+                            result.message ??
+                                `Repair stopped on ${indexFamilyLabel(family.entity_family)} (${result.status}).`,
+                        );
+                        setRepairProgress({
+                            percent:
+                                5 +
+                                Math.round((finished.length / queueFamilies.length) * 85),
+                            etaSeconds: null,
+                            currentFamily: indexFamilyLabel(family.entity_family),
+                            finished: finished.map(indexFamilyLabel),
+                            remaining: remaining.map((row) =>
+                                indexFamilyLabel(row.entity_family),
+                            ),
+                            phase: "done",
+                            stageStartedAtMs: Date.now(),
+                            lastDurationMs,
+                            rowsRebuiltTotal,
+                        });
+                        return;
+                    }
+                }
+
+                setRepairProgress({
+                    percent: 95,
+                    etaSeconds: Math.ceil(SEARCH_INDEX_HEALTH_CHECK_ESTIMATE_MS / 1_000),
+                    currentFamily: null,
+                    finished: finished.map(indexFamilyLabel),
+                    remaining: [],
+                    phase: "verification",
+                    stageStartedAtMs: Date.now(),
+                    lastDurationMs,
+                    rowsRebuiltTotal,
+                });
+                const healthResult = await runSearchIndexHealthCheck();
+                applyOperationResult({
+                    ...healthResult,
+                    operation: "repair_unhealthy",
+                    duration_ms: Date.now() - actionStartedAt,
+                    rows_rebuilt: rowsRebuiltTotal,
+                    affected_families: finished,
+                    message: `Repaired ${finished.length} unhealthy families sequentially with the set-based rebuild path.`,
+                });
+                setRepairProgress({
+                    percent: 100,
+                    etaSeconds: 0,
+                    currentFamily: null,
+                    finished: finished.map(indexFamilyLabel),
+                    remaining: [],
+                    phase: "done",
+                    stageStartedAtMs: Date.now(),
+                    lastDurationMs,
+                    rowsRebuiltTotal,
+                });
+                setPendingAction(null);
+                return;
+            }
+
+            let result: SearchIndexMaintenanceOperation;
+            if (pendingAction.kind === "reindex_family") {
+                const actionStartedAt = Date.now();
+                const family =
+                    dataRef.current?.families.find(
+                        (row) => row.entity_family === pendingAction.entity_family,
+                    ) ?? {
+                        entity_family: pendingAction.entity_family,
+                        expected_searchable_count: 0,
+                    };
+                const familyEstimateMs = estimateSearchIndexFamilyDurationMs(
+                    family,
+                    timingEstimatesRef.current,
+                );
+                setRepairProgress({
+                    percent: 10,
+                    etaSeconds: Math.ceil(
+                        (familyEstimateMs + SEARCH_INDEX_HEALTH_CHECK_ESTIMATE_MS) / 1_000,
+                    ),
+                    currentFamily: indexFamilyLabel(pendingAction.entity_family),
+                    finished: [],
+                    remaining: [indexFamilyLabel(pendingAction.entity_family)],
+                    phase: "rebuilding",
+                    stageStartedAtMs: Date.now(),
+                    lastDurationMs: null,
+                    rowsRebuiltTotal: 0,
+                });
+                result = await reindexSearchFamily({
+                    entity_family: pendingAction.entity_family,
+                    skip_health_refresh: true,
+                });
+                const familyDurationMs = result.duration_ms || Date.now() - actionStartedAt;
+                timingEstimatesRef.current = recordSearchIndexFamilyDuration(
+                    timingEstimatesRef.current,
+                    pendingAction.entity_family,
+                    familyDurationMs,
+                );
+                if (result.status === "failed" || result.status === "conflict") {
+                    setActionError(
+                        result.message ??
+                            `Reindex stopped on ${indexFamilyLabel(pendingAction.entity_family)} (${result.status}).`,
+                    );
+                    return;
+                }
+
+                setRepairProgress({
+                    percent: 90,
+                    etaSeconds: Math.ceil(SEARCH_INDEX_HEALTH_CHECK_ESTIMATE_MS / 1_000),
+                    currentFamily: null,
+                    finished: [indexFamilyLabel(pendingAction.entity_family)],
+                    remaining: [],
+                    phase: "verification",
+                    stageStartedAtMs: Date.now(),
+                    lastDurationMs: familyDurationMs,
+                    rowsRebuiltTotal: result.rows_rebuilt,
+                });
+                const healthResult = await runSearchIndexHealthCheck();
+                const verifiedFamily = healthResult.health_after.families.find(
+                    (row) => row.entity_family === pendingAction.entity_family,
+                );
+                result = {
+                    ...result,
+                    status: verifiedFamily?.status === "healthy" ? "success" : "partial",
+                    duration_ms: Date.now() - actionStartedAt,
+                    health_after: healthResult.health_after,
+                    message: result.message?.replace(
+                        "Health report not refreshed (sequential repair).",
+                        "",
+                    ).trim() || null,
+                };
             } else {
                 result = await reindexSearchEntity({
                     entity_type: pendingAction.entity_type,
@@ -212,6 +477,7 @@ export default function SearchIndexHealthPage() {
             }
             applyOperationResult(result);
             setPendingAction(null);
+            setRepairProgress(null);
         } catch (err) {
             setActionError(err instanceof Error ? err.message : "Maintenance action failed.");
         } finally {
@@ -234,15 +500,14 @@ export default function SearchIndexHealthPage() {
     }, [entityId, entityType]);
 
     const totals = data?.totals;
-    const hasUnhealthyFamilies = (data?.families ?? []).some((row) => row.severity !== "healthy");
 
     const pendingDialogCopy =
         pendingAction?.kind === "repair"
             ? {
-                  title: "Repair unhealthy families",
+                  title: "Repair search index",
                   description:
-                      "Rebuilds only families with missing, ghost, or stale rows. This uses the same targeted repair logic as the reconcile CLI.",
-                  confirmLabel: "Repair unhealthy families",
+                      "Runs an exact health check, rebuilds every unhealthy family one at a time with the set-based fast path, then verifies the result.",
+                  confirmLabel: "Repair index",
               }
             : pendingAction?.kind === "reindex_family"
               ? {
@@ -275,7 +540,7 @@ export default function SearchIndexHealthPage() {
                             type="button"
                             className={SECONDARY_BTN}
                             disabled={phase === "initial" || isRefreshing || runningAction}
-                            onClick={() => void load({ refresh: true })}
+                            onClick={() => void load({ refresh: false })}
                         >
                             {isRefreshing ? "Refreshing…" : "Refresh"}
                         </button>
@@ -283,26 +548,43 @@ export default function SearchIndexHealthPage() {
                             type="button"
                             className={SECONDARY_BTN}
                             disabled={!canWrite || phase === "initial" || isRefreshing || runningAction}
-                            title={!canWrite ? "Read-only viewers cannot run maintenance checks" : undefined}
+                            title={
+                                !canWrite
+                                    ? "Read-only viewers cannot run maintenance checks"
+                                    : "Runs the exact (slow) missing/ghost/stale reconciliation"
+                            }
                             onClick={() => void runHealthCheck()}
                         >
                             {runningAction ? "Running…" : "Run health check"}
                         </button>
-                        {canMaintain && hasUnhealthyFamilies ? (
+                        {canMaintain ? (
                             <button
                                 type="button"
                                 className={PRIMARY_BTN}
                                 disabled={phase === "initial" || isRefreshing || runningAction}
                                 onClick={() => setPendingAction({ kind: "repair" })}
                             >
-                                Repair unhealthy
+                                Repair index
                             </button>
                         ) : null}
                         <Link href={searchPath("documents")} className={SECONDARY_BTN}>
                             Browse documents
                         </Link>
                     </div>
+                    {canMaintain ? (
+                        <p className="text-xs text-gray-500">
+                            Repair index checks exact drift, then rebuilds unhealthy families
+                            sequentially. Reindex family uses the same fast set-based database path
+                            for one selected family.
+                        </p>
+                    ) : null}
                 </header>
+
+                {cacheNote ? (
+                    <p className="rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                        {cacheNote}
+                    </p>
+                ) : null}
 
                 {error ? (
                     <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -554,14 +836,22 @@ export default function SearchIndexHealthPage() {
             {pendingDialogCopy ? (
                 <SearchIndexMaintenanceConfirmDialog
                     title={pendingDialogCopy.title}
-                    description={pendingDialogCopy.description}
+                    description={
+                        pendingAction?.kind === "repair"
+                            ? "Exact health check → unhealthy families (smallest first) → final verification. The current stage, elapsed time, and learned ETA update while it runs."
+                            : pendingDialogCopy.description
+                    }
                     confirmLabel={pendingDialogCopy.confirmLabel}
                     saving={runningAction}
                     error={actionError}
+                    confirmed={confirmUnderstood}
+                    onConfirmedChange={setConfirmUnderstood}
+                    progress={repairProgress}
                     onClose={() => {
                         if (!runningAction) {
                             setPendingAction(null);
                             setActionError("");
+                            setRepairProgress(null);
                         }
                     }}
                     onConfirm={() => void executePendingAction()}

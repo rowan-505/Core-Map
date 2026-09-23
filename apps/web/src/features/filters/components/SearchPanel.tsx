@@ -1,7 +1,11 @@
 import { memo, useEffect, useRef } from 'react';
 import { mapUiText, useMapUiText } from '@/features/map/i18n/mapUiText';
 import { useMapUiStore } from '@/features/map/state/mapUiStore';
-import type { PlaceLanguageMode, PublicSearchResult } from '@/features/poi/api/publicMapApi';
+import type {
+  PlaceLanguageMode,
+  PublicSearchResult,
+  SearchResultGeometry,
+} from '@/features/poi/api/publicMapApi';
 import { shouldAutoLoadMorePublicSearch } from '@/features/poi/api/publicSearchRetry';
 import {
   getVisiblePublicSearchCategoryFilterChips,
@@ -16,7 +20,6 @@ import { Chip, ChipRow, ListSkeleton, PanelEmptyState, ResultRow, SearchField, S
 import { resultTitleClass } from '@/components/ui/sidebarTokens';
 import type { Poi, PoiCategory, PoiCategoryCode } from '@/types';
 import { getLocalizedName } from '@local-map/localized-name';
-import { usePublicTransportRoute } from '@/features/transport/api/usePublicTransportRoute';
 
 type SearchResultType =
   | PublicSearchResult['type']
@@ -43,6 +46,7 @@ type SearchPanelProps = {
   readonly searchResults: readonly PublicSearchResult[];
   readonly selectedSearchResultId: string | null;
   readonly selectedSearchResult?: PublicSearchResult | null;
+  readonly selectedResultGeometry?: SearchResultGeometry | null;
   readonly selectedResultLoading?: boolean;
   readonly onSelectSearchResult: (result: PublicSearchResult) => void;
   readonly onClearSelectedSearchResult?: () => void;
@@ -89,6 +93,7 @@ function SearchPanelInner({
   searchResults,
   selectedSearchResultId,
   selectedSearchResult = null,
+  selectedResultGeometry = null,
   selectedResultLoading = false,
   onSelectSearchResult,
   onClearSelectedSearchResult,
@@ -278,6 +283,7 @@ function SearchPanelInner({
         <div className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-1 border-t border-map-border bg-map-surface px-4 pb-4 pt-2.5">
           <SelectedResultCard
             result={selectedSearchResult}
+            geometry={selectedResultGeometry}
             referenceCoordinates={referenceCoordinates}
             loading={selectedResultLoading}
             onClear={onClearSelectedSearchResult}
@@ -402,12 +408,14 @@ function transportModeLabel(
 /** Compact card for the currently selected result; keeps the list visible below. */
 function SelectedResultCard({
   result,
+  geometry,
   referenceCoordinates,
   loading = false,
   onClear,
   onViewDetails,
 }: {
   readonly result: PublicSearchResult;
+  readonly geometry?: SearchResultGeometry | null;
   readonly referenceCoordinates?: readonly [number, number] | null;
   readonly loading?: boolean;
   readonly onClear?: () => void;
@@ -433,9 +441,14 @@ function SelectedResultCard({
     entityType === 'transport_route_variant' ||
     entityType === 'bus_route' ||
     entityType === 'bus_route_variant';
-  const routeDetail = usePublicTransportRoute(isTransportRoute ? result.routeCode : null);
-  const routeStopCount =
-    routeDetail.data?.variants.reduce((sum, variant) => sum + variant.stops.length, 0) ?? 0;
+  const routeVariants = isTransportRoute ? (geometry?.routeVariants ?? []) : [];
+  const routeStops = isTransportRoute ? (geometry?.importantStops ?? []) : [];
+  const routeDirection =
+    routeVariants.find((variant) => variant.isPrimary)?.directionName ??
+    routeVariants.find((variant) => variant.isPrimary)?.headsign ??
+    routeVariants[0]?.directionName ??
+    routeVariants[0]?.headsign ??
+    null;
 
   return (
     <div className="rounded-map-card border border-map-primary/15 bg-map-primary-soft p-3">
@@ -451,47 +464,46 @@ function SelectedResultCard({
             <span className="block truncate text-xs text-map-muted">{reverseLine}</span>
           ) : null}
           <SearchResultBadges result={result} entityType={entityType} />
-          {routeDetail.data ? (
+          {isTransportRoute && geometry ? (
             <span className="mt-1 block text-xs leading-5 text-map-muted">
               <span className="block">
                 {[
-                  routeDetail.data.operator?.name,
-                  routeDetail.data.variants.length > 0
+                  routeVariants.length > 0
                     ? t(
-                        `${routeDetail.data.variants.length} မျိုးကွဲ`,
-                        `${routeDetail.data.variants.length} variant${routeDetail.data.variants.length === 1 ? '' : 's'}`,
+                        `${routeVariants.length} မျိုးကွဲ`,
+                        `${routeVariants.length} variant${routeVariants.length === 1 ? '' : 's'}`,
                       )
                     : null,
-                  routeStopCount > 0 ? t(`${routeStopCount} မှတ်တိုင်`, `${routeStopCount} stops`) : null,
+                  routeStops.length > 0
+                    ? t(`${routeStops.length} မှတ်တိုင်`, `${routeStops.length} stops`)
+                    : null,
                 ].filter(Boolean).join(' · ')}
               </span>
-              {routeDetail.data.variants[0]?.direction_name ? (
+              {routeDirection ? (
                 <span className="block truncate">
-                  {t('ဦးတည်ရာ', 'Direction')}: {routeDetail.data.variants[0].direction_name}
+                  {t('ဦးတည်ရာ', 'Direction')}: {routeDirection}
                 </span>
               ) : null}
-              {routeDetail.data.variants[0]?.stops.length ? (
+              {routeStops.length > 0 ? (
                 <span className="mt-1 block border-l-2 border-map-primary/20 pl-2">
-                  {routeDetail.data.variants[0].stops.slice(0, 5).map((stop) => (
-                    <span key={`${stop.public_id}:${stop.stop_sequence}`} className="block truncate">
-                      {stop.stop_sequence}. {stop.name_my ?? stop.name_en ?? t('မှတ်တိုင်', 'Stop')}
+                  {routeStops.slice(0, 5).map((stop) => (
+                    <span key={`${stop.publicId}:${stop.sequence}`} className="block truncate">
+                      {stop.sequence}. {stop.displayName}
                     </span>
                   ))}
-                  {routeDetail.data.variants[0].stops.length > 5 ? (
-                    <span className="block">+{routeDetail.data.variants[0].stops.length - 5}</span>
+                  {routeStops.length > 5 ? (
+                    <span className="block">+{routeStops.length - 5}</span>
                   ) : null}
                 </span>
               ) : null}
-            </span>
-          ) : routeDetail.isError ? (
-            <span className="mt-1 block text-xs text-amber-700">
-              {t('လမ်းကြောင်းအသေးစိတ် မရရှိနိုင်ပါ။', 'Route details unavailable.')}
             </span>
           ) : null}
           {loading ? (
             <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-map-primary">
               <span className="h-3 w-3 animate-spin rounded-full border-2 border-map-primary/20 border-t-map-primary" />
-              {t('နယ်နိမိတ် ဖွင့်နေသည်…', 'Loading boundary…')}
+              {isTransportRoute
+                ? t('လမ်းကြောင်းနှင့် မှတ်တိုင်များ ဖွင့်နေသည်…', 'Loading route and stops…')
+                : t('ပုံသဏ္ဌာန် ဖွင့်နေသည်…', 'Loading shape…')}
             </span>
           ) : null}
         </span>

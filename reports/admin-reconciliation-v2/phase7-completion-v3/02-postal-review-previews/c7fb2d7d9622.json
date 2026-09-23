@@ -1,0 +1,21 @@
+{
+  "group_id": "c7fb2d7d9622",
+  "postal_codes": [
+    "0269001"
+  ],
+  "locality_mm": "ချမ်းအေးသာယာ ရပ်ကွက်",
+  "locality_en": "Chan Aye Thar Yar Quarter",
+  "township_en": "Zee Kone Town",
+  "township_mm": "ဇီးကုန်း မြို့",
+  "township_public_id": "df682010-f157-4ea8-9528-353045731ea5",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

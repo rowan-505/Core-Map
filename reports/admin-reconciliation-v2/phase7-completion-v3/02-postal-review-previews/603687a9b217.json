@@ -1,0 +1,21 @@
+{
+  "group_id": "603687a9b217",
+  "postal_codes": [
+    "0711007"
+  ],
+  "locality_mm": "တရုပ်တန်း ရပ်ကွက်",
+  "locality_en": "Ta Yoke Tan Quarter",
+  "township_en": "Myebon Township",
+  "township_mm": "မြေပုံ မြို့နယ်",
+  "township_public_id": "ba2d7ed8-46c2-4600-82b0-2ce891dea030",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

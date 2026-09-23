@@ -1,0 +1,467 @@
+admin_public_id,language_code,alias_name,normalized_alias,preserve_primary,replace_primary,source_postal_code,reason,manifest_version,production_apply
+d3c638d3-0e5b-429a-90c0-e61717a32038,en,Pam Ma Ti Village Tract,pammati,true,false,0101205,postal EN spelling not in primary/alias set,v3,false
+cb335311-69c1-4cd9-a952-8426c546c9c8,en,Hkaung Hpu Ywar Thit Village Tract,hkaunghpuywarthit,true,false,0101213,postal EN spelling not in primary/alias set,v3,false
+b77eb9e6-1077-4593-b657-b08b2a0c4992,en,Hkaung Hpu Ywar Haung Village Tract,hkaunghpuywarhaung,true,false,0101214,postal EN spelling not in primary/alias set,v3,false
+b48385d3-86d6-411d-a09b-716b3c2c33f6,en,Taw Pin Lon Village Tract,tawpinlon,true,false,0101221,postal EN spelling not in primary/alias set,v3,false
+5c10e00d-9bc9-4300-a730-591ce40b06c7,en,Waing Lon Village Tract,wainglon,true,false,0101228,postal EN spelling not in primary/alias set,v3,false
+9f1e0fb5-756f-4728-9f57-24ffc7430835,en,In Jun Ga Village Tract,injunga,true,false,0102200,postal EN spelling not in primary/alias set,v3,false
+cc26d1d2-d4c2-4be6-b012-ec1d0b5fc01e,en,Sam Hpum Ga Village Tract,samhpumga,true,false,0102204,postal EN spelling not in primary/alias set,v3,false
+043930c3-d1ee-4a2b-8ecd-82d33c6b9fbc,en,Sha Dan Lawt Khum Village Tract,shadanlawtkhum,true,false,0102209,postal EN spelling not in primary/alias set,v3,false
+6fff80ad-fede-49fc-a8ef-b430cb3db51f,en,In Hpyin Ga Village Tract,inhpyinga,true,false,0102211,postal EN spelling not in primary/alias set,v3,false
+73884dc2-47d4-46b9-a81c-c21e35ba1a9b,en,Tsum Dwar Ga Village Tract,tsumdwarga,true,false,0102215,postal EN spelling not in primary/alias set,v3,false
+01b44fe9-d9f0-4b41-8cbc-2213df4827fc,en,In Htauk Ga Village Tract,inhtaukga,true,false,0102217,postal EN spelling not in primary/alias set,v3,false
+5d5fd7ec-6602-4b1f-aa82-c728f0cfb91d,en,Jing Ma Yang Village Tract,jingmayang,true,false,0102222,postal EN spelling not in primary/alias set,v3,false
+b170299e-9d83-446b-a437-88f29cd48b5f,en,In Hku Ga Village Tract,inhkuga,true,false,0102226,postal EN spelling not in primary/alias set,v3,false
+8e718b3b-a775-476f-bffd-439e7b305319,en,Ka Ring Ga Village Tract,karingga,true,false,0102240,postal EN spelling not in primary/alias set,v3,false
+193c61bf-119a-4c8e-84fe-e5579830d6e3,en,War Li Chet Village Tract,warlichet,true,false,0102244,postal EN spelling not in primary/alias set,v3,false
+58cee89b-85d8-45ee-b5df-873356e1ccae,en,Naw Hkum Ga Village Tract,nawhkumga,true,false,0102245,postal EN spelling not in primary/alias set,v3,false
+1d05ad37-a828-4aee-9e62-4ca1e2ff5118,en,Adan Ga Village Tract,adanga,true,false,0102251,postal EN spelling not in primary/alias set,v3,false
+c189f5aa-5c73-4647-bb2f-cbadc9147666,en,Ma Khum Kan Village Tract,makhumkan,true,false,0103212,postal EN spelling not in primary/alias set,v3,false
+1b1cb62c-6c14-4cd9-95f5-328eefd475c2,en,Ah Lang Ga Village Tract,ahlangga,true,false,0104205,postal EN spelling not in primary/alias set,v3,false
+5a740316-dbbd-45a9-a06f-e046eadc82b4,en,Ma Jang Ga Village Tract,majangga,true,false,0104209,postal EN spelling not in primary/alias set,v3,false
+572fbfea-9d1c-4717-8840-4007c8743bb8,en,Shin Naw Ga Village Tract,shinnawga,true,false,0104219,postal EN spelling not in primary/alias set,v3,false
+ebc3602f-5d0a-42d9-971d-95a19a64f298,en,Sarl Hkam Dam Village Tract,sarlhkamdam,true,false,0105200,postal EN spelling not in primary/alias set,v3,false
+b573eb09-b1da-4d57-bf6d-7e6f21d774c9,en,Pu Taung Village Tract,putaung,true,false,0105204,postal EN spelling not in primary/alias set,v3,false
+bf408ee4-6b8e-4ba6-b826-c028c9b5604a,en,Man Say Khun Village Tract,mansaykhun,true,false,0105207,postal EN spelling not in primary/alias set,v3,false
+3f2efd36-8282-4570-8b9a-02161c0d5042,en,Lon Sha Yang Village Tract,lonshayang,true,false,0105211,postal EN spelling not in primary/alias set,v3,false
+e6fbce9a-110e-467e-a403-e47d9abff9cf,en,Hpung Ing Hku Village Tract,hpunginghku,true,false,0106203,postal EN spelling not in primary/alias set,v3,false
+d42302ac-d846-4117-908a-79357dc27ab4,en,In Yam Ga Village Tract,inyamga,true,false,0106204,postal EN spelling not in primary/alias set,v3,false
+03d7d6c0-0c46-4b72-8336-b68e10dc2682,en,Sai Ran Village Tract,sairan,true,false,0106209,postal EN spelling not in primary/alias set,v3,false
+c579761b-355c-4b2e-affc-ca60eb8a1db0,en,Shakram Ga Village Tract,shakramga,true,false,0106210,postal EN spelling not in primary/alias set,v3,false
+3fc4a1b2-2816-4e2b-bbe2-f147413d1aa5,en,Khin Du Yang Village Tract,khinduyang,true,false,0106212,postal EN spelling not in primary/alias set,v3,false
+482fd95a-9da7-4d82-aa7d-0f07ba74eb21,en,Lon Wan Village Tract,lonwan,true,false,0106224,postal EN spelling not in primary/alias set,v3,false
+bf7aa5b3-9d66-4672-a935-22a3c3ca663b,en,Laung Hpant Village Tract,launghpant,true,false,0107204,postal EN spelling not in primary/alias set,v3,false
+a5d038af-59dc-45e6-a25a-71a4d8772e1f,en,Nam Maw Zup Village Tract,nammawzup,true,false,0107210,postal EN spelling not in primary/alias set,v3,false
+ae1bf77b-62e6-4f56-98ee-ffb560182976,en,Ngwa Hpa Hkar Village Tract,ngwahpahkar,true,false,0107238,postal EN spelling not in primary/alias set,v3,false
+e7dea8b5-ed22-45e1-b418-315eb45913a2,en,Kan Hpan Village Tract,kanhpan,true,false,0107239,postal EN spelling not in primary/alias set,v3,false
+af7c5e15-33f5-4864-bd9c-5dc3712594fb,en,Hkat Cho Village Tract,hkatcho,true,false,0108202,postal EN spelling not in primary/alias set,v3,false
+36cc3895-3df6-45ba-8794-22fd13e6491a,en,Nawng Chein Village Tract,nawngchein,true,false,0108213,postal EN spelling not in primary/alias set,v3,false
+5adaa45e-fa0f-43c6-99f4-79e756a7facf,en,Ga Ra Yang Village Tract,garayang,true,false,0108222,postal EN spelling not in primary/alias set,v3,false
+16a18788-1c00-4d4c-a501-59b01275f553,en,Sai Law Village Tract,sailaw,true,false,0108225,postal EN spelling not in primary/alias set,v3,false
+ada1f725-0be6-4019-9d02-3f9a83e4081d,en,Nawng Lon Kawng Ra Village Tract,nawnglonkawngra,true,false,0109202,postal EN spelling not in primary/alias set,v3,false
+8bf5faf9-1285-474f-ae9e-3cdca0aaf39c,en,Shin Lon Ga Village Tract,shinlonga,true,false,0109205,postal EN spelling not in primary/alias set,v3,false
+da1078f6-c9ec-45d0-98bc-e7021087b3c1,en,Ah Le Quarter,ahle,true,false,0110003,postal EN spelling not in primary/alias set,v3,false
+2c7cf9ed-2677-4b74-ad14-71a3b76a16d4,en,Nam Khwin Village Tract,namkhwin,true,false,0110228,postal EN spelling not in primary/alias set,v3,false
+5602598b-7c17-4aa2-bd9c-b8a673d6199b,en,See Din Yang Village Tract,seedinyang,true,false,0110233,postal EN spelling not in primary/alias set,v3,false
+b9236327-e65f-44f2-9f57-a29c2ab68d4e,en,Oak Kyin Village Tract,oakkyin,true,false,0110239,postal EN spelling not in primary/alias set,v3,false
+9b27b7a8-6f8f-4941-89d4-8835b594338c,en,Pin Lon Village Tract,pinlon,true,false,0111200,postal EN spelling not in primary/alias set,v3,false
+08b8a6a3-a696-4cdc-b4a1-ecf60d60549a,en,Maing Poke Village Tract,maingpoke,true,false,0111218,postal EN spelling not in primary/alias set,v3,false
+08e2a0f2-01b0-4721-902c-c349f9c55c67,en,Pan Lar Village Tract,panlar,true,false,0111224,postal EN spelling not in primary/alias set,v3,false
+5a4897b3-ec71-46f6-800f-688c2b15de96,en,He Lon Village Tract,helon,true,false,0111226,postal EN spelling not in primary/alias set,v3,false
+cad14ad7-0bff-42c4-a17b-91f6694a76e5,en,Sin Hpoke Village Tract,sinhpoke,true,false,0112205,postal EN spelling not in primary/alias set,v3,false
+41909b4c-8e45-4eac-b20c-ce87d19650f6,en,Pan Khun Yang Village Tract,pankhunyang,true,false,0112233,postal EN spelling not in primary/alias set,v3,false
+165786e5-25d0-4b0b-a199-ea1cd6b2fc0e,en,Man Khun Village Tract,mankhun,true,false,0113203,postal EN spelling not in primary/alias set,v3,false
+d26e0a64-7941-4e3d-b10a-55352fad26a2,en,Kho Kyin Village Tract,khokyin,true,false,0113205,postal EN spelling not in primary/alias set,v3,false
+d6f86d68-0a9c-45c1-bc16-af6a36ce58a5,en,Tar Maing Lon Village Tract,tarmainglon,true,false,0113209,postal EN spelling not in primary/alias set,v3,false
+9466f88b-e768-40c7-9852-4e1aab572937,en,He Lon Thit Village Tract,helonthit,true,false,0113210,postal EN spelling not in primary/alias set,v3,false
+b36500a5-d2c1-4360-976b-a131630db2fd,en,He Lon Haung Village Tract,helonhaung,true,false,0113211,postal EN spelling not in primary/alias set,v3,false
+a962d5e1-bb66-4fc1-8b25-59aa892256cd,en,Sai Kin Village Tract,saikin,true,false,0113212,postal EN spelling not in primary/alias set,v3,false
+6fbad08a-0c30-494a-a194-f5a737488bc6,en,Ma Lu La Village Tract,malula,true,false,0113213,postal EN spelling not in primary/alias set,v3,false
+77ddaca6-a468-4f53-a0f9-5cdd75e7ed99,en,Sint Kin Village Tract,sintkin,true,false,0113218,postal EN spelling not in primary/alias set,v3,false
+174dd2bb-f05e-44c2-8076-7624ddbaa324,en,Thing Ling Village Tract,thingling,true,false,0113219,postal EN spelling not in primary/alias set,v3,false
+b96de214-2c45-48f7-80b8-82071b707964,en,Maing Kar Village Tract,maingkar,true,false,0113231,postal EN spelling not in primary/alias set,v3,false
+7ab45c7c-5dbf-4cd2-a90c-923dcbfb4f51,en,Kawng Sint Village Tract,kawngsint,true,false,0113236,postal EN spelling not in primary/alias set,v3,false
+239afc4d-7c9a-4ebf-9abd-01597187c80b,en,Sin Hkan Village Tract,sinhkan,true,false,0113241,postal EN spelling not in primary/alias set,v3,false
+5a61bb20-a210-44e5-bb39-87bdba5f1d4d,en,Nam Ma Hpweit Village Tract,nammahpweit,true,false,0114204,postal EN spelling not in primary/alias set,v3,false
+7264fee4-3cae-4dc3-81c2-95521dba2ce6,en,Zein Rong Village Tract,zeinrong,true,false,0114212,postal EN spelling not in primary/alias set,v3,false
+4d0f91b9-845a-47d8-8bb7-86fbfdd4a1dc,en,Hka Na Par Village Tract,hkanapar,true,false,0114215,postal EN spelling not in primary/alias set,v3,false
+757aeb12-9cfd-4d8f-9a98-623a0afb6c8d,my,ပန်ခမ်း ကျေးရွာအုပ်စု,ပန်ခမ်း,true,false,0114224,postal MM spelling not in primary/alias set,v3,false
+757aeb12-9cfd-4d8f-9a98-623a0afb6c8d,en,Pan Hkam Village Tract,panhkam,true,false,0114224,postal EN spelling not in primary/alias set,v3,false
+2b821998-4479-498b-b4a0-5e26a9e8135e,en,La Khum Yar Ma Village Tract,lakhumyarma,true,false,0114239,postal EN spelling not in primary/alias set,v3,false
+6a7b6b5c-d7c3-426b-8165-f86336f81bc0,en,Pan Choe Hai Village Tract,panchoehai,true,false,0115215,postal EN spelling not in primary/alias set,v3,false
+8100e325-f356-461a-a6da-72d301a314d9,en,Maing Hkat Village Tract,mainghkat,true,false,0115219,postal EN spelling not in primary/alias set,v3,false
+141e53b9-275c-4fd7-b20a-3733767c526d,en,Num Lang Village Tract,numlang,true,false,0115221,postal EN spelling not in primary/alias set,v3,false
+249b5011-a955-4b95-b7a1-b8a110c959cc,en,Pan Mu Village Tract,panmu,true,false,0115224,postal EN spelling not in primary/alias set,v3,false
+5adae359-bb41-4553-9e6a-273b3e174947,en,Pan Hkat Village Tract,panhkat,true,false,0115237,postal EN spelling not in primary/alias set,v3,false
+c0d57c52-ae08-42af-af92-2f354d59c9e8,en,In Baw Mai Kyin Village Tract,inbawmaikyin,true,false,0115241,postal EN spelling not in primary/alias set,v3,false
+6f377a4a-3094-412b-8f2e-4607564909d4,en,Thein Lon Village Tract,theinlon,true,false,0115244,postal EN spelling not in primary/alias set,v3,false
+5a4bd838-a49e-42df-b571-356985c81863,en,Nar Lon Village Tract,narlon,true,false,0115247,postal EN spelling not in primary/alias set,v3,false
+af49a091-5714-43d3-86c2-577d22db5350,en,Nawng Mi Village Tract,nawngmi,true,false,0116207,postal EN spelling not in primary/alias set,v3,false
+c4b004e2-2664-417f-893b-80d7015e269e,en,Yin Kyang Village Tract,yinkyang,true,false,0117201,postal EN spelling not in primary/alias set,v3,false
+874d1177-7552-49fb-8cf3-213f7f63c9b9,en,Laung Din Village Tract,laungdin,true,false,0117207,postal EN spelling not in primary/alias set,v3,false
+2216dd91-b750-4ae6-a5fe-1fe57b82e177,en,Myaw Jaung Village Tract,myawjaung,true,false,0117209,postal EN spelling not in primary/alias set,v3,false
+087725c0-efbd-4e79-b5a9-9a78413e542c,en,La Za Village Tract,laza,true,false,0117219,postal EN spelling not in primary/alias set,v3,false
+2fcbb3c5-1d1a-4006-bdc5-4ddc7a72f323,en,Ka Khin Village Tract,kakhin,true,false,0118205,postal EN spelling not in primary/alias set,v3,false
+fa13443c-5a74-4ac2-83a1-6bc51918debb,en,Shi Lang Dam Village Tract,shilangdam,true,false,0118218,postal EN spelling not in primary/alias set,v3,false
+cd9dcd64-8144-41c8-b9fa-ccaff5181bc1,en,La Jar Ga Village Tract,lajarga,true,false,0118220,postal EN spelling not in primary/alias set,v3,false
+2b46bd50-aeeb-47df-927c-570a285546c6,en,Khin Lum Village Tract,khinlum,true,false,0118221,postal EN spelling not in primary/alias set,v3,false
+0312ec4b-c11a-4f7a-823e-4c892797a065,en,Pi Naung Sut Village Tract,pinaungsut,true,false,0201200,postal EN spelling not in primary/alias set,v3,false
+d80106a1-79fe-429d-aceb-fb0fa2b3d2d8,en,Kye Tha Yauk (Sun Par) Village Tract,kyethayauksunpar,true,false,0201201,postal EN spelling not in primary/alias set,v3,false
+c94d6a74-4371-44f5-8702-f63ab72ea5b6,en,Tha Man Chaung Son Village Tract,thamanchaungson,true,false,0201202,postal EN spelling not in primary/alias set,v3,false
+c4a960ee-a9be-44c9-826d-216204d1444e,en,Kyaing Raing Village Tract,kyaingraing,true,false,0201203,postal EN spelling not in primary/alias set,v3,false
+2d423907-f873-4a47-8bdc-225e30379fae,en,Yaung Ngway Village Tract,yaungngway,true,false,0201204,postal EN spelling not in primary/alias set,v3,false
+4d3789b4-7a15-4f03-b5bf-7890305cd578,en,Har War Village Tract,harwar,true,false,0201205,postal EN spelling not in primary/alias set,v3,false
+c63583b9-5f13-4328-b064-4356f982be61,en,Lar Khu (1) Village Tract,larkhu1,true,false,0201208,postal EN spelling not in primary/alias set,v3,false
+05efdbe4-682c-4fec-b7c2-f13d8be588de,en,Ga Gaw Ka Bar Village Tract,gagawkabar,true,false,0201212,postal EN spelling not in primary/alias set,v3,false
+d5308acf-7bce-4464-a2c4-2fff9f0b672a,en,Thar Man Village Tract,tharman,true,false,0201213,postal EN spelling not in primary/alias set,v3,false
+f45ba55d-a7b5-4ac0-8562-11bfb47be21a,en,Lein Hnoke (1) Village Tract,leinhnoke1,true,false,0201214,postal EN spelling not in primary/alias set,v3,false
+cf69684a-10ae-4beb-bc6f-125411405bf0,en,Ah Htet Lu Lun Village Tract,ahhtetlulun,true,false,0201215,postal EN spelling not in primary/alias set,v3,false
+9b820db9-a61f-44ec-ac7f-a73d9822c4a1,en,Hpar Kyet Village Tract,hparkyet,true,false,0201217,postal EN spelling not in primary/alias set,v3,false
+8b1f8f13-d507-4e1f-a5f6-b35cfd5e4939,en,Chein Kauk Village Tract,cheinkauk,true,false,0201219,postal EN spelling not in primary/alias set,v3,false
+4d285374-5fde-4294-b8e6-568ebff1ef09,en,Taw Lun Village Tract,tawlun,true,false,0201220,postal EN spelling not in primary/alias set,v3,false
+da1a3637-7fe5-477f-a5dd-b7aea502fe78,en,Lat Kee Lon Yar Village Tract,latkeelonyar,true,false,0201221,postal EN spelling not in primary/alias set,v3,false
+d73c68dd-02c1-45af-b922-12829bfdb449,en,San Tee Village Tract,santee,true,false,0201222,postal EN spelling not in primary/alias set,v3,false
+754f95ff-33ab-4eb5-bba7-49d641ea4003,en,Rein Khu Village Tract,reinkhu,true,false,0201223,postal EN spelling not in primary/alias set,v3,false
+4dc8eba8-1725-4223-b399-e48a3bb6ce50,en,Kar Lun Village Tract,karlun,true,false,0201224,postal EN spelling not in primary/alias set,v3,false
+a9849551-0342-4760-b6fb-2ac940d5888b,en,Mi Ku Nauk Kone Village Tract,mikunaukkone,true,false,0201225,postal EN spelling not in primary/alias set,v3,false
+31e9218e-ed84-4293-8cb2-0b9bb38d9cbe,en,Kyar Wun Nauk Pauk Village Tract,kyarwunnaukpauk,true,false,0201226,postal EN spelling not in primary/alias set,v3,false
+ad41dd55-ce2c-45db-84cb-21ca63a67ecb,en,Taw Kye Village Tract,tawkye,true,false,0201227,postal EN spelling not in primary/alias set,v3,false
+67086cce-6c88-4d60-bf60-858ff078def5,en,Yan Si Village Tract,yansi,true,false,0201228,postal EN spelling not in primary/alias set,v3,false
+0de8d91d-7309-4c5c-9ced-dec2a3d590df,en,Chan Ban Village Tract,chanban,true,false,0201230,postal EN spelling not in primary/alias set,v3,false
+d076396b-98bf-4014-bc27-8cd3e926357d,en,Ka Gyi Chan My Village Tract,kagyichanmy,true,false,0201231,postal EN spelling not in primary/alias set,v3,false
+7a8ab4be-2402-4ccc-918b-4fb26578311a,en,Ha Khee Village Tract,hakhee,true,false,0201233,postal EN spelling not in primary/alias set,v3,false
+050968d7-6ecf-48a3-b70a-89aae6b951f9,en,Lar Mar Village Tract,larmar,true,false,0201234,postal EN spelling not in primary/alias set,v3,false
+2b45fd3e-d290-41d6-9363-c3d0ed8528e7,en,Ngaing Maung Village Tract,ngaingmaung,true,false,0201235,postal EN spelling not in primary/alias set,v3,false
+381f7f38-489a-4e1c-bad7-1ce6c0bb2203,en,Lar Haung Village Tract,larhaung,true,false,0201236,postal EN spelling not in primary/alias set,v3,false
+6472326f-d0f8-43f8-9f7f-280e7523707f,en,Ha San Kaing Village Tract,hasankaing,true,false,0201237,postal EN spelling not in primary/alias set,v3,false
+b00bbeda-e986-48e6-8a7d-13590756cfbc,en,Leik Lin Kan Village Tract,leiklinkan,true,false,0201238,postal EN spelling not in primary/alias set,v3,false
+16d1fdc2-9897-45ae-b14e-499f0d19e975,en,Hnoke Par Village Tract,hnokepar,true,false,0201239,postal EN spelling not in primary/alias set,v3,false
+13c18374-68ea-4be7-b0a1-0a00fe773839,en,Bo Te Lar Nu Village Tract,botelarnu,true,false,0201240,postal EN spelling not in primary/alias set,v3,false
+151eea2f-4493-4526-86c9-69bae8034153,en,Ha Haung Village Tract,hahaung,true,false,0201242,postal EN spelling not in primary/alias set,v3,false
+adf41fa9-c87a-4e93-9426-15c1ad8ddcae,en,Kaw Lan Village Tract,kawlan,true,false,0201243,postal EN spelling not in primary/alias set,v3,false
+b0e9b662-6dda-444c-bafc-a23f712e30d9,en,Ha Chun Sar Village Tract,hachunsar,true,false,0201244,postal EN spelling not in primary/alias set,v3,false
+5d3a35a2-fd9a-4abe-af94-97c3cf9c97bc,en,Ha Sheik Nauk Nyu Village Tract,hasheiknauknyu,true,false,0201245,postal EN spelling not in primary/alias set,v3,false
+85b20e39-9a1e-4392-b95a-2b2abfc00911,en,Ke San Bauk Lun Village Tract,kesanbauklun,true,false,0201246,postal EN spelling not in primary/alias set,v3,false
+ff38883b-2ce7-4e66-bc5b-027bc8fd7ad8,en,Ke San Sar Lin Village Tract,kesansarlin,true,false,0201247,postal EN spelling not in primary/alias set,v3,false
+f105fd7d-593e-474a-b860-af1a5bd73d13,en,Yan Naw San Ri Village Tract,yannawsanri,true,false,0201248,postal EN spelling not in primary/alias set,v3,false
+b0d10701-253b-4e94-a2ec-b367950242ee,en,Chan Ma Kauk San Ri Village Tract,chanmakauksanri,true,false,0201249,postal EN spelling not in primary/alias set,v3,false
+d7845535-bb1d-4fa9-a96e-690d83bdafea,en,Wan Ka Sun Khaw Village Tract,wankasunkhaw,true,false,0201250,postal EN spelling not in primary/alias set,v3,false
+cd5d0261-4490-417e-a8d5-d2013240823d,en,Kyu Yan Village Tract,kyuyan,true,false,0201251,postal EN spelling not in primary/alias set,v3,false
+d94af3ba-7f0f-45fc-bd36-3f246e5d32d8,en,Ke San Laung Kyan Village Tract,kesanlaungkyan,true,false,0201252,postal EN spelling not in primary/alias set,v3,false
+6aaf1981-b0bf-4533-981d-45b056b826bc,en,Kar Yaw Kon Shwe Village Tract,karyawkonshwe,true,false,0201253,postal EN spelling not in primary/alias set,v3,false
+d6b3aa8e-c2e8-4a87-b4e8-72f907299e1d,en,Pun Shein Village Tract,punshein,true,false,0201254,postal EN spelling not in primary/alias set,v3,false
+6097ec36-f2a9-42af-81f6-89e70a07319e,en,Sheik Nyu Village Tract,sheiknyu,true,false,0201255,postal EN spelling not in primary/alias set,v3,false
+03243eaf-ad82-470c-a8b3-5ecc7d0a9d30,en,Yaw Kun Village Tract,yawkun,true,false,0201256,postal EN spelling not in primary/alias set,v3,false
+95df1749-95b4-48ff-acaa-fbcb4ac5c2c8,en,Shan He Village Tract,shanhe,true,false,0201257,postal EN spelling not in primary/alias set,v3,false
+cac6603a-07a8-4ca1-bf97-36ac9a982160,en,Ta Kaing Village Tract,takaing,true,false,0201258,postal EN spelling not in primary/alias set,v3,false
+fc3eba65-7dad-44a4-9a51-7977a5541860,en,Naung Yan Village Tract,naungyan,true,false,0201259,postal EN spelling not in primary/alias set,v3,false
+45107069-5896-43bd-9557-31d06188b7cd,en,Ta Kone (1) Village Tract,takone1,true,false,0201260,postal EN spelling not in primary/alias set,v3,false
+6f048411-fd3c-418f-ab2a-0851325605eb,en,Naung Ka Lu Village Tract,naungkalu,true,false,0201261,postal EN spelling not in primary/alias set,v3,false
+1e5ebf61-7e57-4b07-b13d-9a9e1ea92a23,en,Hta Haw (1) Village Tract,htahaw1,true,false,0201263,postal EN spelling not in primary/alias set,v3,false
+21dd8d3b-56a7-46c0-9a3f-fb20f482c9c9,en,Hu Laung Village Tract,hulaung,true,false,0201264,postal EN spelling not in primary/alias set,v3,false
+645f30f4-a1db-4b2c-aeec-b310bf986380,en,Lon Laung Village Tract,lonlaung,true,false,0201265,postal EN spelling not in primary/alias set,v3,false
+4693a717-2d06-4ef4-9999-4b73c2c47c57,en,Wut Htan Village Tract,wuthtan,true,false,0201266,postal EN spelling not in primary/alias set,v3,false
+058c6ec7-ec8e-4c2c-95be-98a6a42b7067,en,Kar Mway Law Ri Village Tract,karmwaylawri,true,false,0202200,postal EN spelling not in primary/alias set,v3,false
+44ecf6b1-5edf-4793-9ea2-234770715054,en,Yan Kyone Village Tract,yankyone,true,false,0202201,postal EN spelling not in primary/alias set,v3,false
+b0d9b227-fa87-4442-aaad-1496f1f907ff,en,Nauk Nyu Khar San Village Tract,nauknyukharsan,true,false,0202202,postal EN spelling not in primary/alias set,v3,false
+d4e45ece-cb5a-4ed0-aec1-c1a3d0ada2c1,en,Kar Yaw Nauk Nyo Village Tract,karyawnauknyo,true,false,0202203,postal EN spelling not in primary/alias set,v3,false
+1e1745b2-cbc4-44fc-89ca-2bdd14e284ae,en,Htan Khaw Nauk Kone Village Tract,htankhawnaukkone,true,false,0202204,postal EN spelling not in primary/alias set,v3,false
+3bbe6a78-0a25-4bd4-9921-61586db09d87,en,Khan Ma Lar Village Tract,khanmalar,true,false,0202205,postal EN spelling not in primary/alias set,v3,false
+622f5387-9de6-4689-9fe4-ddc3bdc39c23,en,Maw Hpun Village Tract,mawhpun,true,false,0202206,postal EN spelling not in primary/alias set,v3,false
+0973579f-0919-459a-ae42-df9c2a47bae9,en,Ant Paw Village Tract,antpaw,true,false,0202207,postal EN spelling not in primary/alias set,v3,false
+e7960ae1-9300-4814-8d51-c3e54454ef7e,en,Yan Kyein Village Tract,yankyein,true,false,0202208,postal EN spelling not in primary/alias set,v3,false
+599d818f-17cf-4675-a31c-e20802955cc2,en,Law Nauk Kone Village Tract,lawnaukkone,true,false,0202209,postal EN spelling not in primary/alias set,v3,false
+3e9d5e8d-adf8-4457-b912-76c1c854bdd7,en,Tway Htway Nauk Kone Village Tract,twayhtwaynaukkone,true,false,0202210,postal EN spelling not in primary/alias set,v3,false
+2aee90b2-bfc0-40e9-a86c-0dac21539c15,en,La Kyan Village Tract,lakyan,true,false,0202211,postal EN spelling not in primary/alias set,v3,false
+7a6c26ad-ac3a-4086-b593-460e14bfab49,en,Saw Law Village Tract,sawlaw,true,false,0202212,postal EN spelling not in primary/alias set,v3,false
+16ea56c2-039c-4771-b2b7-9fa9e1269344,en,Hway Htaik Village Tract,hwayhtaik,true,false,0202213,postal EN spelling not in primary/alias set,v3,false
+ab25cc5a-67e5-4243-89c4-07cadc6d01e4,en,Laung Kyan Nauk Kone Village Tract,laungkyannaukkone,true,false,0202214,postal EN spelling not in primary/alias set,v3,false
+81b54015-13f7-4c19-8e48-9e7d77399796,en,Ma Kyan Village Tract,makyan,true,false,0202215,postal EN spelling not in primary/alias set,v3,false
+cd7209f7-52b5-4e4e-9bdb-de1267684245,en,Nyin Shaung Village Tract,nyinshaung,true,false,0202216,postal EN spelling not in primary/alias set,v3,false
+70309028-1bfc-49c0-91b3-113d146c4aa6,en,Kat Pa Lan Day Waw Village Tract,katpalandaywaw,true,false,0202217,postal EN spelling not in primary/alias set,v3,false
+231f6ae4-b11b-4fd3-b204-663091a16bc9,en,Ku Ku Nauk Kone Village Tract,kukunaukkone,true,false,0202219,postal EN spelling not in primary/alias set,v3,false
+00164f8b-d86c-4be9-9ac7-c8b4e7932bc9,en,Lun Htaung Village Tract,lunhtaung,true,false,0202220,postal EN spelling not in primary/alias set,v3,false
+15165a9e-6ac3-4053-b182-9f6f905be146,en,Lon Khin Village Tract,lonkhin,true,false,0202221,postal EN spelling not in primary/alias set,v3,false
+92f87137-a83f-49f6-a1eb-b6a0ad75182a,en,Kone Khar Lel Village Tract,konekharlel,true,false,0202222,postal EN spelling not in primary/alias set,v3,false
+54a50377-3472-466e-a890-407711604449,en,Ga Hone Village Tract,gahone,true,false,0202223,postal EN spelling not in primary/alias set,v3,false
+57b8a83c-5000-4c0a-ae68-3ec8a9d51d78,en,Kone Lan Village Tract,konelan,true,false,0202224,postal EN spelling not in primary/alias set,v3,false
+c61522f4-dede-45f5-9ee3-6e19384aeb91,en,Hton San Village Tract,htonsan,true,false,0202225,postal EN spelling not in primary/alias set,v3,false
+e51e1264-c3f3-47d4-bdfe-d00728d7454a,en,Kyun Khaung Village Tract,kyunkhaung,true,false,0202226,postal EN spelling not in primary/alias set,v3,false
+1850c1d0-84fa-41dd-b4f2-3b0332f46bbc,en,Pon Nyo Village Tract,ponnyo,true,false,0202227,postal EN spelling not in primary/alias set,v3,false
+f135ff35-23e9-4ad8-b2f8-cf025dc13595,en,Htan Khaw Village Tract,htankhaw,true,false,0202228,postal EN spelling not in primary/alias set,v3,false
+18f9d6d9-4a3c-4739-bde0-42025e9f8bd4,en,Laung Ngauk Village Tract,laungngauk,true,false,0202229,postal EN spelling not in primary/alias set,v3,false
+1289b29a-eec0-4900-8e52-40caa0e8c434,en,Saw Law Nauk Inn Village Tract,sawlawnaukinn,true,false,0202230,postal EN spelling not in primary/alias set,v3,false
+890e096a-9e3a-45de-96f1-eb485936eb04,en,Lan Khin Village Tract,lankhin,true,false,0202231,postal EN spelling not in primary/alias set,v3,false
+4dafd48e-ab5f-41ed-aebc-6c50e1bcd408,en,Kyauk Kei Village Tract,kyaukkei,true,false,0202232,postal EN spelling not in primary/alias set,v3,false
+6dbce207-07c6-4127-804e-d2ff24707045,en,Lan Nauk Village Tract,lannauk,true,false,0202233,postal EN spelling not in primary/alias set,v3,false
+86b4cb24-6540-4386-a7bb-9507248fdeaa,en,Tar Maung Village Tract,tarmaung,true,false,0202234,postal EN spelling not in primary/alias set,v3,false
+22044957-7794-475e-a149-329d7049f42b,en,Ma Thaw Ri Village Tract,mathawri,true,false,0204200,postal EN spelling not in primary/alias set,v3,false
+5bacdc41-d20e-4d40-9503-d4697e370f69,en,Raw Par Mee Village Tract,rawparmee,true,false,0204201,postal EN spelling not in primary/alias set,v3,false
+f42d58a5-b9d3-4ccd-b51c-e5977305894e,en,Htaing Hpai Yan Village Tract,htainghpaiyan,true,false,0204203,postal EN spelling not in primary/alias set,v3,false
+f4f6e346-613d-46cd-b457-7385d2051510,en,Hlan Hlaing Hla Village Tract,hlanhlainghla,true,false,0204204,postal EN spelling not in primary/alias set,v3,false
+cff020ab-fac4-4f39-8244-3d63155a6856,en,Dein Ka Lein Village Tract,deinkalein,true,false,0204205,postal EN spelling not in primary/alias set,v3,false
+0fc7fcd9-39cc-49c7-9ae7-6f97639ed213,en,Chei Yar Village Tract,cheiyar,true,false,0204206,postal EN spelling not in primary/alias set,v3,false
+7dba4fbc-1272-48c0-983b-fe1ee3029194,en,Yan Nway Village Tract,yannway,true,false,0204207,postal EN spelling not in primary/alias set,v3,false
+31e56911-e4e9-4f68-82fa-f76f13f93464,en,Lay Tein Village Tract,laytein,true,false,0204208,postal EN spelling not in primary/alias set,v3,false
+2cc406cd-0669-46fb-b617-6dea208c034d,en,Ku Kee Village Tract,kukee,true,false,0204209,postal EN spelling not in primary/alias set,v3,false
+fb979041-9fc5-4184-9b69-dc1de98ab492,en,Na Mi Yu Pi Village Tract,namiyupi,true,false,0204210,postal EN spelling not in primary/alias set,v3,false
+2be73d69-566e-4154-9366-0d50096c6fe4,en,Pan Set (Pan Sat) Village Tract,pansetpansat,true,false,0204211,postal EN spelling not in primary/alias set,v3,false
+3689b99e-95e8-495d-9a6f-699bfa300eca,en,Hpun Tha Yet Village Tract,hpunthayet,true,false,0204212,postal EN spelling not in primary/alias set,v3,false
+d899d4cf-cf03-4151-956f-daad2fb2fd08,en,Kon Kaing Lon Village Tract,konkainglon,true,false,0204213,postal EN spelling not in primary/alias set,v3,false
+ed1f8c46-0eec-48ce-98f4-1effa88df698,en,Hein Kwet Village Tract,heinkwet,true,false,0204215,postal EN spelling not in primary/alias set,v3,false
+8665472b-0e02-4c56-a4b8-7ed7d5c9d553,en,Bon Bar Village Tract,bonbar,true,false,0204216,postal EN spelling not in primary/alias set,v3,false
+f5c3ff81-e11f-416b-bae5-dd2c51cba6e2,en,Hpway Lin Village Tract,hpwaylin,true,false,0204217,postal EN spelling not in primary/alias set,v3,false
+6a887e5c-23df-4bb7-abb9-1689781f0815,en,Hpai Lin Kut Village Tract,hpailinkut,true,false,0204218,postal EN spelling not in primary/alias set,v3,false
+dba1f67c-f6ef-4b37-8e3d-b57d9701c5a7,en,Sa Yar Hpawt Village Tract,sayarhpawt,true,false,0204219,postal EN spelling not in primary/alias set,v3,false
+4ef4855f-e93e-40a3-a675-10ae8b4d9bd6,en,Dan Sa Ku Village Tract,dansaku,true,false,0204220,postal EN spelling not in primary/alias set,v3,false
+1429fc36-050b-4cbe-9b16-b60424da7735,en,Maw Nwan Village Tract,mawnwan,true,false,0204221,postal EN spelling not in primary/alias set,v3,false
+19130eec-d883-4e0e-8b59-fb6481249d22,en,Hlwa Zin Kone Village Tract,hlwazinkone,true,false,0205210,postal EN spelling not in primary/alias set,v3,false
+1bccef7b-1b8f-4472-b36b-bf45105310cc,en,Man That Village Tract,manthat,true,false,0205252,postal EN spelling not in primary/alias set,v3,false
+308f727f-ab45-491b-a514-a4b215fe3e1a,en,Maing Nwe Village Tract,maingnwe,true,false,0206206,postal EN spelling not in primary/alias set,v3,false
+0f2089c5-b445-4698-b80a-3e6dd44f6f19,en,Inn Kyin Taung Village Tract,innkyintaung,true,false,0211228,postal EN spelling not in primary/alias set,v3,false
+924eefc5-28f2-44e7-bcba-f0e5e16536fd,my,တဇယ်ချောင် ကျေးရွာအုပ်စု,တဇယ်ချောင်,true,false,0212230,postal MM spelling not in primary/alias set,v3,false
+e5cb0ee8-fbba-44e7-b190-019e936d5873,en,Man Tan Village Tract,mantan,true,false,0216223,postal EN spelling not in primary/alias set,v3,false
+077f5ccf-9f7e-49da-8bbe-0ca8ab0db27d,en,Ta Dar Kine Village Tract,tadarkine,true,false,0216236,postal EN spelling not in primary/alias set,v3,false
+c74bd9d1-8ac5-4ee2-b7d2-f345006bc8b8,en,Myin Thar Oo Village Tract,myintharoo,true,false,0220233,postal EN spelling not in primary/alias set,v3,false
+9afb1c46-d4be-4294-9f67-6bfbdadefff9,en,Kyoe Kyar Village Tract,kyoekyar,true,false,0221230,postal EN spelling not in primary/alias set,v3,false
+bc50c660-4819-4f6d-8e17-a26aa58096c7,my,ရွာမုံတောင် ကျေးရွာအုပ်စု,ရွာမုံတောင်,true,false,0222251,postal MM spelling not in primary/alias set,v3,false
+2dcbae95-2974-4954-a3c7-91efea679728,my,ကုလားမ	Ku Lar Ma ကျေးရွာအုပ်စု,ကုလားမkularma,true,false,0226228,postal MM spelling not in primary/alias set,v3,false
+a22dd3d4-6abb-41ce-b7f1-a076dabc30ea,en,Kyoe Kyar Village Tract,kyoekyar,true,false,0226233,postal EN spelling not in primary/alias set,v3,false
+8008d28d-4cd4-4a2c-a30a-d93043fbd8f8,en,Pauk Tone Village Tract,pauktone,true,false,0226237,postal EN spelling not in primary/alias set,v3,false
+e54b4078-b5a6-441b-8811-ff2649ec4008,en,Kyoet Kone Village Tract,kyoetkone,true,false,0227238,postal EN spelling not in primary/alias set,v3,false
+796676ad-f4ee-4f78-8f41-a8ecb8cd9480,en,Kyoe Kyar Kan Village Tract,kyoekyarkan,true,false,0230237,postal EN spelling not in primary/alias set,v3,false
+a94b01c6-32c4-49f5-aa27-668229fbb863,en,Ka Paing-t Thee Kone Village Tract,kapaingttheekone,true,false,0231234,postal EN spelling not in primary/alias set,v3,false
+32a6a9bd-ac06-450a-9941-e113a041d76d,en,Ma Gyi Khwa Village Tract,magyikhwa,true,false,0233211,postal EN spelling not in primary/alias set,v3,false
+407b2b53-49e5-4d78-b4ab-d91a14595a7a,en,Kyoe Kyar U Village Tract,kyoekyaru,true,false,0235202,postal EN spelling not in primary/alias set,v3,false
+9a9f9a65-3bd9-4b65-9ab5-ebe7883bb47d,en,Thorzan Village Tract,thorzan,true,false,0303252,postal EN spelling not in primary/alias set,v3,false
+8a21bc35-5435-4207-a3dd-f53012e50f36,en,Haicin Village Tract,haicin,true,false,0305228,postal EN spelling not in primary/alias set,v3,false
+5406f84a-99bf-4d05-8cf2-c42bd3ae7d5c,en,Shar Ta Lai Village Tract,shartalai,true,false,0306255,postal EN spelling not in primary/alias set,v3,false
+ffac094f-0ab0-4150-8d2a-dc4e5e6c8186,en,Hlaykawng Village Tract,hlaykawng,true,false,0307217,postal EN spelling not in primary/alias set,v3,false
+fd2ed452-1b78-4716-b494-65ef162526bc,en,Twee Kin Wa Village Tract,tweekinwa,true,false,0309209,postal EN spelling not in primary/alias set,v3,false
+fb5d46fc-a751-4f23-844c-ffe691325164,en,Aung Ya Da Nar Quarter,aungyadanar,true,false,0401012,postal EN spelling not in primary/alias set,v3,false
+d00faaea-d293-4573-8711-99cb6bd10c0f,my,မြို့မ ရပ်ကွက်,မ,true,false,0407002,postal MM spelling not in primary/alias set,v3,false
+d00faaea-d293-4573-8711-99cb6bd10c0f,en,Myo Ma Quarter,myoma,true,false,0407002,postal EN spelling not in primary/alias set,v3,false
+b95dd609-1cf7-4ddf-8eb5-bfbce77213c8,en,Aye Ka RitA Village Tract,ayekarita,true,false,0408227,postal EN spelling not in primary/alias set,v3,false
+6fe1409b-acbf-4f6e-98de-c5ed8a40e001,en,In Yone Village Tract,inyone,true,false,0408242,postal EN spelling not in primary/alias set,v3,false
+8ecbcbef-df6b-4006-b2d8-0923a07533b8,en,Nyaung Kyet Village Tract,nyaungkyet,true,false,0410211,postal EN spelling not in primary/alias set,v3,false
+66c0dbc1-2c6e-4eca-9db9-4d118e704a18,en,Pa Zin Naint Village Tract,pazinnaint,true,false,0411228,postal EN spelling not in primary/alias set,v3,false
+9ea4b517-f8d8-427a-8ebb-b625c8b909b3,en,Pa Lin Gyi Village Tract,palingyi,true,false,0413206,postal EN spelling not in primary/alias set,v3,false
+98c73992-54b4-4b7c-9a0f-2a65a45681c2,en,Hpa La Taing Village Tract,hpalataing,true,false,0413207,postal EN spelling not in primary/alias set,v3,false
+fadd9d49-505c-4514-b4c8-f43e447b2c04,en,Pa Lin Pyar Gyi Village Tract,palinpyargyi,true,false,0413213,postal EN spelling not in primary/alias set,v3,false
+5e757427-89a0-4b8e-becb-81581f8fb120,my,မောင်းတိုင် (၂) ရပ်ကွက်,မောင်းတိုင်၂,true,false,0414004,postal MM spelling not in primary/alias set,v3,false
+100929e8-c1b4-440b-a357-88a9d1771876,en,Let Pan Pu Village Tract,letpanpu,true,false,0414214,postal EN spelling not in primary/alias set,v3,false
+dee814eb-5f69-46be-8d46-8518438bd515,en,Kalar Kan Village Tract,kalarkan,true,false,0414233,postal EN spelling not in primary/alias set,v3,false
+a1a22216-56e5-4eb8-b48b-05b66610ef9a,en,Kan Ma Village Tract,kanma,true,false,0416207,postal EN spelling not in primary/alias set,v3,false
+ad48cdc3-cd28-4b26-ad1d-1a2504e4b2a1,en,Shwe Lin Swe Village Tract,shwelinswe,true,false,0419226,postal EN spelling not in primary/alias set,v3,false
+143284eb-3796-45c6-858f-2d8b84de3321,en,Taung Sone Village Tract,taungsone,true,false,0419239,postal EN spelling not in primary/alias set,v3,false
+96311672-2036-4819-b7c4-9995028ed1ba,en,Kon Lat (North) Village Tract,konlatnorth,true,false,0419273,postal EN spelling not in primary/alias set,v3,false
+d8686795-d03f-4dfd-a5c0-868d452655ab,en,Gaung Ton Village Tract,gaungton,true,false,0421265,postal EN spelling not in primary/alias set,v3,false
+a05e9898-cb1e-44c0-ae1e-d1c7fac9001b,en,War Bo Chaung Village Tract,warbochaung,true,false,0422235,postal EN spelling not in primary/alias set,v3,false
+7cce9d43-594c-4197-9dbd-76a720746b04,en,Myet Hmaung Village Tract,myethmaung,true,false,0422264,postal EN spelling not in primary/alias set,v3,false
+f6a14c8d-0105-43d0-88c1-cbff3b01dcf4,en,Ka Bar Hpyu Village Tract,kabarhpyu,true,false,0423266,postal EN spelling not in primary/alias set,v3,false
+f4d37e24-1852-4fb7-b177-d7377c2cffe6,my,မဟာနွယ်စင် ရပ်ကွက်,မဟာနွယ်စင်,true,false,0503001,postal MM spelling not in primary/alias set,v3,false
+5c5e56fd-15a3-4ae4-9bf7-364b3cc521e1,en,Hpone Kone Village Tract,hponekone,true,false,0510221,postal EN spelling not in primary/alias set,v3,false
+c526d25e-8351-4a6a-a077-3428f1e75d41,en,Ya Ta Nar Bon Mi Village Tract,yatanarbonmi,true,false,0512281,postal EN spelling not in primary/alias set,v3,false
+129c2e80-373b-42a6-8b83-2dd551833b11,en,Thin Tain Village Tract,thintain,true,false,0513253,postal EN spelling not in primary/alias set,v3,false
+da4b92d1-064c-4583-a4be-d88286926760,en,Ah Nauk Thar Ga Ya Village Tract,ahnaukthargaya,true,false,0515243,postal EN spelling not in primary/alias set,v3,false
+52dab79f-f67f-4f86-8477-8fe48382f707,en,Ah Shey Thar Ga Ya Village Tract,ahsheythargaya,true,false,0515264,postal EN spelling not in primary/alias set,v3,false
+ef7c74b0-705e-49ce-a187-42e47950e6b0,en,Maing Lan Village Tract,mainglan,true,false,0516248,postal EN spelling not in primary/alias set,v3,false
+84278f73-8a59-4748-bba3-441efe01493e,en,Kywe Kan Village Tract,kywekan,true,false,0518217,postal EN spelling not in primary/alias set,v3,false
+242302f6-7359-45f5-b800-fc92dab7a677,en,Shaw Hpyu Kan Village Tract,shawhpyukan,true,false,0518252,postal EN spelling not in primary/alias set,v3,false
+e27760c5-5cf0-49d1-9141-354faedc41d3,en,Ma Kyee Kwa Village Tract,makyeekwa,true,false,0519270,postal EN spelling not in primary/alias set,v3,false
+c6385474-c59f-48f3-8743-385cb31131c2,en,Kyoet Kone Village Tract,kyoetkone,true,false,0521203,postal EN spelling not in primary/alias set,v3,false
+185a8a3d-b787-4f5e-85b8-757224651963,en,War Yin Toke Village Tract,waryintoke,true,false,0521263,postal EN spelling not in primary/alias set,v3,false
+bbe8414a-5fed-444a-9601-c7f65ae3d6c5,en,Kan Ma Village Tract,kanma,true,false,0522213,postal EN spelling not in primary/alias set,v3,false
+1345f762-fc7b-46e1-8bfb-6ef9d43f4d9e,en,Hlwa Zin Village Tract,hlwazin,true,false,0522246,postal EN spelling not in primary/alias set,v3,false
+c0a6805f-0baa-4888-90a8-0204b99083aa,en,Inn Taing Village Tract,inntaing,true,false,0523210,postal EN spelling not in primary/alias set,v3,false
+4c289063-f4c1-4ca5-9329-c566c727d2b6,en,Lel Gyi (North) Village Tract,lelgyinorth,true,false,0524212,postal EN spelling not in primary/alias set,v3,false
+a4592d4d-19e3-4068-9cfd-b05ab57d9266,en,Poke Par Lwin Village Tract,pokeparlwin,true,false,0524216,postal EN spelling not in primary/alias set,v3,false
+a8101111-6a22-44ad-9bee-b56d8a54662d,en,Kyauk Ta Tar Village Tract,kyauktatar,true,false,0524220,postal EN spelling not in primary/alias set,v3,false
+913b6e35-81b5-4413-84d3-7e0e3f86dbce,en,Aing Lyar (North) Village Tract,ainglyarnorth,true,false,0524281,postal EN spelling not in primary/alias set,v3,false
+8bbadbb9-9c24-428d-a9f7-f0dd69f3bf6d,en,Aing Lyar (South) Village Tract,ainglyarsouth,true,false,0524282,postal EN spelling not in primary/alias set,v3,false
+03e44ffe-320b-4fa8-915f-4fcf7a63fd64,en,No (၆) Quarter,no၆,true,false,0526006,postal EN spelling not in primary/alias set,v3,false
+8ed03108-6502-49bd-baf2-ddf01e08f3f7,en,No (၇) Quarter,no၇,true,false,0526007,postal EN spelling not in primary/alias set,v3,false
+20c28d89-b5f4-4d58-be3b-a0d08102b6cd,en,Shaw Hpyu Village Tract,shawhpyu,true,false,0526219,postal EN spelling not in primary/alias set,v3,false
+9c6a14e8-927c-45ff-88df-8483f0f7369c,en,Nam Hu Village Tract,namhu,true,false,0601203,postal EN spelling not in primary/alias set,v3,false
+ee44d2b2-b411-4e1b-9332-3bfd0fbc6d50,en,Pan Sit Village Tract,pansit,true,false,0603208,postal EN spelling not in primary/alias set,v3,false
+9228e1f2-9ada-49ed-8b56-dbcc573862a7,en,Sat Chan Village Tract,satchan,true,false,0604218,postal EN spelling not in primary/alias set,v3,false
+f6ed4d3a-8343-4982-aa03-370fe7cce6f8,en,Sin Ghaung Village Tract,singhaung,true,false,0604223,postal EN spelling not in primary/alias set,v3,false
+8a828723-fac4-4f2d-ba47-86870964e8b7,my,ထီပေါင်း ကျေးရွာအုပ်စု,ထီပေါင်း,true,false,0605204,postal MM spelling not in primary/alias set,v3,false
+b1e5c3f7-39e3-4406-a45b-69e09690ef05,en,Nang Toke Village Tract,nangtoke,true,false,0605212,postal EN spelling not in primary/alias set,v3,false
+1552752f-a7ac-4f47-b69f-69061d99f35a,en,Ohn Kwe Village Tract,ohnkwe,true,false,0607213,postal EN spelling not in primary/alias set,v3,false
+3a6b922c-a42f-46b5-9738-eca1aee48292,en,Nang Kaung Hmu Village Tract,nangkaunghmu,true,false,0607214,postal EN spelling not in primary/alias set,v3,false
+4ac1df10-acb3-4da1-b807-e4d8e979fc43,en,Nan Thea Village Tract,nanthea,true,false,0608200,postal EN spelling not in primary/alias set,v3,false
+9ba594f5-acfa-48a0-a376-b239f623dd25,en,Taung Chay Myin Sa Hkun Village Tract,taungchaymyinsahkun,true,false,0608206,postal EN spelling not in primary/alias set,v3,false
+9d5ad005-adc8-41d8-9af0-17970c5dfc0a,en,Mong Ping Village Tract,mongping,true,false,0609215,postal EN spelling not in primary/alias set,v3,false
+c7ab77fa-f316-48f0-86da-52ca1badb8b5,en,Nar Sang Village Tract,narsang,true,false,0614201,postal EN spelling not in primary/alias set,v3,false
+97d333ab-3be4-4ad3-bf17-67d4e0a77cef,en,Hpet Nam Village Tract,hpetnam,true,false,0615201,postal EN spelling not in primary/alias set,v3,false
+0d871b16-38fb-4fb5-b341-81501d856a71,en,Hseng Lin Village Tract,hsenglin,true,false,0615205,postal EN spelling not in primary/alias set,v3,false
+33d0589d-44c5-42e1-86eb-d1c8f90daa5a,en,Nansang Village Tract,nansang,true,false,0616200,postal EN spelling not in primary/alias set,v3,false
+140c91ad-6e77-4e47-8190-08a933bdfd57,en,Kyeng Hkam Village Tract,kyenghkam,true,false,0621207,postal EN spelling not in primary/alias set,v3,false
+9619858a-e79e-4126-80d0-888a7935e808,en,Maung Hna Ma Village Tract,maunghnama,true,false,0702246,postal EN spelling not in primary/alias set,v3,false
+f936f85f-e415-4b61-b74f-3302fb039f71,en,Ta Ya Gu Village Tract,tayagu,true,false,0703215,postal EN spelling not in primary/alias set,v3,false
+cf2d8d05-f8e7-4baf-bfba-a250887a9b66,en,Wa Ya Kyun Village Tract,wayakyun,true,false,0703251,postal EN spelling not in primary/alias set,v3,false
+e44739c4-64f7-46b0-a0fe-e44de9efc0eb,en,Maung Hna Ma (a) Pa Oe Thei Ma Village Tract,maunghnamaapaoetheima,true,false,0703274,postal EN spelling not in primary/alias set,v3,false
+b7b153e6-91d4-4c9b-9349-7741dba00be5,en,Poe Shi Pyin Village Tract,poeshipyin,true,false,0705208,postal EN spelling not in primary/alias set,v3,false
+570161c3-994b-4aea-8740-2c4971aebf7e,my,ကြာကန် ကျေးရွာအုပ်စု,ကြာကန်,true,false,0710239,postal MM spelling not in primary/alias set,v3,false
+9efb1454-70e2-4455-884f-644d91d23476,en,Su Yit Chaung Village Tract,suyitchaung,true,false,0710255,postal EN spelling not in primary/alias set,v3,false
+5e897f17-f3d0-4b08-b58c-ac2a25771aab,en,Maung Hna Ma Village Tract,maunghnama,true,false,0710256,postal EN spelling not in primary/alias set,v3,false
+76f09dec-e802-4fe7-a2d8-4b947909256e,en,Way Thar Li Village Tract,waytharli,true,false,0710264,postal EN spelling not in primary/alias set,v3,false
+bc951f44-765d-4107-8f83-ae0637ab24dc,my,ကုန်းဘောင် ကျေးရွာအုပ်စု,ကုန်းဘောင်,true,false,0713212,postal MM spelling not in primary/alias set,v3,false
+fe75541d-799c-49e7-b3a7-b00970e6aac3,en,Kyauk Maung Hna Ma Village Tract,kyaukmaunghnama,true,false,0716208,postal EN spelling not in primary/alias set,v3,false
+13a0ab50-af17-4743-a32a-b4c020f07d60,en,Kyoe Kyar Kwin Village Tract,kyoekyarkwin,true,false,0716224,postal EN spelling not in primary/alias set,v3,false
+8c1510fc-307a-4561-9a73-6e2d5fd3dae3,en,Pu Zun Hpay Village Tract,puzunhpay,true,false,0717258,postal EN spelling not in primary/alias set,v3,false
+07b1df73-2998-4046-b6e2-a074980c2015,en,Baw Net Gyi Village Tract,bawnetgyi,true,false,0801229,postal EN spelling not in primary/alias set,v3,false
+f7a25dd0-5a9b-4e55-af40-405105a33bf4,my,ဆွဲဒလွဲ ကျေးရွာအုပ်စု,ဆွဲဒလွဲ,true,false,0803230,postal MM spelling not in primary/alias set,v3,false
+39a82144-2566-44b8-b2ce-5c5a6d19674b,en,Hto War Saik Village Tract,htowarsaik,true,false,0804212,postal EN spelling not in primary/alias set,v3,false
+b61a3b8c-1ba5-43a9-8b9a-edf5487f9df5,en,Ah Nauk Hpet Village Tract,ahnaukhpet,true,false,0805209,postal EN spelling not in primary/alias set,v3,false
+c3bfbb75-0c65-496e-947b-62cc65f2d2b5,en,Set Hle Village Tract,sethle,true,false,0805232,postal EN spelling not in primary/alias set,v3,false
+434fe068-e916-4c6f-82b3-33943fbf271d,en,Tar Wa Yae Ta Khar Village Tract,tarwayaetakhar,true,false,0808208,postal EN spelling not in primary/alias set,v3,false
+727ece5e-3f13-4a52-a04e-f8541da81c29,en,Than Tan Khar Village Tract,thantankhar,true,false,0809241,postal EN spelling not in primary/alias set,v3,false
+6233076d-e336-4f9a-b5de-d4a223c1921e,en,Thar Ga Ya Village Tract,thargaya,true,false,0811243,postal EN spelling not in primary/alias set,v3,false
+378b8697-2777-4c81-b3e1-5af682cf7847,en,Nga See Laung Village Tract,ngaseelaung,true,false,0813227,postal EN spelling not in primary/alias set,v3,false
+425b698c-fef5-418d-b09d-1a9cce3abb99,en,San Pya Chauk Maing Village Tract,sanpyachaukmaing,true,false,0902221,postal EN spelling not in primary/alias set,v3,false
+95450682-c163-42e5-bb9d-01bae68486ce,my,အမှတ် (၁၁) (ကန်တိုမင်နယ်မြေ) ရပ်ကွက်,၁၁ကန်တိုမင်နယ်မြေ,true,false,1001011,postal MM spelling not in primary/alias set,v3,false
+95450682-c163-42e5-bb9d-01bae68486ce,en,No (11) (Kan To Min Nei Myay) Quarter,11kantominneimyay,true,false,1001011,postal EN spelling not in primary/alias set,v3,false
+e467b782-a92e-46f1-bc11-447ae2faa7c5,en,No (12)  (Yae  Kyi U ) Quarter,12yaekyiu,true,false,1001012,postal EN spelling not in primary/alias set,v3,false
+7a837128-ddce-444c-a8f7-c852329ece96,my,အမှတ် (၁၃)  (ရွှေဝတ်မှုံ) ရပ်ကွက်,၁၃ရွှေဝတ်မှုံ,true,false,1001013,postal MM spelling not in primary/alias set,v3,false
+33915f28-1744-488b-8a49-520ea835fa93,en,Shaw Kone Village Tract,shawkone,true,false,1002248,postal EN spelling not in primary/alias set,v3,false
+71ffa583-8e38-4d61-bf4b-ffe92002f242,en,Ma Ka Kyun Village Tract,makakyun,true,false,1002267,postal EN spelling not in primary/alias set,v3,false
+ff125393-d1e3-4506-9307-8dd3a0a32044,my,အင်္ဂပို ကျေးရွာအုပ်စု,အင်္ဂပို,true,false,1006280,postal MM spelling not in primary/alias set,v3,false
+690dac30-5de9-4638-ae78-ab204efeca02,my,အိုင်စောက် ကျေးရွာအုပ်စု,အိုင်စောက်,true,false,1006296,postal MM spelling not in primary/alias set,v3,false
+b0583921-9925-4a64-91f5-a61c539fbf99,en,vInn Par Village Tract,vinnpar,true,false,1009219,postal EN spelling not in primary/alias set,v3,false
+3f6eaf46-6256-457c-9880-49cd0856eb56,en,Thea Phyu Village Tract,theaphyu,true,false,1011222,postal EN spelling not in primary/alias set,v3,false
+61daa6a0-d3ac-449b-aabe-bb57f92a111d,en,Maung De Village Tract,maungde,true,false,1012254,postal EN spelling not in primary/alias set,v3,false
+c7228ce4-2d40-4f25-ab3e-419756a784a7,en,Gon Nyin Tan Village Tract,gonnyintan,true,false,1013211,postal EN spelling not in primary/alias set,v3,false
+275965b5-252c-4a52-9c90-c4acbd053e85,en,Than Mar Day Wa Village Tract,thanmardaywa,true,false,1013225,postal EN spelling not in primary/alias set,v3,false
+8bf056f3-e7c3-412b-9eab-aedfa7bf42f2,en,Ka Tawt Ka Yat Village Tract,katawtkayat,true,false,1014255,postal EN spelling not in primary/alias set,v3,false
+cddb79b5-ea9f-4802-ba3c-c67abc75a8d1,en,Chaung Zauk Village Tract,chaungzauk,true,false,1015207,postal EN spelling not in primary/alias set,v3,false
+bc8781c8-3bb7-43b2-88a2-979fac511612,en,Tha Byu Pin Village Tract,thabyupin,true,false,1015246,postal EN spelling not in primary/alias set,v3,false
+8a5c6970-5130-487e-896a-798f23f07de9,en,Tha Byu Village Tract,thabyu,true,false,1015253,postal EN spelling not in primary/alias set,v3,false
+5b1e7ada-3389-444d-8296-4c71c2e75553,en,Tha Baw Tha Byu Village Tract,thabawthabyu,true,false,1015261,postal EN spelling not in primary/alias set,v3,false
+96fdbbbb-0657-4cb2-a42d-66db07e5e3f3,en,Tha Byu Yae Lel Kyun Village Tract,thabyuyaelelkyun,true,false,1016242,postal EN spelling not in primary/alias set,v3,false
+1938c3be-fd94-4816-ac01-4f7bf1997ad1,en,Myo Kwet Thit Quarter,myokwetthit,true,false,1017004,postal EN spelling not in primary/alias set,v3,false
+a7a666c6-e851-417c-bd00-6cdd689d4e8e,en,Ah Hta Ka (1) Kyaung Quarter,ahhtaka1kyaung,true,false,1018006,postal EN spelling not in primary/alias set,v3,false
+50576c97-0778-4514-871f-6d74a5074c57,my,ပျဉ်းမကုန်း (အရှေ့) ကျေးရွာအုပ်စု,ပျဉ်းမကုန်းအရှေ့,true,false,1019250,postal MM spelling not in primary/alias set,v3,false
+b0534693-f8df-4690-93ac-02b890c572bd,en,Pwe Sar Gon Nyin Tan Village Tract,pwesargonnyintan,true,false,1019256,postal EN spelling not in primary/alias set,v3,false
+66bf9171-7b0d-40e0-9d2c-394c38ce62de,en,Gon Nyin Tan Village Tract,gonnyintan,true,false,1019266,postal EN spelling not in primary/alias set,v3,false
+616e7824-b3ad-4b6b-a9e4-bfb86449c368,en,Htaw Ka Nwut Quarter,htawkanwut,true,false,1020009,postal EN spelling not in primary/alias set,v3,false
+328e304f-b860-425c-965a-1fc7671c66ed,my,ကုန်းသာကြီး ကျေးရွာအုပ်စု,ကုန်းသာကြီး,true,false,1021201,postal MM spelling not in primary/alias set,v3,false
+a0099a4b-c43d-4f87-96b7-630ed6a4c52a,en,Nga Tan Ta Yar Village Tract,ngatantayar,true,false,1021281,postal EN spelling not in primary/alias set,v3,false
+bff3f5ba-6ff6-4b88-8a88-fb73b91ab365,en,vKun Chan Village Tract,vkunchan,true,false,1021291,postal EN spelling not in primary/alias set,v3,false
+f50eca24-a338-4b62-8e69-a163bc93e8d7,my,ပိတ္တာလေး ကျေးရွာအုပ်စု,ပိတ္တာလေး,true,false,1022221,postal MM spelling not in primary/alias set,v3,false
+9829c9f9-897f-4348-b0b1-b6ff647d667d,my,(၁) ဓနိတော ရပ်ကွက်,၁ဓနိတော,true,false,1025001,postal MM spelling not in primary/alias set,v3,false
+74db400d-2099-4fca-a60f-2e194d98a355,my,(၁၄) စစ်ကွက်သစ် ရပ်ကွက်,၁၄စစ်ကွက်သစ်,true,false,1025014,postal MM spelling not in primary/alias set,v3,false
+fd94a139-c2ed-462f-bd4b-2d718c14bfdd,my,(၁၆) အကြီးကွက်သစ် ရပ်ကွက်,၁၆အကြီးကွက်သစ်,true,false,1025016,postal MM spelling not in primary/alias set,v3,false
+1424e39a-1407-4428-b9fe-343fb6870371,my,သုဝဏ္ဏ - (၂၄) ရပ်ကွက်,သုဝဏ္ဏ၂၄,true,false,1107027,postal MM spelling not in primary/alias set,v3,false
+1424e39a-1407-4428-b9fe-343fb6870371,en,Thu Wa Na - (24) Quarter,thuwana24,true,false,1107027,postal EN spelling not in primary/alias set,v3,false
+7218546e-f864-441c-a898-65e4bac20acd,my,သုဝဏ္ဏ - (၂၅) ရပ်ကွက်,သုဝဏ္ဏ၂၅,true,false,1107028,postal MM spelling not in primary/alias set,v3,false
+7218546e-f864-441c-a898-65e4bac20acd,en,Thu Wa Na - (25) Quarter,thuwana25,true,false,1107028,postal EN spelling not in primary/alias set,v3,false
+8fdaef56-3eb9-4fd4-a05d-825bb22d17d0,my,သုဝဏ္ဏ - (၂၉) ရပ်ကွက်,သုဝဏ္ဏ၂၉,true,false,1107029,postal MM spelling not in primary/alias set,v3,false
+8fdaef56-3eb9-4fd4-a05d-825bb22d17d0,en,Thu Wa Na - (29) Quarter,thuwana29,true,false,1107029,postal EN spelling not in primary/alias set,v3,false
+a187fb3f-38bd-46b8-843e-b740f4296aa1,my,ဘောဂ ရပ်ကွက်,ဘောဂ,true,false,1110012,postal MM spelling not in primary/alias set,v3,false
+a187fb3f-38bd-46b8-843e-b740f4296aa1,en,Baw Ga Quarter,bawga,true,false,1110012,postal EN spelling not in primary/alias set,v3,false
+13d6f7f6-c902-4145-91ae-90a010490e46,my,ပန်းလှိုင် ရပ်ကွက်,ပန်းလှိုင်,true,false,1110014,postal MM spelling not in primary/alias set,v3,false
+13d6f7f6-c902-4145-91ae-90a010490e46,en,Pan Hlaing Quarter,panhlaing,true,false,1110014,postal EN spelling not in primary/alias set,v3,false
+4326d91f-4442-4d6b-a2d5-492de80c53d5,my,စောရန်ပိုင်အနောက် ရပ်ကွက်,စောရန်ပိုင်အနောက်,true,false,1112002,postal MM spelling not in primary/alias set,v3,false
+4326d91f-4442-4d6b-a2d5-492de80c53d5,en,Saw Yan Paing_West Quarter,sawyanpaingwest,true,false,1112002,postal EN spelling not in primary/alias set,v3,false
+1488ecbb-d376-4394-85a7-1a5c851f594a,my,စောရန်ပိုင်(အရှေ့) ရပ်ကွက်,စောရန်ပိုင်အရှေ့,true,false,1112003,postal MM spelling not in primary/alias set,v3,false
+1488ecbb-d376-4394-85a7-1a5c851f594a,en,Saw Yan Paing_East Quarter,sawyanpaingeast,true,false,1112003,postal EN spelling not in primary/alias set,v3,false
+03987ecd-95c1-47e2-8f41-5cb59f380ac5,my,စောရန်ပိုင်တောင် ရပ်ကွက်,စောရန်ပိုင်တောင်,true,false,1112004,postal MM spelling not in primary/alias set,v3,false
+03987ecd-95c1-47e2-8f41-5cb59f380ac5,en,Saw Yan Paing_South Quarter,sawyanpaingsouth,true,false,1112004,postal EN spelling not in primary/alias set,v3,false
+186afb5f-f8f4-41f0-bc6a-4a5b77df1732,my,စောရန်ပိုင်မြောက် ရပ်ကွက်,စောရန်ပိုင်မြောက်,true,false,1112006,postal MM spelling not in primary/alias set,v3,false
+186afb5f-f8f4-41f0-bc6a-4a5b77df1732,en,Saw Yan Paing_North Quarter,sawyanpaingnorth,true,false,1112006,postal EN spelling not in primary/alias set,v3,false
+f6f06e23-d5d7-4c8d-97bd-171eeed0606a,my,မြို့မ ရပ်ကွက်,မ,true,false,1120001,postal MM spelling not in primary/alias set,v3,false
+f6f06e23-d5d7-4c8d-97bd-171eeed0606a,en,Myo Ma Quarter,myoma,true,false,1120001,postal EN spelling not in primary/alias set,v3,false
+c0b70f42-48db-4a23-86ce-64d8094cbfd9,my,ဗိုလ်ချိုအမှတ် (၁) ရပ်ကွက်,ဗိုလ်ချို၁,true,false,1120019,postal MM spelling not in primary/alias set,v3,false
+c0b70f42-48db-4a23-86ce-64d8094cbfd9,en,Bo Cho No (1) Quarter,bocho1,true,false,1120019,postal EN spelling not in primary/alias set,v3,false
+8456bac6-30e6-4f37-a54c-d97c110ebd3b,my,ဗိုလ်ချိုအမှတ် (၂) ရပ်ကွက်,ဗိုလ်ချို၂,true,false,1120020,postal MM spelling not in primary/alias set,v3,false
+8456bac6-30e6-4f37-a54c-d97c110ebd3b,en,Bo Cho No (2) Quarter,bocho2,true,false,1120020,postal EN spelling not in primary/alias set,v3,false
+852af3e9-ceed-4152-a8e5-0b35d49fafdb,my,ဆရာစံ ရပ်ကွက်,ဆရာစံ,true,false,1120021,postal MM spelling not in primary/alias set,v3,false
+852af3e9-ceed-4152-a8e5-0b35d49fafdb,en,Sa Yar San Quarter,sayarsan,true,false,1120021,postal EN spelling not in primary/alias set,v3,false
+0049e4c9-5afb-41fe-aca9-f22a6622b835,en,Thongwa (West) Village Tract,thongwawest,true,false,1131211,postal EN spelling not in primary/alias set,v3,false
+190b6979-86fa-42d3-b316-7debdd609c08,en,Kyone Kyone Kya Village Tract,kyonekyonekya,true,false,1132203,postal EN spelling not in primary/alias set,v3,false
+5b4554bf-5b38-4ea5-98cd-0d9ac649ab76,en,Ka Ma Ka Loke Village Tract,kamakaloke,true,false,1132217,postal EN spelling not in primary/alias set,v3,false
+0af6d724-87e1-4a49-8f15-9d393fb1b741,en,Sin Kyu Village Tract,sinkyu,true,false,1132241,postal EN spelling not in primary/alias set,v3,false
+f62e0298-be50-4e7c-aa24-b66b61cedee7,en,Pyin Ka Toe Village Tract,pyinkatoe,true,false,1135202,postal EN spelling not in primary/alias set,v3,false
+928479ac-090c-4d69-8c11-40963d4ac346,en,Sin Sa Kan Village Tract,sinsakan,true,false,1138211,postal EN spelling not in primary/alias set,v3,false
+5e32dc17-2411-4786-b6d7-217b63a3b991,my,အမှတ် (၁၁) ရပ်ကွက် | အမှတ်(၁၁) ရပ်ကွက်,၁၁၁၁,true,false,1141003,postal MM spelling not in primary/alias set,v3,false
+63a8a8d7-71f3-4c24-9dc2-1bd6f7ff6c1e,my,ရွာသာကြီး (တောင်) ကျေးရွာအုပ်စု,ရွာသာကြီးတောင်,true,false,1143200,postal MM spelling not in primary/alias set,v3,false
+c2f72006-6351-4c08-b709-40609f19568e,my,သုံးခွ (တောင်) ကျေးရွာအုပ်စု,သုံးခွတောင်,true,false,1143201,postal MM spelling not in primary/alias set,v3,false
+21bc13ce-d666-4441-9c7f-64b882f385df,my,လေးဒေါင့်ကန် ကျေးရွာအုပ်စု,လေးဒေါင့်ကန်,true,false,1143202,postal MM spelling not in primary/alias set,v3,false
+4dc0cba3-8ee9-42f4-a8cd-19d6d44e07b4,my,ရှမ်းတဲကြီး (တောင်) ကျေးရွာအုပ်စု,ရှမ်းတဲကြီးတောင်,true,false,1143204,postal MM spelling not in primary/alias set,v3,false
+44545aa2-690e-47c1-b703-236afb30eec8,my,လမ်းဆုံပိုင်း ရပ်ကွက်,လမ်းဆုံပိုင်း,true,false,1160010,postal MM spelling not in primary/alias set,v3,false
+44545aa2-690e-47c1-b703-236afb30eec8,en,Lan Son Paing Quarter,lansonpaing,true,false,1160010,postal EN spelling not in primary/alias set,v3,false
+deb7a247-5358-4aa7-a9f9-c0f336ecbb5b,my,စျေးပိုင်း ရပ်ကွက်,စျေးပိုင်း,true,false,1160011,postal MM spelling not in primary/alias set,v3,false
+deb7a247-5358-4aa7-a9f9-c0f336ecbb5b,en,Zay Paing Quarter,zaypaing,true,false,1160011,postal EN spelling not in primary/alias set,v3,false
+fa5c9659-5ba8-4110-b200-27779c6b4300,my,ရွာမပိုင်း ရပ်ကွက်,ရွာမပိုင်း,true,false,1160012,postal MM spelling not in primary/alias set,v3,false
+fa5c9659-5ba8-4110-b200-27779c6b4300,en,Ywar Ma Paing Quarter,ywarmapaing,true,false,1160012,postal EN spelling not in primary/alias set,v3,false
+c17e6fef-0180-4cf9-9eea-0633d1207b0a,my,ဈေးကြို ရပ်ကွက်,ဈေးကြို,true,false,1201015,postal MM spelling not in primary/alias set,v3,false
+c17e6fef-0180-4cf9-9eea-0633d1207b0a,en,Zay Kyo Quarter,zaykyo,true,false,1201015,postal EN spelling not in primary/alias set,v3,false
+d9130edb-245b-41f1-a445-d8ff9cb914ea,my,နောင်ခရိ ကျေးရွာအုပ်စု,နောင်ခရိ,true,false,1201214,postal MM spelling not in primary/alias set,v3,false
+b07411ba-594d-49a8-9566-7117a7e1e3e3,en,Yo Go Village Tract,yogo,true,false,1201218,postal EN spelling not in primary/alias set,v3,false
+f6b509f7-8836-4624-b559-e0f85a3179b1,en,Pyin Ka Toe Kone Village Tract,pyinkatoekone,true,false,1202225,postal EN spelling not in primary/alias set,v3,false
+0bd7b8d5-5140-438c-b3d3-18e15b6ef600,en,Gon Hnyin Nwei Village Tract,gonhnyinnwei,true,false,1203225,postal EN spelling not in primary/alias set,v3,false
+296890f3-56bf-487d-b30e-65192ba277d9,en,Day Ba Yein Village Tract,daybayein,true,false,1204231,postal EN spelling not in primary/alias set,v3,false
+2ac18c24-9714-40ce-b624-fa62f3873974,en,Lat Pan Kyun Village Tract,latpankyun,true,false,1205247,postal EN spelling not in primary/alias set,v3,false
+e21c10a8-9356-44d7-8fdd-e366643bd206,en,Hlwa Zin Kone Village Tract,hlwazinkone,true,false,1207240,postal EN spelling not in primary/alias set,v3,false
+943c8d69-c63c-4975-b527-41cbb6acdc98,en,Kawt Pa Ran Village Tract,kawtparan,true,false,1208212,postal EN spelling not in primary/alias set,v3,false
+8919168b-e5b0-4eac-a43f-6ced1cc54b02,my,ဖေါင်စိန် ကျေးရွာအုပ်စု,ဖေါင်စိန်,true,false,1209210,postal MM spelling not in primary/alias set,v3,false
+6a1e7d45-f032-43ac-b9f4-fd300c40b65f,en,Hnin Sone Village Tract,hninsone,true,false,1210222,postal EN spelling not in primary/alias set,v3,false
+d351e881-94c2-40c2-bf19-c2798a210922,en,Maing Lun Village Tract,mainglun,true,false,1302214,postal EN spelling not in primary/alias set,v3,false
+071bfb19-65b2-453b-a242-7490332edfba,en,Lawt Khaw Village Tract,lawtkhaw,true,false,1305216,postal EN spelling not in primary/alias set,v3,false
+4c33556e-7adb-4669-8e9b-616aa19f7684,en,Kawt Go Village Tract,kawtgo,true,false,1306250,postal EN spelling not in primary/alias set,v3,false
+82e51422-4969-4a31-b025-0d78b3819f30,en,Nat Kyi Sin Village Tract,natkyisin,true,false,1402223,postal EN spelling not in primary/alias set,v3,false
+fac3e945-2504-449a-a752-4200a2344bb4,en,Ah Hmat Koe Village Tract,ahhmatkoe,true,false,1407220,postal EN spelling not in primary/alias set,v3,false
+ba2a5d15-cf69-48ec-9a8a-ecbdc067a7dc,en,AhTwinBokPyin Village Tract,ahtwinbokpyin,true,false,1408202,postal EN spelling not in primary/alias set,v3,false
+00c1f48e-4cfa-4fb1-a3af-8054b8fba371,my,ရွှေဟင်္သာ ရပ်ကွက်,ရွှေဟင်္သာ,true,false,1409001,postal MM spelling not in primary/alias set,v3,false
+02121835-36fe-40c3-bc01-f1f515789438,en,Kyoe Kyar Inn Village Tract,kyoekyarinn,true,false,1503228,postal EN spelling not in primary/alias set,v3,false
+ca61eb88-b79c-4d57-a1e0-b431b1a78071,my,မြွေရိုးကျောင်းစု ကျေးရွာအုပ်စု,မြွေရိုးကျောင်းစု,true,false,1504225,postal MM spelling not in primary/alias set,v3,false
+204decc6-3f06-412f-b5e3-50d87f25383f,my,ရွှေပြည်အေး ကျေးရွာအုပ်စု,ရွှေပြည်အေး,true,false,1504227,postal MM spelling not in primary/alias set,v3,false
+636fb412-24b3-47f9-8a62-64067be1e25d,en,vKyun Yaung Village Tract,vkyunyaung,true,false,1505201,postal EN spelling not in primary/alias set,v3,false
+ffd93cae-8174-4b28-818d-cfeb128bed9a,en,Shwe In Gyin Quarter,shweingyin,true,false,1506002,postal EN spelling not in primary/alias set,v3,false
+3c8016eb-2263-4ea3-8c72-4a9354f74862,en,Mak Hki Nu Village Tract,makhkinu,true,false,1601211,postal EN spelling not in primary/alias set,v3,false
+3ba43f4e-b64f-45af-94b2-2d535a68e68e,en,Mein Kyaing Village Tract,meinkyaing,true,false,1601227,postal EN spelling not in primary/alias set,v3,false
+b4743336-a136-4c8d-b7ca-c3616c3dd9ec,en,Nar Ma Khaw Village Tract,narmakhaw,true,false,1601239,postal EN spelling not in primary/alias set,v3,false
+0671085c-6ee5-4ab8-abd3-7c0e106d4af6,en,Kun Kyaing Village Tract,kunkyaing,true,false,1601255,postal EN spelling not in primary/alias set,v3,false
+dd0ebccb-6442-4026-96aa-4b16766c13e5,en,Pein Hsar Village Tract,peinhsar,true,false,1602204,postal EN spelling not in primary/alias set,v3,false
+6a6f886c-68d1-4cb2-8da5-83b37af42faf,en,Man Kyawng Pang Sin Village Tract,mankyawngpangsin,true,false,1603207,postal EN spelling not in primary/alias set,v3,false
+8f0a0c68-63f5-48c5-8c9e-d03e8856d660,en,Man Sant Village Tract,mansant,true,false,1603209,postal EN spelling not in primary/alias set,v3,false
+40a982b0-e8ec-4e3a-814a-11d4cb726e0e,en,Long Laing Village Tract,longlaing,true,false,1603220,postal EN spelling not in primary/alias set,v3,false
+9681df92-ee8f-4852-90cf-e0ae52ff1a27,en,Man Lwe Quarter,manlwe,true,false,1604007,postal EN spelling not in primary/alias set,v3,false
+03a1e741-4266-4f82-a824-087bb9f85bb9,en,Kawng San Village Tract,kawngsan,true,false,1604240,postal EN spelling not in primary/alias set,v3,false
+fb530c08-ccd6-4a8a-b22e-1b7cac82fbb3,en,Loi Sim Village Tract,loisim,true,false,1605211,postal EN spelling not in primary/alias set,v3,false
+221c12c8-4fce-4dd3-8a17-229388513f0b,en,Pang Kaw (Auk) Village Tract,pangkawauk,true,false,1605220,postal EN spelling not in primary/alias set,v3,false
+c1d26ca3-b2bc-4a10-a4f7-a064ae7b7364,en,Se Lant Village Tract,selant,true,false,1609201,postal EN spelling not in primary/alias set,v3,false
+540b2bbd-5688-4c37-a5d9-22c506d92d96,en,Mone Yu Tit Yar Ngar Maing Village Tract,moneyutityarngarmaing,true,false,1609208,postal EN spelling not in primary/alias set,v3,false
+be46ac69-160c-4f04-830b-56ae45798b46,en,Kyein Yang Ton Village Tract,kyeinyangton,true,false,1609226,postal EN spelling not in primary/alias set,v3,false
+fcc8ee69-c3de-4078-a3a1-ab982697acec,en,Mong Hpan Village Tract,monghpan,true,false,1609233,postal EN spelling not in primary/alias set,v3,false
+3e278f7f-71f1-45d3-9392-88c10c886ff1,en,Mant Jat Village Tract,mantjat,true,false,1609247,postal EN spelling not in primary/alias set,v3,false
+0588c012-f59a-4cf9-a0a5-bd9911e61e58,en,Mant Kant Village Tract,mantkant,true,false,1609250,postal EN spelling not in primary/alias set,v3,false
+38c285b4-bf22-4b5b-810f-9c6fe0d018e2,en,Bang Kaw Village Tract,bangkaw,true,false,1611261,postal EN spelling not in primary/alias set,v3,false
+964b2980-143b-4e01-ba42-38c076278dc7,en,Bang Long Village Tract,banglong,true,false,1611262,postal EN spelling not in primary/alias set,v3,false
+35314a88-7051-4d2d-ad2a-499e2062fd9e,en,Shaw Haw Village Tract,shawhaw,true,false,1611270,postal EN spelling not in primary/alias set,v3,false
+e4517769-f7d5-4f89-971a-8500ed56c6e6,en,Nawng Pein Village Tract,nawngpein,true,false,1612216,postal EN spelling not in primary/alias set,v3,false
+be91e58e-f379-4afa-a760-b16b8fa894ec,en,Nyaung Maung Village Tract,nyaungmaung,true,false,1612223,postal EN spelling not in primary/alias set,v3,false
+428c75ac-28b6-4229-b31e-74a97de64278,en,Hu Sun Village Tract,husun,true,false,1612231,postal EN spelling not in primary/alias set,v3,false
+3e651982-8412-4f0c-a4e2-45496c76d1ac,en,Kone Sam Village Tract,konesam,true,false,1613200,postal EN spelling not in primary/alias set,v3,false
+4bf26237-ff56-410c-a46f-a738603a7698,en,Tein San Village Tract,teinsan,true,false,1614200,postal EN spelling not in primary/alias set,v3,false
+fb03ae36-b39f-4dbd-8b78-74dc00438b58,en,Sun Long Village Tract,sunlong,true,false,1614205,postal EN spelling not in primary/alias set,v3,false
+3e638467-db86-4418-8606-f4cf70259873,en,Pang Soa Ming Village Tract,pangsoaming,true,false,1614206,postal EN spelling not in primary/alias set,v3,false
+77bf5042-ed24-46dc-ba35-4857a10dafea,en,Saung Kye Village Tract,saungkye,true,false,1614216,postal EN spelling not in primary/alias set,v3,false
+6397e057-0b9f-4ea6-880c-933b4b77bb61,en,Tun Kyaing Village Tract,tunkyaing,true,false,1614217,postal EN spelling not in primary/alias set,v3,false
+47854639-ed8b-4cda-a377-b2dc8bd83b48,en,Nam Kyin San Village Tract,namkyinsan,true,false,1620217,postal EN spelling not in primary/alias set,v3,false
+09d78c41-e68d-413d-bf1f-829def26ba7f,en,Man Nar Sang Village Tract,mannarsang,true,false,1621239,postal EN spelling not in primary/alias set,v3,false
+4ce6d42f-9cac-477b-8c53-687876d44058,en,Tar Shwe Tan Village Tract,tarshwetan,true,false,1622229,postal EN spelling not in primary/alias set,v3,false
+dc78b471-0546-4578-9989-e1f9c732cdb6,en,Man Law (Marn Lor) Village Tract,manlawmarnlor,true,false,1622230,postal EN spelling not in primary/alias set,v3,false
+22a2e32f-10e1-4f10-a55b-c7e0ff1164f5,en,Hon Aik (Hon Ai) Village Tract,honaikhonai,true,false,1623225,postal EN spelling not in primary/alias set,v3,false
+a1e5e042-feee-48e2-975e-d17769d1659f,en,Mor Htaik (Mor Tai) Village Tract,morhtaikmortai,true,false,1623226,postal EN spelling not in primary/alias set,v3,false
+9ca616a4-a5e8-4f65-8ce0-f6b78d0508d1,en,Hson Kan (Chon Gang) Village Tract,hsonkanchongang,true,false,1623227,postal EN spelling not in primary/alias set,v3,false
+d93ac3c3-9cbc-4401-848e-4efeeaf35c31,en,Wut Sawng Village Tract,wutsawng,true,false,1701229,postal EN spelling not in primary/alias set,v3,false
+b9892af0-0229-4cd6-bf2d-9c266aabed39,en,Wan Pin Village Tract,wanpin,true,false,1702213,postal EN spelling not in primary/alias set,v3,false
+a1bf1f96-9b9b-4c5e-9e56-c7ac2e2b7380,en,Mae Sum (South) Quarter,maesumsouth,true,false,1705002,postal EN spelling not in primary/alias set,v3,false
+ae1806cc-5a99-45fb-9f17-c4ec02f9bbe7,en,Wein Nay Village Tract,weinnay,true,false,1705224,postal EN spelling not in primary/alias set,v3,false
+ae1806cc-5a99-45fb-9f17-c4ec02f9bbe7,my,ဝိန်းနေ ကျေးရွာအုပ်စု,ဝိန်းနေ,true,false,1705225,postal MM spelling not in primary/alias set,v3,false
+af93c1d4-4462-4dab-92e0-e83b7a89057e,en,Mong Shan Village Tract,mongshan,true,false,1706219,postal EN spelling not in primary/alias set,v3,false
+9c1a34da-96d2-4f0b-b191-b609663d72d7,en,Mong Laik Village Tract,monglaik,true,false,1710208,postal EN spelling not in primary/alias set,v3,false
+6170b2b4-b464-42de-b3e6-0a77d5b59881,en,Wan Inn Village Tract,waninn,true,false,1710217,postal EN spelling not in primary/alias set,v3,false
+299a37d4-c606-40f9-8849-25880b4fe511,en,No (1) Quarter,1,true,false,1762001,postal EN spelling not in primary/alias set,v3,false
+6931e31b-c668-4d53-9967-15410b0971b3,en,No (2) Quarter,2,true,false,1762002,postal EN spelling not in primary/alias set,v3,false
+9fd8ffeb-2e4a-448a-ad17-400d1df20b42,en,No (3) Quarter,3,true,false,1762003,postal EN spelling not in primary/alias set,v3,false
+185150b5-fceb-4f1f-8df8-e529f6162295,en,No (4) Quarter,4,true,false,1762004,postal EN spelling not in primary/alias set,v3,false
+9140c656-286b-4e30-a276-4717d78b0800,en,No (5) Quarter,5,true,false,1762005,postal EN spelling not in primary/alias set,v3,false
+3ecfaa25-83bb-4b28-8fe0-c82cf6f76764,en,Kan Kyi Kone Village Tract,kankyikone,true,false,1801218,postal EN spelling not in primary/alias set,v3,false
+3263dd83-ab0c-400b-8f11-a6fd4666be4b,en,Moke Htaw Village Tract,mokehtaw,true,false,1801224,postal EN spelling not in primary/alias set,v3,false
+c55c9801-4026-4229-961d-b4ee61c7fc2a,en,No (၅) Quarter,no၅,true,false,1802005,postal EN spelling not in primary/alias set,v3,false
+ebca3073-c866-43f2-9c0f-2abe8955f41e,en,Tha Phan Cho Village Tract,thaphancho,true,false,1802202,postal EN spelling not in primary/alias set,v3,false
+2fff1025-bac4-4faa-8141-93138755f060,en,Chaung Phyaunt Village Tract,chaungphyaunt,true,false,1802225,postal EN spelling not in primary/alias set,v3,false
+9e2d2e39-a280-446b-b6da-b6172b9b9443,en,Tha Phan Kaing Village Tract,thaphankaing,true,false,1802231,postal EN spelling not in primary/alias set,v3,false
+05ca2ee4-4f65-4ff0-b83e-e5f0f64e56f1,en,Kyoe Kyar Village Tract,kyoekyar,true,false,1803227,postal EN spelling not in primary/alias set,v3,false
+b4047562-3d29-4dae-9639-a2144c7f5898,en,Hnget Taw Myee Village Tract,hngettawmyee,true,false,1805228,postal EN spelling not in primary/alias set,v3,false
+876de540-55b0-4dbe-ac12-ac2bd9a45de0,en,Kyet Nar Village Tract,kyetnar,true,false,1805240,postal EN spelling not in primary/alias set,v3,false
+3f70b6f1-0bc6-4df3-99ec-a6ddc9942ab5,en,Pyin Ka Toe Kone Village Tract,pyinkatoekone,true,false,1808242,postal EN spelling not in primary/alias set,v3,false
+abaa620a-b48f-491e-8f28-ccbb67e540d2,en,Tin Goke Gyi Village Tract,tingokegyi,true,false,1810218,postal EN spelling not in primary/alias set,v3,false
+93a60bdb-6d3a-4224-8c0e-af0d330bcf18,en,Chaung Zauk Village Tract,chaungzauk,true,false,1811209,postal EN spelling not in primary/alias set,v3,false
+3acc214d-f7fe-482c-a9b7-f42b2f020a4c,en,Kyoe Kyar Kan Village Tract,kyoekyarkan,true,false,1812228,postal EN spelling not in primary/alias set,v3,false
+c0c95d7c-dc35-4b6b-bf47-423c64eab89b,en,Dahmma Nge Village Tract,dahmmange,true,false,1812259,postal EN spelling not in primary/alias set,v3,false
+15babad1-cf7b-4a5f-a68d-277f0f82c71c,en,Nga Kei Village Tract,ngakei,true,false,1813206,postal EN spelling not in primary/alias set,v3,false

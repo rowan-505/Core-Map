@@ -1,0 +1,59 @@
+{
+  "group_id": "65f4fb872e49",
+  "postal_codes": [
+    "1501009"
+  ],
+  "locality_mm": "ဗလသိဒ္ဓိ ရပ်ကွက်",
+  "locality_en": "Ba La Theik Di Quarter",
+  "township_en": "Za Bu Thi Ri Township",
+  "township_mm": "ဇမ္ဗူသီရိ မြို့နယ်",
+  "township_public_id": "0a007cb6-42ca-4887-8528-30777e3cb976",
+  "expected_locality_type": "ward",
+  "candidates": [
+    {
+      "core_id": "6023",
+      "public_id": "dda8330a-acd9-4e72-a9a5-d6786c100cca",
+      "type": "ward",
+      "parent_public_id": "0a007cb6-42ca-4887-8528-30777e3cb976",
+      "name_mm": "ဗလသိဒ္ဓိရပ်ကွက်",
+      "name_en": "",
+      "aliases_mm": [],
+      "aliases_en": [
+        "Ba La Theik Di Ward"
+      ]
+    },
+    {
+      "core_id": "6025",
+      "public_id": "3a9ddc81-23ca-43a9-bbf7-8b2ce67cc57a",
+      "type": "ward",
+      "parent_public_id": "0a007cb6-42ca-4887-8528-30777e3cb976",
+      "name_mm": "ဗလသိဒ္ဓိရပ်ကွက်",
+      "name_en": "",
+      "aliases_mm": [],
+      "aliases_en": [
+        "Ba La Theik Di Ward"
+      ]
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR018002701509",
+      "name_en": "Ba La Theik Di Ward",
+      "name_my": "ဗလသိဒ္ဓိရပ်ကွက်",
+      "norm_en": "balatheikdi",
+      "norm_my": "ဗလသိဒ္ဓိ",
+      "ts_pcode": "MMR018002",
+      "ts_name": "Za Bu Thi Ri",
+      "source_row": 1574,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    }
+  ],
+  "name_evidence": "multiple_candidates",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "multiple CoreMap candidates; cannot auto-match without unique bilingual proof"
+}

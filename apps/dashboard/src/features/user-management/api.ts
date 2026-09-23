@@ -6,6 +6,7 @@ import type {
     AdminUserList,
     AnalyticsBucket,
     AnalyticsSummary,
+    CreateAdminUserBody,
     GrowthBucket,
     PointLedgerItem,
     PointReasonCode,
@@ -18,12 +19,22 @@ import type {
     TopPointUser,
     UserAuditEntry,
     UserPointsResponse,
+    UpdateAdminUserProfileBody,
     UsersListFilters,
 } from "./types";
 
 type Signal = Pick<RequestInit, "signal">;
 
 // --- Users ---
+
+export function createUser(body: CreateAdminUserBody, init?: Signal) {
+    return apiFetch<AdminUserDetail>("/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        ...init,
+    });
+}
 
 export function listUsers(filters: UsersListFilters = {}, init?: Signal) {
     const sp = new URLSearchParams();
@@ -74,6 +85,28 @@ export function setUserAdminNote(id: string, adminNote: string | null, init?: Si
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminNote }),
+        ...init,
+    });
+}
+
+export function updateUserProfile(
+    id: string,
+    body: UpdateAdminUserProfileBody,
+    init?: Signal
+) {
+    return apiFetch<AdminUserDetail>(`/admin/users/${encodeURIComponent(id)}/profile`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        ...init,
+    });
+}
+
+export function resetUserPassword(id: string, password: string, init?: Signal) {
+    return apiFetch<{ message: string }>(`/admin/users/${encodeURIComponent(id)}/password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
         ...init,
     });
 }

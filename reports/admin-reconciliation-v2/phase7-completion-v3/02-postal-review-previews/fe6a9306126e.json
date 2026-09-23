@@ -1,0 +1,21 @@
+{
+  "group_id": "fe6a9306126e",
+  "postal_codes": [
+    "0230017"
+  ],
+  "locality_mm": "ရုံးကြီး ရပ်ကွက်",
+  "locality_en": "Yone Gyi Quarter",
+  "township_en": "Monywa Township",
+  "township_mm": "မုံရွာ မြို့နယ်",
+  "township_public_id": "f542f9e9-d5aa-43ff-a403-441ff3f89b91",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

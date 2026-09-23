@@ -1,0 +1,21 @@
+{
+  "group_id": "bc2d2539d8de",
+  "postal_codes": [
+    "0266001"
+  ],
+  "locality_mm": "အမှတ် (၁) ရပ်ကွက်",
+  "locality_en": "No (1) Quarter",
+  "township_en": "Myothit Town",
+  "township_mm": "မြို့သစ် မြို့",
+  "township_public_id": "0ed999bd-23c2-4cca-8abf-ebde524131d1",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

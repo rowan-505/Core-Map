@@ -1,0 +1,21 @@
+{
+  "group_id": "1479b3d3ca1a",
+  "postal_codes": [
+    "0416007"
+  ],
+  "locality_mm": "တွင်းကုန်း ရပ်ကွက်",
+  "locality_en": "Twin Kone Quarter",
+  "township_en": "Yenangyaung Township",
+  "township_mm": "ရေနံချောင်း မြို့နယ်",
+  "township_public_id": "adc69753-da7e-446d-90d4-d97babb81457",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

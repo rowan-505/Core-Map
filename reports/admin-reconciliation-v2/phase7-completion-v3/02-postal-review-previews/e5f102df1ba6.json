@@ -1,0 +1,21 @@
+{
+  "group_id": "e5f102df1ba6",
+  "postal_codes": [
+    "0701033"
+  ],
+  "locality_mm": "အောင်မင်္ဂလာမြောက် ရပ်ကွက်",
+  "locality_en": "Aung Mingalar Myauk Quarter",
+  "township_en": "Sittwe Township",
+  "township_mm": "စစ်တွေ မြို့နယ်",
+  "township_public_id": "819f7b87-8dbf-4de5-98a2-5486f01ce478",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

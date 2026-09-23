@@ -1,0 +1,34 @@
+{
+  "group_id": "dd3f10c47467",
+  "postal_codes": [
+    "1121013"
+  ],
+  "locality_mm": "ဗျိုင်းရေအိုးစင်ရွာမ ရပ်ကွက်",
+  "locality_en": "Byaing Yae Oe Sin Ywar Ma Quarter",
+  "township_en": "Tamwe Township",
+  "township_mm": "တာမွေ မြို့နယ်",
+  "township_public_id": "80e177c3-7640-4545-8b25-f7b4b96c480b",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR013015701513",
+      "name_en": "Byaing Yay Oe Zin Ywar Ma Ward",
+      "name_my": "ဗျိုင်းရေအိုးစင်ရွာမရပ်ကွက်",
+      "norm_en": "byaingyayoezinywarma",
+      "norm_my": "ဗျိုင်းရေအိုးစင်ရွာမ",
+      "ts_pcode": "MMR013015",
+      "ts_name": "Tamwe",
+      "source_row": 771,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    }
+  ],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "MIMU source exists (MMR013015701513) but no CoreMap ward/VT to link; do not invent admin from postal text"
+}

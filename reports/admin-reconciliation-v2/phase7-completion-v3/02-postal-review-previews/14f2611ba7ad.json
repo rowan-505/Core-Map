@@ -1,0 +1,21 @@
+{
+  "group_id": "14f2611ba7ad",
+  "postal_codes": [
+    "0510001"
+  ],
+  "locality_mm": "ဆိပ်ကမ်း ရပ်ကွက်",
+  "locality_en": "Seik Kan Quarter",
+  "township_en": "Thabeikkyin Township",
+  "township_mm": "သပိတ်ကျင်း မြို့နယ်",
+  "township_public_id": "5cae90bf-1722-4dd9-b929-8f64e4ff89be",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

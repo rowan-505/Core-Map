@@ -1,0 +1,21 @@
+{
+  "group_id": "a8c8b78d3a65",
+  "postal_codes": [
+    "0105011"
+  ],
+  "locality_mm": "မူလာရှီဒီး ရပ်ကွက်",
+  "locality_en": "Mu Lar Shee Dee Quarter",
+  "township_en": "Puta-O Township",
+  "township_mm": "ပူတာအို မြို့နယ်",
+  "township_public_id": "505814e4-7afc-4d8a-aab2-96607200bf17",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

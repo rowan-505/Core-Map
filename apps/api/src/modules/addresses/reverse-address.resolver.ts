@@ -3,6 +3,7 @@ import type { AddressComposerComponent } from "./address-composer.types.js";
 import {
     isLocalityHintAdmin,
     isOfficialAdmin,
+    REVERSE_LAYER_CONCURRENCY,
     REVERSE_STREET_CLOSE_M,
     REVERSE_STREET_MAX_M,
 } from "./reverse-address.constants.js";
@@ -35,6 +36,30 @@ const ADMIN_LEVEL_COMPONENT: Record<string, string> = {
     city: "city",
     town: "town",
 };
+
+/** Run async tasks with a fixed concurrency ceiling (no shared job framework). */
+export async function mapWithConcurrencyLimit<
+    const TTasks extends readonly (() => Promise<unknown>)[],
+>(
+    tasks: TTasks,
+    limit: number = REVERSE_LAYER_CONCURRENCY
+): Promise<{ -readonly [K in keyof TTasks]: Awaited<ReturnType<TTasks[K]>> }> {
+    if (tasks.length === 0) {
+        return [] as { -readonly [K in keyof TTasks]: Awaited<ReturnType<TTasks[K]>> };
+    }
+    const results = new Array<unknown>(tasks.length);
+    let nextIndex = 0;
+    const workers = Array.from({ length: Math.min(Math.max(limit, 1), tasks.length) }, async () => {
+        while (true) {
+            const index = nextIndex;
+            nextIndex += 1;
+            if (index >= tasks.length) return;
+            results[index] = await tasks[index]!();
+        }
+    });
+    await Promise.all(workers);
+    return results as { -readonly [K in keyof TTasks]: Awaited<ReturnType<TTasks[K]>> };
+}
 
 function idStr(id: bigint | null | undefined): string | null {
     return id === null || id === undefined ? null : String(id);
@@ -337,13 +362,13 @@ export class ReverseAddressResolver {
             streets,
             adminAreas,
             landArea,
-        ] = await Promise.all([
-            this.repo.findNearbyCoreAddresses(point),
-            this.repo.findBuildingAtPoint(point),
-            this.repo.findNearbyPlaces(point),
-            this.repo.findNearbyStreets(point, REVERSE_STREET_MAX_M),
-            this.repo.findAdminAreasAtPoint(point),
-            this.repo.findLandAreaAtPoint(point),
+        ] = await mapWithConcurrencyLimit([
+            () => this.repo.findNearbyCoreAddresses(point),
+            () => this.repo.findBuildingAtPoint(point),
+            () => this.repo.findNearbyPlaces(point),
+            () => this.repo.findNearbyStreets(point, REVERSE_STREET_MAX_M),
+            () => this.repo.findAdminAreasAtPoint(point),
+            () => this.repo.findLandAreaAtPoint(point),
         ]);
 
         const { official: officialAdmins, localityHints: polygonLocalityHints } = partitionAdmins(adminAreas);

@@ -1,0 +1,21 @@
+{
+  "group_id": "0b1fef50abbf",
+  "postal_codes": [
+    "0301006"
+  ],
+  "locality_mm": "မြို့သစ် ရပ်ကွက်",
+  "locality_en": "Myo Thit Quarter",
+  "township_en": "Hakha Township",
+  "township_mm": "ဟားခါး မြို့နယ်",
+  "township_public_id": "70cdaaf1-3d52-4cde-86e8-2f1f8b622f49",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

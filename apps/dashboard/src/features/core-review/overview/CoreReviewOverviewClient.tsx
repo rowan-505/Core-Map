@@ -23,7 +23,7 @@ export default function CoreReviewOverviewClient() {
         <CoreReviewPageShell>
             <CoreReviewHeaderCard
                 title="Core review"
-                description="Production data management and verification for core entities."
+                description="Manage, verify, and monitor production map data."
             />
 
             {error ? (

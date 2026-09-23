@@ -1,0 +1,21 @@
+{
+  "group_id": "e03615d048d0",
+  "postal_codes": [
+    "0809240"
+  ],
+  "locality_mm": "သက္ကလ ကျေးရွာအုပ်စု",
+  "locality_en": "Thet Ka La Village Tract",
+  "township_en": "Kawa Township",
+  "township_mm": "ကဝ မြို့နယ်",
+  "township_public_id": "b2669d3b-0c96-4706-9b5d-d3717ee96a08",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

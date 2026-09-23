@@ -1,0 +1,21 @@
+{
+  "group_id": "440371d96ceb",
+  "postal_codes": [
+    "1131005"
+  ],
+  "locality_mm": "အမှတ် (၅) ရပ်ကွက်",
+  "locality_en": "No (5) Quarter",
+  "township_en": "Thongwa Township",
+  "township_mm": "သုံးခွ မြို့နယ်",
+  "township_public_id": "7842fe11-6596-43c5-b306-6f56b8448f1e",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

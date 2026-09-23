@@ -1,0 +1,21 @@
+{
+  "group_id": "65df38904515",
+  "postal_codes": [
+    "0811248"
+  ],
+  "locality_mm": "ရေနီ ကျေးရွာအုပ်စု",
+  "locality_en": "Yae Ni Village Tract",
+  "township_en": "Yedashe Township",
+  "township_mm": "ရေတာရှည် မြို့နယ်",
+  "township_public_id": "3cbae518-6484-40c0-b1c1-5897a5ec6f61",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

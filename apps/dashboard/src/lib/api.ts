@@ -1,6 +1,7 @@
 import {
     clearAuthTokens,
     getAccessToken,
+    restoreAccessTokenFromOtherTabs,
     setAccessToken,
 } from "./authTokenStorage";
 import type { CoreReviewVerificationStatusFilter } from "@/src/features/core-review/verification/coreReviewVerificationFilter";
@@ -473,58 +474,6 @@ export type BuildingsParams = {
     sortOrder?: "asc" | "desc";
 };
 
-/** GET /dashboard/stats — matches Fastify dashboard stats payload. */
-export type DashboardStatsMainCounts = {
-    places: number;
-    map_buildings: number;
-    streets: number;
-    admin_areas: number;
-    addresses: number;
-};
-
-export type DashboardStatsMetadataCounts = {
-    place_names: number;
-    street_names: number;
-    admin_area_names: number;
-    place_contacts: number;
-    place_sources: number;
-    place_media: number;
-    place_versions: number;
-};
-
-export type DashboardStatsTransitCounts = {
-    bus_routes: number;
-    bus_route_variants: number;
-    bus_stops: number;
-    bus_route_stops: number;
-};
-
-export type DashboardStatsHealthCounts = {
-    places_active: number;
-    places_deleted: number;
-    places_verified: number;
-    places_unverified: number;
-    buildings_active: number;
-    buildings_deleted: number;
-    streets_active: number;
-    streets_inactive: number;
-};
-
-export type DashboardStatsOverview = {
-    total_main_rows: number;
-    total_metadata_rows: number;
-    total_transit_rows: number;
-};
-
-export type DashboardStatsResponse = {
-    countsMode: "exact" | "estimated";
-    overview: DashboardStatsOverview;
-    main: DashboardStatsMainCounts;
-    metadata: DashboardStatsMetadataCounts;
-    transit: DashboardStatsTransitCounts;
-    health: DashboardStatsHealthCounts;
-};
-
 export type DataReviewGeoJson = Record<string, unknown>;
 
 export type DeleteBuildingResponse = {
@@ -776,6 +725,10 @@ export function getAuthMe(fetchInit?: Pick<RequestInit, "signal">) {
 }
 
 export async function tryRestoreDashboardSession(): Promise<boolean> {
+    const fromOpenTab = await restoreAccessTokenFromOtherTabs();
+    if (fromOpenTab) {
+        return true;
+    }
     return refreshSession();
 }
 
@@ -1022,9 +975,13 @@ async function apiFetchInternal<T>(
     }
 
     if (!accessToken) {
-        // New tabs have an empty memory JWT. Try cookie refresh once before
-        // bouncing to /login (common for "open in new tab" dashboard links).
+        // New tabs have an empty memory JWT. Reuse a token from an open
+        // dashboard tab, then cookie refresh, before bouncing to /login.
         if (allowRefresh) {
+            const fromOpenTab = await restoreAccessTokenFromOtherTabs();
+            if (fromOpenTab) {
+                return apiFetchInternal<T>(path, init, params, true);
+            }
             const refreshed = await refreshSession();
             if (refreshed) {
                 return apiFetchInternal<T>(path, init, params, false);
@@ -1128,8 +1085,18 @@ export function getCategories() {
     return apiFetch<Category[]>("/categories", { method: "GET" });
 }
 
-export function getAdminAreas() {
-    return apiFetch<AdminArea[]>("/admin-areas", { method: "GET" });
+export function getAdminAreas(params?: { limit?: number; offset?: number }) {
+    const search = new URLSearchParams();
+    search.set("limit", String(params?.limit ?? 100));
+    if (params?.offset !== undefined) {
+        search.set("offset", String(params.offset));
+    }
+    return apiFetch<{
+        items: AdminArea[];
+        total: number;
+        limit: number;
+        offset: number;
+    }>(`/admin-areas?${search.toString()}`, { method: "GET" }).then((page) => page.items);
 }
 
 export type AdminAreaOption = {
@@ -1304,13 +1271,6 @@ export function validateEntityAdminAreaManual(payload: {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-    });
-}
-
-export function getDashboardStats(fetchInit?: Pick<RequestInit, "signal">) {
-    return apiFetch<DashboardStatsResponse>("/dashboard/stats", {
-        method: "GET",
-        ...fetchInit,
     });
 }
 

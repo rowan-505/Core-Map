@@ -1,0 +1,21 @@
+{
+  "group_id": "4bbfda71a353",
+  "postal_codes": [
+    "0518010"
+  ],
+  "locality_mm": "ကြည်တော်ကုန်း ရပ်ကွက်",
+  "locality_en": "Kyi Taw Kone Quarter",
+  "township_en": "Meiktila Township",
+  "township_mm": "မိတ္ထီလာ မြို့နယ်",
+  "township_public_id": "6b70ffb5-9038-49b1-ae7f-684427d4c4d4",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

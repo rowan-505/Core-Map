@@ -1,0 +1,57 @@
+{
+  "group_id": "6fa667480dd4",
+  "postal_codes": [
+    "1004238"
+  ],
+  "locality_mm": "သပြေကုန်း ကျေးရွာအုပ်စု",
+  "locality_en": "Tha Pyay Kone (2)/ Tha Pyay Kone Village Tract",
+  "township_en": "Myanaung Township",
+  "township_mm": "မြန်အောင် မြို့နယ်",
+  "township_public_id": "6df41163-6032-4152-83bf-9f3f960eef7b",
+  "expected_locality_type": "village_tract",
+  "candidates": [
+    {
+      "core_id": "7965",
+      "public_id": "f902479c-b6c5-4f6e-9055-c1f4e0fefefd",
+      "type": "village_tract",
+      "parent_public_id": "6df41163-6032-4152-83bf-9f3f960eef7b",
+      "name_mm": "သပြေကုန်း",
+      "name_en": "Tha Pyay Kone (2)/ Tha Pyay Kone",
+      "aliases_mm": [],
+      "aliases_en": []
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR017011002",
+      "name_en": "Tha Pyay Kone",
+      "name_my": "သပြေကုန်း",
+      "norm_en": "thapyaykone",
+      "norm_my": "သပြေကုန်း",
+      "ts_pcode": "MMR017011",
+      "ts_name": "Myanaung",
+      "source_row": 320,
+      "source_file": "village_tract_boundary_Ayeyarwady_v94.zip:mmr_ady_polbnda_adm4_mimu_250k.shp"
+    },
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR017011039",
+      "name_en": "Tha Pyay Kone (2)/ Tha Pyay Kone",
+      "name_my": "သပြေကုန်း",
+      "norm_en": "thapyaykone2thapyaykone",
+      "norm_my": "သပြေကုန်း",
+      "ts_pcode": "MMR017011",
+      "ts_name": "Myanaung",
+      "source_row": 321,
+      "source_file": "village_tract_boundary_Ayeyarwady_v94.zip:mmr_ady_polbnda_adm4_mimu_250k.shp"
+    }
+  ],
+  "name_evidence": "unique_exact_bilingual",
+  "recommendation": "link_existing",
+  "review_decision": "link_existing",
+  "selected_admin_public_id": "f902479c-b6c5-4f6e-9055-c1f4e0fefefd",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "unique exact bilingual identity → f902479c-b6c5-4f6e-9055-c1f4e0fefefd"
+}

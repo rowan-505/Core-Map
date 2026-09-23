@@ -1,0 +1,21 @@
+{
+  "group_id": "9310a4c6d7a0",
+  "postal_codes": [
+    "0601017"
+  ],
+  "locality_mm": "သစ်တော ရပ်ကွက်",
+  "locality_en": "Thit Taw Quarter",
+  "township_en": "Taunggyi Township",
+  "township_mm": "တောင်ကြီး မြို့နယ်",
+  "township_public_id": "97faedef-5bbe-4490-a177-2910a2f1a05a",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

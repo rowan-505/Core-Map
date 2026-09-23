@@ -27,16 +27,60 @@ describe("reverse address land-area lookup", () => {
         const prisma = {
             $queryRaw: async (strings: TemplateStringsArray) => {
                 queries.push(strings.join(""));
-                return queries.length === 1 ? [{ ok: true }] : [];
+                return [];
             },
         } as unknown as PrismaClient;
 
         const repo = new ReverseAddressRepository(prisma);
         await repo.findLandAreaAtPoint({ lat: 16.65997, lng: 96.38362 });
 
-        const sql = queries[1] ?? "";
+        const sql = queries[0] ?? "";
         assert.match(sql, /lc\.name_en/);
         assert.match(sql, /lc\.name_mm/);
         assert.doesNotMatch(sql, /lc\.name\s+AS\s+class_name/i);
+    });
+});
+
+describe("reverse address street GiST prefilter", () => {
+    it("applies geom && ST_Expand before geography ST_DWithin", async () => {
+        const queries: string[] = [];
+        const prisma = {
+            $queryRaw: async (strings: TemplateStringsArray, ...values: unknown[]) => {
+                // Reconstruct enough SQL text for assertions (Prisma.sql fragments).
+                let built = "";
+                for (let i = 0; i < strings.length; i += 1) {
+                    built += strings[i];
+                    if (i < values.length) built += String(values[i] ?? "");
+                }
+                queries.push(built);
+                return [];
+            },
+        } as unknown as PrismaClient;
+
+        const repo = new ReverseAddressRepository(prisma);
+        await repo.findNearbyStreets({ lat: 16.70874, lng: 96.29244 }, 300);
+
+        const sql = queries[0] ?? "";
+        assert.match(sql, /s\.geom\s*&&\s*ST_Expand/i);
+        assert.match(sql, /ST_DWithin\(\s*s\.geom::geography/i);
+        assert.doesNotMatch(sql, /to_regclass/i);
+    });
+});
+
+describe("reverse layer concurrency helper", () => {
+    it("never runs more than the limit concurrently", async () => {
+        const { mapWithConcurrencyLimit } = await import("./reverse-address.resolver.js");
+        let inFlight = 0;
+        let peak = 0;
+        const tasks = Array.from({ length: 6 }, (_, i) => async () => {
+            inFlight += 1;
+            peak = Math.max(peak, inFlight);
+            await new Promise((r) => setTimeout(r, 5));
+            inFlight -= 1;
+            return i;
+        });
+        const results = await mapWithConcurrencyLimit(tasks, 2);
+        assert.deepEqual(results, [0, 1, 2, 3, 4, 5]);
+        assert.ok(peak <= 2, `peak concurrency was ${peak}`);
     });
 });

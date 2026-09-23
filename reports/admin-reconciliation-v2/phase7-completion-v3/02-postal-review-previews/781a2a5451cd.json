@@ -1,0 +1,21 @@
+{
+  "group_id": "781a2a5451cd",
+  "postal_codes": [
+    "1139212"
+  ],
+  "locality_mm": "ချောင်းညီအစ်ကို ကျေးရွာအုပ်စု",
+  "locality_en": "Chaung Nyi Ah Ko Village Tract",
+  "township_en": "Htantabin Township",
+  "township_mm": "ထန်းတပင် မြို့နယ်",
+  "township_public_id": "3bb35289-a4da-41a6-ba7f-696085af43bc",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

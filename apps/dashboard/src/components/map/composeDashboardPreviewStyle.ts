@@ -40,14 +40,21 @@ export const DASHBOARD_LOCAL_REGION_PMTILES_ENTRIES = [
     { region: "shan", version: "v1" },
 ] as const;
 
-/** Local archive URL for a region package: `<base>/<region>/<region>-<version>.pmtiles`. */
+/** Region archive URL on CDN: `<base>/<region>/v2/basemap.pmtiles` (or v1 when version is v1). */
 export function regionPmtilesLocalHttpUrl(
     baseUrl: string,
     region: string,
     version: string,
 ): string {
-    return `${baseUrl}/${region}/${region}-${version}.pmtiles`;
+    const base = baseUrl.replace(/\/+$/, "");
+    // CDN layout: /basemaps/<region>/<version>/basemap.pmtiles
+    if (base.includes("tiles.coremapmm.com") || base.endsWith("/basemaps")) {
+        return `${base}/${region}/${version}/basemap.pmtiles`;
+    }
+    // Legacy local tile-server layout: /regions/<region>/<region>-<version>.pmtiles
+    return `${base}/${region}/${region}-${version}.pmtiles`;
 }
+
 
 function cloneLayer(layer: LayerSpecification): LayerSpecification {
     if (typeof structuredClone === "function") {

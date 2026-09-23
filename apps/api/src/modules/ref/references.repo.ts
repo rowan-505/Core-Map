@@ -4,6 +4,7 @@ import type { PrismaClient } from "@prisma/client";
 import {
     ALLOWED_REF_TABLES,
     getReferenceConfig,
+    listReferenceConfigs,
     type ReferenceTableConfig,
 } from "./references.registry.js";
 import type { ReferenceTypeKey } from "./references.types.js";
@@ -100,33 +101,68 @@ export class ReferencesRepository {
             return Prisma.sql`${columnSql(col, allowed)}`;
         });
 
-        const rows = await this.prisma.$queryRaw<Record<string, unknown>[]>(Prisma.sql`
-            SELECT ${Prisma.join(selectParts, ", ")}
-            FROM ${tableSql(config.table)}
-            ORDER BY ${orderBySql(config.orderBy)}
-        `);
+        const [rows, usageMap] = await Promise.all([
+            this.prisma.$queryRaw<Record<string, unknown>[]>(Prisma.sql`
+                SELECT ${Prisma.join(selectParts, ", ")}
+                FROM ${tableSql(config.table)}
+                ORDER BY ${orderBySql(config.orderBy)}
+            `),
+            this.loadUsageMap(config),
+        ]);
 
-        const items = rows.map(serializeRow);
+        return rows.map((row) => {
+            const item = serializeRow(row);
+            if (!config.usageAggregate) {
+                return { ...item, usage_count: null };
+            }
+            const key =
+                config.usageAggregate.key === "code" ? String(item.code) : String(item.id);
+            return { ...item, usage_count: usageMap.get(key) ?? 0 };
+        });
+    }
 
-        if (!config.usageSql) {
-            return items.map((item) => ({ ...item, usage_count: null }));
+    async loadUsageMap(config: ReferenceTableConfig): Promise<Map<string, number>> {
+        const map = new Map<string, number>();
+        if (!config.usageAggregate) {
+            return map;
         }
-
-        const withUsage: Record<string, unknown>[] = [];
-        for (const item of items) {
-            const usage = await this.countUsage(config, String(item.id), String(item.code));
-            withUsage.push({ ...item, usage_count: usage });
+        // Static registry SQL only — never interpolated from client input.
+        const rows = await this.prisma.$queryRawUnsafe<{ k: string; n: bigint }[]>(
+            config.usageAggregate.sql,
+        );
+        for (const row of rows) {
+            if (row.k == null) continue;
+            map.set(String(row.k), Number(row.n ?? 0n));
         }
-        return withUsage;
+        return map;
     }
 
     async countUsage(config: ReferenceTableConfig, id: string, code: string): Promise<number> {
-        if (!config.usageSql) {
+        if (!config.usageAggregate) {
             return 0;
         }
-        // usageSql is a static registry string with $1/$2 placeholders only.
-        const rows = await this.prisma.$queryRawUnsafe<{ n: bigint }[]>(config.usageSql, id, code);
-        return Number(rows[0]?.n ?? 0n);
+        const map = await this.loadUsageMap(config);
+        const key = config.usageAggregate.key === "code" ? code : id;
+        return map.get(key) ?? 0;
+    }
+
+    /** Catalog counts for every allowlisted ref table in one round-trip. */
+    async countAllRows(): Promise<Map<string, number>> {
+        const configs = listReferenceConfigs();
+        const unions = configs.map(
+            (config) => Prisma.sql`
+                SELECT ${config.key} AS type, count(*)::bigint AS n
+                FROM ${tableSql(config.table)}
+            `,
+        );
+        const rows = await this.prisma.$queryRaw<{ type: string; n: bigint }[]>(Prisma.sql`
+            ${Prisma.join(unions, " UNION ALL ")}
+        `);
+        const map = new Map<string, number>();
+        for (const row of rows) {
+            map.set(row.type, Number(row.n ?? 0n));
+        }
+        return map;
     }
 
     async findById(

@@ -1,0 +1,5 @@
+entity,source_count,matched,updated,merged,created_placeholder,rejected,manual_review,unaccounted
+ward,83,76,8,0,7,0,0,0
+village_tract,390,0,0,0,390,0,0,0
+village,1040,894,12,22,146,0,0,0
+postal,494,80,0,0,494,0,0,414

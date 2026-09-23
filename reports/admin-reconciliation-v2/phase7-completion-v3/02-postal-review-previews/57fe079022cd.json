@@ -1,0 +1,21 @@
+{
+  "group_id": "57fe079022cd",
+  "postal_codes": [
+    "1502003"
+  ],
+  "locality_mm": "ရန်အောင် (၂) ရပ်ကွက်",
+  "locality_en": "Yan Aung (2) Quarter",
+  "township_en": "Pyinmana Township",
+  "township_mm": "ပျဉ်းမနား မြို့နယ်",
+  "township_public_id": "ef532f22-75cc-4a7d-9e20-a2b6e405e2aa",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

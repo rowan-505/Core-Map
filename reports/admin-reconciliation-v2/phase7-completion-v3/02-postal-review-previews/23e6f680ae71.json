@@ -1,0 +1,21 @@
+{
+  "group_id": "23e6f680ae71",
+  "postal_codes": [
+    "1136226"
+  ],
+  "locality_mm": "ဘွက်ကြီး ကျေးရွာအုပ်စု",
+  "locality_en": "Bwet Gyi Village Tract",
+  "township_en": "Hmawbi Township",
+  "township_mm": "မှော်ဘီ မြို့နယ်",
+  "township_public_id": "fe548c57-494c-4ec6-84a9-a7cb4cd8523a",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

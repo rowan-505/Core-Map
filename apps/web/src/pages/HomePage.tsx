@@ -194,7 +194,7 @@ export default function HomePage() {
         }
       : null,
   );
-  const debouncedSearchQuery = useDebouncedValue(filterState.searchQuery, 200);
+  const debouncedSearchQuery = useDebouncedValue(filterState.searchQuery, 300);
   const debouncedMapViewport = useDebouncedValue(mapViewport, 250);
 
   const categoriesQuery = usePublicCategories();
@@ -1117,6 +1117,7 @@ export default function HomePage() {
               searchResults={searchResults}
               selectedSearchResultId={selectedSearchResult?.id ?? null}
               selectedSearchResult={selectedSearchResult}
+              selectedResultGeometry={searchOverlayGeometryQuery.data ?? null}
               selectedResultLoading={searchHighlightLoading}
               onSelectSearchResult={onSelectSearchResult}
               onClearSelectedSearchResult={onClearSelectedSearchResult}

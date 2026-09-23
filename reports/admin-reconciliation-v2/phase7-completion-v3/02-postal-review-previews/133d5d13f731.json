@@ -1,0 +1,21 @@
+{
+  "group_id": "133d5d13f731",
+  "postal_codes": [
+    "0106003"
+  ],
+  "locality_mm": "ဝါစပ်ခူး ရပ်ကွက်",
+  "locality_en": "War Sat Khu Quarter",
+  "township_en": "Sumprabum Township",
+  "township_mm": "ဆွမ်ပရာဘွမ် မြို့နယ်",
+  "township_public_id": "b0c4f113-21e5-4b70-a754-3843617e2eda",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

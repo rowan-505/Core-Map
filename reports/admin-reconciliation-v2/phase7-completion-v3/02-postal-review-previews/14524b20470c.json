@@ -1,0 +1,21 @@
+{
+  "group_id": "14524b20470c",
+  "postal_codes": [
+    "1005221"
+  ],
+  "locality_mm": "ထူးကြီး ကျေးရွာအုပ်စု",
+  "locality_en": "Htu Gyi Village Tract",
+  "township_en": "Ingapu Township",
+  "township_mm": "အင်္ဂပူ မြို့နယ်",
+  "township_public_id": "3df6f30f-b6a6-4180-9d69-681c02c7653e",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

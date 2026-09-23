@@ -8,6 +8,7 @@ import tourismRoutes from "./tourism.routes.js";
 import { TourismReviewsService } from "./tourism.service.js";
 import type { TourismReviewsRepository } from "./tourism.repo.js";
 import { TourismCatalogService } from "./tourism.catalog.service.js";
+import { TourismVisitorService } from "./tourism.visitor.service.js";
 import { TourismReviewsError } from "./tourism.errors.js";
 import {
     FakeTourismReviewsRepository,
@@ -325,6 +326,14 @@ async function withCatalogApp(
         await app.register(tourismRoutes, {
             service: tourismService,
             catalogService: catalog as unknown as TourismCatalogService,
+            visitorService: {
+                listPublicFoods: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+                listPublicGuides: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+                listPublicAdvisories: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+            } as unknown as TourismVisitorService,
+            researchService: {
+                list: async () => ({ items: [], total: 0, limit: 20, offset: 0 }),
+            } as unknown as import("./tourism.research.service.js").TourismResearchService,
         });
         await app.ready();
 

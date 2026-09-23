@@ -1,0 +1,21 @@
+{
+  "group_id": "36693a1cf322",
+  "postal_codes": [
+    "1611224"
+  ],
+  "locality_mm": "အူရာဘွမ်ဇင်လွမ် ကျေးရွာအုပ်စု",
+  "locality_en": "Au Rar Bum Zin Lum Village Tract",
+  "township_en": "Kutkai Township",
+  "township_mm": "ကွတ်ခိုင် မြို့နယ်",
+  "township_public_id": "3342e8b9-1c9e-458f-8a7a-1792c4afffda",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

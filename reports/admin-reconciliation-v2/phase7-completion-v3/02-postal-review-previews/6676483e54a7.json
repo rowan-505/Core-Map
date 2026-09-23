@@ -1,0 +1,69 @@
+{
+  "group_id": "6676483e54a7",
+  "postal_codes": [
+    "1501010"
+  ],
+  "locality_mm": "ဓနသိဒ္ဓိ ရပ်ကွက်",
+  "locality_en": "Dha Na Theik Di Quarter",
+  "township_en": "Za Bu Thi Ri Township",
+  "township_mm": "ဇမ္ဗူသီရိ မြို့နယ်",
+  "township_public_id": "0a007cb6-42ca-4887-8528-30777e3cb976",
+  "expected_locality_type": "ward",
+  "candidates": [
+    {
+      "core_id": "6024",
+      "public_id": "eeec9dcc-e0c6-40e2-b75d-ab645e49e6b4",
+      "type": "ward",
+      "parent_public_id": "0a007cb6-42ca-4887-8528-30777e3cb976",
+      "name_mm": "ဓနသိဒ္ဓိရပ်ကွက်",
+      "name_en": "",
+      "aliases_mm": [],
+      "aliases_en": [
+        "Dha Na Theik Di Ward"
+      ]
+    },
+    {
+      "core_id": "6011",
+      "public_id": "18201e24-096c-40b1-b4b8-3f51015dd2b8",
+      "type": "ward",
+      "parent_public_id": "0a007cb6-42ca-4887-8528-30777e3cb976",
+      "name_mm": "ဓနသိဒ္ဓိရပ်ကွက်",
+      "name_en": "",
+      "aliases_mm": [],
+      "aliases_en": [
+        "Dha Na Theik Di Ward"
+      ]
+    },
+    {
+      "core_id": "7608",
+      "public_id": "9a8f1282-b7a1-49e0-8fdc-0f5d01158ac3",
+      "type": "ward",
+      "parent_public_id": "0a007cb6-42ca-4887-8528-30777e3cb976",
+      "name_mm": "ဓနသိဒ္ဓိရပ်ကွက်",
+      "name_en": "Dha Na Theik Di Ward",
+      "aliases_mm": [],
+      "aliases_en": []
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "ward",
+      "source_pcode": "MMR018002701510",
+      "name_en": "Dha Na Theik Di Ward",
+      "name_my": "ဓနသိဒ္ဓိရပ်ကွက်",
+      "norm_en": "dhanatheikdi",
+      "norm_my": "ဓနသိဒ္ဓိ",
+      "ts_pcode": "MMR018002",
+      "ts_name": "Za Bu Thi Ri",
+      "source_row": 1565,
+      "source_file": "ward_boundary_countrywide_v94.zip:mmr_polbnda_adm5_mimu_v9_4.shp"
+    }
+  ],
+  "name_evidence": "multiple_candidates",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "multiple CoreMap candidates; cannot auto-match without unique bilingual proof"
+}

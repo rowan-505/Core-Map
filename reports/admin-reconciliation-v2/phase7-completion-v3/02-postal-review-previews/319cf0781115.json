@@ -1,0 +1,21 @@
+{
+  "group_id": "319cf0781115",
+  "postal_codes": [
+    "0116005"
+  ],
+  "locality_mm": "မရှီကထောင် ရပ်ကွက်",
+  "locality_en": "Ma Shi Ka Htaung Quarter",
+  "township_en": "Hpakant Township",
+  "township_mm": "ဖားကန့် မြို့နယ်",
+  "township_public_id": "23ff19df-3432-41d1-a5f7-f6aac6997004",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

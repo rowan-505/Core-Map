@@ -1,0 +1,21 @@
+{
+  "group_id": "758df5a69e0b",
+  "postal_codes": [
+    "0717005"
+  ],
+  "locality_mm": "အမှတ် (၅) ရပ်ကွက်",
+  "locality_en": "No (5) Quarter",
+  "township_en": "Thandwe Township",
+  "township_mm": "သံတွဲ မြို့နယ်",
+  "township_public_id": "617a076d-421a-4c29-a5f9-e118e2357ee2",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

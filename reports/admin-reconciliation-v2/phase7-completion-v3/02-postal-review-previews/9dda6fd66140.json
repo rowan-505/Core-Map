@@ -1,0 +1,21 @@
+{
+  "group_id": "9dda6fd66140",
+  "postal_codes": [
+    "0904002"
+  ],
+  "locality_mm": "ရှမ်းပိုင်း ရပ်ကွက်",
+  "locality_en": "Shan Paing Quarter",
+  "township_en": "Bawlake Township",
+  "township_mm": "ဘောလခဲ မြို့နယ်",
+  "township_public_id": "0a75da9d-650b-4084-9851-235afc2b7bc8",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

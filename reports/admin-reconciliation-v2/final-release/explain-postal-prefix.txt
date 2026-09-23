@@ -1,0 +1,15 @@
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=502.99..503.00 rows=1 width=8) (actual time=22.878..22.930 rows=1 loops=1)
+   Buffers: shared hit=50
+   ->  Index Only Scan using ref_postal_codes_postal_code_key on ref_postal_codes p  (cost=0.29..502.99 rows=2 width=0) (actual time=0.730..21.311 rows=58 loops=1)
+         Filter: (postal_code ~~ '0101%'::text)
+         Rows Removed by Filter: 17239
+         Heap Fetches: 0
+         Buffers: shared hit=50
+ Planning:
+   Buffers: shared hit=119
+ Planning Time: 18.063 ms
+ Execution Time: 25.817 ms
+(11 rows)
+

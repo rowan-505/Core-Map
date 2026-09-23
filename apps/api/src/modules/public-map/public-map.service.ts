@@ -819,7 +819,7 @@ export class PublicMapService {
 
     /**
      * Lightweight transport route preview for map overlays: one simplified path,
-     * variant summaries, and optional endpoint stops (no full variant collect).
+     * variant summaries, and ordered stops for the focused path (no full variant collect).
      */
     async getTransportRouteMapPreview(input: {
         entityType: SearchMapPreviewEntityType;
@@ -1735,6 +1735,8 @@ export function parseCoordinate(q: string): { lat: number; lng: number } | null 
  * Decide whether/how a normalized text query runs:
  * - length 0–1: blocked unless it looks like a Plus Code or coordinate.
  * - numeric length 2+: full search so route-number intent can be evaluated.
+ * - short Myanmar terms: prefix mode, based on base letters rather than UTF-16
+ *   length (combining marks otherwise make a short syllable look long).
  * - other length 2: allowed, but `prefix` mode (no `%q%` trigram fuzzy search).
  * - length 3+: full search.
  */
@@ -1753,11 +1755,26 @@ export function planPublicSearch(q: string): PublicSearchPlan {
         return { allowed: true, mode: "full" };
     }
 
-    if (len === 2) {
+    if (len === 2 || isShortMyanmarPrefixQuery(trimmed)) {
         return { allowed: true, mode: "prefix" };
     }
 
     return { allowed: true, mode: "full" };
+}
+
+const MYANMAR_SCRIPT_RE = /[\u1000-\u109f]/u;
+const MYANMAR_BASE_LETTER_RE = /[\u1000-\u102a]/gu;
+
+/**
+ * Myanmar vowel signs and stacking marks must not count as separate search
+ * letters. One or two base letters are broad enough to need the cheap,
+ * index-backed prefix plan.
+ */
+export function isShortMyanmarPrefixQuery(q: string): boolean {
+    const trimmed = q.trim();
+    if (!MYANMAR_SCRIPT_RE.test(trimmed) || /\s/u.test(trimmed)) return false;
+    const baseLetterCount = trimmed.match(MYANMAR_BASE_LETTER_RE)?.length ?? 0;
+    return baseLetterCount > 0 && baseLetterCount <= 2;
 }
 
 /** Detect a Postgres `statement_timeout` cancellation (SQLSTATE 57014). */

@@ -1,0 +1,21 @@
+{
+  "group_id": "4eb0db7b19f7",
+  "postal_codes": [
+    "1306006"
+  ],
+  "locality_mm": "အနောက်ပိုင်း ရပ်ကွက်",
+  "locality_en": "Ah Nauk Paing Quarter",
+  "township_en": "Kawkareik Township",
+  "township_mm": "ကော့ကရိတ် မြို့နယ်",
+  "township_public_id": "0c1e0422-330d-4f9e-b926-17fd75d00a9c",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

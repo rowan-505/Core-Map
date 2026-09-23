@@ -1,0 +1,21 @@
+{
+  "group_id": "2614d8c431a7",
+  "postal_codes": [
+    "0515008"
+  ],
+  "locality_mm": "ရဲစု ရပ်ကွက်",
+  "locality_en": "Ye Su Quarter",
+  "township_en": "Kyaukse Township",
+  "township_mm": "ကျောက်ဆည် မြို့နယ်",
+  "township_public_id": "f74d4311-a45c-4acd-aa25-674834f9bbee",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

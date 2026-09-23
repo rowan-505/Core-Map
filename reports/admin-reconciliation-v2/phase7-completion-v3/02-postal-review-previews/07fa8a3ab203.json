@@ -1,0 +1,21 @@
+{
+  "group_id": "07fa8a3ab203",
+  "postal_codes": [
+    "0208001"
+  ],
+  "locality_mm": "မြို့မ အမှတ်(၁) ရပ်ကွက်",
+  "locality_en": "Myo Ma  No (1) Quarter",
+  "township_en": "Mawlaik Township",
+  "township_mm": "မော်လိုက် မြို့နယ်",
+  "township_public_id": "4f9b6c81-68cf-4767-b288-6356bae45984",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

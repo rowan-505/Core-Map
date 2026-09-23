@@ -1,0 +1,21 @@
+{
+  "group_id": "1263984a7fd2",
+  "postal_codes": [
+    "0214004"
+  ],
+  "locality_mm": "အောင်မေတ္တာ ရပ်ကွက်",
+  "locality_en": "Aung Myit Tar Quarter",
+  "township_en": "Indaw Township",
+  "township_mm": "အင်းတော် မြို့နယ်",
+  "township_public_id": "5941d795-effb-4966-96b2-74294d19f8f3",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

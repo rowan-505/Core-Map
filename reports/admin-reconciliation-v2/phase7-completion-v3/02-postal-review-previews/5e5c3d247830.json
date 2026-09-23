@@ -1,0 +1,21 @@
+{
+  "group_id": "5e5c3d247830",
+  "postal_codes": [
+    "1138274"
+  ],
+  "locality_mm": "မလေးရှားဝိုင် ကျေးရွာအုပ်စု",
+  "locality_en": "Ma Lay Shar Waing Village Tract",
+  "township_en": "Taikkyi Township",
+  "township_mm": "တိုက်ကြီး မြို့နယ်",
+  "township_public_id": "93303d13-3738-4d01-97f7-5a5b42120022",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

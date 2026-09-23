@@ -175,6 +175,11 @@ export function usePublicSearch(q: string, getCenter?: () => SearchCenter | unde
         signal,
       ).then((page) => page.items),
     enabled: shouldRunPublicSearch(trimmedQuery),
+    retry: shouldRetryPublicSearch,
+    retryDelay: publicSearchRetryDelay,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 30 * 1000,
   });
 }
 
@@ -202,5 +207,7 @@ export function useSearchResultOverlayGeometry(
     enabled,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }

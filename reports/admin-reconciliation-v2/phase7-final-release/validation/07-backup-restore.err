@@ -1,0 +1,21 @@
+pg_restore: error: could not execute query: ERROR:  unrecognized configuration parameter "transaction_timeout"
+Command was: SET transaction_timeout = 0;
+pg_restore: error: could not execute query: ERROR:  function core.core_settlements_require_township_admin_area() does not exist
+Command was: CREATE TRIGGER trg_core_settlements_require_township_admin_area BEFORE INSERT OR UPDATE OF township_id ON core.core_settlements FOR EACH ROW EXECUTE FUNCTION core.core_settlements_require_township_admin_area();
+
+
+pg_restore: error: could not execute query: ERROR:  function core.sync_is_verified_from_verification_status() does not exist
+Command was: CREATE TRIGGER trg_sync_is_verified_from_verification_status BEFORE INSERT OR UPDATE OF verification_status, is_verified ON core.core_admin_areas FOR EACH ROW EXECUTE FUNCTION core.sync_is_verified_from_verification_status();
+
+
+pg_restore: error: could not execute query: ERROR:  function core.sync_is_verified_from_verification_status() does not exist
+Command was: CREATE TRIGGER trg_sync_is_verified_from_verification_status BEFORE INSERT OR UPDATE OF verification_status, is_verified ON core.core_settlements FOR EACH ROW EXECUTE FUNCTION core.sync_is_verified_from_verification_status();
+
+
+pg_restore: error: could not execute query: ERROR:  foreign key constraint "core_admin_areas_verified_by_auth_users_fk" cannot be implemented
+DETAIL:  Key columns "verified_by" and "id" are of incompatible types: bigint and uuid.
+Command was: ALTER TABLE ONLY core.core_admin_areas
+    ADD CONSTRAINT core_admin_areas_verified_by_auth_users_fk FOREIGN KEY (verified_by) REFERENCES app_auth.auth_users(id) ON DELETE SET NULL;
+
+
+pg_restore: warning: errors ignored on restore: 5

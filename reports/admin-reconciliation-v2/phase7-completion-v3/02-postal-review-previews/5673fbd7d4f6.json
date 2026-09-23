@@ -1,0 +1,21 @@
+{
+  "group_id": "5673fbd7d4f6",
+  "postal_codes": [
+    "1706200"
+  ],
+  "locality_mm": "ကျောင်းခါး ကျေးရွာအုပ်စု",
+  "locality_en": "Kyawng Hkar Village Tract",
+  "township_en": "Mongping Township",
+  "township_mm": "မိုင်းပျဉ်း မြို့နယ်",
+  "township_public_id": "d69d7025-578c-4ad0-8a62-6525f6ba1e02",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

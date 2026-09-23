@@ -1,0 +1,21 @@
+{
+  "group_id": "146b41b34e57",
+  "postal_codes": [
+    "0803224"
+  ],
+  "locality_mm": "ပိန်းဇလုပ် ကျေးရွာအုပ်စု",
+  "locality_en": "Pein Za Loke Village Tract",
+  "township_en": "Nyaunglebin Township",
+  "township_mm": "ညောင်လေးပင် မြို့နယ်",
+  "township_public_id": "fbb410fd-7f59-4a6a-a094-1d7f5809c02b",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

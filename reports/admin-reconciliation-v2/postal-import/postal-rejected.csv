@@ -1,0 +1,3 @@
+postal_code,language,region,township,locality,match_status,reason
+114560,en,Yangon Region,Dagon Myothit (East) Township,No (161) Quarter,malformed_rejected,postal_code must be exactly seven ASCII digits
+114560,my,ရန်ကုန်တိုင်းဒေသကြီး,ဒဂုံမြို့သစ် (အရှေ့ပိုင်း) မြို့နယ်,အမှတ် (၁၆၁) ရပ်ကွက်,malformed_rejected,postal_code must be exactly seven ASCII digits

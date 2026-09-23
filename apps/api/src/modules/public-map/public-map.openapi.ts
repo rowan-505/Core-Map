@@ -942,7 +942,7 @@ export const getPublicSearchMapPreviewSchema = {
     summary: "Transport route map preview",
     description:
         "Returns a lightweight map overlay for a selected transport route: one simplified path, " +
-        "variant summaries, and optional endpoint stops. Parent routes use the focus/primary " +
+        "variant summaries, and ordered stops for that path. Parent routes use the focus/primary " +
         "variant only (no multi-variant geometry collect).",
     params: {
         type: "object",

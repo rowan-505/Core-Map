@@ -1,0 +1,21 @@
+{
+  "group_id": "a3b6d831e234",
+  "postal_codes": [
+    "0801015"
+  ],
+  "locality_mm": "မဇင်း (က) ရပ်ကွက်",
+  "locality_en": "Ma Zin (Ka Gyi) Quarter",
+  "township_en": "Bago Township",
+  "township_mm": "ပဲခူး မြို့နယ်",
+  "township_public_id": "ea329457-de24-49f8-84fe-a2012f2a6b4a",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

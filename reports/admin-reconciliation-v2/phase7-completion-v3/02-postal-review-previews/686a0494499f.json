@@ -1,0 +1,57 @@
+{
+  "group_id": "686a0494499f",
+  "postal_codes": [
+    "0226253"
+  ],
+  "locality_mm": "တယ်ပင် ကျေးရွာအုပ်စု",
+  "locality_en": "Tei Pin Village Tract",
+  "township_en": "Shwebo Township",
+  "township_mm": "ရွှေဘို မြို့နယ်",
+  "township_public_id": "80600f77-5563-49a6-ac6f-9ee0397b8459",
+  "expected_locality_type": "village_tract",
+  "candidates": [
+    {
+      "core_id": "18755",
+      "public_id": "66289506-9513-4a50-8bb4-1abde9fa123d",
+      "type": "village_tract",
+      "parent_public_id": "80600f77-5563-49a6-ac6f-9ee0397b8459",
+      "name_mm": "တယ်ပင်",
+      "name_en": "Tei Pin",
+      "aliases_mm": [],
+      "aliases_en": []
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR005004054",
+      "name_en": "Tei Pin",
+      "name_my": "တယ်ပင်",
+      "norm_en": "teipin",
+      "norm_my": "တယ်ပင်",
+      "ts_pcode": "MMR005004",
+      "ts_name": "Shwebo",
+      "source_row": 11117,
+      "source_file": "village_tract_boundary_Sagaing_v94.zip:mmr_sag_polbnda_adm4_250k_mimu_1.shp"
+    },
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR005004073",
+      "name_en": "Tei Pin",
+      "name_my": "တည်ပင်",
+      "norm_en": "teipin",
+      "norm_my": "တည်ပင်",
+      "ts_pcode": "MMR005004",
+      "ts_name": "Shwebo",
+      "source_row": 11118,
+      "source_file": "village_tract_boundary_Sagaing_v94.zip:mmr_sag_polbnda_adm4_250k_mimu_1.shp"
+    }
+  ],
+  "name_evidence": "unique_exact_my",
+  "recommendation": "link_existing",
+  "review_decision": "link_existing",
+  "selected_admin_public_id": "66289506-9513-4a50-8bb4-1abde9fa123d",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "unique exact Myanmar primary/alias match → 66289506-9513-4a50-8bb4-1abde9fa123d"
+}

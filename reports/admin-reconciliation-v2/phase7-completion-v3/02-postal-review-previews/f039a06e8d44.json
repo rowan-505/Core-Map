@@ -1,0 +1,21 @@
+{
+  "group_id": "f039a06e8d44",
+  "postal_codes": [
+    "0201206"
+  ],
+  "locality_mm": "ခလပ်လိပ်တော် ကျေးရွာအုပ်စု",
+  "locality_en": "Kha Let Leik Taw Village Tract",
+  "township_en": "Nanyun Township",
+  "township_mm": "နန်းယွန်း မြို့နယ်",
+  "township_public_id": "8ce962d0-88de-4d8b-84c1-17eb6ed9c26b",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

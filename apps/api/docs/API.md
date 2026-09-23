@@ -1,6 +1,6 @@
 # CoreMap API
 
-> **Generated:** 2026-09-21T02:28:39.487Z (UTC)  
+> **Generated:** 2026-09-23T15:15:02.826Z (UTC)  
 > **OpenAPI:** This file is produced from `buildApp().swagger()` in `scripts/generate-api-docs.ts` — the same JSON as `GET /openapi.json` when the server is running.
 
 ## Base URLs
@@ -1171,15 +1171,25 @@ Administrative boundaries and GeoJSON layers.
 
 #### `GET` `/admin-areas`
 
-**Summary:** List admin areas
+**Summary:** List admin areas (paginated geography)
 
-Active administrative areas for dashboard pickers and filtering.
+Dashboard geography browser. Returns metadata + bbox/centroid only — never nationwide full-resolution polygons.
 
 **Security:** Bearer JWT (`Authorization: Bearer …`)
 
 | Name | In | Required | Schema |
 | --- | --- | --- | --- |
 | limit | Query | no | integer |
+| offset | Query | no | integer |
+| q | Query | no | string |
+| level | Query | no | string |
+| type | Query | no | string |
+| parent | Query | no | string |
+| status | Query | no | string |
+| geometrySource | Query | no | string |
+| geometry_source | Query | no | string |
+| official | Query | no | string |
+| public | Query | no | string |
 
 
 **Responses**
@@ -1187,16 +1197,34 @@ Active administrative areas for dashboard pickers and filtering.
 - **`200`**
 
   ```json
-  [
-    {
-      "id": "string",
-      "parent_id": "string",
-      "admin_level_id": "string",
-      "canonical_name": "string",
-      "slug": "string",
-      "is_active": false
-    }
-  ]
+  {
+    "items": [
+      {
+        "id": "string",
+        "public_id": "string",
+        "parent_id": null,
+        "canonical_name": "string",
+        "slug": "string",
+        "admin_level_id": "string",
+        "admin_level_code": "string",
+        "is_active": false,
+        "verification_status": "string",
+        "is_official_boundary": false,
+        "admin_area_type_id": null,
+        "admin_area_type_code": null,
+        "address_usage": "string",
+        "boundary_status": "string",
+        "is_public_usable": null,
+        "geometry_source": null,
+        "updated_at": "2026-01-01T00:00:00.000Z",
+        "bbox": null,
+        "centroid": null
+      }
+    ],
+    "total": 0,
+    "limit": 0,
+    "offset": 0
+  }
   ```
 
 - **`400`**
@@ -1214,6 +1242,409 @@ Active administrative areas for dashboard pickers and filtering.
   ```
 
 - **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `GET` `/admin-areas/{id}`
+
+**Summary:** Admin area detail
+
+Names, ancestors, child/postal counts, and verification_note (fix reason when status is needs_fix). Full geometry only when include_geometry=true (authorized dashboard user).
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| include_geometry | Query | no | string |
+| id | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {}
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `GET` `/admin-areas/{id}/children`
+
+**Summary:** Admin area children
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| limit | Query | no | integer |
+| offset | Query | no | integer |
+| level | Query | no | string |
+| id | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "items": [
+      {
+        "id": "string",
+        "canonical_name": "string",
+        "admin_level_code": "string",
+        "is_active": false
+      }
+    ],
+    "total": 0,
+    "limit": 0,
+    "offset": 0
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `PATCH` `/admin-areas/{id}/geometry`
+
+**Summary:** Update admin area geometry
+
+Dashboard write roles only. Optimistic concurrency via expected_updated_at. Validates Polygon/MultiPolygon with ST_IsValid; never auto-applies ST_MakeValid. Replacing mimu_placeholder sets geometry_source + license and verification_status=needs_fix. Audited in system.audit_logs.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| id | Path | yes | string |
+
+
+**Request body** (`application/json`)
+
+```json
+{
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      null
+    ]
+  },
+  "expected_updated_at": "2026-01-01T00:00:00.000Z",
+  "geometry_source": "coremap_manual"
+}
+```
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {}
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`409`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `GET` `/admin-areas/{id}/postal-codes`
+
+**Summary:** Postal codes linked to an admin area
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| limit | Query | no | integer |
+| offset | Query | no | integer |
+| q | Query | no | string |
+| id | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "items": [
+      {
+        "postal_code": "string",
+        "match_status": "string",
+        "source_name": "string",
+        "source_version": "string",
+        "region_name_en": null,
+        "region_name_my": null,
+        "township_name_en": null,
+        "township_name_my": null,
+        "locality_name_en": null,
+        "locality_name_my": null,
+        "locality_type": null,
+        "township_admin_area_id": null,
+        "local_admin_area_id": null,
+        "match_method": null
+      }
+    ],
+    "total": 0,
+    "limit": 0,
+    "offset": 0
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `GET` `/admin-areas/{publicId}/context`
+
+**Summary:** Admin area boundary review context
+
+Returns the selected record (full geometry), parent outline, and same-level neighbours inside the selected bbox plus a small margin. Neighbour geometries are simplified and capped — never nationwide GeoJSON.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| publicId | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {}
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `POST` `/admin-areas/{publicId}/validate-geometry`
+
+**Summary:** Validate draft admin area geometry
+
+Accepts draft Polygon/MultiPolygon without saving. Returns ST_IsValid, outside-parent hectares, overlapping neighbour ids/hectares, and touching neighbour count. Ordinary gaps are not classified as fatal errors.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| publicId | Path | yes | string |
+
+
+**Request body** (`application/json`)
+
+```json
+{
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      null
+    ]
+  }
+}
+```
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {}
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
 
   ```json
   {
@@ -1315,6 +1746,97 @@ Server-side search for active township-level admin areas only (roads). Matches i
       "address_usage": "string"
     }
   ]
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `GET` `/admin-areas/summary`
+
+**Summary:** Admin geography summary counters
+
+Dashboard KPI strip. Aggregates only — never returns geometries. Targets: 15 official first-level, 330 official townships.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "official_first_level": 0,
+    "official_township": 0,
+    "ward_count": 0,
+    "village_tract_count": 0,
+    "settlement_count": 0,
+    "placeholder_count": 0,
+    "postal_linked_local": 0,
+    "postal_linked_township_only": 0,
+    "postal_unmatched_review": 0,
+    "targets": {
+      "official_first_level": 0,
+      "official_township": 0
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `GET` `/admin-areas/tiles/{z}/{x}/{y}`
+
+**Summary:** Admin area vector tile (MVT)
+
+Dashboard map overlay. Uses ST_AsMVT with zoom-based simplify; reuses GiST geom index. Not a parallel tile platform.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| level | Query | no | string |
+| type | Query | no | string |
+| status | Query | no | string |
+| geometry_source | Query | no | string |
+| geometrySource | Query | no | string |
+| official | Query | no | string |
+| public | Query | no | string |
+| z | Path | yes | integer |
+| x | Path | yes | integer |
+| y | Path | yes | integer |
+
+
+**Responses**
+
+- **`200`**
+  - application/vnd.mapbox-vector-tile
+
+  ```json
+  "string"
   ```
 
 - **`400`**
@@ -1467,6 +1989,76 @@ Server-side search for active township-level admin areas only (roads). Matches i
       ],
       "fieldErrors": {}
     }
+  }
+  ```
+
+#### `GET` `/postal-codes`
+
+**Summary:** Search postal codes
+
+Search ref.ref_postal_codes by code and locality names. API-only; not exposed via Supabase.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| limit | Query | no | integer |
+| offset | Query | no | integer |
+| q | Query | no | string |
+| postal_code | Query | no | string |
+| locality | Query | no | string |
+| match_status | Query | no | string |
+
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "items": [
+      {
+        "postal_code": "string",
+        "match_status": "string",
+        "source_name": "string",
+        "source_version": "string",
+        "region_name_en": null,
+        "region_name_my": null,
+        "township_name_en": null,
+        "township_name_my": null,
+        "locality_name_en": null,
+        "locality_name_my": null,
+        "locality_type": null,
+        "township_admin_area_id": null,
+        "local_admin_area_id": null,
+        "match_method": null
+      }
+    ],
+    "total": 0,
+    "limit": 0,
+    "offset": 0
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
   }
   ```
 
@@ -7058,6 +7650,94 @@ Admin/super_admin. Paginated, filterable user list. No secrets returned.
   }
   ```
 
+#### `POST` `/admin/users`
+
+**Summary:** Super admin: create account
+
+Creates an email-verified account with one initial role and a password. Audited. The password is never returned.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+**Request body** (`application/json`)
+
+```json
+{
+  "email": "user@example.com",
+  "displayName": "string",
+  "password": "string",
+  "roleCode": "user"
+}
+```
+
+**Responses**
+
+- **`201`**
+
+  ```json
+  {
+    "public_id": "00000000-0000-4000-8000-000000000000",
+    "email": "string",
+    "display_name": "string",
+    "phone": "string",
+    "email_verified": false,
+    "account_status": "string",
+    "primary_region_id": "string",
+    "roles": [
+      "string"
+    ],
+    "total_points": 0,
+    "last_seen_at": "2026-01-01T00:00:00.000Z",
+    "last_login_at": "2026-01-01T00:00:00.000Z",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "is_active": false,
+    "preferred_language": "string",
+    "admin_note": "string",
+    "lifetime_points_earned": 0,
+    "lifetime_points_removed": 0,
+    "saved_places_count": 0,
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "deleted_at": "2026-01-01T00:00:00.000Z"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`409`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
 #### `GET` `/admin/users/{id}`
 
 **Summary:** Admin: user detail
@@ -7299,6 +7979,75 @@ Admin/super_admin. Recent audit log entries for a user (newest first).
   }
   ```
 
+#### `POST` `/admin/users/{id}/password`
+
+**Summary:** Super admin: reset user password
+
+Sets a new password, ensures the password identity exists, revokes active sessions, and writes an audit entry. The password is never returned or logged.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| id | Path | yes | string, uuid |
+
+
+**Request body** (`application/json`)
+
+```json
+{
+  "password": "string"
+}
+```
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
 #### `GET` `/admin/users/{id}/points`
 
 **Summary:** Admin: user points
@@ -7457,6 +8206,109 @@ Admin/super_admin only. Appends a point_ledger row (never edits/deletes), update
   ```
 
 - **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `PATCH` `/admin/users/{id}/profile`
+
+**Summary:** Super admin: update user profile
+
+Updates editable account data. Email or verification changes revoke active sessions. Audited.
+
+**Security:** Bearer JWT (`Authorization: Bearer …`)
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| id | Path | yes | string, uuid |
+
+
+**Request body** (`application/json`)
+
+```json
+{
+  "email": "user@example.com",
+  "displayName": "string",
+  "phone": "string",
+  "preferredLanguage": "my",
+  "primaryRegionId": 0,
+  "emailVerified": false
+}
+```
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "public_id": "00000000-0000-4000-8000-000000000000",
+    "email": "string",
+    "display_name": "string",
+    "phone": "string",
+    "email_verified": false,
+    "account_status": "string",
+    "primary_region_id": "string",
+    "roles": [
+      "string"
+    ],
+    "total_points": 0,
+    "last_seen_at": "2026-01-01T00:00:00.000Z",
+    "last_login_at": "2026-01-01T00:00:00.000Z",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "is_active": false,
+    "preferred_language": "string",
+    "admin_note": "string",
+    "lifetime_points_earned": 0,
+    "lifetime_points_removed": 0,
+    "saved_places_count": 0,
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "deleted_at": "2026-01-01T00:00:00.000Z"
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": {
+      "formErrors": [
+        "string"
+      ],
+      "fieldErrors": {}
+    }
+  }
+  ```
+
+- **`401`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`403`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`404`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+- **`409`**
 
   ```json
   {
@@ -7997,77 +8849,6 @@ admin can enable/disable normal users; super_admin required for admin accounts a
   ```
 
 - **`403`**
-
-  ```json
-  {
-    "message": "string"
-  }
-  ```
-
-#### `GET` `/dashboard/stats`
-
-**Summary:** Dashboard statistics
-
-Aggregated row counts for admin overview.
-
-**Security:** Bearer JWT (`Authorization: Bearer …`)
-
-**Responses**
-
-- **`200`**
-
-  ```json
-  {
-    "countsMode": "exact",
-    "overview": {
-      "total_main_rows": 0,
-      "total_metadata_rows": 0,
-      "total_transit_rows": 0
-    },
-    "main": {
-      "places": 0,
-      "map_buildings": 0,
-      "streets": 0,
-      "admin_areas": 0,
-      "addresses": 0
-    },
-    "metadata": {
-      "place_names": 0,
-      "street_names": 0,
-      "admin_area_names": 0,
-      "place_contacts": 0,
-      "place_sources": 0,
-      "place_media": 0,
-      "place_versions": 0
-    },
-    "transit": {
-      "bus_routes": 0,
-      "bus_route_variants": 0,
-      "bus_stops": 0,
-      "bus_route_stops": 0
-    },
-    "health": {
-      "places_active": 0,
-      "places_deleted": 0,
-      "places_verified": 0,
-      "places_unverified": 0,
-      "buildings_active": 0,
-      "buildings_deleted": 0,
-      "streets_active": 0,
-      "streets_inactive": 0
-    }
-  }
-  ```
-
-- **`401`**
-
-  ```json
-  {
-    "message": "string"
-  }
-  ```
-
-- **`500`**
 
   ```json
   {
@@ -12271,6 +13052,7 @@ Admin/super_admin. Paginated inspection of unified search index rows with sync s
     ],
     "health_query_ok": false,
     "health_query_error": "string",
+    "report_mode": "full",
     "totals": {
       "expected_searchable_count": 0,
       "canonical_count": 0,
@@ -12368,6 +13150,7 @@ Admin/super_admin. Re-runs the health SQL and returns before/after snapshots (id
       ],
       "health_query_ok": false,
       "health_query_error": "string",
+      "report_mode": "full",
       "totals": {
         "expected_searchable_count": 0,
         "canonical_count": 0,
@@ -12418,6 +13201,7 @@ Admin/super_admin. Re-runs the health SQL and returns before/after snapshots (id
       ],
       "health_query_ok": false,
       "health_query_error": "string",
+      "report_mode": "full",
       "totals": {
         "expected_searchable_count": 0,
         "canonical_count": 0,
@@ -12525,6 +13309,7 @@ Super_admin only. Uses search.sync_search_documents for supported entity types (
       ],
       "health_query_ok": false,
       "health_query_error": "string",
+      "report_mode": "full",
       "totals": {
         "expected_searchable_count": 0,
         "canonical_count": 0,
@@ -12575,6 +13360,7 @@ Super_admin only. Uses search.sync_search_documents for supported entity types (
       ],
       "health_query_ok": false,
       "health_query_error": "string",
+      "report_mode": "full",
       "totals": {
         "expected_searchable_count": 0,
         "canonical_count": 0,
@@ -12664,7 +13450,8 @@ Super_admin only. Rebuilds the mapped source view via search.rebuild_search_docu
 
 ```json
 {
-  "entity_family": "string"
+  "entity_family": "string",
+  "skip_health_refresh": false
 }
 ```
 
@@ -12697,6 +13484,7 @@ Super_admin only. Rebuilds the mapped source view via search.rebuild_search_docu
       ],
       "health_query_ok": false,
       "health_query_error": "string",
+      "report_mode": "full",
       "totals": {
         "expected_searchable_count": 0,
         "canonical_count": 0,
@@ -12747,6 +13535,7 @@ Super_admin only. Rebuilds the mapped source view via search.rebuild_search_docu
       ],
       "health_query_ok": false,
       "health_query_error": "string",
+      "report_mode": "full",
       "totals": {
         "expected_searchable_count": 0,
         "canonical_count": 0,
@@ -12826,9 +13615,9 @@ Super_admin only. Rebuilds the mapped source view via search.rebuild_search_docu
 
 #### `POST` `/admin/search/index-health/repair`
 
-**Summary:** Repair all unhealthy search index families
+**Summary:** Repair critical search index gaps
 
-Super_admin only. Rebuilds only unhealthy families (same logic as search:reconcile --repair).
+Super_admin only. Auto-repairs missing/ghost gaps only. Skips heavy families (settlements, street_groups) unless missing+ghost ≥ 100. Use Reindex family for stale-only or heavy rebuilds.
 
 **Security:** Bearer JWT (`Authorization: Bearer …`)
 
@@ -12861,6 +13650,7 @@ Super_admin only. Rebuilds only unhealthy families (same logic as search:reconci
       ],
       "health_query_ok": false,
       "health_query_error": "string",
+      "report_mode": "full",
       "totals": {
         "expected_searchable_count": 0,
         "canonical_count": 0,
@@ -12911,6 +13701,7 @@ Super_admin only. Rebuilds only unhealthy families (same logic as search:reconci
       ],
       "health_query_ok": false,
       "health_query_error": "string",
+      "report_mode": "full",
       "totals": {
         "expected_searchable_count": 0,
         "canonical_count": 0,
@@ -13020,6 +13811,59 @@ Admin/super_admin. Lightweight summary counts for the Search dashboard overview.
   ```
 
 - **`403`**
+
+  ```json
+  {
+    "message": "string"
+  }
+  ```
+
+#### `GET` `/postal-codes/{postalCode}`
+
+**Summary:** Look up a Myanmar Post postal code
+
+Reads ref.ref_postal_codes (API-only reference table). Does not mutate core.core_addresses.
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| postalCode | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+  ```json
+  {
+    "postal_code": "string",
+    "match_status": "string",
+    "source_name": "string",
+    "source_version": "string",
+    "region_name_en": null,
+    "region_name_my": null,
+    "township_name_en": null,
+    "township_name_my": null,
+    "locality_name_en": null,
+    "locality_name_my": null,
+    "locality_type": null,
+    "township_admin_area_id": null,
+    "local_admin_area_id": null,
+    "match_method": null
+  }
+  ```
+
+- **`400`**
+
+  ```json
+  {
+    "message": "string",
+    "issues": null
+  }
+  ```
+
+- **`404`**
 
   ```json
   {
@@ -13229,7 +14073,7 @@ Returns the full GeoJSON geometry for a single search result, fetched on click (
 
 **Summary:** Transport route map preview
 
-Returns a lightweight map overlay for a selected transport route: one simplified path, variant summaries, and optional endpoint stops. Parent routes use the focus/primary variant only (no multi-variant geometry collect).
+Returns a lightweight map overlay for a selected transport route: one simplified path, variant summaries, and ordered stops for that path. Parent routes use the focus/primary variant only (no multi-variant geometry collect).
 
 **Security:** None
 
@@ -17006,6 +17850,143 @@ Does not soft-delete. Removal is a hard delete used only after local Archive is 
   ```
 
 ### Other
+
+#### `PATCH` `/admin-areas/{id}/remediation`
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| id | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+#### `GET` `/admin/name-pair-reviews`
+
+**Security:** None
+
+**Responses**
+
+- **`200`**
+
+#### `GET` `/admin/name-pair-reviews/{publicId}`
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| publicId | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+#### `POST` `/admin/name-pair-reviews/{publicId}/approve`
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| publicId | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+#### `POST` `/admin/name-pair-reviews/{publicId}/reject`
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| publicId | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+#### `POST` `/admin/name-pair-reviews/{publicId}/skip`
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| publicId | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+#### `GET` `/admin/name-pair-reviews/gaps`
+
+**Security:** None
+
+**Responses**
+
+- **`200`**
+
+#### `GET` `/admin/name-pair-reviews/summary`
+
+**Security:** None
+
+**Responses**
+
+- **`200`**
+
+#### `GET` `/admin/references/`
+
+**Security:** None
+
+**Responses**
+
+- **`200`**
+
+#### `GET` `/admin/references/{type}`
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| type | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+#### `POST` `/admin/references/{type}`
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| type | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
+
+#### `PATCH` `/admin/references/{type}/{id}`
+
+**Security:** None
+
+| Name | In | Required | Schema |
+| --- | --- | --- | --- |
+| type | Path | yes | string |
+| id | Path | yes | string |
+
+
+**Responses**
+
+- **`200`**
 
 #### `GET` `/admin/tourism/activities`
 
@@ -24723,4 +25704,4 @@ Many routes return JSON error bodies for failed validation, auth, or missing res
 
 ---
 
-*OpenAPI version: 3.0.3 · API version: 0.1.0 · Operations: 368*
+*OpenAPI version: 3.0.3 · API version: 0.1.0 · Operations: 392*

@@ -1,0 +1,21 @@
+{
+  "group_id": "187e696f82aa",
+  "postal_codes": [
+    "0901016"
+  ],
+  "locality_mm": "နမ့်ဘော်ဝမ် (ခ) ရပ်ကွက်",
+  "locality_en": "Nam Baw Wan (Kha) Quarter",
+  "township_en": "Loikaw Township",
+  "township_mm": "လွိုင်ကော် မြို့နယ်",
+  "township_public_id": "5632cab6-82ff-453a-b4bf-724c50230562",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

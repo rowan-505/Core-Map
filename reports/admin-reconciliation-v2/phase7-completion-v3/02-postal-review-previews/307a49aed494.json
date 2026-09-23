@@ -1,0 +1,21 @@
+{
+  "group_id": "307a49aed494",
+  "postal_codes": [
+    "0617002"
+  ],
+  "locality_mm": "လွိုင်မြေ ရပ်ကွက်",
+  "locality_en": "Lwi Myay Quarter",
+  "township_en": "Mongnai Township",
+  "township_mm": "မိုးနဲ မြို့နယ်",
+  "township_public_id": "ec322fbf-3285-42cb-ac6d-aaa5d99e3996",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

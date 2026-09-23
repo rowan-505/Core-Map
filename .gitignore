@@ -259,3 +259,34 @@ tools/data-repair/current-production/29_township_gap_autonomous_review_fill_2026
 /tmp/**
 !/tmp/
 !/tmp/.gitkeep
+# Tourism Deep Research runner (raw paid outputs + local state)
+scripts/tourism-research/output/raw/*.md
+scripts/tourism-research/state.local.json
+
+scripts/tourism-research/state.json
+
+scripts/tourism-research/output/normalized/*.json
+
+scripts/tourism-research/output/pilot/
+
+# Local frozen MIMU reconciliation sources (licensed/raw; do not commit)
+data/local/admin-reconciliation/
+
+# Phase 1 normalized MIMU geometries (large; regenerate via tools script)
+reports/admin-reconciliation-v2/01-wards-normalized.geojson
+reports/admin-reconciliation-v2/01-village-tracts-normalized.geojson
+
+# Phase 3 geometry previews (regenerate via tools script)
+reports/admin-reconciliation-v2/phase3-previews/
+
+# Phase 3 local review viewer
+tools/admin-reconciliation/phase3-viewer/node_modules/
+tools/admin-reconciliation/phase3-viewer/dist/
+
+# Local Phase 7 production apply helper venv
+.venv-phase7-apply/
+
+# Python / Supabase CLI local junk
+**/__pycache__/
+*.py[cod]
+supabase/.temp/

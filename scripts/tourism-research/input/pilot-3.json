@@ -1,0 +1,23 @@
+{
+  "notes": "Phase 6 pilot — exactly 3 canonical CoreMap townships. Do not expand to 30 here.",
+  "townships": [
+    {
+      "public_id": "b49f3ad2-9b3a-4c9c-96d5-e7ac7deca5dd",
+      "name_en": "Nyaungshwe",
+      "name_mm": "ညောင်ရွှေမြို့နယ်",
+      "region_en": "Shan State"
+    },
+    {
+      "public_id": "68baff1b-998c-4994-8244-2fe2d9f63b74",
+      "name_en": "Nyaung-U",
+      "name_mm": "ပုဂံ(ညောင်ဦး)မြို့နယ်",
+      "region_en": "Mandalay Region"
+    },
+    {
+      "public_id": "0cad1b5d-a9ff-47d6-bc7a-a44fb7569ed4",
+      "name_en": "Kalaw",
+      "name_mm": "ကလောမြို့နယ်",
+      "region_en": "Shan State"
+    }
+  ]
+}

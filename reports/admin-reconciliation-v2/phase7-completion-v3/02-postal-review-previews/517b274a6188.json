@@ -1,0 +1,57 @@
+{
+  "group_id": "517b274a6188",
+  "postal_codes": [
+    "1134241"
+  ],
+  "locality_mm": "တောင်ကုန်း ကျေးရွာအုပ်စု",
+  "locality_en": "Taung Kone 2 Village Tract",
+  "township_en": "Kungyangon Township",
+  "township_mm": "ကွမ်းခြံကုန်း မြို့နယ်",
+  "township_public_id": "fa5a2d7d-4d4e-48b8-8c10-62cff99eefcc",
+  "expected_locality_type": "village_tract",
+  "candidates": [
+    {
+      "core_id": "21582",
+      "public_id": "ba4e2d1d-d89a-4560-8782-ccbb20e8f564",
+      "type": "village_tract",
+      "parent_public_id": "fa5a2d7d-4d4e-48b8-8c10-62cff99eefcc",
+      "name_mm": "တောင်ကုန်း",
+      "name_en": "Taung Kone 2",
+      "aliases_mm": [],
+      "aliases_en": []
+    }
+  ],
+  "mimu_hits": [
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR013029017",
+      "name_en": "Taung Kone 1",
+      "name_my": "တောင်ကုန်း",
+      "norm_en": "taungkone1",
+      "norm_my": "တောင်ကုန်း",
+      "ts_pcode": "MMR013029",
+      "ts_name": "Kungyangon",
+      "source_row": 13947,
+      "source_file": "village_tract_boundary_Yangon_v94.zip:mmr_ygn_polbnda_adm4_mimu_250k_1.shp"
+    },
+    {
+      "entity_type": "village_tract",
+      "source_pcode": "MMR013029042",
+      "name_en": "Taung Kone 2",
+      "name_my": "တောင်ကုန်း",
+      "norm_en": "taungkone2",
+      "norm_my": "တောင်ကုန်း",
+      "ts_pcode": "MMR013029",
+      "ts_name": "Kungyangon",
+      "source_row": 13948,
+      "source_file": "village_tract_boundary_Yangon_v94.zip:mmr_ygn_polbnda_adm4_mimu_250k_1.shp"
+    }
+  ],
+  "name_evidence": "unique_exact_bilingual",
+  "recommendation": "link_existing",
+  "review_decision": "link_existing",
+  "selected_admin_public_id": "ba4e2d1d-d89a-4560-8782-ccbb20e8f564",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "unique exact bilingual identity → ba4e2d1d-d89a-4560-8782-ccbb20e8f564"
+}

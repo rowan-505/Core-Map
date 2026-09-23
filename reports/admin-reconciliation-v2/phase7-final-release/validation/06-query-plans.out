@@ -1,0 +1,91 @@
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=40.66..84.37 rows=11 width=67) (actual time=12.816..13.591 rows=50 loops=1)
+   Buffers: shared hit=58
+   ->  Hash Join  (cost=40.66..84.37 rows=11 width=67) (actual time=12.602..13.277 rows=50 loops=1)
+         Hash Cond: (a.admin_area_type_id = t.id)
+         Buffers: shared hit=58
+         ->  Nested Loop  (cost=39.34..83.01 rows=11 width=43) (actual time=10.181..10.742 rows=50 loops=1)
+               Buffers: shared hit=57
+               ->  Seq Scan on ref_admin_levels l  (cost=0.00..1.09 rows=1 width=8) (actual time=0.445..0.446 rows=1 loops=1)
+                     Filter: (code = 'ward_village_tract'::text)
+                     Rows Removed by Filter: 4
+                     Buffers: shared hit=1
+               ->  Bitmap Heap Scan on core_admin_areas a  (cost=39.34..81.81 rows=11 width=51) (actual time=9.241..9.783 rows=50 loops=1)
+                     Recheck Cond: ((parent_id = 7215) AND (l.id = admin_level_id))
+                     Filter: (is_active AND (deleted_at IS NULL))
+                     Heap Blocks: exact=27
+                     Buffers: shared hit=56
+                     ->  BitmapAnd  (cost=39.34..39.34 rows=11 width=0) (actual time=8.224..8.235 rows=0 loops=1)
+                           Buffers: shared hit=29
+                           ->  Bitmap Index Scan on core_admin_areas_parent_idx  (cost=0.00..4.88 rows=79 width=0) (actual time=1.070..1.070 rows=79 loops=1)
+                                 Index Cond: (parent_id = 7215)
+                                 Buffers: shared hit=5
+                           ->  Bitmap Index Scan on core_admin_areas_level_idx  (cost=0.00..34.19 rows=2387 width=0) (actual time=6.689..6.689 rows=16999 loops=1)
+                                 Index Cond: (admin_level_id = l.id)
+                                 Buffers: shared hit=24
+         ->  Hash  (cost=1.14..1.14 rows=14 width=40) (actual time=1.233..1.259 rows=14 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+               Buffers: shared hit=1
+               ->  Seq Scan on ref_admin_area_types t  (cost=0.00..1.14 rows=14 width=40) (actual time=0.645..0.652 rows=14 loops=1)
+                     Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=688 read=10
+ Planning Time: 55.640 ms
+ Execution Time: 16.976 ms
+(33 rows)
+
+                                                                            QUERY PLAN                                                                            
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=9.20..167.41 rows=50 width=43) (actual time=0.892..1.115 rows=50 loops=1)
+   Buffers: shared hit=4 read=4
+   ->  Bitmap Heap Scan on ref_postal_codes p  (cost=9.20..256.01 rows=78 width=43) (actual time=0.891..1.107 rows=50 loops=1)
+         Recheck Cond: ((postal_code = '11111'::text) OR (township_admin_area_id = 7215))
+         Heap Blocks: exact=4
+         Buffers: shared hit=4 read=4
+         ->  BitmapOr  (cost=9.20..9.20 rows=78 width=0) (actual time=0.814..0.835 rows=0 loops=1)
+               Buffers: shared hit=3 read=1
+               ->  Bitmap Index Scan on ref_postal_codes_postal_code_key  (cost=0.00..4.29 rows=1 width=0) (actual time=0.755..0.756 rows=0 loops=1)
+                     Index Cond: (postal_code = '11111'::text)
+                     Buffers: shared hit=2
+               ->  Bitmap Index Scan on ref_postal_codes_township_admin_area_id_idx  (cost=0.00..4.86 rows=77 width=0) (actual time=0.055..0.055 rows=77 loops=1)
+                     Index Cond: (township_admin_area_id = 7215)
+                     Buffers: shared hit=1 read=1
+ Planning:
+   Buffers: shared hit=81 read=4
+ Planning Time: 5.464 ms
+ Execution Time: 1.316 ms
+(18 rows)
+
+                                                                     QUERY PLAN                                                                     
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=12.93..203.18 rows=50 width=70) (actual time=6.475..7.235 rows=50 loops=1)
+   Buffers: shared hit=17 read=3
+   ->  Bitmap Heap Scan on core_settlements s  (cost=12.93..2231.28 rows=583 width=70) (actual time=6.473..7.223 rows=50 loops=1)
+         Recheck Cond: (township_id = 7215)
+         Filter: (deleted_at IS NULL)
+         Heap Blocks: exact=17
+         Buffers: shared hit=17 read=3
+         ->  Bitmap Index Scan on core_settlements_township_id_idx  (cost=0.00..12.78 rows=599 width=0) (actual time=0.298..0.299 rows=595 loops=1)
+               Index Cond: (township_id = 7215)
+               Buffers: shared hit=1 read=2
+ Planning:
+   Buffers: shared hit=142 read=4
+ Planning Time: 1.554 ms
+ Execution Time: 30.532 ms
+(14 rows)
+
+                                                          QUERY PLAN                                                           
+-------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=4423.32..4423.33 rows=1 width=8) (actual time=129.531..129.534 rows=1 loops=1)
+   Buffers: shared hit=4179
+   ->  Seq Scan on core_admin_areas a  (cost=0.00..4387.85 rows=14189 width=0) (actual time=3.103..126.709 rows=14192 loops=1)
+         Filter: ((deleted_at IS NULL) AND (geometry_source = 'mimu_placeholder'::text))
+         Rows Removed by Filter: 2516
+         Buffers: shared hit=4179
+ Planning:
+   Buffers: shared hit=9
+ Planning Time: 3.739 ms
+ Execution Time: 131.372 ms
+(10 rows)
+

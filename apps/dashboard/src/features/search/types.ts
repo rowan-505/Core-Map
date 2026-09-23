@@ -305,6 +305,8 @@ export type SearchIndexHealthReport = {
     overall_severity_reasons: string[];
     health_query_ok: boolean;
     health_query_error: string | null;
+    /** `snapshot` = fast count-diff; `full` = exact missing/ghost/stale. */
+    report_mode?: "full" | "snapshot";
     totals: {
         expected_searchable_count: number;
         canonical_count: number;
@@ -343,6 +345,8 @@ export type SearchIndexMaintenanceOperation = {
 
 export type ReindexSearchFamilyBody = {
     entity_family: string;
+    /** Skip full health reload after rebuild (sequential repair). */
+    skip_health_refresh?: boolean;
 };
 
 export type ReindexSearchEntityBody = {

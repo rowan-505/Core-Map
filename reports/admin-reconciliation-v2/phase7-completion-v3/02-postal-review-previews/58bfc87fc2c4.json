@@ -1,0 +1,21 @@
+{
+  "group_id": "58bfc87fc2c4",
+  "postal_codes": [
+    "0713229"
+  ],
+  "locality_mm": "စပါးတုံ ကျေးရွာအုပ်စု",
+  "locality_en": "Sa Par Ton Village Tract",
+  "township_en": "Ramree Township",
+  "township_mm": "ရမ်းဗြဲ မြို့နယ်",
+  "township_public_id": "73a6ff73-0d1a-4839-b932-af06688c50f9",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

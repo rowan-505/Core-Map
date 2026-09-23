@@ -10,6 +10,7 @@ import {
 import type { CoreReviewVerificationStatus } from "../verification/coreReviewVerificationFilter";
 
 export const VERIFICATION_SUMMARY_STATUS_LABELS: Record<string, string> = {
+    total: "Total records",
     unverified: "Unverified",
     verified: "Verified",
     needs_fix: "Needs fix",
@@ -66,7 +67,7 @@ export function VerificationSummaryTotalsGrid({
     globalHint?: string;
 }) {
     return (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {Object.entries(VERIFICATION_SUMMARY_STATUS_LABELS).map(([status, label]) => (
                 <div
                     key={status}

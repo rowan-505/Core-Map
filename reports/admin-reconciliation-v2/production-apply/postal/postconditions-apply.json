@@ -1,0 +1,19 @@
+{
+  "planned_rows": 17297,
+  "planned_unique": 17297,
+  "db_rows": 17297,
+  "exact_17297_planned": true,
+  "exact_17297_db": true,
+  "zero_duplicate_planned": true,
+  "zero_duplicate_db": true,
+  "zero_invalid_db": true,
+  "every_row_has_status": true,
+  "local_reaches_township": true,
+  "active_fks": true,
+  "status_counts": {
+    "linked_local_area": 1638,
+    "linked_township_only": 12298,
+    "unmatched": 3361
+  },
+  "table_exists": true
+}

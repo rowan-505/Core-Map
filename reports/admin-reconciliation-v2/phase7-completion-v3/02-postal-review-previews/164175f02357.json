@@ -1,0 +1,21 @@
+{
+  "group_id": "164175f02357",
+  "postal_codes": [
+    "0110212"
+  ],
+  "locality_mm": "မုတ်နောင် ကျေးရွာအုပ်စု",
+  "locality_en": "Moke Nawng Village Tract",
+  "township_en": "Mogaung Township",
+  "township_mm": "မိုးကောင်း မြို့နယ်",
+  "township_public_id": "00bb5083-77f4-4aa5-8a54-ba210d766395",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

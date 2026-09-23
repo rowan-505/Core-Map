@@ -1,0 +1,21 @@
+{
+  "group_id": "4f51c3097381",
+  "postal_codes": [
+    "1503225"
+  ],
+  "locality_mm": "ဇရပ်ကြီးကုန်း ကျေးရွာအုပ်စု",
+  "locality_en": "Za Yat Gyi Kone Village Tract",
+  "township_en": "Tatkon Township",
+  "township_mm": "တပ်ကုန်း မြို့နယ်",
+  "township_public_id": "5e55abe3-6b48-408a-9a2e-5660d7e44b05",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

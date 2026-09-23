@@ -1,0 +1,21 @@
+{
+  "group_id": "6a55911ebbf2",
+  "postal_codes": [
+    "1805224"
+  ],
+  "locality_mm": "အင်းမအရှေ့ပိုင်း ကျေးရွာအုပ်စု",
+  "locality_en": "Inn Ma Ah Shey Paing Village Tract",
+  "township_en": "Thegon Township",
+  "township_mm": "သဲကုန်း မြို့နယ်",
+  "township_public_id": "1cb6f236-e7e3-4b01-865c-04436c393602",
+  "expected_locality_type": "village_tract",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}

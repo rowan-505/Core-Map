@@ -1,0 +1,21 @@
+{
+  "group_id": "8f3b50063151",
+  "postal_codes": [
+    "1304004"
+  ],
+  "locality_mm": "(ဃ) ရပ်ကွက်",
+  "locality_en": "(Ga Gyi) Quarter",
+  "township_en": "Hlaingbwe Township",
+  "township_mm": "လှိုင်းဘွဲ့ မြို့နယ်",
+  "township_public_id": "6d850154-f201-4725-b742-0d2e26b3b98f",
+  "expected_locality_type": "ward",
+  "candidates": [],
+  "mimu_hits": [],
+  "name_evidence": "no_exact",
+  "recommendation": "confirmed_non_admin",
+  "review_decision": "confirmed_non_admin",
+  "selected_admin_public_id": "",
+  "proposed_alias_mm": "",
+  "proposed_alias_en": "",
+  "review_note": "no CoreMap or MIMU exact identity under township; keep as non-linked postal locality"
+}
