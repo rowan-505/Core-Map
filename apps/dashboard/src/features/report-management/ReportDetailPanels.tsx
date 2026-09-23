@@ -16,6 +16,7 @@ import {
 import type { ApplyConfirmationSummary, ApplyResultSummary } from "./reportApplyFlow";
 import { MAP_DATA_CHANGED_MESSAGE } from "./reportApplyFlow";
 import { FIELD_EDITOR_LINK_PROPS } from "./fieldReportLinks";
+import type { AdminReportDetailStop, NormalizedAdminReportDetail } from "./types";
 
 export const PRIMARY_BTN =
     "rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 disabled:cursor-not-allowed disabled:opacity-50";
@@ -183,6 +184,187 @@ export function ReportDetailSurveyorNoteCard({ note }: { note: string | null | u
             ) : (
                 <p className="text-sm text-gray-500">No note was sent with this report.</p>
             )}
+        </Card>
+    );
+}
+
+function normalizedPoint(
+    point: { latitude: number; longitude: number } | null
+): string {
+    return point
+        ? `${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}`
+        : "—";
+}
+
+function comparisonValue(
+    value: NormalizedAdminReportDetail["comparison"]["original"]
+): string {
+    if (!value) return "—";
+    return [
+        value.name,
+        normalizedPoint(value.coordinates),
+        value.sequence === null ? null : `Sequence ${value.sequence}`,
+    ]
+        .filter(Boolean)
+        .join(" · ") || "—";
+}
+
+export function NormalizedReportComparisonCard({
+    comparison,
+}: {
+    comparison: NormalizedAdminReportDetail["comparison"];
+}) {
+    return (
+        <Card title="Survey comparison">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <Field label="Original at survey time" value={comparisonValue(comparison.original)} />
+                <Field label="Current database" value={comparisonValue(comparison.current)} />
+                <Field label="Explicit proposal" value={comparisonValue(comparison.proposed)} />
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Field label="Snapshot revision" value={comparison.snapshotRevision ?? "Unknown"} />
+                <Field label="Current revision" value={comparison.currentRevision ?? "Unknown"} />
+                <Field
+                    label="Revision state"
+                    value={
+                        comparison.isStale === null
+                            ? "Unknown"
+                            : comparison.isStale
+                              ? "Stale"
+                              : "Current"
+                    }
+                />
+            </div>
+        </Card>
+    );
+}
+
+export function ReportObserverCard({
+    observer,
+}: {
+    observer: NormalizedAdminReportDetail["observer"];
+}) {
+    return (
+        <Card title="Observer">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="GPS coordinates" value={observer ? normalizedPoint(observer.coordinates) : "—"} />
+                <Field
+                    label="Accuracy"
+                    value={observer?.accuracyMetres == null ? "—" : `${observer.accuracyMetres.toFixed(1)} m`}
+                />
+                <Field
+                    label="Distance to current stop"
+                    value={
+                        observer?.distanceToCurrentStopMetres == null
+                            ? "—"
+                            : `${observer.distanceToCurrentStopMetres.toFixed(1)} m`
+                    }
+                />
+                <Field
+                    label="Distance to proposed position"
+                    value={
+                        observer?.distanceToProposedPositionMetres == null
+                            ? "—"
+                            : `${observer.distanceToProposedPositionMetres.toFixed(1)} m`
+                    }
+                />
+            </div>
+        </Card>
+    );
+}
+
+export function ReportRouteContextCard({
+    detail,
+}: {
+    detail: Pick<NormalizedAdminReportDetail, "routeContext" | "affectedRoutes">;
+}) {
+    const context = detail.routeContext;
+    const stopLabel = (stop: AdminReportDetailStop | null) =>
+        stop
+            ? `${stop.name ?? stop.publicId ?? "Stop"}${stop.sequence == null ? "" : ` (#${stop.sequence})`}`
+            : "—";
+    return (
+        <Card title="Route context">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Route" value={context?.route?.code ?? "—"} />
+                <Field label="Variant" value={context?.variant?.code ?? "—"} />
+                {context?.insertion ? (
+                    <>
+                        <Field label="Insert after" value={stopLabel(context.insertion.afterStop)} />
+                        <Field label="Insert before" value={stopLabel(context.insertion.beforeStop)} />
+                    </>
+                ) : (
+                    <>
+                        <Field label="Previous stop" value={stopLabel(context?.previousStop ?? null)} />
+                        <Field label="Current stop" value={stopLabel(context?.currentStop ?? null)} />
+                        <Field label="Next stop" value={stopLabel(context?.nextStop ?? null)} />
+                    </>
+                )}
+            </div>
+            <div className="mt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Active affected variants
+                </p>
+                {detail.affectedRoutes.length === 0 ? (
+                    <p className="mt-1 text-sm text-gray-500">No active route memberships.</p>
+                ) : (
+                    <ul className="mt-2 space-y-1 text-sm text-gray-800">
+                        {detail.affectedRoutes.map((membership) => (
+                            <li key={`${membership.routeVariantPublicId}:${membership.sequence}`}>
+                                {membership.routeCode} · {membership.variantCode}
+                                {membership.direction ? ` · ${membership.direction}` : ""}
+                                {` · #${membership.sequence}`}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        </Card>
+    );
+}
+
+export function ReportReviewGuidanceCard({
+    review,
+}: {
+    review: NormalizedAdminReportDetail["review"];
+}) {
+    const label = (action: string) =>
+        action
+            .toLocaleLowerCase("en")
+            .split("_")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ");
+    return (
+        <Card title="Review guidance">
+            <Field
+                label="Suggested action"
+                value={review.suggestedAction ? label(review.suggestedAction) : "No suggestion"}
+            />
+            <div className="mt-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Supported by evidence
+                </p>
+                <p className="mt-1 text-sm text-gray-800">
+                    {review.allowedActions.length > 0
+                        ? review.allowedActions.map(label).join(", ")
+                        : "None"}
+                </p>
+            </div>
+            {review.blockedReasons.length > 0 ? (
+                <div className="mt-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Blocked reasons
+                    </p>
+                    <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-amber-900">
+                        {review.blockedReasons.map((reason) => (
+                            <li key={reason}>{reason}</li>
+                        ))}
+                    </ul>
+                </div>
+            ) : null}
+            <p className="mt-3 text-xs text-gray-500">
+                Guidance only. No map data is changed from this page.
+            </p>
         </Card>
     );
 }

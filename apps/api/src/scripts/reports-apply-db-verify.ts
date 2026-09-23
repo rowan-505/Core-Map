@@ -491,13 +491,13 @@ async function main() {
             counting.reset();
             const { value, ms } = await timed(() => reportsService.adminGet(fixture!.moveReportPublicId));
             const queries = counting.count();
-            const hasMapContext = (value.review?.map_context?.stops.length ?? 0) > 0;
+            const hasRouteContext = Boolean(value.routeContext?.currentStop);
             cases.push({
                 id: "PERF_ADMIN_GET",
-                ok: ms < TARGET_MS && queries < 40 && hasMapContext,
+                ok: ms < TARGET_MS && queries < 40 && hasRouteContext,
                 ms,
                 queries,
-                detail: `adminGet ${ms.toFixed(1)}ms / ${queries} queries; map_context stops=${value.review?.map_context?.stops.length ?? 0}`,
+                detail: `adminGet ${ms.toFixed(1)}ms / ${queries} queries; route_context=${hasRouteContext}`,
             });
         }
 

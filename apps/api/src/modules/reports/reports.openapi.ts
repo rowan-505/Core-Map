@@ -366,14 +366,84 @@ const reportMediaEvidenceSchema = {
     additionalProperties: false,
 } as const;
 
-const adminReportDetailSchema = {
+const normalizedAdminReportDetailSchema = {
     type: "object",
-    required: [...adminReportSchema.required, "followups", "status_events", "media"],
+    required: [
+        "report",
+        "resolvedTarget",
+        "comparison",
+        "observer",
+        "routeContext",
+        "affectedRoutes",
+        "evidence",
+        "review",
+        "workflow",
+    ],
     properties: {
-        ...adminReportSchema.properties,
-        followups: { type: "array", items: followupSchema },
-        status_events: { type: "array", items: statusEventSchema },
-        media: { type: "array", items: reportMediaEvidenceSchema },
+        report: { type: "object", additionalProperties: true },
+        resolvedTarget: { type: "object", additionalProperties: true },
+        comparison: { type: "object", additionalProperties: true },
+        observer: {
+            type: "object",
+            nullable: true,
+            additionalProperties: true,
+        },
+        routeContext: {
+            type: "object",
+            nullable: true,
+            additionalProperties: true,
+        },
+        affectedRoutes: {
+            type: "array",
+            items: { type: "object", additionalProperties: true },
+        },
+        evidence: {
+            type: "object",
+            required: ["media"],
+            properties: {
+                media: { type: "array", items: reportMediaEvidenceSchema },
+            },
+            additionalProperties: false,
+        },
+        review: {
+            type: "object",
+            required: ["allowedActions", "suggestedAction", "blockedReasons"],
+            properties: {
+                allowedActions: {
+                    type: "array",
+                    items: {
+                        type: "string",
+                        enum: [
+                            "RENAME_STOP",
+                            "MOVE_STOP",
+                            "CREATE_STOP_AND_INSERT",
+                            "INSERT_EXISTING_STOP",
+                            "REMOVE_STOP_FROM_VARIANT",
+                            "REORDER_ROUTE_STOP",
+                            "VERIFY_STOP",
+                            "REJECT_NO_CHANGE",
+                        ],
+                    },
+                },
+                suggestedAction: {
+                    type: "string",
+                    nullable: true,
+                    enum: [
+                        "RENAME_STOP",
+                        "MOVE_STOP",
+                        "CREATE_STOP_AND_INSERT",
+                        "INSERT_EXISTING_STOP",
+                        "REMOVE_STOP_FROM_VARIANT",
+                        "REORDER_ROUTE_STOP",
+                        "VERIFY_STOP",
+                        "REJECT_NO_CHANGE",
+                    ],
+                },
+                blockedReasons: { type: "array", items: { type: "string" } },
+            },
+            additionalProperties: false,
+        },
+        workflow: { type: "object", additionalProperties: true },
     },
     additionalProperties: false,
 } as const;
@@ -532,13 +602,13 @@ export const getAdminReportSchema = {
     tags: [Tags.Reports],
     summary: "Get a report (admin)",
     description:
-        "Returns admin report detail plus a compact `review` projection for field survey reports " +
-        "(proposed change, revisions, coordinates, neighbors, allowedActions). " +
-        "Does not apply canonical transport edits.",
+        "Returns one normalized admin report detail with resolved transport context, " +
+        "survey-time/current/proposed comparison, observer distances, affected active route variants, " +
+        "secure media metadata, and advisory review guidance. Does not apply canonical transport edits.",
     security: [...bearerAuth],
     params: adminIdParam,
     response: {
-        200: adminReportDetailSchema,
+        200: normalizedAdminReportDetailSchema,
         400: badRequestSchema,
         401: messageSchema,
         403: messageSchema,

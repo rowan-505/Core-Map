@@ -1,10 +1,117 @@
 import { fieldRouteEditorHref, fieldStopEditorHref } from "./fieldReportLinks";
 import type {
     AdminReportDetail,
+    NormalizedAdminReportDetail,
     ReportReview,
     ReportReviewActionCode,
     ReportReviewAllowedAction,
 } from "./types";
+
+/** Presentation adapter for existing dashboard cards; advisory actions stay separate. */
+export function toLegacyReportDetailView(
+    detail: NormalizedAdminReportDetail
+): AdminReportDetail {
+    const { report, routeContext, comparison, observer, workflow } = detail;
+    const isField = report.sourceCode === "field_survey";
+    return {
+        public_id: report.publicId,
+        is_anonymous: report.isAnonymous,
+        eligible_for_points: report.eligibleForPoints,
+        report_type: { code: report.reportTypeCode, name: report.reportTypeCode },
+        status: { code: report.statusCode, name: report.statusCode },
+        reason_code: report.reasonCode,
+        target_entity_type: report.targetEntityType,
+        target_entity_id: report.targetEntityId,
+        target_public_id: report.targetPublicId,
+        title: report.title,
+        description: report.description,
+        latitude: report.reportedCoordinates?.latitude ?? null,
+        longitude: report.reportedCoordinates?.longitude ?? null,
+        admin_area_id: report.adminAreaId,
+        admin_area_name: report.adminAreaName,
+        priority: report.priority,
+        confidence_score: report.confidenceScore,
+        admin_note: workflow.adminNote,
+        reviewed_at: workflow.reviewedAt,
+        reward_granted_at: report.rewardGrantedAt,
+        created_at: report.createdAt,
+        updated_at: report.updatedAt,
+        anonymous_id: report.anonymousId,
+        author:
+            report.reporterPublicId && report.reporterEmail
+                ? {
+                      public_id: report.reporterPublicId,
+                      display_name: report.reporterName,
+                      email: report.reporterEmail,
+                  }
+                : null,
+        source_code: report.sourceCode,
+        observed_at: report.observedAt,
+        location_accuracy_m: observer?.accuracyMetres ?? null,
+        field: isField
+            ? {
+                  route_code: routeContext?.route?.code ?? null,
+                  route_public_id: routeContext?.route?.publicId ?? null,
+                  variant_code: routeContext?.variant?.code ?? null,
+                  variant_public_id: routeContext?.variant?.publicId ?? null,
+                  origin_name: routeContext?.variant?.originName ?? null,
+                  destination_name: routeContext?.variant?.destinationName ?? null,
+                  stop_public_id: detail.resolvedTarget.stopPublicId,
+                  stop_name:
+                      routeContext?.currentStop?.name ??
+                      routeContext?.insertion?.afterStop?.name ??
+                      null,
+                  stop_sequence: detail.resolvedTarget.stopSequence,
+                  previous_stop_public_id:
+                      routeContext?.previousStop?.publicId ??
+                      routeContext?.insertion?.afterStop?.publicId ??
+                      null,
+                  previous_stop_sequence:
+                      routeContext?.previousStop?.sequence ??
+                      routeContext?.insertion?.afterStop?.sequence ??
+                      null,
+                  next_stop_public_id:
+                      routeContext?.nextStop?.publicId ??
+                      routeContext?.insertion?.beforeStop?.publicId ??
+                      null,
+                  proposed_stop_name: comparison.proposed?.name ?? null,
+                  location_source: comparison.proposedLocationSource,
+                  snapshot_revision: comparison.snapshotRevision,
+                  snapshot_stale: comparison.isStale === true,
+                  current_snapshot_revision: comparison.currentRevision,
+                  survey_session_public_id: null,
+                  survey_session_status: null,
+                  canonical_snapshot: null,
+                  observed_location: observer
+                      ? {
+                            latitude: observer.coordinates.latitude,
+                            longitude: observer.coordinates.longitude,
+                            accuracy_m: observer.accuracyMetres,
+                        }
+                      : null,
+                  proposed_location: comparison.proposed?.coordinates ?? null,
+              }
+            : null,
+        canonical_target: comparison.current?.coordinates ?? null,
+        distance_m: observer?.distanceToCurrentStopMetres ?? null,
+        media_count: detail.evidence.media.length,
+        review: null,
+        status_events: workflow.statusEvents.map((event) => ({
+            old_status_code: event.oldStatusCode,
+            new_status_code: event.newStatusCode,
+            actor_display_name: event.actorDisplayName,
+            note: event.note,
+            created_at: event.createdAt,
+        })),
+        followups: workflow.followups.map((followup) => ({
+            actor_type: followup.actorType,
+            actor_display_name: followup.actorDisplayName,
+            message: followup.message,
+            created_at: followup.createdAt,
+        })),
+        media: detail.evidence.media,
+    };
+}
 
 /** Copy shown when the field snapshot no longer matches live map data. */
 export const STALE_SNAPSHOT_WARNING =

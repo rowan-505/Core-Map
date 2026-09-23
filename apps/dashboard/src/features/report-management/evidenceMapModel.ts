@@ -175,7 +175,11 @@ function buildDistance(
  * Pure — no MapLibre, no network.
  */
 export function buildEvidenceMapModel(
-    report: Pick<AdminReportDetail, "source_code" | "review" | "canonical_target" | "field">
+    report: Pick<AdminReportDetail, "source_code" | "review" | "canonical_target" | "field">,
+    authoritativeDistances?: {
+        observedToCurrentMetres: number | null;
+        observedToProposedMetres: number | null;
+    }
 ): EvidenceMapModel {
     if (report.source_code !== "field_survey") {
         return { markers: [], lines: [], distance: null, empty: true, observedIsOutlier: false };
@@ -336,7 +340,20 @@ export function buildEvidenceMapModel(
         }
     }
 
-    const distance = buildDistance(kind, current, proposed, observed, targetPoint);
+    const distance =
+        authoritativeDistances === undefined
+            ? buildDistance(kind, current, proposed, observed, targetPoint)
+            : authoritativeDistances.observedToProposedMetres !== null
+              ? {
+                    label: "Observed → proposed",
+                    meters: authoritativeDistances.observedToProposedMetres,
+                }
+              : authoritativeDistances.observedToCurrentMetres !== null
+                ? {
+                      label: "Observed → current",
+                      meters: authoritativeDistances.observedToCurrentMetres,
+                  }
+                : null;
 
     return {
         markers,

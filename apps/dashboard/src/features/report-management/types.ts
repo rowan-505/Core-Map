@@ -239,6 +239,153 @@ export type AdminReportDetail = AdminReport & {
     media: ReportMediaEvidence[];
 };
 
+export type AdminReportReviewActionCode =
+    | "RENAME_STOP"
+    | "MOVE_STOP"
+    | "CREATE_STOP_AND_INSERT"
+    | "INSERT_EXISTING_STOP"
+    | "REMOVE_STOP_FROM_VARIANT"
+    | "REORDER_ROUTE_STOP"
+    | "VERIFY_STOP"
+    | "REJECT_NO_CHANGE";
+
+export type AdminReportDetailPoint = {
+    latitude: number;
+    longitude: number;
+};
+
+export type AdminReportDetailStop = {
+    id: string | null;
+    publicId: string | null;
+    name: string | null;
+    coordinates: AdminReportDetailPoint | null;
+    sequence: number | null;
+};
+
+export type NormalizedAdminReportDetail = {
+    report: {
+        publicId: string;
+        sourceCode: ReportSourceCode;
+        reportTypeCode: ReportTypeCode;
+        statusCode: ReportStatusCode;
+        description: string;
+        observedAt: string | null;
+        reporterName: string | null;
+        reporterPublicId: string | null;
+        reporterEmail: string | null;
+        isAnonymous: boolean;
+        anonymousId: string | null;
+        eligibleForPoints: boolean;
+        rewardGrantedAt: string | null;
+        title: string | null;
+        reasonCode: string | null;
+        targetEntityType: string | null;
+        targetEntityId: string | null;
+        targetPublicId: string | null;
+        reportedCoordinates: AdminReportDetailPoint | null;
+        adminAreaId: string | null;
+        adminAreaName: string | null;
+        priority: string;
+        confidenceScore: number;
+        createdAt: string;
+        updatedAt: string;
+    };
+    resolvedTarget: {
+        entityType: string | null;
+        stopId: string | null;
+        stopPublicId: string | null;
+        routeId: string | null;
+        routePublicId: string | null;
+        routeVariantId: string | null;
+        routeVariantPublicId: string | null;
+        stopSequence: number | null;
+    };
+    comparison: {
+        snapshotRevision: string | null;
+        currentRevision: string | null;
+        isStale: boolean | null;
+        original: {
+            name: string | null;
+            coordinates: AdminReportDetailPoint | null;
+            sequence: number | null;
+        } | null;
+        current: {
+            name: string | null;
+            coordinates: AdminReportDetailPoint | null;
+            sequence: number | null;
+        } | null;
+        proposed: {
+            name: string | null;
+            coordinates: AdminReportDetailPoint | null;
+            sequence: number | null;
+        } | null;
+        proposedLocationSource: string | null;
+    };
+    observer: {
+        coordinates: AdminReportDetailPoint;
+        accuracyMetres: number | null;
+        distanceToCurrentStopMetres: number | null;
+        distanceToProposedPositionMetres: number | null;
+    } | null;
+    routeContext: {
+        route: {
+            id: string | null;
+            publicId: string | null;
+            code: string | null;
+            name: string | null;
+        } | null;
+        variant: {
+            id: string | null;
+            publicId: string | null;
+            code: string | null;
+            direction: string | null;
+            originName: string | null;
+            destinationName: string | null;
+        } | null;
+        previousStop: AdminReportDetailStop | null;
+        currentStop: AdminReportDetailStop | null;
+        nextStop: AdminReportDetailStop | null;
+        insertion: {
+            afterStop: AdminReportDetailStop | null;
+            beforeStop: AdminReportDetailStop | null;
+        } | null;
+    } | null;
+    affectedRoutes: Array<{
+        routeId: string | null;
+        routePublicId: string;
+        routeCode: string;
+        routeName: string | null;
+        routeVariantId: string | null;
+        routeVariantPublicId: string;
+        variantCode: string;
+        direction: string | null;
+        sequence: number;
+    }>;
+    evidence: { media: ReportMediaEvidence[] };
+    review: {
+        allowedActions: AdminReportReviewActionCode[];
+        suggestedAction: AdminReportReviewActionCode | null;
+        blockedReasons: string[];
+    };
+    workflow: {
+        adminNote: string | null;
+        reviewedAt: string | null;
+        statusEvents: Array<{
+            oldStatusCode: string | null;
+            newStatusCode: string;
+            actorDisplayName: string | null;
+            note: string | null;
+            createdAt: string;
+        }>;
+        followups: Array<{
+            actorType: string;
+            actorDisplayName: string | null;
+            message: string;
+            createdAt: string;
+        }>;
+    };
+};
+
 export type AdminReportList = {
     items: AdminReport[];
     total: number;

@@ -7,6 +7,7 @@ import type {
     AdminReportDetail,
     AdminReportList,
     MediaAccess,
+    NormalizedAdminReportDetail,
     ReportAnalyticsSummary,
     ReportAnonymousCount,
     ReportApplyRequest,
@@ -29,7 +30,7 @@ export function listReports(filters: ReportsListFilters = {}, init?: Signal) {
 }
 
 export function getReport(id: string, init?: Signal) {
-    return apiFetch<AdminReportDetail>(getReportPath(id), {
+    return apiFetch<NormalizedAdminReportDetail>(getReportPath(id), {
         method: "GET",
         ...init,
     });

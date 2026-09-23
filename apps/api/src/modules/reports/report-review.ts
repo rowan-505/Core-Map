@@ -1,4 +1,10 @@
 import type { FieldReportAdminContext } from "./field-report-evidence.js";
+import type { NormalizedFieldReportEvidence } from "./field-report-evidence.js";
+import type { TransportReportReviewContext } from "../transport/transport.types.js";
+import {
+    ADMIN_REPORT_REVIEW_ACTION_CODES,
+    type AdminReportReviewActionCode,
+} from "./reports.schema.js";
 import { isFieldSurveySource, isAllowedAdminStatusTransition } from "./report-admin-status.js";
 
 /** Field report kinds used by the review action matrix (not public report types). */
@@ -448,4 +454,171 @@ export function isReportCanonicalApplyAction(
     action: string
 ): action is ReportCanonicalApplyAction {
     return (REPORT_CANONICAL_APPLY_ACTIONS as readonly string[]).includes(action);
+}
+
+export type NormalizedReportReviewGuidance = {
+    allowedActions: AdminReportReviewActionCode[];
+    suggestedAction: AdminReportReviewActionCode | null;
+    blockedReasons: string[];
+};
+
+const NORMALIZED_OPEN_STATUSES = new Set(["submitted", "in_review", "needs_more_info"]);
+const UNCLEAR_PROPOSED_NAMES = new Set(["a", "test", "unknown", "n/a", "na", "none"]);
+
+/** Read-only action guidance derived only from structured report evidence. */
+export function buildNormalizedReportReviewGuidance(input: {
+    sourceCode: string | null | undefined;
+    reportTypeCode: string;
+    statusCode: string;
+    evidence: NormalizedFieldReportEvidence | null;
+    transport: TransportReportReviewContext | null;
+    currentRevision: string | null;
+}): NormalizedReportReviewGuidance {
+    if (!isFieldSurveySource(input.sourceCode)) {
+        return { allowedActions: [], suggestedAction: null, blockedReasons: [] };
+    }
+
+    const reasons = [...(input.evidence?.blockedReasons ?? [])];
+    const actions = new Set<AdminReportReviewActionCode>();
+    const evidence = input.evidence;
+    const transport = input.transport;
+    const statusOpen = NORMALIZED_OPEN_STATUSES.has(input.statusCode);
+    const snapshotRevision = evidence?.snapshotRevision ?? null;
+    const stale =
+        snapshotRevision !== null &&
+        input.currentRevision !== null &&
+        snapshotRevision !== input.currentRevision;
+
+    if (!statusOpen) {
+        reasons.push(`Report status '${input.statusCode}' is not open for review`);
+    }
+    if (!snapshotRevision) {
+        reasons.push("Snapshot revision is missing");
+    } else if (!input.currentRevision) {
+        reasons.push("Current transport revision is unavailable");
+    } else if (stale) {
+        reasons.push("Snapshot revision is stale");
+    }
+    if (!evidence?.variantPublicId) {
+        reasons.push("Route variant public ID is missing or invalid");
+    } else if (!transport?.variant) {
+        reasons.push("Active route variant could not be resolved");
+    }
+    if (evidence?.stopPublicId && !transport?.stop) {
+        reasons.push("Active target stop could not be resolved");
+    }
+
+    const proposedName = evidence?.proposed?.name?.trim() ?? "";
+    const clearProposedName =
+        proposedName.length >= 2 &&
+        !UNCLEAR_PROPOSED_NAMES.has(proposedName.toLocaleLowerCase("en"));
+    const proposedCoordinates = evidence?.proposed?.coordinates ?? null;
+    const proposedSequence = evidence?.proposed?.sequence ?? null;
+    const safeForMutation = statusOpen && !stale && snapshotRevision !== null;
+
+    let preferred: AdminReportReviewActionCode | null = null;
+    switch (input.reportTypeCode) {
+        case "wrong_info":
+            preferred = "RENAME_STOP";
+            if (!transport?.stop) {
+                reasons.push("Active target stop is required for rename");
+            }
+            if (!clearProposedName) {
+                reasons.push("Proposed stop name is missing or unclear");
+            }
+            if (safeForMutation && transport?.stop && clearProposedName) {
+                actions.add("RENAME_STOP");
+            }
+            break;
+        case "wrong_location":
+            preferred = "MOVE_STOP";
+            if (!transport?.stop) {
+                reasons.push("Active target stop is required for move");
+            }
+            if (!proposedCoordinates) {
+                reasons.push("Valid proposed coordinates are missing");
+            }
+            if (safeForMutation && transport?.stop && proposedCoordinates) {
+                actions.add("MOVE_STOP");
+            }
+            break;
+        case "new_stop":
+            preferred = "CREATE_STOP_AND_INSERT";
+            if (!transport?.variant) {
+                reasons.push("Active route variant is required for insertion");
+            }
+            if (!evidence?.previousStopPublicId || !transport?.stop) {
+                reasons.push("Active insertion anchor stop is missing");
+            }
+            if (!clearProposedName) {
+                reasons.push("Proposed stop name is missing or unclear");
+            }
+            if (!proposedCoordinates) {
+                reasons.push("Valid proposed coordinates are missing");
+            }
+            if (
+                safeForMutation &&
+                transport?.variant &&
+                evidence?.previousStopPublicId &&
+                transport.stop &&
+                clearProposedName &&
+                proposedCoordinates
+            ) {
+                actions.add("CREATE_STOP_AND_INSERT");
+            }
+            break;
+        case "missing_item":
+            preferred = "REMOVE_STOP_FROM_VARIANT";
+            if (!transport?.stop) {
+                reasons.push("Active target stop is required for removal");
+            }
+            if (!transport?.variant || transport.stop?.sequence === null) {
+                reasons.push("Current route membership is required for removal");
+            }
+            if (
+                safeForMutation &&
+                transport?.stop &&
+                transport.variant &&
+                transport.stop.sequence !== null
+            ) {
+                actions.add("REMOVE_STOP_FROM_VARIANT");
+            }
+            break;
+        case "transport_issue":
+            preferred = "REORDER_ROUTE_STOP";
+            if (!transport?.stop || !transport?.variant) {
+                reasons.push("Active stop and route variant are required for reorder");
+            }
+            if (proposedSequence === null) {
+                reasons.push("Proposed stop sequence is missing");
+            }
+            if (
+                safeForMutation &&
+                transport?.stop &&
+                transport.variant &&
+                proposedSequence !== null
+            ) {
+                actions.add("REORDER_ROUTE_STOP");
+            }
+            break;
+        default:
+            break;
+    }
+
+    if (statusOpen && transport?.stop) {
+        actions.add("VERIFY_STOP");
+    }
+    if (statusOpen) {
+        actions.add("REJECT_NO_CHANGE");
+    }
+
+    const allowedActions = ADMIN_REPORT_REVIEW_ACTION_CODES.filter((action) =>
+        actions.has(action)
+    );
+    return {
+        allowedActions,
+        suggestedAction:
+            preferred !== null && actions.has(preferred) ? preferred : null,
+        blockedReasons: [...new Set(reasons)].sort((a, b) => a.localeCompare(b, "en")),
+    };
 }

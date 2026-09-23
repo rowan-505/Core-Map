@@ -5,6 +5,7 @@ import { snapshotRevisionFromParts } from "../field/field-revision.js";
 import {
     fieldStopPublicIdOf,
     toFieldContext,
+    toNormalizedFieldEvidence,
     type FieldReportAdminContext,
 } from "./field-report-evidence.js";
 import {
@@ -20,9 +21,21 @@ import {
     type StatusEventRow,
 } from "./reports.repo.js";
 import { isAllowedAdminStatusTransition, isFieldSurveySource } from "./report-admin-status.js";
-import { toReportReview, labelReviewMapStops, type ReportReview, type ReportReviewActionCode } from "./report-review.js";
+import {
+    buildNormalizedReportReviewGuidance,
+    toReportReview,
+    labelReviewMapStops,
+    type ReportReview,
+    type ReportReviewActionCode,
+} from "./report-review.js";
 import { ReportsApplyError, ReportsApplyRepository } from "./reports-apply.repo.js";
-import type { AdminApplyBody, AdminReportsQuery, ReportCreateBody } from "./reports.schema.js";
+import {
+    adminReportDetailResponseSchema,
+    type AdminApplyBody,
+    type AdminReportDetailResponse,
+    type AdminReportsQuery,
+    type ReportCreateBody,
+} from "./reports.schema.js";
 import type { TransportRepository } from "../transport/transport.repo.js";
 import type { ObjectStore } from "../media/object-store.js";
 
@@ -224,8 +237,9 @@ export class ReportsService {
         private readonly mediaRepo: MediaRepository,
         private readonly fieldRepo: Pick<FieldRepository, "loadRevisionParts">,
         prisma: PrismaClient,
-        transportRepo: Pick<
+        private readonly transportRepo: Pick<
             TransportRepository,
+            | "getReportReviewContext"
             | "applyMoveStopInTx"
             | "applyRemoveStopFromVariantInTx"
             | "applyCreateAndInsertStopInTx"
@@ -465,32 +479,179 @@ export class ReportsService {
         return this.reportsRepo.analyticsAnonymousVsLoggedIn();
     }
 
-    async adminGet(
-        publicId: string
-    ): Promise<
-        AdminReportResponse & {
-            followups: FollowupResponse[];
-            status_events: StatusEventResponse[];
-            media: ReportMediaEvidenceResponse[];
-        }
-    > {
+    async adminGet(publicId: string): Promise<AdminReportDetailResponse> {
         const report = await this.requireReport(publicId);
-        const [events, followups, canonical, media, currentRevision] = await Promise.all([
+        const fieldEvidence = toNormalizedFieldEvidence(report);
+        const [events, followups, media, currentRevision, transport] = await Promise.all([
             this.reportsRepo.listStatusEvents(report.id),
             this.reportsRepo.listFollowups(report.id),
-            this.loadCanonicalTarget(report),
             this.mediaRepo.listReadyPrivateForReport(report.id),
             this.loadCurrentSnapshotRevision(report.source_code),
+            fieldEvidence
+                ? this.transportRepo.getReportReviewContext({
+                      stopPublicId: fieldEvidence.stopPublicId,
+                      routePublicId: fieldEvidence.routePublicId,
+                      variantPublicId: fieldEvidence.variantPublicId,
+                      observer: fieldEvidence.observer
+                          ? {
+                                latitude: fieldEvidence.observer.latitude,
+                                longitude: fieldEvidence.observer.longitude,
+                            }
+                          : null,
+                      proposed: fieldEvidence.proposed?.coordinates ?? null,
+                  })
+                : Promise.resolve(null),
         ]);
-        const base = toAdminReportResponse(report, canonical, currentRevision);
-        const review = await this.buildReview(report, base.field, canonical.canonical_target);
-        return {
-            ...base,
+
+        const isNewStop = report.report_type_code === "new_stop";
+        const comparisonCurrent = transport?.stop
+            ? {
+                  name: transport.stop.name,
+                  coordinates: transport.stop.coordinates,
+                  sequence: transport.stop.sequence,
+              }
+            : null;
+        const review = buildNormalizedReportReviewGuidance({
+            sourceCode: report.source_code,
+            reportTypeCode: report.report_type_code,
+            statusCode: report.status_code,
+            evidence: fieldEvidence,
+            transport,
+            currentRevision,
+        });
+        const reportedCoordinates = validResponsePoint(
+            report.latitude,
+            report.longitude
+        );
+        const response: AdminReportDetailResponse = {
+            report: {
+                publicId: report.public_id,
+                sourceCode:
+                    report.source_code === "field_survey" ? "field_survey" : "public",
+                reportTypeCode: report.report_type_code as AdminReportDetailResponse["report"]["reportTypeCode"],
+                statusCode: report.status_code as AdminReportDetailResponse["report"]["statusCode"],
+                description: report.description,
+                observedAt: report.observed_at?.toISOString() ?? null,
+                reporterName: report.author_display_name,
+                reporterPublicId: report.author_public_id,
+                reporterEmail: report.author_email,
+                isAnonymous: report.is_anonymous,
+                anonymousId: report.anonymous_id,
+                eligibleForPoints: report.eligible_for_points,
+                rewardGrantedAt: report.reward_granted_at?.toISOString() ?? null,
+                title: report.title,
+                reasonCode: report.reason_code,
+                targetEntityType: report.target_entity_type,
+                targetEntityId:
+                    report.target_entity_id === null
+                        ? null
+                        : report.target_entity_id.toString(),
+                targetPublicId: report.target_public_id,
+                reportedCoordinates,
+                adminAreaId:
+                    report.admin_area_id === null
+                        ? null
+                        : report.admin_area_id.toString(),
+                adminAreaName: report.admin_area_name ?? null,
+                priority: report.priority,
+                confidenceScore: Number(report.confidence_score),
+                createdAt: report.created_at.toISOString(),
+                updatedAt: report.updated_at.toISOString(),
+            },
+            resolvedTarget: {
+                entityType: report.target_entity_type,
+                stopId: transport?.stop?.id ?? null,
+                stopPublicId: transport?.stop?.publicId ?? null,
+                routeId: transport?.route?.id ?? null,
+                routePublicId: transport?.route?.publicId ?? null,
+                routeVariantId: transport?.variant?.id ?? null,
+                routeVariantPublicId: transport?.variant?.publicId ?? null,
+                stopSequence: transport?.stop?.sequence ?? null,
+            },
+            comparison: {
+                snapshotRevision: fieldEvidence?.snapshotRevision ?? null,
+                currentRevision,
+                isStale:
+                    fieldEvidence?.snapshotRevision && currentRevision
+                        ? fieldEvidence.snapshotRevision !== currentRevision
+                        : null,
+                original: fieldEvidence?.original ?? null,
+                current: comparisonCurrent,
+                proposed: fieldEvidence?.proposed ?? null,
+                proposedLocationSource:
+                    fieldEvidence?.proposedLocationSource ?? null,
+            },
+            observer: fieldEvidence?.observer
+                ? {
+                      coordinates: {
+                          latitude: fieldEvidence.observer.latitude,
+                          longitude: fieldEvidence.observer.longitude,
+                      },
+                      accuracyMetres: finiteOrNull(
+                          fieldEvidence.observer.accuracy_m
+                      ),
+                      distanceToCurrentStopMetres: finiteOrNull(
+                          transport?.distanceObserverToCurrentMetres
+                      ),
+                      distanceToProposedPositionMetres: finiteOrNull(
+                          transport?.distanceObserverToProposedMetres
+                      ),
+                  }
+                : null,
+            routeContext:
+                transport?.route || transport?.variant
+                    ? {
+                          route: transport.route,
+                          variant: transport.variant,
+                          previousStop: isNewStop
+                              ? null
+                              : transport.previousStop,
+                          currentStop: isNewStop ? null : transport.stop,
+                          nextStop: isNewStop ? null : transport.nextStop,
+                          insertion: isNewStop
+                              ? {
+                                    afterStop: transport.stop,
+                                    beforeStop: transport.nextStop,
+                                }
+                              : null,
+                      }
+                    : null,
+            affectedRoutes: [...(transport?.affectedRoutes ?? [])].sort(
+                (a, b) =>
+                    a.routeCode.localeCompare(b.routeCode, "en") ||
+                    a.variantCode.localeCompare(b.variantCode, "en") ||
+                    a.sequence - b.sequence ||
+                    a.routeVariantId.localeCompare(b.routeVariantId, "en")
+            ),
+            evidence: {
+                media: media
+                    .map(toMediaEvidenceResponse)
+                    .sort(
+                        (a, b) =>
+                            a.sortOrder - b.sortOrder ||
+                            a.publicId.localeCompare(b.publicId, "en")
+                    ),
+            },
             review,
-            status_events: events.map(toStatusEventResponse),
-            followups: followups.map(toFollowupResponse),
-            media: media.map(toMediaEvidenceResponse),
+            workflow: {
+                adminNote: report.admin_note,
+                reviewedAt: report.reviewed_at?.toISOString() ?? null,
+                statusEvents: events.map((event) => ({
+                    oldStatusCode: event.old_status_code,
+                    newStatusCode: event.new_status_code,
+                    actorDisplayName: event.actor_display_name,
+                    note: event.note,
+                    createdAt: event.created_at.toISOString(),
+                })),
+                followups: followups.map((followup) => ({
+                    actorType: followup.actor_type,
+                    actorDisplayName: followup.actor_display_name,
+                    message: followup.message,
+                    createdAt: followup.created_at.toISOString(),
+                })),
+            },
         };
+        return adminReportDetailResponseSchema.parse(response);
     }
 
     /**
@@ -945,4 +1106,39 @@ function toFollowupResponse(row: FollowupRow): FollowupResponse {
         message: row.message,
         created_at: row.created_at.toISOString(),
     };
+}
+
+function validResponsePoint(
+    latitude: unknown,
+    longitude: unknown
+): { latitude: number; longitude: number } | null {
+    if (
+        latitude === null ||
+        latitude === undefined ||
+        longitude === null ||
+        longitude === undefined
+    ) {
+        return null;
+    }
+    const lat = typeof latitude === "number" ? latitude : Number(latitude);
+    const lng = typeof longitude === "number" ? longitude : Number(longitude);
+    if (
+        !Number.isFinite(lat) ||
+        !Number.isFinite(lng) ||
+        lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180
+    ) {
+        return null;
+    }
+    return { latitude: lat, longitude: lng };
+}
+
+function finiteOrNull(value: unknown): number | null {
+    if (value === null || value === undefined) {
+        return null;
+    }
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
 }

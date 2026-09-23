@@ -456,6 +456,66 @@ export type TransportStopRouteUsageDetailResponse = {
     directionUsage: TransportStopRouteUsageDirectionUsage;
 };
 
+export type TransportReportReviewPoint = {
+    latitude: number;
+    longitude: number;
+};
+
+export type TransportReportReviewStop = {
+    id: string;
+    publicId: string;
+    name: string | null;
+    coordinates: TransportReportReviewPoint | null;
+    sequence: number | null;
+};
+
+export type TransportReportReviewRoute = {
+    id: string;
+    publicId: string;
+    code: string;
+    name: string | null;
+};
+
+export type TransportReportReviewVariant = {
+    id: string;
+    publicId: string;
+    code: string;
+    direction: string | null;
+    originName: string | null;
+    destinationName: string | null;
+};
+
+export type TransportReportReviewAffectedRoute = {
+    routeId: string;
+    routePublicId: string;
+    routeCode: string;
+    routeName: string | null;
+    routeVariantId: string;
+    routeVariantPublicId: string;
+    variantCode: string;
+    direction: string | null;
+    sequence: number;
+};
+
+export type TransportReportReviewContext = {
+    stop: TransportReportReviewStop | null;
+    route: TransportReportReviewRoute | null;
+    variant: TransportReportReviewVariant | null;
+    previousStop: TransportReportReviewStop | null;
+    nextStop: TransportReportReviewStop | null;
+    affectedRoutes: TransportReportReviewAffectedRoute[];
+    distanceObserverToCurrentMetres: number | null;
+    distanceObserverToProposedMetres: number | null;
+};
+
+export type TransportReportReviewContextInput = {
+    stopPublicId: string | null;
+    routePublicId: string | null;
+    variantPublicId: string | null;
+    observer: TransportReportReviewPoint | null;
+    proposed: TransportReportReviewPoint | null;
+};
+
 export type TransportStopMergePreviewStop = {
     publicId: string;
     name: string;

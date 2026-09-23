@@ -153,7 +153,7 @@ test("old snapshot is stale when the live field revision differs", () => {
     assert.equal(field?.snapshot_revision, "v1-capture");
 });
 
-test("new_stop evidence keeps previous stop, proposed name, and location source", () => {
+test("new_stop evidence keeps insertion metadata without inventing proposed geometry", () => {
     const field = toFieldContext(
         row({
             report_type_code: "new_stop",
@@ -183,7 +183,7 @@ test("new_stop evidence keeps previous stop, proposed name, and location source"
     assert.equal(field?.proposed_stop_name, "Corner stall");
     assert.equal(field?.location_source, "GPS");
     assert.equal(field?.stop_public_id, stopId);
-    assert.equal(field?.proposed_location?.latitude, 16.781);
+    assert.equal(field?.proposed_location, null);
     assert.equal(field?.observed_location?.latitude, 16.781);
 });
 
@@ -210,10 +210,10 @@ test("new_stop evidence falls back to previousStopPublicId when stopPublicId is 
     );
     assert.equal(field?.stop_public_id, stopId);
     assert.equal(field?.previous_stop_public_id, stopId);
-    assert.equal(field?.proposed_location?.latitude, 16.91);
+    assert.equal(field?.proposed_location, null);
 });
 
-test("new_stop GPS-only has proposed geometry even without a corrected snapshot point", () => {
+test("new_stop GPS-only observer never becomes proposed geometry", () => {
     const field = toFieldContext(
         row({
             report_type_code: "new_stop",
@@ -237,7 +237,7 @@ test("new_stop GPS-only has proposed geometry even without a corrected snapshot 
     );
     assert.equal(field?.next_stop_public_id, null);
     assert.equal(field?.location_source, "GPS");
-    assert.equal(field?.proposed_location?.latitude, 16.801);
+    assert.equal(field?.proposed_location, null);
     assert.equal(field?.observed_location?.latitude, 16.801);
     assert.equal(field?.observed_location?.accuracy_m, 7);
 });

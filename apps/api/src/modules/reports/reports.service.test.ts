@@ -5,11 +5,13 @@ import type { ReportMediaEvidenceRow } from "../media/media.repo.js";
 import type { FieldRevisionParts } from "../field/field-revision.js";
 import { snapshotRevisionFromParts } from "../field/field-revision.js";
 import type { ReportRow } from "./reports.repo.js";
+import { adminReportDetailResponseSchema } from "./reports.schema.js";
 import { ReportsService } from "./reports.service.js";
 
 const reportId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const stopId = "33333333-3333-4333-8333-333333333333";
 const routeId = "11111111-1111-4111-8111-111111111111";
+const variantId = "22222222-2222-4222-8222-222222222222";
 
 const liveParts: FieldRevisionParts = {
     routeCount: 1,
@@ -52,7 +54,7 @@ function reportRow(overrides: Partial<ReportRow> = {}): ReportRow {
         reward_granted_at: null,
         created_at: new Date("2026-09-04T00:00:00.000Z"),
         updated_at: new Date("2026-09-04T00:00:00.000Z"),
-        author_public_id: "user-1",
+        author_public_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         author_display_name: "Surveyor",
         author_email: "s@example.com",
         source_code: "field_survey",
@@ -61,6 +63,7 @@ function reportRow(overrides: Partial<ReportRow> = {}): ReportRow {
         report_data: {
             snapshotRevision: "v1-capture",
             routePublicId: routeId,
+            variantPublicId: variantId,
             variantCode: "D0",
             stopPublicId: stopId,
             stopSequence: 3,
@@ -81,6 +84,52 @@ function service(input: {
     media?: ReportMediaEvidenceRow[];
     parts?: FieldRevisionParts;
     affectedRoutes?: number;
+    context?: {
+        stop: {
+            id: string;
+            publicId: string;
+            name: string | null;
+            coordinates: { latitude: number; longitude: number } | null;
+            sequence: number | null;
+        } | null;
+        route: { id: string; publicId: string; code: string; name: string | null } | null;
+        variant: {
+            id: string;
+            publicId: string;
+            code: string;
+            direction: string | null;
+            originName: string | null;
+            destinationName: string | null;
+        } | null;
+        previousStop: {
+            id: string;
+            publicId: string;
+            name: string | null;
+            coordinates: { latitude: number; longitude: number } | null;
+            sequence: number | null;
+        } | null;
+        nextStop: {
+            id: string;
+            publicId: string;
+            name: string | null;
+            coordinates: { latitude: number; longitude: number } | null;
+            sequence: number | null;
+        } | null;
+        affectedRoutes: Array<{
+            routeId: string;
+            routePublicId: string;
+            routeCode: string;
+            routeName: string | null;
+            routeVariantId: string;
+            routeVariantPublicId: string;
+            variantCode: string;
+            direction: string | null;
+            sequence: number;
+        }>;
+        distanceObserverToCurrentMetres: number | null;
+        distanceObserverToProposedMetres: number | null;
+    };
+    onContextCall?: () => void;
     transport?: {
         applyMoveStopInTx?: (...args: never[]) => Promise<unknown>;
         applyRemoveStopFromVariantInTx?: (...args: never[]) => Promise<unknown>;
@@ -148,6 +197,58 @@ function service(input: {
         },
         prisma as never,
         {
+            getReportReviewContext: async () => {
+                input.onContextCall?.();
+                return (
+                    input.context ?? {
+                        stop: {
+                            id: "10",
+                            publicId: stopId,
+                            name: "First",
+                            coordinates: { latitude: 16.8, longitude: 96.15 },
+                            sequence: 3,
+                        },
+                        route: { id: "20", publicId: routeId, code: "YBS-13", name: "YBS 13" },
+                        variant: {
+                            id: "30",
+                            publicId: variantId,
+                            code: "D0",
+                            direction: "outbound",
+                            originName: "A",
+                            destinationName: "B",
+                        },
+                        previousStop: {
+                            id: "9",
+                            publicId: "22222222-2222-4222-8222-222222222221",
+                            name: "Prev",
+                            coordinates: { latitude: 16.79, longitude: 96.14 },
+                            sequence: 2,
+                        },
+                        nextStop: {
+                            id: "11",
+                            publicId: "22222222-2222-4222-8222-222222222223",
+                            name: "Next",
+                            coordinates: { latitude: 16.81, longitude: 96.16 },
+                            sequence: 4,
+                        },
+                        affectedRoutes: [
+                            {
+                                routeId: "20",
+                                routePublicId: routeId,
+                                routeCode: "YBS-13",
+                                routeName: "YBS 13",
+                                routeVariantId: "30",
+                                routeVariantPublicId: variantId,
+                                variantCode: "D0",
+                                direction: "outbound",
+                                sequence: 3,
+                            },
+                        ],
+                        distanceObserverToCurrentMetres: 120,
+                        distanceObserverToProposedMetres: 15,
+                    }
+                );
+            },
             applyMoveStopInTx:
                 input.transport?.applyMoveStopInTx ??
                 (async () => ({
@@ -182,45 +283,21 @@ function service(input: {
     );
 }
 
-test("adminGet returns stop-level field evidence without applying canonical writes", async () => {
-    const detail = await service({ report: reportRow() }).adminGet(reportId);
-    assert.equal(detail.field?.stop_public_id, stopId);
-    assert.equal(detail.field?.variant_code, "D0");
-    assert.equal(detail.field?.stop_sequence, 3);
-    assert.equal(detail.canonical_target?.latitude, 16.8);
-    assert.equal(detail.media.length, 0);
-});
-
-test("adminGet returns route-level field evidence", async () => {
-    const detail = await service({
-        report: reportRow({
-            target_entity_type: "route",
-            target_public_id: routeId,
-            field_stop_name: null,
-            report_data: {
-                snapshotRevision: snapshotRevisionFromParts(liveParts),
-                routePublicId: routeId,
-                variantCode: "D1",
-            },
-        }),
-    }).adminGet(reportId);
-    assert.equal(detail.field?.route_public_id, routeId);
-    assert.equal(detail.field?.variant_code, "D1");
-    assert.equal(detail.field?.stop_public_id, null);
-    assert.equal(detail.canonical_target, null);
-});
-
-test("adminGet MOVED geometry keeps observer and proposed points", async () => {
+test("adminGet returns one normalized complete stop review", async () => {
     const detail = await service({
         report: reportRow({
             report_type_code: "wrong_location",
-            latitude: 16.9,
-            longitude: 96.2,
+            status_code: "in_review",
             report_data: {
-                snapshotRevision: "v1-capture",
-                variantCode: "D0",
+                snapshotRevision: snapshotRevisionFromParts(liveParts),
+                routePublicId: routeId,
+                variantPublicId: variantId,
                 stopPublicId: stopId,
                 canonicalSnapshot: {
+                    nameEn: "Survey name",
+                    lat: 16.79,
+                    lng: 96.14,
+                    stopSequence: 3,
                     observerLat: 16.801,
                     observerLng: 96.151,
                     observerAccuracyM: 5,
@@ -230,137 +307,262 @@ test("adminGet MOVED geometry keeps observer and proposed points", async () => {
             },
         }),
     }).adminGet(reportId);
-    assert.equal(detail.field?.observed_location?.latitude, 16.801);
-    assert.equal(detail.field?.proposed_location?.latitude, 16.9);
-    assert.equal(detail.canonical_target?.latitude, 16.8);
+
+    assert.equal(detail.report.publicId, reportId);
+    assert.equal(detail.resolvedTarget.stopPublicId, stopId);
+    assert.equal(detail.comparison.original?.name, "Survey name");
+    assert.equal(detail.comparison.current?.name, "First");
+    assert.equal(detail.comparison.proposed?.coordinates?.latitude, 16.9);
+    assert.equal(detail.observer?.distanceToCurrentStopMetres, 120);
+    assert.deepEqual(detail.review.allowedActions, [
+        "MOVE_STOP",
+        "VERIFY_STOP",
+        "REJECT_NO_CHANGE",
+    ]);
+    assert.equal(detail.review.suggestedAction, "MOVE_STOP");
+    assert.deepEqual(detail.evidence.media, []);
 });
 
-test("adminGet missing media stays an empty list", async () => {
-    const detail = await service({ report: reportRow(), media: [] }).adminGet(reportId);
-    assert.deepEqual(detail.media, []);
-    assert.equal(detail.media_count, 0);
+test("adminGet resolves legacy report_data with null target_entity_id", async () => {
+    const detail = await service({
+        report: reportRow({ target_entity_id: null, target_public_id: null }),
+    }).adminGet(reportId);
+    assert.equal(detail.report.targetEntityId, null);
+    assert.equal(detail.resolvedTarget.stopPublicId, stopId);
+    assert.equal(detail.resolvedTarget.routeVariantPublicId, variantId);
 });
 
-test("adminGet new_stop returns evidence and does not invent a canonical write", async () => {
-    let canonicalLookups = 0;
-    const reports = {
-        findByPublicId: async () =>
-            reportRow({
-                report_type_code: "new_stop",
-                report_type_name: "New stop",
-                target_entity_type: "variant",
-                target_public_id: "22222222-2222-4222-8222-222222222222",
-                latitude: 16.91,
-                longitude: 96.21,
-                report_data: {
-                    snapshotRevision: "v1-capture",
-                    routePublicId: routeId,
-                    variantCode: "D0",
-                    previousStopPublicId: stopId,
-                    previousStopSequence: 4,
-                    proposedStopName: "Corner stall",
-                    locationSource: "MAP_PICK",
-                    stopPublicId: stopId,
-                    stopSequence: 4,
-                    canonicalSnapshot: {
-                        observerLat: 16.801,
-                        observerLng: 96.151,
-                        observerAccuracyM: 40,
-                        correctedLat: 16.91,
-                        correctedLng: 96.21,
-                    },
-                },
-            }),
-        listStatusEvents: async () => [],
-        listFollowups: async () => [],
-        findCanonicalStopPoint: async () => {
-            canonicalLookups += 1;
-            return { latitude: 16.8, longitude: 96.15, distance_m: 80 };
-        },
-        countAffectedRoutesForStop: async () => 1,
-        findReviewNeighborStops: async () => ({
-            previous: { public_id: stopId, name: "First", sequence: 4 },
-            next: null,
-        }),
-        findReviewMapWindow: async () => [
-            {
-                public_id: stopId,
-                name: "First",
-                sequence: 4,
-                latitude: 16.8,
-                longitude: 96.15,
-            },
-        ],
-        insertStop: async () => {
-            throw new Error("canonical write");
-        },
-    };
-    const detail = await new ReportsService(
-        reports as never,
-        { listReadyPrivateForReport: async () => [] } as never,
-        { loadRevisionParts: async () => liveParts },
-        { $transaction: async (fn: (tx: unknown) => Promise<unknown>) => fn({}) } as never,
-        {
-            applyMoveStopInTx: async () => {
-                throw new Error("canonical write");
-            },
-            applyRemoveStopFromVariantInTx: async () => {
-                throw new Error("canonical write");
-            },
-            applyCreateAndInsertStopInTx: async () => {
-                throw new Error("canonical write");
-            },
-            applyUpdateStopDetailsInTx: async () => {
-                throw new Error("canonical write");
-            },
-        } as never
-    ).adminGet(reportId);
-    assert.equal(detail.report_type.code, "new_stop");
-    assert.equal(detail.field?.proposed_stop_name, "Corner stall");
-    assert.equal(detail.field?.location_source, "MAP_PICK");
-    assert.equal(detail.field?.proposed_location?.latitude, 16.91);
-    assert.equal(detail.field?.observed_location?.latitude, 16.801);
-    assert.equal(detail.canonical_target?.latitude, 16.8);
-    assert.equal(canonicalLookups, 1);
-    assert.equal(detail.media.length, 0);
-});
-
-test("adminGet marks an old snapshot stale against the live revision", async () => {
-    const detail = await service({ report: reportRow() }).adminGet(reportId);
-    assert.equal(detail.field?.snapshot_revision, "v1-capture");
-    assert.equal(detail.field?.current_snapshot_revision, snapshotRevisionFromParts(liveParts));
-    assert.equal(detail.field?.snapshot_stale, true);
-});
-
-test("adminGet review model includes allowedActions and does not write canonical data", async () => {
+test("adminGet keeps observer and report geometry separate from proposed geometry", async () => {
     const detail = await service({
         report: reportRow({
             report_type_code: "wrong_location",
-            status_code: "in_review",
+            latitude: 16.9,
+            longitude: 96.2,
             report_data: {
-                snapshotRevision: "v1-capture",
-                variantCode: "D0",
-                variantPublicId: "22222222-2222-4222-8222-222222222222",
+                snapshotRevision: snapshotRevisionFromParts(liveParts),
+                variantPublicId: variantId,
                 stopPublicId: stopId,
-                stopSequence: 3,
                 canonicalSnapshot: {
-                    correctedLat: 16.9,
-                    correctedLng: 96.2,
                     observerLat: 16.801,
                     observerLng: 96.151,
                 },
             },
         }),
-        affectedRoutes: 3,
+    }).adminGet(reportId);
+    assert.equal(detail.observer?.coordinates.latitude, 16.801);
+    assert.equal(detail.comparison.proposed, null);
+    assert.equal(detail.review.suggestedAction, null);
+    assert.ok(detail.review.blockedReasons.includes("Valid proposed coordinates are missing"));
+});
+
+test("adminGet invalid corrected coordinate pair becomes null and blocks move", async () => {
+    const detail = await service({
+        report: reportRow({
+            report_type_code: "wrong_location",
+            report_data: {
+                snapshotRevision: snapshotRevisionFromParts(liveParts),
+                variantPublicId: variantId,
+                stopPublicId: stopId,
+                canonicalSnapshot: { correctedLat: 16.9 },
+            },
+        }),
+    }).adminGet(reportId);
+    assert.equal(detail.comparison.proposed, null);
+    assert.ok(
+        detail.review.blockedReasons.includes(
+            "Proposed coordinates are incomplete or invalid"
+        )
+    );
+});
+
+test("adminGet new stop uses separate insertion context", async () => {
+    const detail = await service({
+        report: reportRow({
+            report_type_code: "new_stop",
+            report_type_name: "New stop",
+            target_entity_type: "variant",
+            target_entity_id: null,
+            target_public_id: variantId,
+            report_data: {
+                snapshotRevision: snapshotRevisionFromParts(liveParts),
+                routePublicId: routeId,
+                variantPublicId: variantId,
+                previousStopPublicId: stopId,
+                proposedStopName: "Corner stall",
+                locationSource: "MAP_PICK",
+                canonicalSnapshot: {
+                    observerLat: 16.801,
+                    observerLng: 96.151,
+                    correctedLat: 16.91,
+                    correctedLng: 96.21,
+                },
+            },
+        }),
+    }).adminGet(reportId);
+    assert.equal(detail.routeContext?.currentStop, null);
+    assert.equal(detail.routeContext?.insertion?.afterStop?.publicId, stopId);
+    assert.equal(detail.comparison.proposed?.name, "Corner stall");
+    assert.equal(detail.review.suggestedAction, "CREATE_STOP_AND_INSERT");
+});
+
+test("adminGet missing transport target returns incomplete review", async () => {
+    const detail = await service({
+        report: reportRow(),
+        context: {
+            stop: null,
+            route: null,
+            variant: null,
+            previousStop: null,
+            nextStop: null,
+            affectedRoutes: [],
+            distanceObserverToCurrentMetres: null,
+            distanceObserverToProposedMetres: null,
+        },
+    }).adminGet(reportId);
+    assert.equal(detail.resolvedTarget.stopId, null);
+    assert.equal(detail.routeContext, null);
+    assert.ok(detail.review.blockedReasons.includes("Active target stop could not be resolved"));
+});
+
+test("adminGet missing snapshot revision is unknown rather than stale", async () => {
+    const detail = await service({
+        report: reportRow({ report_data: { variantPublicId: variantId, stopPublicId: stopId } }),
+    }).adminGet(reportId);
+    assert.equal(detail.comparison.snapshotRevision, null);
+    assert.equal(detail.comparison.isStale, null);
+    assert.ok(detail.review.blockedReasons.includes("Snapshot revision is missing"));
+});
+
+test("adminGet public report has empty field review and no transport lookup", async () => {
+    let contextCalls = 0;
+    const detail = await service({
+        report: reportRow({
+            source_code: "public",
+            report_data: {},
+            observed_at: null,
+        }),
+        onContextCall: () => {
+            contextCalls += 1;
+        },
+    }).adminGet(reportId);
+    assert.equal(contextCalls, 0);
+    assert.equal(detail.routeContext, null);
+    assert.deepEqual(detail.affectedRoutes, []);
+    assert.deepEqual(detail.review, {
+        allowedActions: [],
+        suggestedAction: null,
+        blockedReasons: [],
+    });
+});
+
+test("adminGet performs one bounded transport repository call", async () => {
+    let calls = 0;
+    await service({
+        report: reportRow(),
+        onContextCall: () => {
+            calls += 1;
+        },
+    }).adminGet(reportId);
+    assert.equal(calls, 1);
+});
+
+test("adminGet deterministically orders affected routes and blocked reasons", async () => {
+    const detail = await service({
+        report: reportRow({
+            report_type_code: "wrong_location",
+            report_data: {
+                snapshotRevision: "v1-stale",
+                variantPublicId: variantId,
+                stopPublicId: stopId,
+            },
+        }),
+        context: {
+            stop: {
+                id: "10",
+                publicId: stopId,
+                name: "First",
+                coordinates: { latitude: 16.8, longitude: 96.15 },
+                sequence: 3,
+            },
+            route: { id: "20", publicId: routeId, code: "YBS-13", name: null },
+            variant: {
+                id: "30",
+                publicId: variantId,
+                code: "D0",
+                direction: null,
+                originName: null,
+                destinationName: null,
+            },
+            previousStop: null,
+            nextStop: null,
+            affectedRoutes: [
+                {
+                    routeId: "21",
+                    routePublicId: "11111111-1111-4111-8111-111111111112",
+                    routeCode: "YBS-20",
+                    routeName: null,
+                    routeVariantId: "31",
+                    routeVariantPublicId: "22222222-2222-4222-8222-222222222223",
+                    variantCode: "D1",
+                    direction: null,
+                    sequence: 5,
+                },
+                {
+                    routeId: "20",
+                    routePublicId: routeId,
+                    routeCode: "YBS-13",
+                    routeName: null,
+                    routeVariantId: "30",
+                    routeVariantPublicId: variantId,
+                    variantCode: "D0",
+                    direction: null,
+                    sequence: 3,
+                },
+            ],
+            distanceObserverToCurrentMetres: null,
+            distanceObserverToProposedMetres: null,
+        },
     }).adminGet(reportId);
 
-    assert.ok(detail.review);
-    assert.equal(detail.review.kind, "STOP_MOVED");
-    assert.equal(detail.review.affected_route_count, 3);
-    assert.equal(detail.review.coordinates.proposed?.latitude, 16.9);
-    assert.equal(detail.review.previous_stop?.sequence, 2);
-    assert.ok(detail.review.allowedActions.some((a) => a.action === "MOVE_STOP" && a.enabled === true));
-    assert.ok(detail.review.allowedActions.some((a) => a.action === "RESOLVE" && a.enabled === true));
+    assert.deepEqual(
+        detail.affectedRoutes.map((item) => item.routeCode),
+        ["YBS-13", "YBS-20"]
+    );
+    assert.deepEqual(detail.review.blockedReasons, [
+        ...detail.review.blockedReasons,
+    ].sort((a, b) => a.localeCompare(b, "en")));
+});
+
+test("strict detail schema rejects unexpected fields", async () => {
+    const detail = await service({ report: reportRow() }).adminGet(reportId);
+    assert.equal(
+        adminReportDetailResponseSchema.safeParse({
+            ...detail,
+            unexpected: true,
+        }).success,
+        false
+    );
+});
+
+test("adminGet media metadata never exposes private storage keys", async () => {
+    const detail = await service({
+        report: reportRow(),
+        media: [
+            {
+                public_id: "77777777-7777-4777-8777-777777777777",
+                mime_type: "image/jpeg",
+                byte_size: 100,
+                width: 10,
+                height: 10,
+                note: null,
+                sort_order: 0,
+                published: false,
+                object_key: "private/secret.jpg",
+            } as never,
+        ],
+    }).adminGet(reportId);
+    assert.equal(detail.evidence.media.length, 1);
+    assert.equal("object_key" in detail.evidence.media[0]!, false);
 });
 
 test("adminApply OPEN_ROUTE_EDITOR returns a client navigation hint without writes", async () => {

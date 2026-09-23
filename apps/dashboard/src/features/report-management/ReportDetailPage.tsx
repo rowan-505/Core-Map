@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, startTransition } from "react";
+import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 import { reportsPath } from "@/src/lib/dashboardPaths";
 
 import {
-    applyReportAction,
     changeReportStatus,
     getReport,
     requestReportInfo,
@@ -25,7 +24,6 @@ import {
     statusLabel,
     targetTypeLabel,
 } from "./constants";
-import { fieldRouteEditorHref, openFieldEditorInNewTab } from "./fieldReportLinks";
 import { sessionFinalizationLabel } from "./fieldEvidenceView";
 import {
     isNewStopReport,
@@ -42,43 +40,24 @@ import {
     Field,
     INPUT_CLASS,
     PRIMARY_BTN,
-    ApplyConfirmationDialog,
-    ReportApplyToast,
-    ReportDetailComparisonCard,
     ReportDetailEmptyState,
     ReportDetailErrorState,
-    ReportDetailFieldActionPanel,
     ReportDetailKeyFactsCard,
     ReportDetailLoadingState,
     ReportDetailSurveyorNoteCard,
+    NormalizedReportComparisonCard,
+    ReportObserverCard,
+    ReportReviewGuidanceCard,
+    ReportRouteContextCard,
     SECONDARY_BTN,
     SELECT_CLASS,
 } from "./ReportDetailPanels";
 import {
-    buildReportDetailActionModel,
-    buildReportDetailComparison,
     buildReportDetailKeyFacts,
+    toLegacyReportDetailView,
 } from "./reportDetailView";
 import { buildEvidenceMapModel } from "./evidenceMapModel";
-import {
-    beginApplySubmit,
-    buildApplyConfirmation,
-    buildApplyRequestBody,
-    buildApplyResultSummary,
-    cancelApplyConfirmation,
-    clearApplyToast,
-    completeApplyConflict,
-    completeApplyFailure,
-    completeApplySuccess,
-    createApplyFlowState,
-    formatReportApplyError,
-    isReportApplyConflictError,
-    openApplyConfirmation,
-    type ApplyFlowState,
-} from "./reportApplyFlow";
 import type {
-    AdminReportDetail,
-    ReportReviewActionCode,
     ReportStatusCode,
     RewardReasonCode,
 } from "./types";
@@ -134,7 +113,6 @@ function ConfirmationDialog({ value, busy, onClose }: { value: Confirmation; bus
 }
 
 export default function ReportDetailPage({ id }: { id: string }) {
-    const queryClient = useQueryClient();
     const [actionLoading, setActionLoading] = useState(false);
     const [actionError, setActionError] = useState("");
     const [actionMsg, setActionMsg] = useState("");
@@ -145,27 +123,20 @@ export default function ReportDetailPage({ id }: { id: string }) {
     const [rewardReason, setRewardReason] = useState<RewardReasonCode>("valid_report");
     const [rewardNote, setRewardNote] = useState("");
     const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
-    const [applyFlow, setApplyFlow] = useState<ApplyFlowState>(() => createApplyFlowState());
-    const applyInFlightRef = useRef(false);
 
     const reportQuery = useQuery({
         queryKey: ["reports", "detail", id],
         queryFn: ({ signal }) => getReport(id, { signal }),
         staleTime: 30_000,
     });
-    const report = reportQuery.data;
+    const normalizedReport = reportQuery.data;
+    const report = normalizedReport
+        ? toLegacyReportDetailView(normalizedReport)
+        : undefined;
 
     useEffect(() => {
         if (report) setNoteText(report.admin_note ?? "");
     }, [report]);
-
-    useEffect(() => {
-        if (!applyFlow.toast) return;
-        const timer = window.setTimeout(() => {
-            setApplyFlow((prev) => clearApplyToast(prev));
-        }, 2800);
-        return () => window.clearTimeout(timer);
-    }, [applyFlow.toast]);
 
     const runAction = useCallback(
         async (fn: () => Promise<unknown>, successMsg: string) => {
@@ -202,7 +173,7 @@ export default function ReportDetailPage({ id }: { id: string }) {
         );
     }
 
-    if (!report) {
+    if (!report || !normalizedReport) {
         return <ReportDetailEmptyState backHref={reportsPath()} />;
     }
 
@@ -233,139 +204,17 @@ export default function ReportDetailPage({ id }: { id: string }) {
         field?.canonical_snapshot != null ? JSON.stringify(field.canonical_snapshot, null, 2) : null;
 
     const keyFacts = buildReportDetailKeyFacts(detail, formatDateTime);
-    const comparison = buildReportDetailComparison(detail);
-    const actionModel = buildReportDetailActionModel(detail);
-    const evidenceMapModel = buildEvidenceMapModel(detail);
-    const reportId = detail.public_id;
-    const applyBusy = applyFlow.phase === "submitting" || actionLoading;
-    const applyResult =
-        applyFlow.result ??
-        (isField && (status === "resolved" || status === "rejected")
-            ? {
-                  action: (status === "rejected" ? "REJECT" : "RESOLVE") as ReportReviewActionCode,
-                  actionLabel: status === "rejected" ? "Reject" : "Resolve without change",
-                  statusLabel: statusLabel(status),
-                  detail: "Report closed.",
-                  toastMessage: "",
-              }
-            : null);
+    const evidenceMapModel = buildEvidenceMapModel(detail, {
+        observedToCurrentMetres:
+            normalizedReport?.observer?.distanceToCurrentStopMetres ?? null,
+        observedToProposedMetres:
+            normalizedReport?.observer?.distanceToProposedPositionMetres ?? null,
+    });
 
     function formatPoint(point: { latitude: number; longitude: number } | null | undefined): string {
         if (!point) return "—";
         return `${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}`;
     }
-
-    function requestApplyConfirm(action: ReportReviewActionCode) {
-        const summary = buildApplyConfirmation(detail, action);
-        setApplyFlow((prev) => openApplyConfirmation(prev, summary));
-        if (!summary) {
-            setActionError("That action is not available for this report.");
-        } else {
-            setActionError("");
-        }
-    }
-
-    async function submitConfirmedApply() {
-        if (applyInFlightRef.current) {
-            return;
-        }
-        const pending = applyFlow.confirmation;
-        if (!pending || applyFlow.phase === "submitting") {
-            return;
-        }
-
-        const started = beginApplySubmit(applyFlow);
-        if (!started) {
-            return;
-        }
-        setApplyFlow(started);
-
-        const action = pending.action;
-        const revision = actionModel.expectedCanonicalRevision;
-        if (!revision) {
-            setApplyFlow((prev) =>
-                completeApplyFailure(prev, "Canonical revision is missing; refresh and try again.")
-            );
-            setActionError("Canonical revision is missing; refresh and try again.");
-            return;
-        }
-
-        applyInFlightRef.current = true;
-        setActionError("");
-        setActionMsg("");
-        try {
-            // Wait for server commit — no optimistic canonical UI.
-            const applyResponse = await applyReportAction(
-                reportId,
-                buildApplyRequestBody(action, revision)
-            );
-            // Instant UI from apply response (keeps media/events; no blocking detail refetch).
-            queryClient.setQueryData(
-                ["reports", "detail", reportId],
-                (prev: AdminReportDetail | undefined) => {
-                    if (!prev) {
-                        return {
-                            ...applyResponse.report,
-                            status_events: [],
-                            followups: [],
-                            media: [],
-                        } satisfies AdminReportDetail;
-                    }
-                    return {
-                        ...prev,
-                        ...applyResponse.report,
-                        status_events: prev.status_events,
-                        followups: prev.followups,
-                        media: prev.media,
-                    };
-                }
-            );
-            startTransition(() => {
-                void queryClient.invalidateQueries({ queryKey: ["reports", "list"] });
-            });
-            const summary = buildApplyResultSummary(action, applyResponse);
-            setApplyFlow((prev) => completeApplySuccess(prev, summary));
-        } catch (err) {
-            if (isReportApplyConflictError(err)) {
-                await reportQuery.refetch();
-                setApplyFlow((prev) => completeApplyConflict(prev));
-                setActionError("");
-            } else {
-                const message = formatReportApplyError(err);
-                setApplyFlow((prev) => completeApplyFailure(prev, message));
-                setActionError(message);
-            }
-        } finally {
-            applyInFlightRef.current = false;
-        }
-    }
-
-    function handlePrimary() {
-        const primary = actionModel.primary;
-        if (!primary) return;
-        if (primary.mode === "navigate") {
-            const routeId = field?.route_public_id;
-            if (!routeId) {
-                setActionError("Route is missing from report evidence.");
-                return;
-            }
-            openFieldEditorInNewTab(fieldRouteEditorHref(routeId));
-            return;
-        }
-        requestApplyConfirm(primary.action);
-    }
-
-    const fieldActionPanel = (
-        <ReportDetailFieldActionPanel
-            model={actionModel}
-            busy={applyBusy}
-            result={applyResult}
-            conflictNotice={applyFlow.conflictNotice}
-            onPrimary={handlePrimary}
-            onResolve={() => requestApplyConfirm("RESOLVE")}
-            onReject={() => requestApplyConfirm("REJECT")}
-        />
-    );
 
     return (
         <main className="p-6">
@@ -437,12 +286,12 @@ export default function ReportDetailPage({ id }: { id: string }) {
                             </Card>
                         ) : null}
 
-                        {comparison ? (
-                            <ReportDetailComparisonCard
-                                before={comparison.before}
-                                after={comparison.after}
-                                empty={comparison.empty}
-                            />
+                        {isField ? (
+                            <>
+                                <NormalizedReportComparisonCard comparison={normalizedReport.comparison} />
+                                <ReportObserverCard observer={normalizedReport.observer} />
+                                <ReportRouteContextCard detail={normalizedReport} />
+                            </>
                         ) : null}
 
                         {isField ? (
@@ -466,7 +315,7 @@ export default function ReportDetailPage({ id }: { id: string }) {
 
                         <div className="space-y-5 lg:hidden">
                             {isField ? (
-                                fieldActionPanel
+                                <ReportReviewGuidanceCard review={normalizedReport.review} />
                             ) : (
                                 <Card title="Actions">
                                     <div className="flex flex-col gap-2">
@@ -608,7 +457,7 @@ export default function ReportDetailPage({ id }: { id: string }) {
                                     <Field label="Current revision" value={field.current_snapshot_revision ?? "—"} />
                                     <Field
                                         label="Affected routes"
-                                        value={report.review?.affected_route_count ?? "—"}
+                                        value={normalizedReport.affectedRoutes.length}
                                     />
                                 </div>
                             </CollapsibleCard>
@@ -709,7 +558,7 @@ export default function ReportDetailPage({ id }: { id: string }) {
 
                     <div className="hidden space-y-5 lg:sticky lg:top-5 lg:block lg:self-start">
                         {isField ? (
-                            fieldActionPanel
+                            <ReportReviewGuidanceCard review={normalizedReport.review} />
                         ) : (
                             <>
                                 <Card title="Actions">
@@ -887,14 +736,6 @@ export default function ReportDetailPage({ id }: { id: string }) {
                     </div>
                 </div>
             </div>
-            {applyFlow.confirmation ? (
-                <ApplyConfirmationDialog
-                    summary={applyFlow.confirmation}
-                    busy={applyFlow.phase === "submitting"}
-                    onCancel={() => setApplyFlow((prev) => cancelApplyConfirmation(prev))}
-                    onConfirm={() => void submitConfirmedApply()}
-                />
-            ) : null}
             {confirmation ? (
                 <ConfirmationDialog
                     value={confirmation}
@@ -902,7 +743,6 @@ export default function ReportDetailPage({ id }: { id: string }) {
                     onClose={() => setConfirmation(null)}
                 />
             ) : null}
-            <ReportApplyToast message={applyFlow.toast} />
         </main>
     );
 }

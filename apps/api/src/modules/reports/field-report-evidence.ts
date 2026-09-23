@@ -35,8 +35,118 @@ export type FieldReportAdminContext = {
     proposed_location: GeoPoint | null;
 };
 
+export type NormalizedComparisonValue = {
+    name: string | null;
+    coordinates: GeoPoint | null;
+    sequence: number | null;
+};
+
+export type NormalizedFieldReportEvidence = {
+    routePublicId: string | null;
+    variantPublicId: string | null;
+    stopPublicId: string | null;
+    previousStopPublicId: string | null;
+    nextStopPublicId: string | null;
+    snapshotRevision: string | null;
+    original: NormalizedComparisonValue | null;
+    proposed: NormalizedComparisonValue | null;
+    proposedLocationSource: string | null;
+    observer: ObservedLocation | null;
+    blockedReasons: string[];
+};
+
 export function fieldStopPublicIdOf(row: ReportRow): string | null {
     return fieldStopPublicId(row, asRecord(row.report_data));
+}
+
+/**
+ * Strict field-evidence projection for admin review. Original values come only
+ * from canonicalSnapshot; proposed coordinates come only from correctedLat/Lng.
+ */
+export function toNormalizedFieldEvidence(
+    row: ReportRow
+): NormalizedFieldReportEvidence | null {
+    if (!isFieldSurveySource(row.source_code)) {
+        return null;
+    }
+
+    const data = asRecord(row.report_data);
+    const snapshot = asRecord(data.canonicalSnapshot);
+    const blockedReasons: string[] = [];
+    const originalPoint = strictPoint(
+        snapshot,
+        "lat",
+        "lng",
+        "Original coordinates are incomplete or invalid",
+        blockedReasons
+    );
+    const proposedPoint = strictPoint(
+        snapshot,
+        "correctedLat",
+        "correctedLng",
+        "Proposed coordinates are incomplete or invalid",
+        blockedReasons
+    );
+    const observerPoint = strictPoint(
+        snapshot,
+        "observerLat",
+        "observerLng",
+        "Observer coordinates are incomplete or invalid",
+        blockedReasons
+    );
+    const reportPoint = geoPoint(row.latitude, row.longitude);
+    const observerCoordinates = observerPoint ?? reportPoint;
+    const observer =
+        observerCoordinates === null
+            ? null
+            : {
+                  ...observerCoordinates,
+                  accuracy_m:
+                      optionalNonNegativeFinite(snapshot.observerAccuracyM) ??
+                      optionalNonNegativeFinite(row.location_accuracy_m),
+              };
+
+    const originalName =
+        optionalString(snapshot.nameEn) ??
+        optionalString(snapshot.nameMy) ??
+        optionalString(snapshot.stopName);
+    const originalSequence = optionalInt(snapshot.stopSequence);
+    const proposedName = optionalString(data.proposedStopName);
+    const proposedSequence = optionalInt(data.proposedStopSequence);
+
+    return {
+        routePublicId: optionalUuid(data.routePublicId),
+        variantPublicId: optionalUuid(data.variantPublicId),
+        stopPublicId:
+            optionalUuid(data.stopPublicId) ??
+            (row.report_type_code === "new_stop"
+                ? optionalUuid(data.previousStopPublicId)
+                : row.target_entity_type === "stop"
+                  ? optionalUuid(row.target_public_id)
+                  : null),
+        previousStopPublicId: optionalUuid(data.previousStopPublicId),
+        nextStopPublicId: optionalUuid(data.nextStopPublicId),
+        snapshotRevision: optionalString(data.snapshotRevision),
+        original:
+            originalName !== null || originalPoint !== null || originalSequence !== null
+                ? {
+                      name: originalName,
+                      coordinates: originalPoint,
+                      sequence: originalSequence,
+                  }
+                : null,
+        proposed:
+            proposedName !== null || proposedPoint !== null || proposedSequence !== null
+                ? {
+                      name: proposedName,
+                      coordinates: proposedPoint,
+                      sequence: proposedSequence,
+                  }
+                : null,
+        proposedLocationSource: optionalString(data.locationSource),
+        observer,
+        blockedReasons,
+    };
 }
 
 export function toFieldContext(
@@ -94,18 +204,12 @@ export function toFieldContext(
 }
 
 function proposedLocation(
-    reportTypeCode: string,
+    _reportTypeCode: string,
     corrected: GeoPoint | null,
-    observer: GeoPoint | null,
-    reportPoint: GeoPoint | null
+    _observer: GeoPoint | null,
+    _reportPoint: GeoPoint | null
 ): GeoPoint | null {
-    if (corrected) {
-        return corrected;
-    }
-    if (reportTypeCode === "new_stop") {
-        return reportPoint;
-    }
-    return observer != null ? reportPoint : null;
+    return corrected;
 }
 
 function fieldStopPublicId(row: ReportRow, data: Record<string, unknown>): string | null {
@@ -143,6 +247,25 @@ function geoPoint(lat: unknown, lng: unknown): GeoPoint | null {
     return { latitude, longitude };
 }
 
+function strictPoint(
+    source: Record<string, unknown>,
+    latitudeKey: string,
+    longitudeKey: string,
+    invalidReason: string,
+    blockedReasons: string[]
+): GeoPoint | null {
+    const hasLatitude = source[latitudeKey] !== undefined && source[latitudeKey] !== null;
+    const hasLongitude = source[longitudeKey] !== undefined && source[longitudeKey] !== null;
+    if (!hasLatitude && !hasLongitude) {
+        return null;
+    }
+    const point = geoPoint(source[latitudeKey], source[longitudeKey]);
+    if (!point) {
+        blockedReasons.push(invalidReason);
+    }
+    return point;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
     if (value && typeof value === "object" && !Array.isArray(value)) {
         return value as Record<string, unknown>;
@@ -152,6 +275,13 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function optionalString(value: unknown): string | null {
     return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function optionalUuid(value: unknown): string | null {
+    const text = optionalString(value);
+    return text && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(text)
+        ? text
+        : null;
 }
 
 function optionalInt(value: unknown): number | null {
@@ -173,4 +303,9 @@ function optionalFinite(value: unknown): number | null {
         return Number.isFinite(parsed) ? parsed : null;
     }
     return null;
+}
+
+function optionalNonNegativeFinite(value: unknown): number | null {
+    const parsed = optionalFinite(value);
+    return parsed !== null && parsed >= 0 ? parsed : null;
 }

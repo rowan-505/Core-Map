@@ -209,3 +209,220 @@ export const adminReportsQuerySchema = z.object({
 });
 
 export type AdminReportsQuery = z.infer<typeof adminReportsQuerySchema>;
+
+export const ADMIN_REPORT_REVIEW_ACTION_CODES = [
+    "RENAME_STOP",
+    "MOVE_STOP",
+    "CREATE_STOP_AND_INSERT",
+    "INSERT_EXISTING_STOP",
+    "REMOVE_STOP_FROM_VARIANT",
+    "REORDER_ROUTE_STOP",
+    "VERIFY_STOP",
+    "REJECT_NO_CHANGE",
+] as const;
+
+const nullableUuidSchema = z.string().uuid().nullable();
+const nullableDateTimeSchema = z.string().datetime().nullable();
+const nullableFiniteSchema = z.number().finite().nullable();
+const internalIdSchema = z.string().regex(/^\d+$/).nullable();
+
+export const adminReportGeoPointSchema = z
+    .object({
+        latitude: z.number().finite().min(-90).max(90),
+        longitude: z.number().finite().min(-180).max(180),
+    })
+    .strict();
+
+const adminReportComparisonValueSchema = z
+    .object({
+        name: z.string().nullable(),
+        coordinates: adminReportGeoPointSchema.nullable(),
+        sequence: z.number().int().nullable(),
+    })
+    .strict();
+
+const adminReportTransportStopSchema = z
+    .object({
+        id: internalIdSchema,
+        publicId: nullableUuidSchema,
+        name: z.string().nullable(),
+        coordinates: adminReportGeoPointSchema.nullable(),
+        sequence: z.number().int().nullable(),
+    })
+    .strict();
+
+const adminReportRouteSchema = z
+    .object({
+        id: internalIdSchema,
+        publicId: nullableUuidSchema,
+        code: z.string().nullable(),
+        name: z.string().nullable(),
+    })
+    .strict();
+
+const adminReportVariantSchema = z
+    .object({
+        id: internalIdSchema,
+        publicId: nullableUuidSchema,
+        code: z.string().nullable(),
+        direction: z.string().nullable(),
+        originName: z.string().nullable(),
+        destinationName: z.string().nullable(),
+    })
+    .strict();
+
+const adminReportMediaSchema = z
+    .object({
+        publicId: z.string().uuid(),
+        mimeType: z.string(),
+        byteSize: z.number().int().nonnegative(),
+        width: z.number().int().nonnegative().nullable(),
+        height: z.number().int().nonnegative().nullable(),
+        note: z.string().nullable(),
+        sortOrder: z.number().int(),
+        published: z.boolean(),
+    })
+    .strict();
+
+const adminReportStatusEventSchema = z
+    .object({
+        oldStatusCode: z.string().nullable(),
+        newStatusCode: z.string(),
+        actorDisplayName: z.string().nullable(),
+        note: z.string().nullable(),
+        createdAt: z.string().datetime(),
+    })
+    .strict();
+
+const adminReportFollowupSchema = z
+    .object({
+        actorType: z.string(),
+        actorDisplayName: z.string().nullable(),
+        message: z.string(),
+        createdAt: z.string().datetime(),
+    })
+    .strict();
+
+export const adminReportDetailResponseSchema = z
+    .object({
+        report: z
+            .object({
+                publicId: z.string().uuid(),
+                sourceCode: z.enum(REPORT_SOURCE_CODES),
+                reportTypeCode: z.enum(REPORT_TYPE_CODES),
+                statusCode: z.enum(REPORT_STATUS_CODES),
+                description: z.string(),
+                observedAt: nullableDateTimeSchema,
+                reporterName: z.string().nullable(),
+                reporterPublicId: nullableUuidSchema,
+                reporterEmail: z.string().email().nullable(),
+                isAnonymous: z.boolean(),
+                anonymousId: z.string().nullable(),
+                eligibleForPoints: z.boolean(),
+                rewardGrantedAt: nullableDateTimeSchema,
+                title: z.string().nullable(),
+                reasonCode: z.string().nullable(),
+                targetEntityType: z.string().nullable(),
+                targetEntityId: internalIdSchema,
+                targetPublicId: nullableUuidSchema,
+                reportedCoordinates: adminReportGeoPointSchema.nullable(),
+                adminAreaId: internalIdSchema,
+                adminAreaName: z.string().nullable(),
+                priority: z.string(),
+                confidenceScore: z.number().finite(),
+                createdAt: z.string().datetime(),
+                updatedAt: z.string().datetime(),
+            })
+            .strict(),
+        resolvedTarget: z
+            .object({
+                entityType: z.string().nullable(),
+                stopId: internalIdSchema,
+                stopPublicId: nullableUuidSchema,
+                routeId: internalIdSchema,
+                routePublicId: nullableUuidSchema,
+                routeVariantId: internalIdSchema,
+                routeVariantPublicId: nullableUuidSchema,
+                stopSequence: z.number().int().nullable(),
+            })
+            .strict(),
+        comparison: z
+            .object({
+                snapshotRevision: z.string().nullable(),
+                currentRevision: z.string().nullable(),
+                isStale: z.boolean().nullable(),
+                original: adminReportComparisonValueSchema.nullable(),
+                current: adminReportComparisonValueSchema.nullable(),
+                proposed: adminReportComparisonValueSchema.nullable(),
+                proposedLocationSource: z.string().nullable(),
+            })
+            .strict(),
+        observer: z
+            .object({
+                coordinates: adminReportGeoPointSchema,
+                accuracyMetres: nullableFiniteSchema,
+                distanceToCurrentStopMetres: nullableFiniteSchema,
+                distanceToProposedPositionMetres: nullableFiniteSchema,
+            })
+            .strict()
+            .nullable(),
+        routeContext: z
+            .object({
+                route: adminReportRouteSchema.nullable(),
+                variant: adminReportVariantSchema.nullable(),
+                previousStop: adminReportTransportStopSchema.nullable(),
+                currentStop: adminReportTransportStopSchema.nullable(),
+                nextStop: adminReportTransportStopSchema.nullable(),
+                insertion: z
+                    .object({
+                        afterStop: adminReportTransportStopSchema.nullable(),
+                        beforeStop: adminReportTransportStopSchema.nullable(),
+                    })
+                    .strict()
+                    .nullable(),
+            })
+            .strict()
+            .nullable(),
+        affectedRoutes: z.array(
+            z
+                .object({
+                    routeId: internalIdSchema,
+                    routePublicId: z.string().uuid(),
+                    routeCode: z.string(),
+                    routeName: z.string().nullable(),
+                    routeVariantId: internalIdSchema,
+                    routeVariantPublicId: z.string().uuid(),
+                    variantCode: z.string(),
+                    direction: z.string().nullable(),
+                    sequence: z.number().int(),
+                })
+                .strict()
+        ),
+        evidence: z
+            .object({
+                media: z.array(adminReportMediaSchema),
+            })
+            .strict(),
+        review: z
+            .object({
+                allowedActions: z.array(z.enum(ADMIN_REPORT_REVIEW_ACTION_CODES)),
+                suggestedAction: z.enum(ADMIN_REPORT_REVIEW_ACTION_CODES).nullable(),
+                blockedReasons: z.array(z.string()),
+            })
+            .strict(),
+        workflow: z
+            .object({
+                adminNote: z.string().nullable(),
+                reviewedAt: nullableDateTimeSchema,
+                statusEvents: z.array(adminReportStatusEventSchema),
+                followups: z.array(adminReportFollowupSchema),
+            })
+            .strict(),
+    })
+    .strict();
+
+export type AdminReportReviewActionCode =
+    (typeof ADMIN_REPORT_REVIEW_ACTION_CODES)[number];
+export type AdminReportDetailResponse = z.infer<
+    typeof adminReportDetailResponseSchema
+>;

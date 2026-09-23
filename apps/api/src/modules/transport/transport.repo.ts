@@ -133,6 +133,8 @@ import type {
     TransportStopDetail,
     TransportStopListItem,
     TransportStopLocationUpdateResult,
+    TransportReportReviewContext,
+    TransportReportReviewContextInput,
     TransportStopRouteUsage,
     TransportStopRouteUsageDetailResponse,
     TransportStopMergePreviewResponse,
@@ -336,6 +338,51 @@ type StopRouteUsageDetailRow = {
 
 type StopRouteUsageDetailByStopRow = StopRouteUsageDetailRow & {
     stop_internal_id: bigint;
+};
+
+type ReportReviewContextRow = {
+    stop_id: string | null;
+    stop_public_id: string | null;
+    stop_name: string | null;
+    stop_latitude: number | null;
+    stop_longitude: number | null;
+    stop_sequence: number | null;
+    route_id: string | null;
+    route_public_id: string | null;
+    route_code: string | null;
+    route_name: string | null;
+    variant_id: string | null;
+    variant_public_id: string | null;
+    variant_code: string | null;
+    variant_direction: string | null;
+    variant_origin_name: string | null;
+    variant_destination_name: string | null;
+    previous_stop_id: string | null;
+    previous_stop_public_id: string | null;
+    previous_stop_name: string | null;
+    previous_stop_latitude: number | null;
+    previous_stop_longitude: number | null;
+    previous_stop_sequence: number | null;
+    next_stop_id: string | null;
+    next_stop_public_id: string | null;
+    next_stop_name: string | null;
+    next_stop_latitude: number | null;
+    next_stop_longitude: number | null;
+    next_stop_sequence: number | null;
+    distance_observer_to_current_metres: number | null;
+    distance_observer_to_proposed_metres: number | null;
+};
+
+type ReportReviewAffectedRouteRow = {
+    route_id: string;
+    route_public_id: string;
+    route_code: string;
+    route_name: string | null;
+    variant_id: string;
+    variant_public_id: string;
+    variant_code: string;
+    direction_name: string | null;
+    stop_sequence: number;
 };
 
 type MergePreviewStopRow = {
@@ -3310,6 +3357,317 @@ export class TransportRepository {
             })),
             source_refs: row.source_refs ?? null,
             normalized_data: row.normalized_data ?? null,
+        };
+    }
+
+    /**
+     * Bounded admin report-review context. Two parameterized reads are used:
+     * one for the selected variant window/distances and one for all active
+     * memberships of the physical stop.
+     */
+    async getReportReviewContext(
+        input: TransportReportReviewContextInput
+    ): Promise<TransportReportReviewContext> {
+        const [contextRows, affectedRows] = await Promise.all([
+            this.prisma.$queryRaw<ReportReviewContextRow[]>(Prisma.sql`
+                WITH selected_stop AS (
+                    SELECT
+                        s.id,
+                        s.public_id,
+                        COALESCE(NULLIF(btrim(s.name_en), ''), NULLIF(btrim(s.name_mm), ''), NULLIF(btrim(s.name), '')) AS name,
+                        s.geom
+                    FROM transport.stops s
+                    WHERE ${input.stopPublicId}::uuid IS NOT NULL
+                      AND s.public_id = ${input.stopPublicId}::uuid
+                      AND s.is_active IS TRUE
+                      AND s.deleted_at IS NULL
+                    LIMIT 1
+                ),
+                requested_route AS (
+                    SELECT r.id, r.public_id, r.route_code, r.public_name
+                    FROM transport.routes r
+                    WHERE ${input.routePublicId}::uuid IS NOT NULL
+                      AND r.public_id = ${input.routePublicId}::uuid
+                      AND r.is_active IS TRUE
+                      AND r.deleted_at IS NULL
+                    LIMIT 1
+                ),
+                selected_variant AS (
+                    SELECT
+                        v.id,
+                        v.public_id,
+                        v.route_id,
+                        v.variant_code,
+                        v.direction_name,
+                        v.origin_name,
+                        v.destination_name
+                    FROM transport.route_variants v
+                    JOIN transport.routes r
+                      ON r.id = v.route_id
+                     AND r.is_active IS TRUE
+                     AND r.deleted_at IS NULL
+                    WHERE ${input.variantPublicId}::uuid IS NOT NULL
+                      AND v.public_id = ${input.variantPublicId}::uuid
+                      AND v.is_active IS TRUE
+                      AND v.deleted_at IS NULL
+                    LIMIT 1
+                )
+                SELECT
+                    ss.id::text AS stop_id,
+                    ss.public_id::text AS stop_public_id,
+                    ss.name AS stop_name,
+                    ST_Y(ss.geom)::float8 AS stop_latitude,
+                    ST_X(ss.geom)::float8 AS stop_longitude,
+                    membership.stop_sequence::int AS stop_sequence,
+                    route.id::text AS route_id,
+                    route.public_id::text AS route_public_id,
+                    route.route_code,
+                    route.public_name AS route_name,
+                    sv.id::text AS variant_id,
+                    sv.public_id::text AS variant_public_id,
+                    sv.variant_code,
+                    sv.direction_name AS variant_direction,
+                    sv.origin_name AS variant_origin_name,
+                    sv.destination_name AS variant_destination_name,
+                    previous_stop.id::text AS previous_stop_id,
+                    previous_stop.public_id::text AS previous_stop_public_id,
+                    previous_stop.name AS previous_stop_name,
+                    previous_stop.latitude AS previous_stop_latitude,
+                    previous_stop.longitude AS previous_stop_longitude,
+                    previous_stop.stop_sequence::int AS previous_stop_sequence,
+                    next_stop.id::text AS next_stop_id,
+                    next_stop.public_id::text AS next_stop_public_id,
+                    next_stop.name AS next_stop_name,
+                    next_stop.latitude AS next_stop_latitude,
+                    next_stop.longitude AS next_stop_longitude,
+                    next_stop.stop_sequence::int AS next_stop_sequence,
+                    CASE
+                        WHEN ss.geom IS NULL
+                          OR ${input.observer?.latitude ?? null}::float8 IS NULL
+                          OR ${input.observer?.longitude ?? null}::float8 IS NULL
+                        THEN NULL
+                        ELSE ST_Distance(
+                            ST_SetSRID(
+                                ST_MakePoint(
+                                    ${input.observer?.longitude ?? null}::float8,
+                                    ${input.observer?.latitude ?? null}::float8
+                                ),
+                                4326
+                            )::geography,
+                            ss.geom::geography
+                        )::float8
+                    END AS distance_observer_to_current_metres,
+                    CASE
+                        WHEN ${input.observer?.latitude ?? null}::float8 IS NULL
+                          OR ${input.observer?.longitude ?? null}::float8 IS NULL
+                          OR ${input.proposed?.latitude ?? null}::float8 IS NULL
+                          OR ${input.proposed?.longitude ?? null}::float8 IS NULL
+                        THEN NULL
+                        ELSE ST_Distance(
+                            ST_SetSRID(
+                                ST_MakePoint(
+                                    ${input.observer?.longitude ?? null}::float8,
+                                    ${input.observer?.latitude ?? null}::float8
+                                ),
+                                4326
+                            )::geography,
+                            ST_SetSRID(
+                                ST_MakePoint(
+                                    ${input.proposed?.longitude ?? null}::float8,
+                                    ${input.proposed?.latitude ?? null}::float8
+                                ),
+                                4326
+                            )::geography
+                        )::float8
+                    END AS distance_observer_to_proposed_metres
+                FROM (SELECT 1) seed
+                LEFT JOIN selected_stop ss ON true
+                LEFT JOIN selected_variant sv ON true
+                LEFT JOIN requested_route requested ON true
+                LEFT JOIN transport.routes route
+                  ON route.id = COALESCE(sv.route_id, requested.id)
+                 AND route.is_active IS TRUE
+                 AND route.deleted_at IS NULL
+                LEFT JOIN LATERAL (
+                    SELECT rs.stop_sequence
+                    FROM transport.route_stops rs
+                    WHERE rs.route_variant_id = sv.id
+                      AND rs.stop_id = ss.id
+                    ORDER BY rs.stop_sequence ASC
+                    LIMIT 1
+                ) membership ON true
+                LEFT JOIN LATERAL (
+                    SELECT
+                        s.id,
+                        s.public_id,
+                        COALESCE(NULLIF(btrim(s.name_en), ''), NULLIF(btrim(s.name_mm), ''), NULLIF(btrim(s.name), '')) AS name,
+                        ST_Y(s.geom)::float8 AS latitude,
+                        ST_X(s.geom)::float8 AS longitude,
+                        rs.stop_sequence
+                    FROM transport.route_stops rs
+                    JOIN transport.stops s
+                      ON s.id = rs.stop_id
+                     AND s.is_active IS TRUE
+                     AND s.deleted_at IS NULL
+                    WHERE rs.route_variant_id = sv.id
+                      AND rs.stop_sequence < membership.stop_sequence
+                    ORDER BY rs.stop_sequence DESC
+                    LIMIT 1
+                ) previous_stop ON true
+                LEFT JOIN LATERAL (
+                    SELECT
+                        s.id,
+                        s.public_id,
+                        COALESCE(NULLIF(btrim(s.name_en), ''), NULLIF(btrim(s.name_mm), ''), NULLIF(btrim(s.name), '')) AS name,
+                        ST_Y(s.geom)::float8 AS latitude,
+                        ST_X(s.geom)::float8 AS longitude,
+                        rs.stop_sequence
+                    FROM transport.route_stops rs
+                    JOIN transport.stops s
+                      ON s.id = rs.stop_id
+                     AND s.is_active IS TRUE
+                     AND s.deleted_at IS NULL
+                    WHERE rs.route_variant_id = sv.id
+                      AND rs.stop_sequence > membership.stop_sequence
+                    ORDER BY rs.stop_sequence ASC
+                    LIMIT 1
+                ) next_stop ON true
+                LIMIT 1
+            `),
+            input.stopPublicId
+                ? this.prisma.$queryRaw<ReportReviewAffectedRouteRow[]>(Prisma.sql`
+                      SELECT
+                          r.id::text AS route_id,
+                          r.public_id::text AS route_public_id,
+                          r.route_code,
+                          r.public_name AS route_name,
+                          v.id::text AS variant_id,
+                          v.public_id::text AS variant_public_id,
+                          v.variant_code,
+                          v.direction_name,
+                          rs.stop_sequence::int AS stop_sequence
+                      FROM transport.stops s
+                      JOIN transport.route_stops rs ON rs.stop_id = s.id
+                      JOIN transport.route_variants v
+                        ON v.id = rs.route_variant_id
+                       AND v.is_active IS TRUE
+                       AND v.deleted_at IS NULL
+                      JOIN transport.routes r
+                        ON r.id = v.route_id
+                       AND r.is_active IS TRUE
+                       AND r.deleted_at IS NULL
+                      WHERE s.public_id = ${input.stopPublicId}::uuid
+                        AND s.is_active IS TRUE
+                        AND s.deleted_at IS NULL
+                      ORDER BY
+                          lower(r.route_code) ASC,
+                          lower(v.variant_code) ASC,
+                          rs.stop_sequence ASC,
+                          r.id ASC,
+                          v.id ASC
+                  `)
+                : Promise.resolve([]),
+        ]);
+
+        const row = contextRows[0];
+        const point = (
+            latitude: number | null,
+            longitude: number | null
+        ): { latitude: number; longitude: number } | null => {
+            const lat = latitude === null ? null : Number(latitude);
+            const lng = longitude === null ? null : Number(longitude);
+            return lat !== null &&
+                lng !== null &&
+                Number.isFinite(lat) &&
+                Number.isFinite(lng)
+                ? { latitude: lat, longitude: lng }
+                : null;
+        };
+        const distance = (value: number | null | undefined): number | null => {
+            const numeric = value === null || value === undefined ? null : Number(value);
+            return numeric !== null && Number.isFinite(numeric) ? numeric : null;
+        };
+
+        return {
+            stop:
+                row?.stop_id && row.stop_public_id
+                    ? {
+                          id: row.stop_id,
+                          publicId: row.stop_public_id,
+                          name: row.stop_name,
+                          coordinates: point(row.stop_latitude, row.stop_longitude),
+                          sequence: row.stop_sequence === null ? null : Number(row.stop_sequence),
+                      }
+                    : null,
+            route:
+                row?.route_id && row.route_public_id && row.route_code
+                    ? {
+                          id: row.route_id,
+                          publicId: row.route_public_id,
+                          code: row.route_code,
+                          name: row.route_name,
+                      }
+                    : null,
+            variant:
+                row?.variant_id && row.variant_public_id && row.variant_code
+                    ? {
+                          id: row.variant_id,
+                          publicId: row.variant_public_id,
+                          code: row.variant_code,
+                          direction: row.variant_direction,
+                          originName: row.variant_origin_name,
+                          destinationName: row.variant_destination_name,
+                      }
+                    : null,
+            previousStop:
+                row?.previous_stop_id && row.previous_stop_public_id
+                    ? {
+                          id: row.previous_stop_id,
+                          publicId: row.previous_stop_public_id,
+                          name: row.previous_stop_name,
+                          coordinates: point(
+                              row.previous_stop_latitude,
+                              row.previous_stop_longitude
+                          ),
+                          sequence:
+                              row.previous_stop_sequence === null
+                                  ? null
+                                  : Number(row.previous_stop_sequence),
+                      }
+                    : null,
+            nextStop:
+                row?.next_stop_id && row.next_stop_public_id
+                    ? {
+                          id: row.next_stop_id,
+                          publicId: row.next_stop_public_id,
+                          name: row.next_stop_name,
+                          coordinates: point(
+                              row.next_stop_latitude,
+                              row.next_stop_longitude
+                          ),
+                          sequence:
+                              row.next_stop_sequence === null
+                                  ? null
+                                  : Number(row.next_stop_sequence),
+                      }
+                    : null,
+            affectedRoutes: affectedRows.map((affected) => ({
+                routeId: affected.route_id,
+                routePublicId: affected.route_public_id,
+                routeCode: affected.route_code,
+                routeName: affected.route_name,
+                routeVariantId: affected.variant_id,
+                routeVariantPublicId: affected.variant_public_id,
+                variantCode: affected.variant_code,
+                direction: affected.direction_name,
+                sequence: Number(affected.stop_sequence),
+            })),
+            distanceObserverToCurrentMetres: distance(
+                row?.distance_observer_to_current_metres
+            ),
+            distanceObserverToProposedMetres: distance(
+                row?.distance_observer_to_proposed_metres
+            ),
         };
     }
 
