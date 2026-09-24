@@ -1,7 +1,7 @@
 /**
  * Build a field bootstrap gzip + sidecar outside request handling.
  *
- * Never run from API startup or GET /field/bootstrap.
+ * GET /field/bootstrap also rebuilds this file when the published revision is stale.
  * Does not write canonical transport rows.
  *
  * Usage (from apps/api):

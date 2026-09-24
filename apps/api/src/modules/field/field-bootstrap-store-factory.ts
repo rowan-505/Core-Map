@@ -35,7 +35,8 @@ function r2Store() {
 }
 
 /**
- * Request path never builds a snapshot.
+ * Serves a published snapshot file. GET /field/bootstrap rebuilds that file
+ * from the database when its revision is older than the live transport data.
  * A local dir is used only when it already has a valid artifact (tests).
  * Otherwise private R2. An empty FIELD_BOOTSTRAP_SNAPSHOT_DIR must not hide R2.
  */

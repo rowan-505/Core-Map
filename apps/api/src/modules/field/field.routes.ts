@@ -44,8 +44,12 @@ import {
 } from "./field-reports.schema.js";
 import { FieldReportsError, FieldReportsService } from "./field-reports.service.js";
 import { fieldBootstrapQuerySchema } from "./field.schema.js";
+import { FieldBootstrapRefresher } from "./field-bootstrap-refresh.js";
+import { generateFieldBootstrapGzip } from "./field-bootstrap-generator.js";
 import { serveFieldBootstrap } from "./field-bootstrap-serve.js";
 import { createFieldBootstrapArtifactStore } from "./field-bootstrap-store-factory.js";
+import { FieldRepository } from "./field.repo.js";
+import { snapshotRevisionFromParts } from "./field-revision.js";
 import { SurveyCompletionsRepository } from "./survey-completions.repo.js";
 import {
     surveyCompletionPutBodySchema,
@@ -166,6 +170,8 @@ function invalid(reply: FastifyReply, message: string, issues: unknown): Fastify
 
 const fieldRoutes: FastifyPluginAsync = async (app) => {
     const bootstrapStore = await createFieldBootstrapArtifactStore();
+    const bootstrapRefresher = new FieldBootstrapRefresher();
+    const fieldRepo = new FieldRepository(app.prisma);
     const reportsRepo = new ReportsRepository(app.prisma);
     const surveySessions = new SurveySessionsService(new SurveySessionsRepository(app.prisma));
     const surveyCompletions = new SurveyCompletionsService(new SurveyCompletionsRepository(app.prisma));
@@ -214,6 +220,25 @@ const fieldRoutes: FastifyPluginAsync = async (app) => {
         const parsed = fieldBootstrapQuerySchema.safeParse(request.query);
         if (!parsed.success) {
             return invalid(reply, "Invalid field bootstrap query", parsed.error.flatten());
+        }
+
+        try {
+            const outcome = await bootstrapRefresher.refresh({
+                store: bootstrapStore,
+                loadLiveRevision: async () =>
+                    snapshotRevisionFromParts(await fieldRepo.loadRevisionParts()),
+                writeSnapshot: (gzipPath) =>
+                    generateFieldBootstrapGzip({
+                        repo: fieldRepo,
+                        gzipPath,
+                        simplifyGeometry: true,
+                    }),
+            });
+            if (outcome === "rebuilt") {
+                request.log.info("field bootstrap snapshot refreshed from live transport data");
+            }
+        } catch (error) {
+            request.log.error({ err: error }, "field bootstrap snapshot refresh failed");
         }
 
         return serveFieldBootstrap({

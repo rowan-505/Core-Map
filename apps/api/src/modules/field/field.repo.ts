@@ -86,7 +86,7 @@ export class FieldRepository {
                 WHERE ${ybsVariantFilter}
             ),
             ybs_route_stops AS (
-                SELECT rs.id, rs.stop_id, rs.stop_sequence
+                SELECT rs.id, rs.stop_id, rs.stop_sequence, rs.updated_at
                 FROM transport.route_stops rs
                 JOIN ybs_variants v ON v.id = rs.route_variant_id
             ),
@@ -124,7 +124,18 @@ export class FieldRepository {
                             (SELECT max(updated_at) FROM ybs_routes),
                             (SELECT max(updated_at) FROM ybs_variants),
                             (SELECT max(updated_at) FROM ybs_stops),
-                            (SELECT max(updated_at) FROM ybs_paths)
+                            (SELECT max(updated_at) FROM ybs_route_stops),
+                            (SELECT max(updated_at) FROM ybs_paths),
+                            (
+                                SELECT max(n.updated_at)
+                                FROM transport.route_names n
+                                JOIN ybs_routes r ON r.id = n.route_id
+                            ),
+                            (
+                                SELECT max(n.updated_at)
+                                FROM transport.stop_names n
+                                JOIN ybs_stops s ON s.id = n.stop_id
+                            )
                         )
                     ) * 1000
                 )::bigint AS max_updated_at_ms
